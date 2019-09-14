@@ -1,6 +1,12 @@
 # wikiGDrive
 
+The complete spec is here:
 https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#
+
+You will need a google account to see the shared drive since google does not seem to allow publish shared drives. Just ask for access when getting access to the drive. 
+
+Snippet
+========
 
 
 Overview
