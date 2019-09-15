@@ -1,8 +1,8 @@
 {
-  "name": "EthereumWallet",
+  "name": "WikiGDrive",
   "version": "1.0.0",
-  "description": "Etereum Wallet",
-  "author": "Danial Cagiao",
+  "description": "WikiGDrive",
+  "author": "Han Yoluer",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -27,7 +27,6 @@
     "babel-preset-react": "^6.24.1",
     "bootstrap": "^4.1.3",
     "classnames": "^2.2.6",
-    "connect-history-api-fallback": "^1.5.0",
     "copy-webpack-plugin": "^4.5.1",
     "core-js": "^2.5.7",
     "css-loader": "^0.28.11",
@@ -37,7 +36,7 @@
     "flag-icon-css": "^3.2.0",
     "font-awesome": "^4.7.0",
     "html-webpack-plugin": "^3.1.0",
-    "jquery": "^1.12.4",
+    "jquery": "^3.4.0",
     "node-sass": "^4.7.2",
     "nodemon": "^1.17.2",
     "postcss-loader": "^2.1.3",
