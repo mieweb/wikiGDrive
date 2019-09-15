@@ -7,7 +7,43 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly'];
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
+const {CLIENT_ID, CLIENT_SECRET } = require('../const');
 
+async function getFiles() {
+    let client_id = '', client_secret = '', redirect_uris = [];
+    await fs.readFile(__dirname + '/credentials.json', (err, content) => {
+        if (err) return console.log('Error loading client secret file:', err);
+        // Authorize a client with credentials, then call the Google Drive API.
+        var credentials = JSON.parse(content);
+        client_id = credentials.client_id;
+        client_secret = credentials.client_secret;
+        redirect_uris = credentials.redirect_uris;
+    });
+
+    console.log(client_id);
+
+    const oAuth2Client = new google.auth.OAuth2(
+        client_id, client_secret, redirect_uris[0]
+    )
+    
+    await fs.readFile(__dirname + '/' + TOKEN_PATH, (err, token) => {
+        if (err) return getAccessToken(oAuth2Client, callback);
+        oAuth2Client.setCredentials(JSON.parse(token));
+    });
+
+    const drive = google.drive({version: 'v3', oAuth2Client});
+    var result = await drive.files.list({
+            pageSize: 10,
+            fields: 'nextPageToken, files(id, name)',
+        }, (err, res) => {
+            if (err) return console.log('The API returned an error: ' + err);
+            const files = res.data.files;
+            console.log(files);
+            return files;
+        });
+    console.log(result);
+    return result;
+}
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
  * given callback function.
@@ -20,7 +56,7 @@ async function authorize(credentials, callback) {
       client_id, client_secret, redirect_uris[0]);
 
   // Check if we have previously stored a token.
-  let result = await fs.readFile(TOKEN_PATH, (err, token) => {
+  let result = await fs.readFile(__dirname + '/' + TOKEN_PATH, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
     return callback(oAuth2Client);
@@ -94,3 +130,4 @@ async function googleDrive() {
 }
 
 module.exports.googleDrive = googleDrive;
+module.exports.getFile = getFiles;
