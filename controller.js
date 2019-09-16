@@ -1,8 +1,15 @@
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
-
-const SCOPES = ['https://www.googleapis.com/auth/drive'];
+const async = require('async');
+const SCOPES = ['https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive.readonly',
+            'https://www.googleapis.com/auth/drive.metadata.readonly',
+            'https://www.googleapis.com/auth/drive.appdata',
+            'https://www.googleapis.com/auth/drive.metadata',
+            'https://www.googleapis.com/auth/drive.photos.readonly'];
 const TOKEN_PATH = 'token.json';
 
 /**
@@ -80,6 +87,13 @@ function getFolderTree(drive, nextPageToken, folderList) {
                 folderSt += folder + "#_aabbccddee_#";
                 let arrayFolderSt = folderSt.split("#_aabbccddee_#");
                 arrayFolderSt.pop();
+                arrayFolderSt = arrayFolderSt.map(e => {
+                    for(var i=0; i<folderList.length; i++) {
+                        if(folderList[i].id == e) {
+                            return folderList[i];
+                        }
+                    }
+                })
                 res.push(arrayFolderSt);
                 ar.length == 0 && (folderSt = "");
                 ar.forEach(e => c(e.id, folderSt, res));
@@ -87,7 +101,51 @@ function getFolderTree(drive, nextPageToken, folderList) {
             }(folderId, "", []);
 
             // Output the folder tree.
-            console.log(folderTree);
+            var temp = folderTree.map(folder => {
+                var path = '';
+                folder.map(item => {
+                    path += item.name + '/';
+                })
+                path.substr(0, path.length - 1);
+                folder = {
+                    id: folder[folder.length - 1].id,
+                    path,
+                }
+                return folder;
+            })
+            console.log(temp);
+            // async.eachSeries(temp, function (folder, callback) {
+            //     drive.files.list({
+            //         includeRemoved: false,
+            //         spaces: 'drive',
+            //         fileId: folder.id,
+            //         q: {id: folder.id}
+            //      }, function (err, resp) {
+            //        if (!err) {
+            //            var i;
+            //            var files = resp.data.files;
+            //            var filesList = [];
+            //            if(files) {
+            //                 filesList = files.filter(file => (
+            //                     file.mimeType !== 'application/vnd.google-apps.folder'
+            //                 ))
+            //             }
+            //            folder.child = filesList;
+            //            console.log(folder);
+            //            callback(folder);
+            //        } else {
+            //            console.log('error: ', err);
+            //            callback(err);
+            //        }
+            //      });
+            //   }, function (err) {
+            //     if (err) {
+            //       // Handle error
+            //       console.error(err);
+            //     } else {
+            //       // All permissions inserted
+            //     }
+            //   });
         }
     });
 }
