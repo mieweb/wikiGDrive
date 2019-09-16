@@ -25,3 +25,16 @@ The script should scan for changes in the drive and then refresh the local conve
 
 
 The node.js script should refresh the "Local Filesystem" with changes from the Google Shared Drive overwriting or deleting any content to bring it into sync.  The Local Filesystem is not preserved (since we will be committing the markdown in github anyway).
+
+
+
+
+
+
+https://developers.google.com/drive/api/v3/quickstart/nodejs
+
+1. Create Project
+2. Add Google Drive API
+3. Add Google Docs API
+4. Credentials ->  Create Credentials (OAuth Client ID) -> Other
+5. Put credentials into .wikigdrive
