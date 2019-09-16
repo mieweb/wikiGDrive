@@ -15,7 +15,7 @@ export class MarkDownConverter {
       const file = this.options.fileMap[fileId];
 
       if (url.indexOf(fileId > -1)) {
-        url = file.localPath;
+        url = '/' + file.localPath;
       }
     }
 
@@ -95,7 +95,7 @@ export class MarkDownConverter {
           textElements.push(txt);
 
         } else if (element.inlineObjectElement) {
-          textElements.push('![]('+element.inlineObjectElement.inlineObjectId+')');
+          textElements.push('![]('+this.convertLink(element.inlineObjectElement.inlineObjectId)+')');
           // textElements.push('![]['+element.inlineObjectElement.inlineObjectId+']');
           // console.log('inlineObjectElement', element.inlineObjectElement);
         } else {
