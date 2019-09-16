@@ -7,6 +7,9 @@
     "CLI",
     "MarkDown"
   ],
+  "bin": {
+    "wikigdrive": "./dist/main.js"
+  },
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
