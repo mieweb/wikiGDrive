@@ -14,7 +14,7 @@ export class MarkDownConverter {
     for (let fileId in this.options.fileMap) {
       const file = this.options.fileMap[fileId];
 
-      if (url.indexOf(fileId > -1)) {
+      if (url.indexOf(fileId) > -1) {
         url = '/' + file.localPath;
       }
     }
