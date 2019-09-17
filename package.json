@@ -1,0 +1,41 @@
+{
+  "name": "wikigdrive",
+  "version": "1.0.0",
+  "description": "The complete spec is here: https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#",
+  "keywords": [
+    "GDrive",
+    "CLI",
+    "MarkDown"
+  ],
+  "bin": {
+    "wikigdrive": "./dist/main.js"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack --mode development --target node --watch",
+    "build": "webpack --mode production --target node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gitgis/wikiGDrive.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gitgis/wikiGDrive/issues"
+  },
+  "homepage": "https://github.com/gitgis/wikiGDrive#readme",
+  "dependencies": {
+    "buffer": "^5.4.3",
+    "dotenv": "^8.1.0",
+    "googleapis": "^39.2.0",
+    "minimist": "^1.2.0",
+    "stream": "0.0.2",
+    "xmldoc": "^1.1.2"
+  },
+  "devDependencies": {
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.8"
+  }
+}
