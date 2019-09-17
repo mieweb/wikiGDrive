@@ -5,7 +5,7 @@ import {MarkDownConverter} from "./MarkDownConverter";
 
 export class GoogleDocsService {
 
-  async download(auth, file, dest, fileMap) {
+  async download(auth, file, dest, linkTranslator) {
     return new Promise((resolve, reject) => {
       const docs = google.docs({version: 'v1', auth});
 
@@ -22,9 +22,9 @@ export class GoogleDocsService {
           // console.log(JSON.stringify(data, null, 2))
 
           const converter = new MarkDownConverter(data, {
-            fileMap
+            linkTranslator
           });
-          const md = converter.convert();
+          const md = await converter.convert();
 
           dest.write(md);
           dest.end();

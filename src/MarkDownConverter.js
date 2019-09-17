@@ -9,9 +9,10 @@ export class MarkDownConverter {
   constructor(document, options) {
     this.document = document;
     this.options = options;
+    this.linkTranslator = options.linkTranslator;
   }
 
-  convertLink(url) {
+  async convertImageLink(url) {
     if (this.document.inlineObjects[url]) {
       const inlineObject = this.document.inlineObjects[url];
       // console.log(url, JSON.stringify(inlineObject, null, 2));
@@ -20,6 +21,10 @@ export class MarkDownConverter {
       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
     }
 
+    return await this.linkTranslator.imageUrlToLocalPath(url);
+  }
+
+  convertLink(url) {
     for (let fileId in this.options.fileMap) {
       const file = this.options.fileMap[fileId];
 
@@ -31,25 +36,26 @@ export class MarkDownConverter {
     return url;
   }
 
-  processTos(content) {
-
+  async processTos(content) {
     let text = "";
     const inSrc = false;
     const globalImageCounter = 0;
     const globalListCounters = {};
 
-    content.forEach((child, i) => {
+    for (let childNo = 0; childNo < content.length; childNo++) {
+      const child = content[childNo];
+
       // console.log( JSON.stringify(child, null, 2));
-      const result = this.processParagraph(i, child, inSrc, globalImageCounter, globalListCounters);
+      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
       text += result.text;
-    });
+    }
 
     return text;
   }
 
-  processParagraph(index, element, inSrc, imageCounter, listCounters) {
+  async processParagraph(index, element, inSrc, imageCounter, listCounters) {
     if (element.tableOfContents) {
-      return {"text": this.processTos(element.tableOfContents.content)};
+      return {"text": await this.processTos(element.tableOfContents.content)};
     }
 
     const textElements = [];
@@ -83,7 +89,9 @@ export class MarkDownConverter {
 
       // console.log(element);
       const paragraph = element.paragraph;
-      paragraph.elements.forEach(element => {
+      for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
+        const element = paragraph.elements[elementNo];
+
         // console.log(element);
         if (element.textRun) {
           // console.log(element.textRun);
@@ -104,14 +112,14 @@ export class MarkDownConverter {
           textElements.push(txt);
 
         } else if (element.inlineObjectElement) {
-          textElements.push('![]('+this.convertLink(element.inlineObjectElement.inlineObjectId)+')');
+          textElements.push('![]('+(await this.convertImageLink(element.inlineObjectElement.inlineObjectId))+')');
           // textElements.push('![]['+element.inlineObjectElement.inlineObjectId+']');
           // console.log('inlineObjectElement', element.inlineObjectElement);
         } else {
           console.log(element)
         }
 
-      });
+      }
 
     } else
     if (element.sectionBreak) {
@@ -310,9 +318,7 @@ export class MarkDownConverter {
     return pOut;
   }
 
-
-
-  convert() {
+  async convert() {
     const content = this.document.body.content;
     var text = "";
     var inSrc = false;
@@ -323,8 +329,9 @@ export class MarkDownConverter {
 
     const attachments = [];
 
-    content.forEach((child, i) => {
-      const result = this.processParagraph(i, child, inSrc, globalImageCounter, globalListCounters);
+    for (let childNo = 0; childNo < content.length; childNo++) {
+      const child = content[childNo];
+      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
 
       globalImageCounter += (result && result.images) ? result.images.length : 0;
       if (result !== null) {
@@ -367,7 +374,7 @@ export class MarkDownConverter {
         text+='\n';
       }
 
-    });
+    };
 
     return text;
   }
