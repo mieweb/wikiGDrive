@@ -18,6 +18,9 @@ export class GoogleAuthService {
   }
 
   async authorize(client_id, client_secret) {
+    if (!client_id) throw "Unknown: client_id";
+    if (!client_secret) throw "Unknown: client_secret";
+
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
 
     // Service account
@@ -34,8 +37,8 @@ export class GoogleAuthService {
 
     return new Promise(async (resolve, reject) => {
       const config = await this.configService.loadConfig();
-      if (config.access_token) {
-        oAuth2Client.setCredentials(config.access_token);
+      if (config.google_auth) {
+        oAuth2Client.setCredentials(config.google_auth);
         resolve(oAuth2Client);
       } else {
         resolve(this.getAccessToken(oAuth2Client));
@@ -65,7 +68,7 @@ export class GoogleAuthService {
           // Store the token to disk for later program executions
 
           const config = await this.configService.loadConfig();
-          config.access_token = token;
+          config.google_auth = token;
           await this.configService.saveConfig(config);
 
           resolve(oAuth2Client);

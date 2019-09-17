@@ -12,13 +12,13 @@ function usage() {
 
 Options:
     --config (.wikigdrive)
-    --user
-    --pass
+    --client_id
+    --client_secret
     --dest (current working folder)
     --watch (keep scanning for changes, ie: daemon)
 
 Examples:
-    $ wikigdrive
+    $ wikigdrive https://google.drive...
     `);
 }
 
@@ -38,12 +38,14 @@ async function index() {
   params['dest'] = argv['dest'] || process.env.PWD;
   params['watch'] = !!argv['watch'];
 
-  params['user'] = argv['user'];
-  params['pass'] = argv['pass'];
+  params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
+  params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
 
   const mainService = new SyncService(params);
   return await mainService.start();
 }
+
+require('dotenv').config();
 
 index()
   .then(() => {

@@ -24,7 +24,12 @@ export class SyncService {
     const config = await this.configService.loadConfig();
     const fileMap = config.fileMap || {};
 
-    const auth = await this.googleAuthService.authorize(config.credentials.client_id, config.credentials.client_secret);
+    if (config.credentials) {
+      if (!this.params.client_id) this.params.client_id = config.credentials.client_id;
+      if (!this.params.client_secret) this.params.client_secret = config.credentials.client_secret;
+    }
+
+    const auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
     const files = await this.googleDriveService.listFilesRecursive(auth, folderId);
 

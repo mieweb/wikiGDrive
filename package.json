@@ -28,6 +28,7 @@
   "homepage": "https://github.com/gitgis/wikiGDrive#readme",
   "dependencies": {
     "buffer": "^5.4.3",
+    "dotenv": "^8.1.0",
     "googleapis": "^39.2.0",
     "minimist": "^1.2.0",
     "stream": "0.0.2",
