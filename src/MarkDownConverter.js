@@ -6,11 +6,20 @@ function escapeHTML(text) {
 
 export class MarkDownConverter {
 
-  constructor(options) {
+  constructor(document, options) {
+    this.document = document;
     this.options = options;
   }
 
   convertLink(url) {
+    if (this.document.inlineObjects[url]) {
+      const inlineObject = this.document.inlineObjects[url];
+      // console.log(url, JSON.stringify(inlineObject, null, 2));
+
+      const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
+      url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+    }
+
     for (let fileId in this.options.fileMap) {
       const file = this.options.fileMap[fileId];
 
@@ -303,8 +312,8 @@ export class MarkDownConverter {
 
 
 
-  convert(content) {
-
+  convert() {
+    const content = this.document.body.content;
     var text = "";
     var inSrc = false;
     var inClass = false;

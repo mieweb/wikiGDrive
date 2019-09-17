@@ -123,6 +123,13 @@ export class SyncService {
         auth,
         Object.assign({}, file, {mimeType: 'image/svg+xml'}),
         [linkTransform, dest]);
+
+      const destPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+
+      await this.googleDriveService.exportDocument(
+        auth,
+        Object.assign({}, file, {mimeType: 'image/png'}),
+        destPng);
     }
 
   }

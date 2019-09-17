@@ -17,12 +17,14 @@ export class GoogleDocsService {
             reject(err);
           }
 
-          const body = res.data.body;
+          const data = res.data;
 
-          const converter = new MarkDownConverter({
+          // console.log(JSON.stringify(data, null, 2))
+
+          const converter = new MarkDownConverter(data, {
             fileMap
           });
-          const md = converter.convert(body.content);
+          const md = converter.convert();
 
           dest.write(md);
           dest.end();
