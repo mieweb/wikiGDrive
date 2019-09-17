@@ -13,8 +13,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack --mode development --target node && chmod +x dist/main.js && ./dist/main.js https://drive.google.com/drive/u/0/folders/0AB1bEyFsoJ9pUk9PVA --dest content",
-    "build": "webpack --mode production --target node && chmod +x dist/main.js"
+    "dev": "webpack --mode development --target node --watch",
+    "build": "webpack --mode production --target node"
   },
   "repository": {
     "type": "git",

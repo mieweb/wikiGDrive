@@ -1,4 +1,5 @@
 const webpack = require("webpack");
+const fs = require("fs");
 
 module.exports = {
   plugins: [
@@ -6,5 +7,10 @@ module.exports = {
       banner: '#!/usr/bin/env node',
       raw: true,
     }),
+    function () {
+      this.plugin('done', () => {
+        fs.chmodSync(`${__dirname}/dist/main.js`, '755');
+      })
+    },
   ],
 };
