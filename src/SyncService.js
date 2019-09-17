@@ -9,6 +9,25 @@ import {GoogleAuthService} from "./GoogleAuthService";
 import {GoogleDocsService} from "./GoogleDocsService";
 import {LinkTransform} from "./LinkTransform";
 
+function getMaxModifiedTime(fileMap) {
+  let maxModifiedTime = null;
+
+  for (let fileId in fileMap) {
+    const file = fileMap[fileId];
+    if (!maxModifiedTime) {
+      maxModifiedTime = file.modifiedTime;
+      continue;
+    }
+
+    if (maxModifiedTime < file.modifiedTime) {
+      maxModifiedTime = file.modifiedTime;
+    }
+  }
+
+  return maxModifiedTime;
+}
+
+
 export class SyncService {
 
   constructor(params) {
@@ -21,7 +40,7 @@ export class SyncService {
 
 
   async start() {
-    const config = await this.configService.loadConfig();
+    let config = await this.configService.loadConfig();
     const fileMap = config.fileMap || {};
 
     if (config.credentials) {
@@ -30,9 +49,11 @@ export class SyncService {
     }
 
     const auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
-    const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
-    const files = await this.googleDriveService.listFilesRecursive(auth, folderId);
+    config = await this.configService.loadConfig();
 
+    const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
+
+    const files = await this.googleDriveService.listFilesRecursive(auth, folderId);
     files.forEach(file => {
       fileMap[file.id] = file;
     });
@@ -43,8 +64,34 @@ export class SyncService {
     await this.downloadDocuments(auth, files, fileMap);
 
     config.fileMap = fileMap;
-
     await this.configService.saveConfig(config);
+
+    if (this.params.watch) {
+      console.log('Watching for changes');
+      while (true) {
+        const stop = new Date().getTime();
+        while(new Date().getTime() < stop + 2000) {}
+
+        let lastMTime = getMaxModifiedTime(fileMap);
+
+        const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
+        if (files.length > 0) {
+          console.log(files.length + " files modified");
+          files.forEach(file => {
+            fileMap[file.id] = file;
+          });
+
+          await this.createFolderStructure(files);
+          await this.downloadAssets(auth, files);
+          await this.downloadDiagrams(auth, files, fileMap);
+          await this.downloadDocuments(auth, files, fileMap);
+
+          config.fileMap = fileMap;
+          await this.configService.saveConfig(config);
+        }
+      }
+    }
+
   }
 
   async downloadAssets(auth, files) {

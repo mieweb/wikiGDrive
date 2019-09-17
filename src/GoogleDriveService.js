@@ -35,8 +35,8 @@ export class GoogleDriveService {
     return false;
   }
 
-  async listFilesRecursive(auth, folderId, parentDirName) {
-    let files = await this.listFiles(auth, folderId);
+  async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
+    let files = await this.listFiles(auth, folderId, modifiedTime);
 
     if (parentDirName) {
       files.forEach(file => {
@@ -48,20 +48,22 @@ export class GoogleDriveService {
       const file = files[fileNo];
       if (file.mimeType != 'application/vnd.google-apps.folder') continue;
 
-      const moreFiles = await this.listFilesRecursive(auth, file.id, file.name);
+      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, file.name);
       files = files.concat(moreFiles);
     }
 
     return files;
   }
 
-  listFiles(auth, folderId, nextPageToken) {
+  listFiles(auth, folderId, modifiedTime, nextPageToken) {
     return new Promise((resolve, reject) => {
 
       const drive = google.drive({version: 'v3', auth});
 
-      let query = '\''+folderId+'\' in parents and trashed = false';
-      // modifiedTime > '2012-06-04T12:00:00'
+      let query = '\'' + folderId + '\' in parents and trashed = false';
+      if (modifiedTime) {
+        query += ' and modifiedTime > \'' + modifiedTime + '\'';
+      }
 
       drive.files.list({
         corpora: 'allDrives',
@@ -78,7 +80,7 @@ export class GoogleDriveService {
         }
 
         if (res.data.nextPageToken) {
-          const nextFiles = await this.listFiles(auth, folderId, res.data.nextPageToken);
+          const nextFiles = await this.listFiles(auth, folderId, modifiedTime, res.data.nextPageToken);
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
