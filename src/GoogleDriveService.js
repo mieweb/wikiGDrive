@@ -1,12 +1,12 @@
 'use strict';
 
-const {google} = require('googleapis');
+import {google} from 'googleapis';
 
 export class GoogleDriveService {
 
   urlToFolderId(url) {
     if (url.match(/drive.google.com\/drive.*folders\//)) {
-      let id = url.substr(url.indexOf('/folders/')+'/folders/'.length);
+      let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
       if (id.indexOf('/') > 0) {
         id = id.substr(0, id.indexOf('/'));
       }
@@ -22,7 +22,7 @@ export class GoogleDriveService {
     }
 
     if (url.indexOf('docs.google.com/document/d/') > 0) {
-      let id = url.substr(url.indexOf('docs.google.com/document/d/')+'docs.google.com/document/d/'.length);
+      let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
       if (id.indexOf('/') > 0) {
         id = id.substr(0, id.indexOf('/'));
       }

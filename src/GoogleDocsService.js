@@ -1,7 +1,7 @@
 'use strict';
 
-const {google} = require('googleapis');
-import {MarkDownConverter} from "./MarkDownConverter";
+import {google} from 'googleapis';
+import {MarkDownConverter} from './MarkDownConverter';
 
 export class GoogleDocsService {
 

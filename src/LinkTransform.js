@@ -1,7 +1,7 @@
 'use strict';
 
-const { Transform } = require('stream');
-const xmldoc = require('xmldoc');
+import {Transform} from 'stream';
+import xmldoc from 'xmldoc';
 
 export class LinkTransform extends Transform {
 

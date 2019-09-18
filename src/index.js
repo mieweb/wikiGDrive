@@ -1,9 +1,8 @@
 'use strict';
 
-import path from "path";
-import {SyncService} from "./SyncService";
-
-const minimist = require('minimist');
+import path from 'path';
+import minimist from 'minimist';
+import {SyncService} from './SyncService';
 
 function usage() {
   console.log(
@@ -22,11 +21,10 @@ Examples:
     `);
 }
 
-
 async function index() {
   const argv = minimist(process.argv.slice(2));
 
-  if (argv._.length != 1 || argv.h || argv.help) {
+  if (argv._.length !== 1 || argv.h || argv.help) {
     usage();
     process.exit(1);
   }
@@ -56,5 +54,4 @@ index()
     console.error('Error', err);
     process.exit(1);
   });
-
 

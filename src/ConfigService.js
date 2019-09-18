@@ -1,6 +1,6 @@
 'use strict';
 
-import {FileService} from "./FileService";
+import {FileService} from './FileService';
 
 export class ConfigService {
 

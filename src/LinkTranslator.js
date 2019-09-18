@@ -1,7 +1,7 @@
 'use strict';
 
-import path from "path";
-import fs from "fs";
+import path from 'path';
+import fs from 'fs';
 
 export class LinkTranslator {
 

@@ -3,14 +3,14 @@
 import path from 'path';
 import fs from 'fs';
 
-import {ConfigService} from "./ConfigService";
-import {GoogleDriveService} from "./GoogleDriveService";
-import {GoogleAuthService} from "./GoogleAuthService";
-import {GoogleDocsService} from "./GoogleDocsService";
-import {LinkTransform} from "./LinkTransform";
-import {LinkTranslator} from "./LinkTranslator";
-import {HttpClient} from "./HttpClient";
-import {FileService} from "./FileService";
+import {ConfigService} from './ConfigService';
+import {GoogleDriveService} from './GoogleDriveService';
+import {GoogleAuthService} from './GoogleAuthService';
+import {GoogleDocsService} from './GoogleDocsService';
+import {LinkTransform} from './LinkTransform';
+import {LinkTranslator} from './LinkTranslator';
+import {HttpClient} from './HttpClient';
+import {FileService} from './FileService';
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -30,7 +30,6 @@ function getMaxModifiedTime(fileMap) {
   return maxModifiedTime;
 }
 
-
 export class SyncService {
 
   constructor(params) {
@@ -40,7 +39,6 @@ export class SyncService {
     this.googleDriveService = new GoogleDriveService();
     this.googleDocsService = new GoogleDocsService();
   }
-
 
   async start() {
     let config = await this.configService.loadConfig();
@@ -78,13 +76,15 @@ export class SyncService {
       console.log('Watching for changes');
       while (true) {
         const stop = new Date().getTime();
-        while(new Date().getTime() < stop + 2000) {}
+        while (new Date().getTime() < stop + 2000) {
+          ;
+        }
 
         let lastMTime = getMaxModifiedTime(fileMap);
 
         const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
         if (files.length > 0) {
-          console.log(files.length + " files modified");
+          console.log(files.length + ' files modified');
           files.forEach(file => {
             fileMap[file.id] = file;
           });
@@ -139,7 +139,6 @@ export class SyncService {
         auth,
         Object.assign({}, file, {mimeType: 'image/png'}),
         destPng);
-
 
       const fileService = new FileService();
       const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
