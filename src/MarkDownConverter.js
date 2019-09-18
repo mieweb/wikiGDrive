@@ -1,5 +1,7 @@
 'use strict';
 
+import slugify from 'slugify';
+
 function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -11,6 +13,24 @@ export class MarkDownConverter {
     this.options = options;
     this.linkTranslator = options.linkTranslator;
     this.localPath = options.localPath;
+
+    this.styles = this.transformNamedStyles(document.namedStyles);
+    this.headings = {};
+  }
+
+  transformNamedStyles(namedStyles) {
+    const styles = {};
+
+    namedStyles.styles.forEach(namedStyle => {
+      const style = {
+        name: namedStyle.namedStyleType,
+        fontFamily: namedStyle.textStyle.weightedFontFamily.fontFamily
+      };
+
+      styles[style.name] = style
+    });
+
+    return styles;
   }
 
   async convertImageLink(url) {
@@ -26,18 +46,6 @@ export class MarkDownConverter {
     return this.linkTranslator.convertToRelativePath(localPath, this.localPath);
   }
 
-  convertLink(url) {
-    for (let fileId in this.options.fileMap) {
-      const file = this.options.fileMap[fileId];
-
-      if (url.indexOf(fileId) > -1) {
-        url = file.localPath;
-      }
-    }
-
-    return url;
-  }
-
   async processTos(content) {
     let text = '';
     const inSrc = false;
@@ -49,7 +57,7 @@ export class MarkDownConverter {
 
       // console.log( JSON.stringify(child, null, 2));
       const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
-      text += result.text;
+      text += '* ' + result.text;
     }
 
     return text;
@@ -94,34 +102,60 @@ export class MarkDownConverter {
 
       // console.log(element);
       const paragraph = element.paragraph;
+
+      if (paragraph.paragraphStyle.namedStyleType) {
+        const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+        if (fontFamily === 'Courier New') {
+          textElements.push('```\n');
+        }
+      }
+
+      let paragraphTxt = '';
+
       for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
         const element = paragraph.elements[elementNo];
 
         // console.log(element);
+
         if (element.textRun) {
           // console.log(element.textRun);
           let txt = element.textRun.content;
-
-          if (element.textRun.textStyle.link) {
-            // console.log(element.textRun.textStyle.link);
-
-            if (element.textRun.textStyle.link.url) {
-              txt = '[' + txt + '](' + this.convertLink(element.textRun.textStyle.link.url) + ')';
-            } else
-            if (element.textRun.textStyle.link.headingId) {
-              txt = '[' + txt + '][' + element.textRun.textStyle.link.headingId + ']';
-            }
-          }
+          paragraphTxt += txt;
+          //
+          // if (element.textRun.textStyle.link) {
+          //   // console.log(element.textRun.textStyle.link);
+          //
+          //   if (element.textRun.textStyle.link.url) {
+          //     txt = '[' + txt + '](' + this.convertLink(element.textRun.textStyle.link.url) + ')';
+          //   } else
+          //   if (element.textRun.textStyle.link.headingId) {
+          //     txt = '[' + txt + '][' + element.textRun.textStyle.link.headingId + ']';
+          //   }
+          // }
+          //
+          // element.textRun.content = txt;
 
           pOut += txt;
-          textElements.push(txt);
+
+          element.paragraphStyle = paragraph.paragraphStyle;
+          textElements.push(element);
 
         } else if (element.inlineObjectElement) {
           textElements.push('![](' + (await this.convertImageLink(element.inlineObjectElement.inlineObjectId)) + ')');
         } else {
           console.log(element)
         }
+      }
 
+      if (paragraph.paragraphStyle.headingId) {
+        this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
+      }
+
+      if (paragraph.paragraphStyle.namedStyleType) {
+        const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+        if (fontFamily === 'Courier New') {
+          textElements.push('```\n');
+        }
       }
 
     } else
@@ -161,7 +195,7 @@ export class MarkDownConverter {
 
       let pOut = '';
       for (let i = 0; i < textElements.length; i++) {
-        pOut += this.processTextElement(inSrc, textElements[i]);
+        pOut += await this.processTextElement(inSrc, textElements[i]);
       }
 
       // replace Unicode quotation marks
@@ -248,56 +282,52 @@ export class MarkDownConverter {
     return prefix;
   }
 
-  processTextElement(inSrc, txt) {
-    if (typeof txt === 'string') {
-      return txt;
+  async processTextElement(inSrc, element) {
+    if (typeof element === 'string') {
+      return element;
     }
 
-    let pOut = txt.getText();
-    if (!txt.getTextAttributeIndices) {
+    let pOut = element.textRun.content;
+
+    const style = Object.assign({}, element.paragraphStyle, element.textRun.textStyle);
+    if (element.textRun.textStyle.namedStyleType) {
+      style.fontFamily = this.styles[element.textRun.textStyle.namedStyleType].fontFamily;
+    }
+
+    function getFontFamily(style) {
+      return style.fontFamily;
+    }
+
+    const font = getFontFamily(style);
+
+    if (element.textRun.textStyle.link) {
+      // console.log(element.textRun.textStyle.link);
+
+      if (element.textRun.textStyle.link.url) {
+        pOut = '[' + pOut + '](' + await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url) + ')';
+      } else
+      if (element.textRun.textStyle.link.headingId) {
+        pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
+      }
+
       return pOut;
     }
 
-    const attrs = txt.getTextAttributeIndices();
-    let lastOff = pOut.length;
-
-    for (var i = attrs.length - 1; i >= 0; i--) {
-      var off = attrs[i];
-      var url = txt.getLinkUrl(off);
-      var font = txt.getFontFamily(off);
-
-      if (url) {  // start of link
-        if (i >= 1 && attrs[i - 1] == off - 1 && txt.getLinkUrl(attrs[i - 1]) === url) {
-          // detect links that are in multiple pieces because of errors on formatting:
-          i -= 1;
-          off = attrs[i];
-          url = txt.getLinkUrl(off);
-        }
-        pOut = pOut.substring(0, off) + '[' + pOut.substring(off, lastOff) + '](' + url + ')' + pOut.substring(lastOff);
-      } else if (font) {
-        if (!inSrc && font === font.COURIER_NEW) {
-          while (i >= 1 && txt.getFontFamily(attrs[i - 1]) && txt.getFontFamily(attrs[i - 1]) === font.COURIER_NEW) {
-            // detect fonts that are in multiple pieces because of errors on formatting:
-            i -= 1;
-            off = attrs[i];
-          }
-          pOut = pOut.substring(0, off) + '`' + pOut.substring(off, lastOff) + '`' + pOut.substring(lastOff);
-        }
+    if (font) {
+      if (!inSrc && font === 'Courier New') {
+        pOut = '`' + pOut + '`';
       }
-      if (txt.isBold(off)) {
-        var d1 = '**';
-        var d2 = '**';
-        if (txt.isItalic(off)) {
-          // edbacher: changed this to handle bold italic properly.
-          d1 = '**_';
-          d2 = '_**';
-        }
-        pOut = pOut.substring(0, off) + d1 + pOut.substring(off, lastOff) + d2 + pOut.substring(lastOff);
-      } else if (txt.isItalic(off)) {
-        pOut = pOut.substring(0, off) + '*' + pOut.substring(off, lastOff) + '*' + pOut.substring(lastOff);
-      }
-      lastOff = off;
     }
+    if (style.bold) {
+      if (style.italic) {
+        pOut = '**_' + pOut + '_**';
+      } else {
+        pOut = '**' + pOut + '**';
+      }
+    } else if (style.italic) {
+      pOut = '*' + pOut + '*';
+    }
+
     return pOut;
   }
 
@@ -337,11 +367,13 @@ export class MarkDownConverter {
           inClass = false;
           text += '</div>\n\n';
         } else if (inClass) {
-          text += result.text + '\n\n';
+          text += result.text;
+          // text += result.text + '\n\n';
         } else if (inSrc) {
           text += (srcIndent + escapeHTML(result.text) + '\n');
         } else if (result.text && result.text.length > 0) {
-          text += result.text + '\n\n';
+          text += result.text;
+          // text += result.text + '\n\n';
         }
 
         if (result.images && result.images.length > 0) {
@@ -355,6 +387,16 @@ export class MarkDownConverter {
         }
       } else if (inSrc) { // support empty lines inside source code
         text += '\n';
+      }
+    }
+
+    while (text.indexOf('```\n```\n') > -1) {
+      text = text.replace('```\n```\n', '');
+    }
+
+    for (let heading in this.headings) {
+      while (text.indexOf(heading) > -1) {
+        text = text.replace(heading, this.headings[heading]);
       }
     }
 

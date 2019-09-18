@@ -29,6 +29,7 @@ export class GoogleDocsService {
 
           let frontMatter = '---\n';
           frontMatter += 'title: ' + file.name + '\n';
+          frontMatter += 'date: ' + file.modifiedTime + '\n';
           if (file.htmlPath) {
             frontMatter += 'url: \"' + file.htmlPath + '\"\n';
           }
