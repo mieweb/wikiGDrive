@@ -27,6 +27,14 @@ export class GoogleDocsService {
           });
           const md = await converter.convert();
 
+          let frontMatter = '---\n';
+          frontMatter += 'title: ' + file.name + '\n';
+          if (file.htmlPath) {
+            frontMatter += 'url: \"' + file.htmlPath + '\"\n';
+          }
+          frontMatter += '---\n';
+
+          dest.write(frontMatter);
           dest.write(md);
           dest.end();
 

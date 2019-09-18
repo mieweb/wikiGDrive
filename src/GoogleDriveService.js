@@ -1,6 +1,7 @@
 'use strict';
 
 import {google} from 'googleapis';
+import slugify from 'slugify';
 
 export class GoogleDriveService {
 
@@ -42,7 +43,7 @@ export class GoogleDriveService {
       files.forEach(file => {
         file.localPath = parentDirName + '/' + file.localPath;
         if (file.htmlPath) {
-          file.htmlPath = parentDirName + '/' + file.htmlPath;
+          file.htmlPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.htmlPath;
         }
       });
     }
@@ -93,7 +94,7 @@ export class GoogleDriveService {
                 file.localPath += '.svg';
                 break;
               case 'application/vnd.google-apps.document':
-                file.htmlPath = file.name + '.html';
+                file.htmlPath = slugify(file.name, { replacement: '-', lower: true }) + '.html';
                 file.localPath += '.md';
                 break;
             }
