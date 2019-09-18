@@ -11,6 +11,7 @@ import {LinkTransform} from './LinkTransform';
 import {LinkTranslator} from './LinkTranslator';
 import {HttpClient} from './HttpClient';
 import {FileService} from './FileService';
+import {TocGenerator} from "./TocGenerator";
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -68,6 +69,9 @@ export class SyncService {
     await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
     await this.downloadDocuments(auth, files, linkTranslator);
 
+    const tocGenerator = new TocGenerator(linkTranslator);
+    await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+
     config.binaryFiles = binaryFiles;
     config.fileMap = fileMap;
     await this.configService.saveConfig(config);
@@ -93,6 +97,9 @@ export class SyncService {
           await this.downloadAssets(auth, files);
           await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
           await this.downloadDocuments(auth, files, linkTranslator);
+
+          const tocGenerator = new TocGenerator(linkTranslator);
+          await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
           config.binaryFiles = binaryFiles;
           config.fileMap = fileMap;

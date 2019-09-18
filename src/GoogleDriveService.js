@@ -92,6 +92,7 @@ export class GoogleDriveService {
             file.localPath = file.name;
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName
+              delete file.lastModifyingUser;
             }
 
             switch (file.mimeType) {
