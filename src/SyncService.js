@@ -144,8 +144,8 @@ export class SyncService {
       const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
       binaryFiles[md5checksum] = {
-        localPath: targetPath.replace(/.svg$/, '.png'),
-        localDocumentPath: targetPath,
+        localPath: file.localPath.replace(/.svg$/, '.png'),
+        localDocumentPath: file.localPath,
         md5checksum: md5checksum
       };
     }

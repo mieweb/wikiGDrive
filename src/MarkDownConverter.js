@@ -10,6 +10,7 @@ export class MarkDownConverter {
     this.document = document;
     this.options = options;
     this.linkTranslator = options.linkTranslator;
+    this.localPath = options.localPath;
   }
 
   async convertImageLink(url) {
@@ -21,7 +22,8 @@ export class MarkDownConverter {
       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
     }
 
-    return await this.linkTranslator.imageUrlToLocalPath(url);
+    const localPath = await this.linkTranslator.imageUrlToLocalPath(url)
+    return this.linkTranslator.convertToRelativePath(localPath, this.localPath);
   }
 
   convertLink(url) {
@@ -29,7 +31,7 @@ export class MarkDownConverter {
       const file = this.options.fileMap[fileId];
 
       if (url.indexOf(fileId) > -1) {
-        url = '/' + file.localPath;
+        url = file.localPath;
       }
     }
 

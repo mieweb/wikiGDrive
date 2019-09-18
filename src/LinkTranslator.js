@@ -17,7 +17,7 @@ export class LinkTranslator {
       const file = this.fileMap[fileId];
 
       if (url.indexOf(fileId) > -1) {
-        url = '/' + file.localPath;
+        url = file.localPath;
         return url;
       }
     }
@@ -38,21 +38,26 @@ export class LinkTranslator {
           return this.binaryFiles[md5].localDocumentPath || this.binaryFiles[md5].localPath;
         }
 
-        const targetPath = path.join(this.dest, '.binary_files', md5 + '.png');
+        const localPath = path.join('.binary_files', md5 + '.png');
+        const targetPath = path.join(this.dest, localPath);
         const writeStream = fs.createWriteStream(targetPath);
 
         await this.httpClient.downloadUrl(url, writeStream);
 
         this.binaryFiles[md5] = {
-          localPath: targetPath,
+          localPath: localPath,
           md5checksum: md5
         };
 
-        return targetPath;
+        return localPath;
       }
     }
 
     return url;
+  }
+
+  convertToRelativePath(localPath, basePath) {
+    return path.relative(path.dirname(basePath), localPath);
   }
 
 }

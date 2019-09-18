@@ -22,7 +22,8 @@ export class GoogleDocsService {
           // console.log(JSON.stringify(data, null, 2))
 
           const converter = new MarkDownConverter(data, {
-            linkTranslator
+            linkTranslator,
+            localPath: file.localPath
           });
           const md = await converter.convert();
 
