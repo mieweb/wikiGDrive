@@ -50,7 +50,7 @@ export class GoogleDriveService {
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
-      if (file.mimeType != 'application/vnd.google-apps.folder') continue;
+      if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
 
       const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, file.name);
       files = files.concat(moreFiles);
@@ -74,7 +74,8 @@ export class GoogleDriveService {
         q: query,
         pageToken: nextPageToken,
         pageSize: 1000,
-        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum)',
+        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser)',
+        // fields: 'nextPageToken, files(*)',
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         orderBy: 'modifiedTime desc'
@@ -89,6 +90,10 @@ export class GoogleDriveService {
         } else {
           res.data.files.forEach(file => {
             file.localPath = file.name;
+            if (file.lastModifyingUser) {
+              file.lastAuthor = file.lastModifyingUser.displayName
+            }
+
             switch (file.mimeType) {
               case 'application/vnd.google-apps.drawing':
                 file.localPath += '.svg';

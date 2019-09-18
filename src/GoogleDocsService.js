@@ -30,6 +30,11 @@ export class GoogleDocsService {
           let frontMatter = '---\n';
           frontMatter += 'title: ' + file.name + '\n';
           frontMatter += 'date: ' + file.modifiedTime + '\n';
+          if (file.lastAuthor) {
+            frontMatter += 'author: ' + file.lastAuthor + '\n';
+          }
+          frontMatter += 'id: ' + file.id + '\n';
+          frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
           if (file.htmlPath) {
             frontMatter += 'url: \"' + file.htmlPath + '\"\n';
           }
