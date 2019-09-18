@@ -41,6 +41,9 @@ export class GoogleDriveService {
     if (parentDirName) {
       files.forEach(file => {
         file.localPath = parentDirName + '/' + file.localPath;
+        if (file.htmlPath) {
+          file.htmlPath = parentDirName + '/' + file.htmlPath;
+        }
       });
     }
 
@@ -90,6 +93,7 @@ export class GoogleDriveService {
                 file.localPath += '.svg';
                 break;
               case 'application/vnd.google-apps.document':
+                file.htmlPath = file.name + '.html';
                 file.localPath += '.md';
                 break;
             }

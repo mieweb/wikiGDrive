@@ -123,22 +123,23 @@ export class SyncService {
       const file = files[fileNo];
 
       const targetPath = path.join(this.params.dest, file.localPath);
-      const dest = fs.createWriteStream(targetPath);
-      const linkTransform = new LinkTransform({
-        fileMap
-      });
+      const writeStream = fs.createWriteStream(targetPath);
+
+      const httpClient = new HttpClient();
+      const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
+      const linkTransform = new LinkTransform(linkTranslator, file.localPath);
 
       await this.googleDriveService.exportDocument(
         auth,
         Object.assign({}, file, {mimeType: 'image/svg+xml'}),
-        [linkTransform, dest]);
+        [linkTransform, writeStream]);
 
-      const destPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         auth,
         Object.assign({}, file, {mimeType: 'image/png'}),
-        destPng);
+        writeStreamPng);
 
       const fileService = new FileService();
       const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));

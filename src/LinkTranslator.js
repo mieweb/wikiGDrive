@@ -12,6 +12,28 @@ export class LinkTranslator {
     this.dest = dest;
   }
 
+  async urlToLocalPath(url) {
+    for (let fileId in this.fileMap) {
+      const file = this.fileMap[fileId];
+
+      if (url.indexOf(fileId) > -1) {
+        url = file.localPath;
+        return url;
+      }
+    }
+  }
+
+  async urlToDestUrl(url) {
+    for (let fileId in this.fileMap) {
+      const file = this.fileMap[fileId];
+
+      if (url.indexOf(fileId) > -1) {
+        url = file.htmlPath || file.localPath;
+        return url;
+      }
+    }
+  }
+
   async imageUrlToLocalPath(url) {
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
