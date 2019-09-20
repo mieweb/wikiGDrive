@@ -1,6 +1,6 @@
 'use strict';
 
-import {FileService} from "./FileService";
+import {FileService} from './FileService';
 
 export class ConfigService {
 
@@ -20,7 +20,7 @@ export class ConfigService {
   }
 
   async saveConfig(config) {
-    const content = JSON.stringify(config);
+    const content = JSON.stringify(config, null, 2);
     return this.fileService.writeFile(this.filePath, content);
   }
 

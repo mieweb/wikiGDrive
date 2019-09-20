@@ -1,6 +1,7 @@
 'use strict';
 
-const fs = require('fs');
+import fs from 'fs';
+import crypto from 'crypto';
 
 export class FileService {
 
@@ -16,12 +17,30 @@ export class FileService {
 
   writeFile(filePath, content) {
     return new Promise((resolve, reject) => {
-
       fs.writeFile(filePath, content, function (err) {
         if (err) return reject(err);
         resolve();
       });
     })
+  }
+
+  md5File(filePath) {
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash('md5');
+      hash.setEncoding('hex');
+
+      const fd = fs.createReadStream(filePath);
+      fd
+        .on('error', function(err) {
+          reject(err)
+        })
+        .on('end', function() {
+          hash.end();
+          resolve(hash.read()); // the desired sha1sum
+        });
+
+      fd.pipe(hash);
+    });
   }
 
 }

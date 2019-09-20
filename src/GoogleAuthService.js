@@ -1,7 +1,7 @@
 'use strict';
 
-const {google} = require('googleapis');
-const readline = require('readline');
+import {google} from 'googleapis';
+import readline from 'readline';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -18,8 +18,8 @@ export class GoogleAuthService {
   }
 
   async authorize(client_id, client_secret) {
-    if (!client_id) throw "Unknown: client_id";
-    if (!client_secret) throw "Unknown: client_secret";
+    if (!client_id) throw 'Unknown: client_id';
+    if (!client_secret) throw 'Unknown: client_secret';
 
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
 
@@ -51,13 +51,13 @@ export class GoogleAuthService {
 
       const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: SCOPES,
+        scope: SCOPES
       });
       console.log('Authorize this app by visiting this url:', authUrl);
 
       const rl = readline.createInterface({
         input: process.stdin,
-        output: process.stdout,
+        output: process.stdout
       });
 
       rl.question('Enter the code from that page here: ', (code) => {

@@ -1,11 +1,11 @@
 'use strict';
 
-const {google} = require('googleapis');
-import {MarkDownConverter} from "./MarkDownConverter";
+import {google} from 'googleapis';
+import {MarkDownConverter} from './MarkDownConverter';
 
 export class GoogleDocsService {
 
-  async download(auth, file, dest, fileMap) {
+  async download(auth, file, dest, linkTranslator) {
     return new Promise((resolve, reject) => {
       const docs = google.docs({version: 'v1', auth});
 
@@ -22,10 +22,25 @@ export class GoogleDocsService {
           // console.log(JSON.stringify(data, null, 2))
 
           const converter = new MarkDownConverter(data, {
-            fileMap
+            linkTranslator,
+            localPath: file.localPath
           });
-          const md = converter.convert();
+          const md = await converter.convert();
 
+          let frontMatter = '---\n';
+          frontMatter += 'title: ' + file.name + '\n';
+          frontMatter += 'date: ' + file.modifiedTime + '\n';
+          if (file.lastAuthor) {
+            frontMatter += 'author: ' + file.lastAuthor + '\n';
+          }
+          frontMatter += 'id: ' + file.id + '\n';
+          frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
+          if (file.htmlPath) {
+            frontMatter += 'url: \"' + file.htmlPath + '\"\n';
+          }
+          frontMatter += '---\n';
+
+          dest.write(frontMatter);
           dest.write(md);
           dest.end();
 

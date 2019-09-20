@@ -3,11 +3,15 @@
 import path from 'path';
 import fs from 'fs';
 
-import {ConfigService} from "./ConfigService";
-import {GoogleDriveService} from "./GoogleDriveService";
-import {GoogleAuthService} from "./GoogleAuthService";
-import {GoogleDocsService} from "./GoogleDocsService";
-import {LinkTransform} from "./LinkTransform";
+import {ConfigService} from './ConfigService';
+import {GoogleDriveService} from './GoogleDriveService';
+import {GoogleAuthService} from './GoogleAuthService';
+import {GoogleDocsService} from './GoogleDocsService';
+import {LinkTransform} from './LinkTransform';
+import {LinkTranslator} from './LinkTranslator';
+import {HttpClient} from './HttpClient';
+import {FileService} from './FileService';
+import {TocGenerator} from "./TocGenerator";
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -27,7 +31,6 @@ function getMaxModifiedTime(fileMap) {
   return maxModifiedTime;
 }
 
-
 export class SyncService {
 
   constructor(params) {
@@ -38,10 +41,10 @@ export class SyncService {
     this.googleDocsService = new GoogleDocsService();
   }
 
-
   async start() {
     let config = await this.configService.loadConfig();
     const fileMap = config.fileMap || {};
+    const binaryFiles = config.binaryFiles || {};
 
     if (config.credentials) {
       if (!this.params.client_id) this.params.client_id = config.credentials.client_id;
@@ -58,11 +61,18 @@ export class SyncService {
       fileMap[file.id] = file;
     });
 
+    const httpClient = new HttpClient();
+    const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
+
     await this.createFolderStructure(files);
     await this.downloadAssets(auth, files);
-    await this.downloadDiagrams(auth, files, fileMap);
-    await this.downloadDocuments(auth, files, fileMap);
+    await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
+    await this.downloadDocuments(auth, files, linkTranslator);
 
+    const tocGenerator = new TocGenerator(linkTranslator);
+    await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+
+    config.binaryFiles = binaryFiles;
     config.fileMap = fileMap;
     await this.configService.saveConfig(config);
 
@@ -70,22 +80,28 @@ export class SyncService {
       console.log('Watching for changes');
       while (true) {
         const stop = new Date().getTime();
-        while(new Date().getTime() < stop + 2000) {}
+        while (new Date().getTime() < stop + 2000) {
+          ;
+        }
 
         let lastMTime = getMaxModifiedTime(fileMap);
 
         const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
         if (files.length > 0) {
-          console.log(files.length + " files modified");
+          console.log(files.length + ' files modified');
           files.forEach(file => {
             fileMap[file.id] = file;
           });
 
           await this.createFolderStructure(files);
           await this.downloadAssets(auth, files);
-          await this.downloadDiagrams(auth, files, fileMap);
-          await this.downloadDocuments(auth, files, fileMap);
+          await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
+          await this.downloadDocuments(auth, files, linkTranslator);
 
+          const tocGenerator = new TocGenerator(linkTranslator);
+          await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+
+          config.binaryFiles = binaryFiles;
           config.fileMap = fileMap;
           await this.configService.saveConfig(config);
         }
@@ -107,34 +123,44 @@ export class SyncService {
     }
   }
 
-  async downloadDiagrams(auth, files, fileMap) {
+  async downloadDiagrams(auth, files, fileMap, binaryFiles) {
     files = files.filter(file => file.mimeType === 'application/vnd.google-apps.drawing');
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
 
       const targetPath = path.join(this.params.dest, file.localPath);
-      const dest = fs.createWriteStream(targetPath);
-      const linkTransform = new LinkTransform({
-        fileMap
-      });
+      const writeStream = fs.createWriteStream(targetPath);
+
+      const httpClient = new HttpClient();
+      const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
+      const linkTransform = new LinkTransform(linkTranslator, file.localPath);
 
       await this.googleDriveService.exportDocument(
         auth,
         Object.assign({}, file, {mimeType: 'image/svg+xml'}),
-        [linkTransform, dest]);
+        [linkTransform, writeStream]);
 
-      const destPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         auth,
         Object.assign({}, file, {mimeType: 'image/png'}),
-        destPng);
+        writeStreamPng);
+
+      const fileService = new FileService();
+      const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
+
+      binaryFiles[md5checksum] = {
+        localPath: file.localPath.replace(/.svg$/, '.png'),
+        localDocumentPath: file.localPath,
+        md5checksum: md5checksum
+      };
     }
 
   }
 
-  async downloadDocuments(auth, files, fileMap) {
+  async downloadDocuments(auth, files, linkTranslator) {
     files = files.filter(file => file.mimeType === 'application/vnd.google-apps.document');
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
@@ -143,7 +169,7 @@ export class SyncService {
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
-      await this.googleDocsService.download(auth, file, dest, fileMap);
+      await this.googleDocsService.download(auth, file, dest, linkTranslator);
     }
   }
 
@@ -157,7 +183,9 @@ export class SyncService {
     files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);
       fs.mkdirSync(targetPath, { recursive: true });
-    })
+    });
+
+    fs.mkdirSync(path.join(this.params.dest, '.binary_files'), { recursive: true });
   }
 
 }

@@ -1,12 +1,13 @@
 'use strict';
 
-const {google} = require('googleapis');
+import {google} from 'googleapis';
+import slugify from 'slugify';
 
 export class GoogleDriveService {
 
   urlToFolderId(url) {
     if (url.match(/drive.google.com\/drive.*folders\//)) {
-      let id = url.substr(url.indexOf('/folders/')+'/folders/'.length);
+      let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
       if (id.indexOf('/') > 0) {
         id = id.substr(0, id.indexOf('/'));
       }
@@ -22,7 +23,7 @@ export class GoogleDriveService {
     }
 
     if (url.indexOf('docs.google.com/document/d/') > 0) {
-      let id = url.substr(url.indexOf('docs.google.com/document/d/')+'docs.google.com/document/d/'.length);
+      let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
       if (id.indexOf('/') > 0) {
         id = id.substr(0, id.indexOf('/'));
       }
@@ -41,12 +42,15 @@ export class GoogleDriveService {
     if (parentDirName) {
       files.forEach(file => {
         file.localPath = parentDirName + '/' + file.localPath;
+        if (file.htmlPath) {
+          file.htmlPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.htmlPath;
+        }
       });
     }
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
-      if (file.mimeType != 'application/vnd.google-apps.folder') continue;
+      if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
 
       const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, file.name);
       files = files.concat(moreFiles);
@@ -70,7 +74,8 @@ export class GoogleDriveService {
         q: query,
         pageToken: nextPageToken,
         pageSize: 1000,
-        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum)',
+        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser)',
+        // fields: 'nextPageToken, files(*)',
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         orderBy: 'modifiedTime desc'
@@ -85,11 +90,17 @@ export class GoogleDriveService {
         } else {
           res.data.files.forEach(file => {
             file.localPath = file.name;
+            if (file.lastModifyingUser) {
+              file.lastAuthor = file.lastModifyingUser.displayName
+              delete file.lastModifyingUser;
+            }
+
             switch (file.mimeType) {
               case 'application/vnd.google-apps.drawing':
                 file.localPath += '.svg';
                 break;
               case 'application/vnd.google-apps.document':
+                file.htmlPath = slugify(file.name, { replacement: '-', lower: true }) + '.html';
                 file.localPath += '.md';
                 break;
             }
