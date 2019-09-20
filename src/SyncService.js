@@ -185,7 +185,7 @@ export class SyncService {
       fs.mkdirSync(targetPath, { recursive: true });
     });
 
-    fs.mkdirSync(path.join(this.params.dest, '.binary_files'), { recursive: true });
+    fs.mkdirSync(path.join(this.params.dest, 'external_files'), { recursive: true });
   }
 
 }

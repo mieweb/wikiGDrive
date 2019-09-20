@@ -32,6 +32,8 @@ export class LinkTranslator {
         return '/' + url;
       }
     }
+
+    return url;
   }
 
   async imageUrlToLocalPath(url) {
@@ -60,7 +62,7 @@ export class LinkTranslator {
           return this.binaryFiles[md5].localDocumentPath || this.binaryFiles[md5].localPath;
         }
 
-        const localPath = path.join('.binary_files', md5 + '.png');
+        const localPath = path.join('external_files', md5 + '.png');
         const targetPath = path.join(this.dest, localPath);
         const writeStream = fs.createWriteStream(targetPath);
 
