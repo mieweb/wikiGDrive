@@ -13,7 +13,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "jscs ./src",
+    "lint": "eslint ./src",
     "dev": "webpack --mode development --target node --watch",
     "build": "webpack --mode production --target node"
   },
@@ -38,7 +38,8 @@
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
-    "jscs": "^3.0.7",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.4.0",
     "webpack": "^4.40.2",
     "webpack-cli": "^3.3.8"
   }

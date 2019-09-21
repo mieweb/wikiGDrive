@@ -11,7 +11,7 @@ import {LinkTransform} from './LinkTransform';
 import {LinkTranslator} from './LinkTranslator';
 import {HttpClient} from './HttpClient';
 import {FileService} from './FileService';
-import {TocGenerator} from "./TocGenerator";
+import {TocGenerator} from './TocGenerator';
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -78,11 +78,9 @@ export class SyncService {
 
     if (this.params.watch) {
       console.log('Watching for changes');
-      while (true) {
+      while (true) { // eslint-disable-line no-constant-condition
         const stop = new Date().getTime();
-        while (new Date().getTime() < stop + 2000) {
-          ;
-        }
+        while (new Date().getTime() < stop + 2000);
 
         let lastMTime = getMaxModifiedTime(fileMap);
 
@@ -151,7 +149,7 @@ export class SyncService {
       const fileService = new FileService();
       const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
-      binaryFiles[md5checksum] = {
+      binaryFiles[md5checksum] = { // eslint-disable-line require-atomic-updates
         localPath: file.localPath.replace(/.svg$/, '.png'),
         localDocumentPath: file.localPath,
         md5checksum: md5checksum

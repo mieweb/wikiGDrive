@@ -16,8 +16,8 @@ export class HttpClient {
             .on('end', () => {
               resolve();
             })
-            .pipe(writeStream)
-        })
+            .pipe(writeStream);
+        });
     });
   }
 

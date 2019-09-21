@@ -15,7 +15,7 @@ export class ConfigService {
       const config = JSON.parse(content);
       return config;
     } catch (error) {
-      return {}
+      return {};
     }
   }
 

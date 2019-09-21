@@ -5,7 +5,7 @@ import path from 'path';
 export class TocGenerator {
 
   addLevels(fileMap) {
-    const copy = {}
+    const copy = {};
 
     for (let id in fileMap) {
       copy[id] = fileMap[id];
@@ -61,7 +61,7 @@ export class TocGenerator {
   generate(fileMap, writeStream, htmlPath) {
     let frontMatter = '---\n';
     if (htmlPath) {
-      frontMatter += 'url: \"' + htmlPath + '\"\n';
+      frontMatter += 'url: "' + htmlPath + '"\n';
     }
     frontMatter += 'type: page\n';
     frontMatter += '---\n';

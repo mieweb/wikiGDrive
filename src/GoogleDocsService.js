@@ -36,7 +36,7 @@ export class GoogleDocsService {
           frontMatter += 'id: ' + file.id + '\n';
           frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
           if (file.htmlPath) {
-            frontMatter += 'url: \"' + file.htmlPath + '\"\n';
+            frontMatter += 'url: "' + file.htmlPath + '"\n';
           }
           frontMatter += '---\n';
 

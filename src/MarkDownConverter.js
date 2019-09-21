@@ -27,7 +27,7 @@ export class MarkDownConverter {
         fontFamily: namedStyle.textStyle.weightedFontFamily.fontFamily
       };
 
-      styles[style.name] = style
+      styles[style.name] = style;
     });
 
     return styles;
@@ -42,7 +42,7 @@ export class MarkDownConverter {
       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
     }
 
-    const localPath = await this.linkTranslator.imageUrlToLocalPath(url)
+    const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
     return this.linkTranslator.convertToRelativePath(localPath, this.localPath);
   }
 
@@ -86,7 +86,7 @@ export class MarkDownConverter {
               const elements = node.paragraph.elements;
               return elements.map(element => {
                 return element.textRun.content;
-              })
+              });
             });
 
           textElements.push('    <td>' + content.join().trim() + '</td>\n');
@@ -143,7 +143,7 @@ export class MarkDownConverter {
         } else if (element.inlineObjectElement) {
           textElements.push('![](' + (await this.convertImageLink(element.inlineObjectElement.inlineObjectId)) + ')');
         } else {
-          console.log(element)
+          console.log(element);
         }
       }
 
@@ -205,55 +205,23 @@ export class MarkDownConverter {
     }
 
     return result;
-
-    // Set up for real results.
-    const imagePrefix = 'image_';
-
-    // Process various types (ElementType).
-    for (var i = 0; i < element.getNumChildren(); i++) {
-      var t = element.getChild(i).getType();
-
-      if (t === DocumentApp.ElementType.TABLE_ROW) {
-        // do nothing: already handled TABLE_ROW
-      } else if (t === DocumentApp.ElementType.TEXT) {
-        // var txt=element.getChild(i);
-        // pOut += txt.getText();
-        // textElements.push(txt);
-      } else if (t === DocumentApp.ElementType.INLINE_IMAGE) {
-      } else if (t === DocumentApp.ElementType.PAGE_BREAK) {
-        // ignore
-      } else if (t === DocumentApp.ElementType.HORIZONTAL_RULE) {
-        textElements.push('* * *\n');
-      } else if (t === DocumentApp.ElementType.FOOTNOTE) {
-        textElements.push(' (NOTE: ' + element.getChild(i).getFootnoteContents().getText() + ')');
-      } else {
-        throw 'Paragraph ' + index + ' of type ' + element.getType() + ' has an unsupported child: '
-          + t + ' ' + (element.getChild(i)['getText'] ? element.getChild(i).getText() : '') + ' index=' + index;
-      }
-    }
-
-    return result;
   }
 
   // Add correct prefix to list items.
-  findPrefix(inSrc, element, listCounters) {
+  findPrefix(inSrc, element) {
     let prefix = '';
     if (!inSrc) {
       if (element.paragraph) {
 
         switch (element.paragraph.paragraphStyle.namedStyleType) {
           // Add a # for each heading level. No break, so we accumulate the right number.
-          case 'HEADING_6': prefix += '#';
-          case 'HEADING_5': prefix += '#';
-          case 'HEADING_4': prefix += '#';
-          case 'HEADING_3': prefix += '#';
-          case 'HEADING_2': prefix += '#';
-          case 'HEADING_1': prefix += '# ';
-          default:
+          case 'HEADING_6': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_5': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_4': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_3': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_2': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_1': prefix += '# '; // eslint-disable-line no-fallthrough
         }
-      } else {
-        // TODO list
-        // console.log('aaa', element);
       }
 
       // if (element.getType()===DocumentApp.ElementType.LIST_ITEM) {
@@ -350,7 +318,7 @@ export class MarkDownConverter {
       if (result !== null) {
         if (result.sourcePretty === 'start' && !inSrc) {
           inSrc = true;
-          text += '<pre class=\"prettyprint\">\n';
+          text += '<pre class="prettyprint">\n';
         } else if (result.sourcePretty === 'end' && inSrc) {
           inSrc = false;
           text += '</pre>\n\n';
@@ -362,7 +330,7 @@ export class MarkDownConverter {
           text += '</pre>\n\n';
         } else if (result.inClass === 'start' && !inClass) {
           inClass = true;
-          text += '<div class=\"' + result.className + '\">\n';
+          text += '<div class="' + result.className + '">\n';
         } else if (result.inClass === 'end' && inClass) {
           inClass = false;
           text += '</div>\n\n';
