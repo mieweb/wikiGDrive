@@ -54,7 +54,7 @@ export class GoogleDriveService {
 
     if (parentDirName) {
       files.forEach(file => {
-        file.localPath = parentDirName + '/' + file.localPath;
+        file.desiredLocalPath = parentDirName + '/' + file.desiredLocalPath;
         if (file.htmlPath) {
           file.htmlPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.htmlPath;
         }
@@ -102,7 +102,7 @@ export class GoogleDriveService {
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
-            file.localPath = file.name;
+            file.desiredLocalPath = file.name;
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;
@@ -110,11 +110,11 @@ export class GoogleDriveService {
 
             switch (file.mimeType) {
               case 'application/vnd.google-apps.drawing':
-                file.localPath += '.svg';
+                file.desiredLocalPath += '.svg';
                 break;
               case 'application/vnd.google-apps.document':
                 file.htmlPath = slugify(file.name, { replacement: '-', lower: true }) + '.html';
-                file.localPath += '.md';
+                file.desiredLocalPath += '.md';
                 break;
             }
           });

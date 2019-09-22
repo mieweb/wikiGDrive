@@ -14,6 +14,7 @@ import {FileService} from './FileService';
 import {TocGenerator} from './TocGenerator';
 import {MarkDownTransform} from './MarkDownTransform';
 import {FrontMatterTransform} from './FrontMatterTransform';
+import {FilesStructure} from './FilesStructure';
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -58,47 +59,46 @@ export class SyncService {
 
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
 
-    const files = await this.googleDriveService.listFilesRecursive(auth, folderId);
-    files.forEach(file => {
-      fileMap[file.id] = file;
-    });
+    const filesStructure = new FilesStructure(config.fileMap);
+
+    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
+    const mergedFiles = filesStructure.merge(changedFiles);
 
     const httpClient = new HttpClient();
     const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
 
-    await this.createFolderStructure(files);
-    await this.downloadAssets(auth, files);
-    await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
-    await this.downloadDocuments(auth, files, linkTranslator);
+    await this.createFolderStructure(mergedFiles);
+    await this.downloadAssets(auth, mergedFiles);
+    await this.downloadDiagrams(auth, mergedFiles, fileMap, binaryFiles);
+    await this.downloadDocuments(auth, mergedFiles, linkTranslator);
 
     const tocGenerator = new TocGenerator(linkTranslator);
     await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
+    config.fileMap = filesStructure.fileMap; // eslint-disable-line require-atomic-updates
     config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
-    config.fileMap = fileMap; // eslint-disable-line require-atomic-updates
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
       console.log('Watching for changes');
       let lastMTime = getMaxModifiedTime(fileMap);
       await new Promise(() => setInterval(async () => {
-        const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
-        if (files.length > 0) {
-          console.log(files.length + ' files modified');
-          files.forEach(file => {
-            fileMap[file.id] = file;
-          });
+        const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
+        if (changedFiles.length > 0) {
+          console.log(changedFiles.length + ' files modified');
 
-          await this.createFolderStructure(files);
-          await this.downloadAssets(auth, files);
-          await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
-          await this.downloadDocuments(auth, files, linkTranslator);
+          const mergedFiles = filesStructure.merge(changedFiles);
+
+          await this.createFolderStructure(mergedFiles);
+          await this.downloadAssets(auth, mergedFiles);
+          await this.downloadDiagrams(auth, mergedFiles, fileMap, binaryFiles);
+          await this.downloadDocuments(auth, mergedFiles, linkTranslator);
 
           const tocGenerator = new TocGenerator(linkTranslator);
           await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-          config.binaryFiles = binaryFiles;
-          config.fileMap = fileMap;
+          config.fileMap = filesStructure.fileMap; // eslint-disable-line require-atomic-updates
+          config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
           await this.configService.saveConfig(config);
           console.log('Pulled latest changes');
           lastMTime = getMaxModifiedTime(fileMap); // eslint-disable-line require-atomic-updates
