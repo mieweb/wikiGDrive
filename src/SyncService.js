@@ -12,6 +12,8 @@ import {LinkTranslator} from './LinkTranslator';
 import {HttpClient} from './HttpClient';
 import {FileService} from './FileService';
 import {TocGenerator} from './TocGenerator';
+import {MarkDownTransform} from "./MarkDownTransform";
+import {FrontMatterTransform} from "./FrontMatterTransform";
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -114,6 +116,8 @@ export class SyncService {
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
 
+      console.log('Downloading: ' + file.localPath);
+
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
@@ -126,6 +130,8 @@ export class SyncService {
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
+
+      console.log('Downloading: ' + file.localPath);
 
       const targetPath = path.join(this.params.dest, file.localPath);
       const writeStream = fs.createWriteStream(targetPath);
@@ -154,6 +160,7 @@ export class SyncService {
         localDocumentPath: file.localPath,
         md5checksum: md5checksum
       };
+
     }
 
   }
@@ -164,10 +171,16 @@ export class SyncService {
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
 
+      console.log('Downloading: ' + file.localPath);
+
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
-      await this.googleDocsService.download(auth, file, dest, linkTranslator);
+      const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
+      const frontMatterTransform = new FrontMatterTransform(file);
+
+      await this.googleDocsService.download(auth, file,
+        [markDownTransform, frontMatterTransform, dest], linkTranslator);
     }
   }
 

@@ -1,21 +1,41 @@
 'use strict';
 
 import slugify from 'slugify';
+import {Transform} from "stream";
 
 function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export class MarkDownConverter {
+export class MarkDownTransform extends Transform {
 
-  constructor(document, options) {
-    this.document = document;
-    this.options = options;
-    this.linkTranslator = options.linkTranslator;
-    this.localPath = options.localPath;
+  constructor(localPath, linkTranslator) {
+    super();
 
-    this.styles = this.transformNamedStyles(document.namedStyles);
+    this.linkTranslator = linkTranslator;
+    this.localPath = localPath;
+    this.json = '';
+  }
+
+  _transform(chunk, encoding, callback) {
+    if (encoding === 'buffer') {
+      chunk = chunk.toString();
+    }
+
+    this.json += chunk;
+
+    callback();
+  }
+
+  async _flush(callback) {
+    this.document = JSON.parse(this.json);
+
+    this.styles = this.transformNamedStyles(this.document.namedStyles);
     this.headings = {};
+
+    this.push(await this.convert());
+
+    callback();
   }
 
   transformNamedStyles(namedStyles) {
@@ -272,7 +292,9 @@ export class MarkDownConverter {
       // console.log(element.textRun.textStyle.link);
 
       if (element.textRun.textStyle.link.url) {
-        pOut = '[' + pOut + '](' + await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url) + ')';
+        const localPath = await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url);
+        const relativePath = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+        pOut = '[' + pOut + '](' + relativePath + ')';
       } else
       if (element.textRun.textStyle.link.headingId) {
         pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
@@ -301,12 +323,12 @@ export class MarkDownConverter {
 
   async convert() {
     const content = this.document.body.content;
-    var text = '';
-    var inSrc = false;
-    var inClass = false;
-    var globalImageCounter = 0;
-    var globalListCounters = {};
-    var srcIndent = '';
+    let text = '';
+    let inSrc = false;
+    let inClass = false;
+    let globalImageCounter = 0;
+    const globalListCounters = {};
+    let srcIndent = '';
 
     const attachments = [];
 

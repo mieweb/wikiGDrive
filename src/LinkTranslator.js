@@ -29,7 +29,8 @@ export class LinkTranslator {
 
       if (url.indexOf(fileId) > -1) {
         url = file.htmlPath || file.localPath;
-        return '/' + url;
+
+        return url;
       }
     }
 
@@ -81,6 +82,8 @@ export class LinkTranslator {
   }
 
   convertToRelativePath(localPath, basePath) {
+
+
     return path.relative(path.dirname(basePath), localPath);
   }
 

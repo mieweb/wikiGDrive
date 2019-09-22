@@ -14,11 +14,21 @@ export class GoogleDriveService {
       if (id.indexOf('?') > 0) {
         id = id.substr(0, id.indexOf('?'));
       }
+      if (id.indexOf('&') > 0) {
+        id = id.substr(0, id.indexOf('&'));
+      }
       return id;
     }
 
-    if (url.startsWith('https://drive.google.com/open?id=')) {
-      let id = url.substr('https://drive.google.com/open?id='.length);
+    if (url.indexOf('https://drive.google.com/open?id%3D') > -1) {
+      url = url.replace('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
+    }
+
+    if (url.indexOf('https://drive.google.com/open?id=') > -1) {
+      let id = url.substr(url.indexOf('https://drive.google.com/open?id=') + 'https://drive.google.com/open?id='.length);
+      if (id.indexOf('&') > 0) {
+        id = id.substr(0, id.indexOf('&'));
+      }
       return id;
     }
 
@@ -29,6 +39,9 @@ export class GoogleDriveService {
       }
       if (id.indexOf('?') > 0) {
         id = id.substr(0, id.indexOf('?'));
+      }
+      if (id.indexOf('&') > 0) {
+        id = id.substr(0, id.indexOf('&'));
       }
       return id;
     }
@@ -108,9 +121,7 @@ export class GoogleDriveService {
 
           resolve(res.data.files);
         }
-
       });
-
     });
   }
 
@@ -137,7 +148,6 @@ export class GoogleDriveService {
           .pipe(dest);
       });
     });
-
   }
 
   exportDocument(auth, file, dest) {
@@ -155,7 +165,6 @@ export class GoogleDriveService {
 
         let stream = res.data
           .on('end', () => {
-            resolve();
           })
           .on('error', err => {
             reject(err);
@@ -163,10 +172,15 @@ export class GoogleDriveService {
 
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
+          stream.on('finish', () => {
+            resolve();
+          })
         } else {
           stream.pipe(dest);
+          dest.on('finish', () => {
+            resolve();
+          })
         }
-
       });
     });
 

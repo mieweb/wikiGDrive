@@ -2,6 +2,7 @@
 
 import {Transform} from 'stream';
 import xmldoc from 'xmldoc';
+import {GoogleDriveService} from "./GoogleDriveService";
 
 export class LinkTransform extends Transform {
 
@@ -41,10 +42,19 @@ export class LinkTransform extends Transform {
       findLinkInChild(child);
     });
 
+    const googleDriveService = new GoogleDriveService();
+
     for (let url in urlToRelativePath) {
-      const localPath = await this.linkTranslator.urlToDestUrl(url);
-      if (localPath) {
+      const id = googleDriveService.urlToFolderId(url);
+
+      if (id) {
+        const localPath = await this.linkTranslator.urlToDestUrl(id);
         urlToRelativePath[url] = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+      } else {
+        const localPath = await this.linkTranslator.urlToDestUrl(url);
+        if (localPath !== url) {
+          urlToRelativePath[url] = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+        }
       }
     }
 
