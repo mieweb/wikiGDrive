@@ -30,6 +30,10 @@ export class LinkTranslator {
       if (url.indexOf(fileId) > -1) {
         url = file.htmlPath || file.localPath;
 
+        if (file.mimeType === 'application/vnd.google-apps.folder') {
+          // url += '/';
+        }
+
         return url;
       }
     }
@@ -82,9 +86,13 @@ export class LinkTranslator {
   }
 
   convertToRelativePath(localPath, basePath) {
+    const dirName = path.dirname(basePath);
 
+    if (dirName === localPath) {
+      return '../' + dirName;
+    }
 
-    return path.relative(path.dirname(basePath), localPath);
+    return path.relative(dirName, localPath);
   }
 
 }
