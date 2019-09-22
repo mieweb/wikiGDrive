@@ -1,8 +1,8 @@
 'use strict';
 
-import {Transform} from 'stream';
+import { Transform } from 'stream';
 import xmldoc from 'xmldoc';
-import {GoogleDriveService} from "./GoogleDriveService";
+import {GoogleDriveService} from './GoogleDriveService';
 
 export class LinkTransform extends Transform {
 

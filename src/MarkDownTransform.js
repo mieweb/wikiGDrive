@@ -1,7 +1,7 @@
 'use strict';
 
 import slugify from 'slugify';
-import {Transform} from "stream";
+import {Transform} from 'stream';
 
 function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -40,11 +40,10 @@ export class MarkDownTransform extends Transform {
 
   transformNamedStyles(namedStyles) {
     const styles = {};
-
     namedStyles.styles.forEach(namedStyle => {
       const style = {
         name: namedStyle.namedStyleType,
-        fontFamily: namedStyle.textStyle.weightedFontFamily.fontFamily
+        fontFamily: (namedStyle.textStyle.weightedFontFamily && namedStyle.textStyle.weightedFontFamily.fontFamily) ? namedStyle.textStyle.weightedFontFamily.fontFamily : 'Arial'
       };
 
       styles[style.name] = style;

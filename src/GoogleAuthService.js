@@ -1,6 +1,7 @@
+/* eslint-disable no-async-promise-executor */
 'use strict';
 
-import {google} from 'googleapis';
+import { google } from 'googleapis';
 import readline from 'readline';
 
 const SCOPES = [
@@ -74,7 +75,5 @@ export class GoogleAuthService {
         });
       });
     });
-
   }
-
 }

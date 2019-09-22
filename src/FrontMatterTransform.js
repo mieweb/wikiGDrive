@@ -1,6 +1,6 @@
 'use strict';
 
-import {Transform} from "stream";
+import {Transform} from 'stream';
 
 export class FrontMatterTransform extends Transform {
 

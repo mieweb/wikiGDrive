@@ -12,8 +12,8 @@ import {LinkTranslator} from './LinkTranslator';
 import {HttpClient} from './HttpClient';
 import {FileService} from './FileService';
 import {TocGenerator} from './TocGenerator';
-import {MarkDownTransform} from "./MarkDownTransform";
-import {FrontMatterTransform} from "./FrontMatterTransform";
+import {MarkDownTransform} from './MarkDownTransform';
+import {FrontMatterTransform} from './FrontMatterTransform';
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -54,7 +54,7 @@ export class SyncService {
     }
 
     const auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
-    config = await this.configService.loadConfig();
+    config = await this.configService.loadConfig(); // eslint-disable-line require-atomic-updates
 
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
 
@@ -74,18 +74,14 @@ export class SyncService {
     const tocGenerator = new TocGenerator(linkTranslator);
     await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-    config.binaryFiles = binaryFiles;
-    config.fileMap = fileMap;
+    config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
+    config.fileMap = fileMap; // eslint-disable-line require-atomic-updates
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
       console.log('Watching for changes');
-      while (true) { // eslint-disable-line no-constant-condition
-        const stop = new Date().getTime();
-        while (new Date().getTime() < stop + 2000);
-
-        let lastMTime = getMaxModifiedTime(fileMap);
-
+      let lastMTime = getMaxModifiedTime(fileMap);
+      await new Promise(() => setInterval(async () => {
         const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
         if (files.length > 0) {
           console.log(files.length + ' files modified');
@@ -104,10 +100,13 @@ export class SyncService {
           config.binaryFiles = binaryFiles;
           config.fileMap = fileMap;
           await this.configService.saveConfig(config);
+          console.log('Pulled latest changes');
+          lastMTime = getMaxModifiedTime(fileMap); // eslint-disable-line require-atomic-updates
+        } else {
+          console.log('No changes detected. Sleeping for 10 seconds.');
         }
-      }
+      }, 10000));
     }
-
   }
 
   async downloadAssets(auth, files) {
@@ -142,14 +141,14 @@ export class SyncService {
 
       await this.googleDriveService.exportDocument(
         auth,
-        Object.assign({}, file, {mimeType: 'image/svg+xml'}),
+        Object.assign({}, file, { mimeType: 'image/svg+xml' }),
         [linkTransform, writeStream]);
 
       const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         auth,
-        Object.assign({}, file, {mimeType: 'image/png'}),
+        Object.assign({}, file, { mimeType: 'image/png' }),
         writeStreamPng);
 
       const fileService = new FileService();
@@ -188,8 +187,8 @@ export class SyncService {
     files = files.filter(file => file.mimeType === 'application/vnd.google-apps.folder');
 
     files.sort((a, b) => {
-        return a.localPath.length - b.localPath.length;
-      });
+      return a.localPath.length - b.localPath.length;
+    });
 
     files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);

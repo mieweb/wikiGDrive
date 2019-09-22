@@ -19,14 +19,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gitgis/wikiGDrive.git"
+    "url": "git+https://github.com/mieweb/wikiGDrive.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gitgis/wikiGDrive/issues"
+    "url": "https://github.com/mieweb/wikiGDrive/issues"
   },
-  "homepage": "https://github.com/gitgis/wikiGDrive#readme",
+  "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "dependencies": {
     "buffer": "^5.4.3",
     "dotenv": "^8.1.0",
@@ -40,7 +40,15 @@
   "devDependencies": {
     "babel-eslint": "^10.0.3",
     "eslint": "^6.4.0",
+    "husky": "^3.0.5",
+    "jshint": "^2.10.2",
     "webpack": "^4.40.2",
-    "webpack-cli": "^3.3.8"
+    "webpack-cli": "^3.3.9"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint",
+      "pre-push": "npm run lint"
+    }
   }
 }

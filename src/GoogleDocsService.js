@@ -7,7 +7,7 @@ export class GoogleDocsService {
 
   async download(auth, file, dest, ) {
     return new Promise((resolve, reject) => {
-      const docs = google.docs({version: 'v1', auth});
+      const docs = google.docs({ version: 'v1', auth });
 
       docs.documents
         .get({
@@ -23,7 +23,6 @@ export class GoogleDocsService {
             .on('end', () => {
             })
             .on('error', err => {
-              console.error(err)
               reject(err);
             });
 
@@ -31,12 +30,12 @@ export class GoogleDocsService {
             dest.forEach(pipe => stream = stream.pipe(pipe));
             stream.on('finish', () => {
               resolve();
-            })
+            });
           } else {
             stream.pipe(dest);
             dest.on('finish', () => {
               resolve();
-            })
+            });
           }
 
           readable.push(JSON.stringify(res.data, null, 2));

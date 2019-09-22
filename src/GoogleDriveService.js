@@ -174,12 +174,12 @@ export class GoogleDriveService {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
             resolve();
-          })
+          });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
             resolve();
-          })
+          });
         }
       });
     });
