@@ -91,7 +91,7 @@ export class GoogleDriveService {
           res.data.files.forEach(file => {
             file.localPath = file.name;
             if (file.lastModifyingUser) {
-              file.lastAuthor = file.lastModifyingUser.displayName
+              file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;
             }
 
@@ -111,7 +111,7 @@ export class GoogleDriveService {
 
       });
 
-    })
+    });
   }
 
   download(auth, file, dest) {
@@ -129,13 +129,13 @@ export class GoogleDriveService {
 
         res.data
           .on('end', () => {
-            resolve()
+            resolve();
           })
           .on('error', err => {
               reject(err);
             })
           .pipe(dest);
-      })
+      });
     });
 
   }
@@ -155,19 +155,19 @@ export class GoogleDriveService {
 
         let stream = res.data
           .on('end', () => {
-            resolve()
+            resolve();
           })
           .on('error', err => {
             reject(err);
           });
 
         if (Array.isArray(dest)) {
-          dest.forEach(pipe => stream = stream.pipe(pipe))
+          dest.forEach(pipe => stream = stream.pipe(pipe));
         } else {
           stream.pipe(dest);
         }
 
-      })
+      });
     });
 
   }

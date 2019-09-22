@@ -1,6 +1,7 @@
+/* eslint-disable no-async-promise-executor */
 'use strict';
 
-import {google} from 'googleapis';
+import { google } from 'googleapis';
 import readline from 'readline';
 
 const SCOPES = [
@@ -35,7 +36,7 @@ export class GoogleAuthService {
     // console.log(oAuth2Client);
     // return oAuth2Client;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       const config = await this.configService.loadConfig();
       if (config.google_auth) {
         oAuth2Client.setCredentials(config.google_auth);
@@ -47,7 +48,7 @@ export class GoogleAuthService {
   }
 
   getAccessToken(oAuth2Client) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
       const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
@@ -74,8 +75,6 @@ export class GoogleAuthService {
           resolve(oAuth2Client);
         });
       });
-    })
-
+    });
   }
-
 }

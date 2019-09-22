@@ -21,7 +21,7 @@ export class FileService {
         if (err) return reject(err);
         resolve();
       });
-    })
+    });
   }
 
   md5File(filePath) {
@@ -32,7 +32,7 @@ export class FileService {
       const fd = fs.createReadStream(filePath);
       fd
         .on('error', function(err) {
-          reject(err)
+          reject(err);
         })
         .on('end', function() {
           hash.end();

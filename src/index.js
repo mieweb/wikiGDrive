@@ -48,7 +48,7 @@ require('dotenv').config();
 index()
   .then(() => {
     console.log('Finished');
-    process.exit(0)
+    process.exit(0);
   })
   .catch((err) => {
     console.error('Error', err);
