@@ -5,8 +5,8 @@ import fs from 'fs';
 
 export class LinkTranslator {
 
-  constructor(fileMap, httpClient, binaryFiles, dest) {
-    this.fileMap = fileMap;
+  constructor(filesStructure, httpClient, binaryFiles, dest) {
+    this.fileMap = filesStructure.getFileMap();
     this.httpClient = httpClient;
     this.binaryFiles = binaryFiles;
     this.dest = dest;

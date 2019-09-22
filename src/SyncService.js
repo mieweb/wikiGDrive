@@ -16,24 +16,6 @@ import {MarkDownTransform} from './MarkDownTransform';
 import {FrontMatterTransform} from './FrontMatterTransform';
 import {FilesStructure} from './FilesStructure';
 
-function getMaxModifiedTime(fileMap) {
-  let maxModifiedTime = null;
-
-  for (let fileId in fileMap) {
-    const file = fileMap[fileId];
-    if (!maxModifiedTime) {
-      maxModifiedTime = file.modifiedTime;
-      continue;
-    }
-
-    if (maxModifiedTime < file.modifiedTime) {
-      maxModifiedTime = file.modifiedTime;
-    }
-  }
-
-  return maxModifiedTime;
-}
-
 export class SyncService {
 
   constructor(params) {
@@ -46,7 +28,6 @@ export class SyncService {
 
   async start() {
     let config = await this.configService.loadConfig();
-    const fileMap = config.fileMap || {};
     const binaryFiles = config.binaryFiles || {};
 
     if (config.credentials) {
@@ -65,23 +46,24 @@ export class SyncService {
     const mergedFiles = filesStructure.merge(changedFiles);
 
     const httpClient = new HttpClient();
-    const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
+    const linkTranslator = new LinkTranslator(filesStructure, httpClient, binaryFiles, this.params.dest);
 
     await this.createFolderStructure(mergedFiles);
     await this.downloadAssets(auth, mergedFiles);
-    await this.downloadDiagrams(auth, mergedFiles, fileMap, binaryFiles);
+    await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
     await this.downloadDocuments(auth, mergedFiles, linkTranslator);
+    await this.generateConflicts(filesStructure);
 
     const tocGenerator = new TocGenerator(linkTranslator);
-    await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+    await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-    config.fileMap = filesStructure.fileMap; // eslint-disable-line require-atomic-updates
+    config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
     config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
       console.log('Watching for changes');
-      let lastMTime = getMaxModifiedTime(fileMap);
+      let lastMTime = filesStructure.getMaxModifiedTime();
       await new Promise(() => setInterval(async () => {
         const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
         if (changedFiles.length > 0) {
@@ -91,17 +73,18 @@ export class SyncService {
 
           await this.createFolderStructure(mergedFiles);
           await this.downloadAssets(auth, mergedFiles);
-          await this.downloadDiagrams(auth, mergedFiles, fileMap, binaryFiles);
+          await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
           await this.downloadDocuments(auth, mergedFiles, linkTranslator);
+          await this.generateConflicts(filesStructure);
 
           const tocGenerator = new TocGenerator(linkTranslator);
-          await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+          await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-          config.fileMap = filesStructure.fileMap; // eslint-disable-line require-atomic-updates
+          config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
           config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
           await this.configService.saveConfig(config);
           console.log('Pulled latest changes');
-          lastMTime = getMaxModifiedTime(fileMap); // eslint-disable-line require-atomic-updates
+          lastMTime = filesStructure.getMaxModifiedTime(); // eslint-disable-line require-atomic-updates
         } else {
           console.log('No changes detected. Sleeping for 10 seconds.');
         }
@@ -124,8 +107,8 @@ export class SyncService {
     }
   }
 
-  async downloadDiagrams(auth, files, fileMap, binaryFiles) {
-    files = files.filter(file => file.mimeType === 'application/vnd.google-apps.drawing');
+  async downloadDiagrams(auth, files, filesStructure, binaryFiles) {
+    files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
@@ -136,7 +119,7 @@ export class SyncService {
       const writeStream = fs.createWriteStream(targetPath);
 
       const httpClient = new HttpClient();
-      const linkTranslator = new LinkTranslator(fileMap, httpClient, binaryFiles, this.params.dest);
+      const linkTranslator = new LinkTranslator(filesStructure, httpClient, binaryFiles, this.params.dest);
       const linkTransform = new LinkTransform(linkTranslator, file.localPath);
 
       await this.googleDriveService.exportDocument(
@@ -165,7 +148,7 @@ export class SyncService {
   }
 
   async downloadDocuments(auth, files, linkTranslator) {
-    files = files.filter(file => file.mimeType === 'application/vnd.google-apps.document');
+    files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
@@ -184,7 +167,7 @@ export class SyncService {
   }
 
   createFolderStructure(files) {
-    files = files.filter(file => file.mimeType === 'application/vnd.google-apps.folder');
+    files = files.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
 
     files.sort((a, b) => {
       return a.localPath.length - b.localPath.length;
@@ -198,4 +181,27 @@ export class SyncService {
     fs.mkdirSync(path.join(this.params.dest, 'external_files'), { recursive: true });
   }
 
+  async generateConflicts(filesStructure) {
+    const filesMap = filesStructure.getFileMap();
+
+    for (let fileId in filesMap) {
+      const file = filesMap[fileId];
+      if (file.mimeType !== FilesStructure.CONFLICT_MIME) continue;
+
+      const targetPath = path.join(this.params.dest, file.localPath);
+      const dest = fs.createWriteStream(targetPath);
+
+      let md = '';
+      md += 'There were two documents with the same name in the same folder:\n';
+      md += '\n';
+      for (let fileNo = 0; fileNo < file.conflicting.length; fileNo++) {
+        const id = file.conflicting[fileNo];
+        const conflictingFile = filesMap[id];
+        md += '* [' + conflictingFile.name + '](' + conflictingFile.localPath + ')\n';
+      }
+
+      dest.write(md);
+      dest.close();
+    }
+  }
 }

@@ -54,7 +54,7 @@ export class GoogleDriveService {
 
     if (parentDirName) {
       files.forEach(file => {
-        file.desiredLocalPath = parentDirName + '/' + file.desiredLocalPath;
+        file.desiredLocalPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.desiredLocalPath;
         if (file.htmlPath) {
           file.htmlPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.htmlPath;
         }
@@ -102,7 +102,7 @@ export class GoogleDriveService {
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
-            file.desiredLocalPath = file.name;
+            file.desiredLocalPath = slugify(file.name, { replacement: '-', lower: true });
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;

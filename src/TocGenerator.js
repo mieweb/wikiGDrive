@@ -58,7 +58,8 @@ export class TocGenerator {
     console.log(rootDir);
   }
 
-  generate(fileMap, writeStream, htmlPath) {
+  generate(filesStructure, writeStream, htmlPath) {
+    const fileMap = filesStructure.getFileMap();
     let frontMatter = '---\n';
     if (htmlPath) {
       frontMatter += 'url: "' + htmlPath + '"\n';
@@ -68,8 +69,8 @@ export class TocGenerator {
 
     writeStream.write(frontMatter);
 
-    fileMap = this.addLevels(fileMap);
-    this.outputDir(fileMap, writeStream, 0, '');
+    const fileMapCopy = this.addLevels(fileMap);
+    this.outputDir(fileMapCopy, writeStream, 0, '');
     writeStream.end();
   }
 

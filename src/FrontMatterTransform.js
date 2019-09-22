@@ -31,7 +31,7 @@ export class FrontMatterTransform extends Transform {
     frontMatter += 'id: ' + this.file.id + '\n';
     frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + this.file.id + '\n';
     if (this.file.htmlPath) {
-      frontMatter += 'url: "' + this.file.htmlPath + '"\n';
+      //frontMatter += 'url: "' + this.file.htmlPath + '"\n';
     }
     frontMatter += '---\n';
 
