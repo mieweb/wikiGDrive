@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const fs = require('fs');
 
 module.exports = {
+  target: 'node',
   plugins: [
     new webpack.BannerPlugin({
       banner: '#!/usr/bin/env node',
