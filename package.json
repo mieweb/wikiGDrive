@@ -13,20 +13,20 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "jscs ./src",
+    "lint": "eslint ./src",
     "dev": "webpack --mode development --target node --watch",
     "build": "webpack --mode production --target node"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gitgis/wikiGDrive.git"
+    "url": "git+https://github.com/mieweb/wikiGDrive.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gitgis/wikiGDrive/issues"
+    "url": "https://github.com/mieweb/wikiGDrive/issues"
   },
-  "homepage": "https://github.com/gitgis/wikiGDrive#readme",
+  "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "dependencies": {
     "buffer": "^5.4.3",
     "dotenv": "^8.1.0",
@@ -38,8 +38,17 @@
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
-    "jscs": "^3.0.7",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^5.16.0",
+    "husky": "^3.0.5",
+    "jshint": "^2.10.2",
     "webpack": "^4.40.2",
-    "webpack-cli": "^3.3.8"
+    "webpack-cli": "^3.3.9"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint",
+      "pre-push": "npm run lint"
+    }
   }
 }

@@ -1,17 +1,18 @@
+/* eslint-disable require-atomic-updates */
 'use strict';
 
 import path from 'path';
 import fs from 'fs';
 
-import {ConfigService} from './ConfigService';
-import {GoogleDriveService} from './GoogleDriveService';
-import {GoogleAuthService} from './GoogleAuthService';
-import {GoogleDocsService} from './GoogleDocsService';
-import {LinkTransform} from './LinkTransform';
-import {LinkTranslator} from './LinkTranslator';
-import {HttpClient} from './HttpClient';
-import {FileService} from './FileService';
-import {TocGenerator} from "./TocGenerator";
+import { ConfigService } from './ConfigService';
+import { GoogleDriveService } from './GoogleDriveService';
+import { GoogleAuthService } from './GoogleAuthService';
+import { GoogleDocsService } from './GoogleDocsService';
+import { LinkTransform } from './LinkTransform';
+import { LinkTranslator } from './LinkTranslator';
+import { HttpClient } from './HttpClient';
+import { FileService } from './FileService';
+import { TocGenerator } from './TocGenerator';
 
 function getMaxModifiedTime(fileMap) {
   let maxModifiedTime = null;
@@ -78,36 +79,34 @@ export class SyncService {
 
     if (this.params.watch) {
       console.log('Watching for changes');
-      while (true) {
-        const stop = new Date().getTime();
-        while (new Date().getTime() < stop + 2000) {
-          ;
-        }
-
-        let lastMTime = getMaxModifiedTime(fileMap);
-
-        const files = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
+      const self = this;
+      let lastMTime = getMaxModifiedTime(fileMap);
+      await new Promise(() => setInterval(async function () {
+        const files = await self.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
         if (files.length > 0) {
           console.log(files.length + ' files modified');
           files.forEach(file => {
             fileMap[file.id] = file;
           });
 
-          await this.createFolderStructure(files);
-          await this.downloadAssets(auth, files);
-          await this.downloadDiagrams(auth, files, fileMap, binaryFiles);
-          await this.downloadDocuments(auth, files, linkTranslator);
+          await self.createFolderStructure(files);
+          await self.downloadAssets(auth, files);
+          await self.downloadDiagrams(auth, files, fileMap, binaryFiles);
+          await self.downloadDocuments(auth, files, linkTranslator);
 
           const tocGenerator = new TocGenerator(linkTranslator);
-          await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+          await tocGenerator.generate(fileMap, fs.createWriteStream(path.join(self.params.dest, 'toc.md')), '/toc.html');
 
           config.binaryFiles = binaryFiles;
           config.fileMap = fileMap;
-          await this.configService.saveConfig(config);
+          await self.configService.saveConfig(config);
+          console.log('Pulled latest changes');
+          lastMTime = getMaxModifiedTime(fileMap);
+        } else {
+          console.log('No changes detected. Sleeping for 10 seconds.');
         }
-      }
+      }, 10000));
     }
-
   }
 
   async downloadAssets(auth, files) {
@@ -138,14 +137,14 @@ export class SyncService {
 
       await this.googleDriveService.exportDocument(
         auth,
-        Object.assign({}, file, {mimeType: 'image/svg+xml'}),
+        Object.assign({}, file, { mimeType: 'image/svg+xml' }),
         [linkTransform, writeStream]);
 
       const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         auth,
-        Object.assign({}, file, {mimeType: 'image/png'}),
+        Object.assign({}, file, { mimeType: 'image/png' }),
         writeStreamPng);
 
       const fileService = new FileService();
@@ -177,8 +176,8 @@ export class SyncService {
     files = files.filter(file => file.mimeType === 'application/vnd.google-apps.folder');
 
     files.sort((a, b) => {
-        return a.localPath.length - b.localPath.length;
-      });
+      return a.localPath.length - b.localPath.length;
+    });
 
     files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);

@@ -1,13 +1,13 @@
 'use strict';
 
-import {google} from 'googleapis';
-import {MarkDownConverter} from './MarkDownConverter';
+import { google } from 'googleapis';
+import { MarkDownConverter } from './MarkDownConverter';
 
 export class GoogleDocsService {
 
   async download(auth, file, dest, linkTranslator) {
     return new Promise((resolve, reject) => {
-      const docs = google.docs({version: 'v1', auth});
+      const docs = google.docs({ version: 'v1', auth });
 
       docs.documents
         .get({
@@ -36,7 +36,7 @@ export class GoogleDocsService {
           frontMatter += 'id: ' + file.id + '\n';
           frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
           if (file.htmlPath) {
-            frontMatter += 'url: \"' + file.htmlPath + '\"\n';
+            frontMatter += 'url: "' + file.htmlPath + '"\n';
           }
           frontMatter += '---\n';
 

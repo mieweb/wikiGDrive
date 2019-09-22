@@ -1,6 +1,6 @@
 'use strict';
 
-import {Transform} from 'stream';
+import { Transform } from 'stream';
 import xmldoc from 'xmldoc';
 
 export class LinkTransform extends Transform {
@@ -32,12 +32,12 @@ export class LinkTransform extends Transform {
         urlToRelativePath[child.attr['xlink:href']] = null;
       }
 
-      child.eachChild((child, index, array) => {
+      child.eachChild((child) => {
         findLinkInChild(child);
       });
     };
 
-    document.eachChild((child, index, array) => {
+    document.eachChild((child) => {
       findLinkInChild(child);
     });
 
@@ -55,12 +55,12 @@ export class LinkTransform extends Transform {
         }
       }
 
-      child.eachChild((child, index, array) => {
+      child.eachChild((child) => {
         replaceLinkInChild(child);
       });
     };
 
-    document.eachChild((child, index, array) => {
+    document.eachChild((child) => {
       replaceLinkInChild(child);
     });
 

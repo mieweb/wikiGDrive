@@ -1,5 +1,5 @@
-const webpack = require("webpack");
-const fs = require("fs");
+const webpack = require('webpack');
+const fs = require('fs');
 
 module.exports = {
   plugins: [
@@ -10,7 +10,7 @@ module.exports = {
     function () {
       this.plugin('done', () => {
         fs.chmodSync(`${__dirname}/dist/main.js`, '755');
-      })
+      });
     },
   ],
 };
