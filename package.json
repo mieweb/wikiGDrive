@@ -13,7 +13,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint .",
+    "lint": "eslint ./src",
     "dev": "webpack --mode development --target node --watch",
     "build": "webpack --mode production --target node"
   },
