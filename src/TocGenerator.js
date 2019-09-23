@@ -1,6 +1,7 @@
 'use strict';
 
 import path from 'path';
+import {FilesStructure} from './FilesStructure';
 
 export class TocGenerator {
 
@@ -17,10 +18,10 @@ export class TocGenerator {
 
   sortLevel(files) {
     return files.sort((file1, file2) => {
-      if ((file1.mimeType === 'application/vnd.google-apps.folder') && (file2.mimeType !== 'application/vnd.google-apps.folder')) {
+      if ((file1.mimeType === FilesStructure.FOLDER_MIME) && (file2.mimeType !== FilesStructure.FOLDER_MIME)) {
         return -1;
       }
-      if ((file1.mimeType !== 'application/vnd.google-apps.folder') && (file2.mimeType === 'application/vnd.google-apps.folder')) {
+      if ((file1.mimeType !== FilesStructure.FOLDER_MIME) && (file2.mimeType === FilesStructure.FOLDER_MIME)) {
         return 1;
       }
 
@@ -47,15 +48,14 @@ export class TocGenerator {
         lineStart = ' ' + lineStart;
       }
 
-      if (file.mimeType === 'application/vnd.google-apps.folder') {
+      if (file.mimeType === FilesStructure.FOLDER_MIME) {
         writeStream.write(lineStart + ' ' + file.name + '\n');
         this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
-      } else {
-        const localPath = (file.htmlPath || file.localPath);
-        writeStream.write(lineStart + ' [' + file.name + '](' + (localPath) + ')\n');
+      } else
+      if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
+        writeStream.write(lineStart + ' [' + file.name + '](' + (file.localPath) + ')\n');
       }
     });
-    console.log(rootDir);
   }
 
   generate(filesStructure, writeStream, htmlPath) {
