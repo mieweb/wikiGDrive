@@ -12,7 +12,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha-webpack",
+    "test": "mocha-webpack --mode development",
     "lint": "eslint ./src",
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production"

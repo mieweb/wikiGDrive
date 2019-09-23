@@ -15,79 +15,135 @@ class FilesStructure {
 
     files.forEach(file => {
       const oldEntry = this.fileMap[file.id];
+      let oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
 
       if (!oldEntry) {
-        file = this.insertFile(file);
+        this.insertFile(file);
       } else {
-        file = this.updateFile(file);
+        this.updateFile(file);
       }
 
-      if (file) {
-        mergedFiles.push(file);
+      if (oldDesiredLocalPath) {
+        this.findFiles(found => found.desiredLocalPath === oldDesiredLocalPath)
+          .forEach(found => {
+            if (!mergedFiles.find(x => x.id === found.id)) {
+              mergedFiles.push(found);
+            }
+          });
       }
+
+      this.findFiles(found => found.desiredLocalPath === file.desiredLocalPath)
+        .forEach(found => {
+          if (!mergedFiles.find(x => x.id === found.id)) {
+            mergedFiles.push(found);
+          }
+        });
     });
 
     return mergedFiles;
   }
 
   updateFile(file) {
-    file = this.fileMap[file.id];
-    // TODO handle confilct after move
-    //this.fileMap[file.id] = file;
-    return file;
+    const oldFile = this.fileMap[file.id];
+
+    if (oldFile.desiredLocalPath !== file.desiredLocalPath) {
+
+      const redirectFile = {
+        id: this.generateUniqId(),
+        name: oldFile.name,
+        mimeType: FilesStructure.REDIRECT_MIME,
+        localPath: oldFile.localPath,
+        desiredLocalPath: oldFile.desiredLocalPath,
+        redirectTo: oldFile.id
+      };
+
+      if (oldFile.conflictId) {
+        redirectFile.conflictId = oldFile.conflictId;
+        delete oldFile.conflictId;
+      }
+
+      this.fileMap[redirectFile.id] = redirectFile;
+
+      oldFile.desiredLocalPath = file.desiredLocalPath;
+    }
+
+    ['name', 'modifiedTime', 'lastAuthor'].forEach(key => {
+      if (file[key]) {
+        oldFile[key] = file[key];
+      }
+    });
+
+    this.fileMap[oldFile.id] = oldFile;
+
+    this.checkConflicts(oldFile.desiredLocalPath);
+  }
+
+  checkConflicts(desiredLocalPath) {
+    const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== FilesStructure.CONFLICT_MIME);
+
+    if (files.length < 2) {
+      files.forEach(file => {
+        file.localPath = file.desiredLocalPath;
+      });
+      return;
+    }
+
+    let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === FilesStructure.CONFLICT_MIME);
+    if (!conflictFile) {
+      conflictFile = {
+        id: this.generateUniqId(),
+        name: files[0].name,
+        mimeType: FilesStructure.CONFLICT_MIME,
+        localPath: desiredLocalPath,
+        desiredLocalPath: desiredLocalPath,
+        counter: 0,
+        conflicting: []
+      };
+      this.fileMap[conflictFile.id] = conflictFile;
+    }
+
+    const conflicting = [];
+
+    files.forEach(file => {
+      if (!file.conflictId) {
+        conflictFile.counter++;
+        file.conflictId = conflictFile.counter;
+      }
+
+      file.localPath = conflictFile.desiredLocalPath.replace('.md', '_'+ file.conflictId + '.md');
+      this.fileMap[file.id] = file;
+      conflicting.push(file.id);
+    });
+
+    conflictFile.conflicting = conflicting;
+    this.fileMap[conflictFile.id] = conflictFile;
   }
 
   insertFile(fileToInsert) {
+    delete fileToInsert.conflictId;
     this.fileMap[fileToInsert.id] = fileToInsert;
 
-    const existingFile = this.getFileByLocalPath(fileToInsert.desiredLocalPath);
-    if (existingFile) {
-      if (existingFile.mimeType === FilesStructure.CONFLICT_MIME) {
-        const fileConflict = existingFile;
-
-        fileConflict.counter++;
-        fileToInsert.localPath = fileConflict.desiredLocalPath.replace('.md', '_'+ fileConflict.counter + '.md');
-        fileConflict.conflicting.push(fileToInsert.id);
-        this.fileMap[fileToInsert.id] = fileToInsert;
-      } else {
-        const uniqId = Math.random().toString(26).slice(2);
-
-        const fileConflict = {
-          id: uniqId,
-          name: existingFile.name,
-          mimeType: FilesStructure.CONFLICT_MIME,
-          localPath: fileToInsert.desiredLocalPath,
-          desiredLocalPath: fileToInsert.desiredLocalPath,
-          counter: 0,
-          conflicting: []
-        };
-        this.fileMap[fileConflict.id] = fileConflict;
-
-        fileConflict.counter++;
-        existingFile.localPath = fileConflict.desiredLocalPath.replace('.md', '_'+ fileConflict.counter + '.md');
-        fileConflict.conflicting.push(existingFile.id);
-        this.fileMap[existingFile.id] = existingFile;
-
-        fileConflict.counter++;
-        fileToInsert.localPath = fileConflict.desiredLocalPath.replace('.md', '_'+ fileConflict.counter + '.md');
-        fileConflict.conflicting.push(fileToInsert.id);
-        this.fileMap[fileToInsert.id] = fileToInsert;
-      }
-    } else {
-      fileToInsert.localPath = fileToInsert.desiredLocalPath;
-      this.fileMap[fileToInsert.id] = fileToInsert;
-    }
-
-    return fileToInsert;
+    this.checkConflicts(fileToInsert.desiredLocalPath);
   }
 
-  getFileByLocalPath(localPath) {
+  findFile(checker) {
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
-      if (file.localPath === localPath) {
+      if (checker(file)) {
         return file;
       }
     }
+  }
+
+  findFiles(checker) {
+    const retVal = [];
+    for (let fileId in this.fileMap) {
+      const file = this.fileMap[fileId];
+      if (checker(file)) {
+        retVal.push(file);
+      }
+    }
+    return retVal;
   }
 
   getMaxModifiedTime() {
@@ -106,6 +162,10 @@ class FilesStructure {
     }
 
     return maxModifiedTime;
+  }
+
+  generateUniqId() {
+    return Math.random().toString(26).slice(2);
   }
 
 }

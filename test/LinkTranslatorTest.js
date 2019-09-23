@@ -1,11 +1,14 @@
 import {assert} from 'chai';
 
 import {LinkTranslator} from "../src/LinkTranslator";
+import {FilesStructure} from "../src/FilesStructure";
 
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', () => {
 
-    const linkTranslator = new LinkTranslator();
+    const filesStructure = new FilesStructure();
+
+    const linkTranslator = new LinkTranslator(filesStructure);
 
     assert.equal(linkTranslator.convertToRelativePath('resources', 'resources/Diagram.svg'), '../resources');
     assert.equal(linkTranslator.convertToRelativePath('wiki-g-drive-project-overview.html', 'resources/Diagram.svg'), '../wiki-g-drive-project-overview.html');

@@ -53,6 +53,7 @@ export class SyncService {
     await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
     await this.downloadDocuments(auth, mergedFiles, linkTranslator);
     await this.generateConflicts(filesStructure);
+    await this.generateRedirects(filesStructure);
 
     const tocGenerator = new TocGenerator(linkTranslator);
     await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
@@ -76,6 +77,7 @@ export class SyncService {
           await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
           await this.downloadDocuments(auth, mergedFiles, linkTranslator);
           await this.generateConflicts(filesStructure);
+          await this.generateRedirects(filesStructure);
 
           const tocGenerator = new TocGenerator(linkTranslator);
           await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
@@ -183,11 +185,9 @@ export class SyncService {
 
   async generateConflicts(filesStructure) {
     const filesMap = filesStructure.getFileMap();
+    const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
 
-    for (let fileId in filesMap) {
-      const file = filesMap[fileId];
-      if (file.mimeType !== FilesStructure.CONFLICT_MIME) continue;
-
+    files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
@@ -202,6 +202,26 @@ export class SyncService {
 
       dest.write(md);
       dest.close();
-    }
+    });
   }
+
+  async generateRedirects(filesStructure) {
+    const filesMap = filesStructure.getFileMap();
+    const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+
+    files.forEach(file => {
+      const targetPath = path.join(this.params.dest, file.localPath);
+      const dest = fs.createWriteStream(targetPath);
+
+      const newFile = filesMap[file.redirectTo];
+
+      let md = '';
+      md += 'Renamed to: ';
+      md += '[' + newFile.name + '](' + newFile.localPath + ')\n';
+
+      dest.write(md);
+      dest.close();
+    });
+  }
+
 }
