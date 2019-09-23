@@ -2,6 +2,8 @@
 
 Google Drive to MarkDown synchronization
 
+[![CircleCI](https://circleci.com/gh/mieweb/wikiGDrive.svg?style=svg)](https://circleci.com/gh/mieweb/wikiGDrive)
+
 ## Install - TODO: put into npm
 
 npm install -g wikigdrive
