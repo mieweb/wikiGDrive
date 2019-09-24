@@ -2,6 +2,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import RelateUrl from 'relateurl';
 
 export class LinkTranslator {
 
@@ -86,13 +87,12 @@ export class LinkTranslator {
   }
 
   convertToRelativePath(localPath, basePath) {
-    const dirName = path.dirname(basePath);
+    if (basePath == localPath) return '.';
 
-    if (dirName === localPath) {
-      return '../' + dirName;
-    }
-
-    return path.relative(dirName, localPath);
+    const host = '//example.com/';
+    return decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
+        output: RelateUrl.PATH_RELATIVE
+    }));
   }
 
 }
