@@ -55,9 +55,6 @@ export class GoogleDriveService {
     if (parentDirName) {
       files.forEach(file => {
         file.desiredLocalPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.desiredLocalPath;
-        if (file.htmlPath) {
-          file.htmlPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.htmlPath;
-        }
       });
     }
 
@@ -113,7 +110,6 @@ export class GoogleDriveService {
                 file.desiredLocalPath += '.svg';
                 break;
               case 'application/vnd.google-apps.document':
-                file.htmlPath = slugify(file.name, { replacement: '-', lower: true }) + '.html';
                 file.desiredLocalPath += '.md';
                 break;
             }

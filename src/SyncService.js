@@ -7,7 +7,7 @@ import {ConfigService} from './ConfigService';
 import {GoogleDriveService} from './GoogleDriveService';
 import {GoogleAuthService} from './GoogleAuthService';
 import {GoogleDocsService} from './GoogleDocsService';
-import {LinkTransform} from './LinkTransform';
+import {SvgTransform} from './SvgTransform';
 import {LinkTranslator} from './LinkTranslator';
 import {HttpClient} from './HttpClient';
 import {FileService} from './FileService';
@@ -15,6 +15,7 @@ import {TocGenerator} from './TocGenerator';
 import {MarkDownTransform} from './MarkDownTransform';
 import {FrontMatterTransform} from './FrontMatterTransform';
 import {FilesStructure} from './FilesStructure';
+import {ExternalFiles} from './ExternalFiles';
 
 export class SyncService {
 
@@ -28,7 +29,6 @@ export class SyncService {
 
   async start() {
     let config = await this.configService.loadConfig();
-    const binaryFiles = config.binaryFiles || {};
 
     if (config.credentials) {
       if (!this.params.client_id) this.params.client_id = config.credentials.client_id;
@@ -42,24 +42,26 @@ export class SyncService {
 
     const filesStructure = new FilesStructure(config.fileMap);
 
+    const httpClient = new HttpClient();
+    const externalFiles = new ExternalFiles(config.binaryFiles || {}, httpClient, this.params.dest);
+
     const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
     const mergedFiles = filesStructure.merge(changedFiles);
 
-    const httpClient = new HttpClient();
-    const linkTranslator = new LinkTranslator(filesStructure, httpClient, binaryFiles, this.params.dest);
+    const linkTranslator = new LinkTranslator(filesStructure, externalFiles);
 
     await this.createFolderStructure(mergedFiles);
     await this.downloadAssets(auth, mergedFiles);
-    await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
+    await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
     await this.downloadDocuments(auth, mergedFiles, linkTranslator);
     await this.generateConflicts(filesStructure);
     await this.generateRedirects(filesStructure);
 
-    const tocGenerator = new TocGenerator(linkTranslator);
+    const tocGenerator = new TocGenerator();
     await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
     config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
-    config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
+    config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
@@ -74,16 +76,16 @@ export class SyncService {
 
           await this.createFolderStructure(mergedFiles);
           await this.downloadAssets(auth, mergedFiles);
-          await this.downloadDiagrams(auth, mergedFiles, filesStructure, binaryFiles);
+          await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
           await this.downloadDocuments(auth, mergedFiles, linkTranslator);
           await this.generateConflicts(filesStructure);
           await this.generateRedirects(filesStructure);
 
-          const tocGenerator = new TocGenerator(linkTranslator);
+          const tocGenerator = new TocGenerator();
           await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
           config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
-          config.binaryFiles = binaryFiles; // eslint-disable-line require-atomic-updates
+          config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
           await this.configService.saveConfig(config);
           console.log('Pulled latest changes');
           lastMTime = filesStructure.getMaxModifiedTime(); // eslint-disable-line require-atomic-updates
@@ -109,7 +111,7 @@ export class SyncService {
     }
   }
 
-  async downloadDiagrams(auth, files, filesStructure, binaryFiles) {
+  async downloadDiagrams(auth, files, linkTranslator, externalFiles) {
     files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
@@ -120,14 +122,12 @@ export class SyncService {
       const targetPath = path.join(this.params.dest, file.localPath);
       const writeStream = fs.createWriteStream(targetPath);
 
-      const httpClient = new HttpClient();
-      const linkTranslator = new LinkTranslator(filesStructure, httpClient, binaryFiles, this.params.dest);
-      const linkTransform = new LinkTransform(linkTranslator, file.localPath);
+      const svgTransform = new SvgTransform(linkTranslator, file.localPath);
 
       await this.googleDriveService.exportDocument(
         auth,
         Object.assign({}, file, { mimeType: 'image/svg+xml' }),
-        [linkTransform, writeStream]);
+        [svgTransform, writeStream]);
 
       const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
@@ -137,16 +137,14 @@ export class SyncService {
         writeStreamPng);
 
       const fileService = new FileService();
-      const md5checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
+      const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
-      binaryFiles[md5checksum] = { // eslint-disable-line require-atomic-updates
+      externalFiles.putFile({
         localPath: file.localPath.replace(/.svg$/, '.png'),
         localDocumentPath: file.localPath,
-        md5checksum: md5checksum
-      };
-
+        md5Checksum: md5Checksum
+      });
     }
-
   }
 
   async downloadDocuments(auth, files, linkTranslator) {

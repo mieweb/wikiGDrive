@@ -4,7 +4,7 @@ import { Transform } from 'stream';
 import xmldoc from 'xmldoc';
 import {GoogleDriveService} from './GoogleDriveService';
 
-export class LinkTransform extends Transform {
+export class SvgTransform extends Transform {
 
   constructor(linkTranslator, localPath) {
     super();

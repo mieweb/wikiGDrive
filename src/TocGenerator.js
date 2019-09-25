@@ -58,12 +58,9 @@ export class TocGenerator {
     });
   }
 
-  generate(filesStructure, writeStream, htmlPath) {
+  generate(filesStructure, writeStream) {
     const fileMap = filesStructure.getFileMap();
     let frontMatter = '---\n';
-    if (htmlPath) {
-      frontMatter += 'url: "' + htmlPath + '"\n';
-    }
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
