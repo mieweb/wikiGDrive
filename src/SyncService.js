@@ -200,7 +200,6 @@ export class SyncService {
         const conflictingFile = filesMap[id];
 
         const relativePath = linkTranslator.convertToRelativeMarkDownPath(conflictingFile.localPath, file.localPath);
-        console.log('ccc', conflictingFile.localPath, file.localPath, relativePath);
         md += '* [' + conflictingFile.name + '](' + relativePath + ')\n';
       }
 
