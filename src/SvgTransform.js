@@ -49,11 +49,11 @@ export class SvgTransform extends Transform {
 
       if (id) {
         const localPath = await this.linkTranslator.urlToDestUrl(id);
-        urlToRelativePath[url] = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+        urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
       } else {
         const localPath = await this.linkTranslator.urlToDestUrl(url);
         if (localPath !== url) {
-          urlToRelativePath[url] = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+          urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
         }
       }
     }

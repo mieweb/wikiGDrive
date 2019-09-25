@@ -5,6 +5,11 @@ import {FilesStructure} from './FilesStructure';
 
 export class TocGenerator {
 
+  constructor(localPath, linkTranslator) {
+    this.localPath = localPath;
+    this.linkTranslator = linkTranslator;
+  }
+
   addLevels(fileMap) {
     const copy = {};
 
@@ -40,9 +45,11 @@ export class TocGenerator {
     return this.sortLevel(arr);
   }
 
-  outputDir(fileMap, writeStream, level, prefix) {
+  async outputDir(fileMap, writeStream, level, prefix) {
     const rootDir = this.getDir(fileMap, level, prefix);
-    rootDir.forEach((file) => {
+
+    for (let dirNo = 0; dirNo < rootDir.length; dirNo++) {
+      const file = rootDir[dirNo];
       let lineStart = '*';
       for (let i = 0; i <= level; i++) {
         lineStart = ' ' + lineStart;
@@ -50,15 +57,16 @@ export class TocGenerator {
 
       if (file.mimeType === FilesStructure.FOLDER_MIME) {
         writeStream.write(lineStart + ' ' + file.name + '\n');
-        this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
+        await this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
       } else
       if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
-        writeStream.write(lineStart + ' [' + file.name + '](' + (file.localPath) + ')\n');
+        const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, this.localPath);
+        writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n');
       }
-    });
+    }
   }
 
-  generate(filesStructure, writeStream) {
+  async generate(filesStructure, writeStream) {
     const fileMap = filesStructure.getFileMap();
     let frontMatter = '---\n';
     frontMatter += 'type: page\n';
@@ -67,7 +75,7 @@ export class TocGenerator {
     writeStream.write(frontMatter);
 
     const fileMapCopy = this.addLevels(fileMap);
-    this.outputDir(fileMapCopy, writeStream, 0, '');
+    await this.outputDir(fileMapCopy, writeStream, 0, '');
     writeStream.end();
   }
 

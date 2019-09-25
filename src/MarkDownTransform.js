@@ -12,8 +12,8 @@ export class MarkDownTransform extends Transform {
   constructor(localPath, linkTranslator) {
     super();
 
-    this.linkTranslator = linkTranslator;
     this.localPath = localPath;
+    this.linkTranslator = linkTranslator;
     this.json = '';
   }
 
@@ -62,7 +62,7 @@ export class MarkDownTransform extends Transform {
     }
 
     const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
-    return this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+    return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
   }
 
   async processTos(content) {
@@ -288,11 +288,10 @@ export class MarkDownTransform extends Transform {
     const font = getFontFamily(style);
 
     if (element.textRun.textStyle.link) {
-      // console.log(element.textRun.textStyle.link);
 
       if (element.textRun.textStyle.link.url) {
         const localPath = await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url);
-        const relativePath = this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+        const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
         pOut = '[' + pOut + '](' + relativePath + ')';
       } else
       if (element.textRun.textStyle.link.headingId) {

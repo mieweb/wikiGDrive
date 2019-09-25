@@ -9,6 +9,12 @@ export class LinkTranslator {
     this.filesStructure = filesStructure;
     this.fileMap = filesStructure.getFileMap();
     this.externalFiles = externalFiles;
+
+    /*
+    * uglyURLs - https://gohugo.io/getting-started/configuration/
+    *
+    */
+    this.mode = 'uglyURLs';
   }
 
   async urlToLocalPath(url) {
@@ -73,13 +79,61 @@ export class LinkTranslator {
     return url;
   }
 
-  convertToRelativePath(localPath, basePath) {
+  convertExtension(localPath, mode) {
+    if (!mode) mode = this.mode;
+    const lastSlash = localPath.lastIndexOf('/');
+
+    const dirName = localPath.substr(0, lastSlash + 1);
+    const fileName = localPath.substr(lastSlash + 1);
+
+    const parts = fileName.split('.');
+
+    if (parts.length > 1) {
+      const ext = parts[parts.length - 1];
+
+      switch (ext) {
+        case 'md':
+
+          switch (mode) {
+            case 'uglyURLs':
+              parts[parts.length - 1] = 'html';
+              break;
+
+            case 'dirURLs':
+              parts.pop();
+              break;
+
+            case 'mdURLs':
+            default:
+              parts[parts.length - 1] = 'md';
+              break;
+          }
+
+          break;
+      }
+    }
+
+    return dirName + parts.join('.');
+  }
+
+  convertToRelativeMarkDownPath(localPath, basePath) {
     if (basePath === localPath) return '.';
 
     const host = '//example.com/';
-    return decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
-        output: RelateUrl.PATH_RELATIVE
-    }));
+    return this.convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
+      output: RelateUrl.PATH_RELATIVE
+    })));
+  }
+
+  convertToRelativeSvgPath(localPath, basePath) {
+    if (basePath === localPath) return '.';
+
+    localPath = this.convertExtension(localPath);
+
+    const host = '//example.com/';
+    return this.convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
+      output: RelateUrl.PATH_RELATIVE
+    })), 'dirURLs');
   }
 
 }

@@ -49,15 +49,18 @@ export class SyncService {
     const mergedFiles = filesStructure.merge(changedFiles);
 
     const linkTranslator = new LinkTranslator(filesStructure, externalFiles);
+    if (this.params['link_mode']) {
+      linkTranslator.mode = this.params['link_mode'];
+    }
 
     await this.createFolderStructure(mergedFiles);
     await this.downloadAssets(auth, mergedFiles);
     await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
     await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-    await this.generateConflicts(filesStructure);
-    await this.generateRedirects(filesStructure);
+    await this.generateConflicts(filesStructure, linkTranslator);
+    await this.generateRedirects(filesStructure, linkTranslator);
 
-    const tocGenerator = new TocGenerator();
+    const tocGenerator = new TocGenerator('toc.md', linkTranslator);
     await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
     config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
@@ -78,10 +81,10 @@ export class SyncService {
           await this.downloadAssets(auth, mergedFiles);
           await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
           await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-          await this.generateConflicts(filesStructure);
-          await this.generateRedirects(filesStructure);
+          await this.generateConflicts(filesStructure, linkTranslator);
+          await this.generateRedirects(filesStructure, linkTranslator);
 
-          const tocGenerator = new TocGenerator();
+          const tocGenerator = new TocGenerator('toc.md', linkTranslator);
           await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
           config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
@@ -181,7 +184,7 @@ export class SyncService {
     fs.mkdirSync(path.join(this.params.dest, 'external_files'), { recursive: true });
   }
 
-  async generateConflicts(filesStructure) {
+  async generateConflicts(filesStructure, linkTranslator) {
     const filesMap = filesStructure.getFileMap();
     const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
 
@@ -195,7 +198,10 @@ export class SyncService {
       for (let fileNo = 0; fileNo < file.conflicting.length; fileNo++) {
         const id = file.conflicting[fileNo];
         const conflictingFile = filesMap[id];
-        md += '* [' + conflictingFile.name + '](' + conflictingFile.localPath + ')\n';
+
+        const relativePath = linkTranslator.convertToRelativeMarkDownPath(conflictingFile.localPath, file.localPath);
+        console.log('ccc', conflictingFile.localPath, file.localPath, relativePath);
+        md += '* [' + conflictingFile.name + '](' + relativePath + ')\n';
       }
 
       dest.write(md);
@@ -203,7 +209,7 @@ export class SyncService {
     });
   }
 
-  async generateRedirects(filesStructure) {
+  async generateRedirects(filesStructure, linkTranslator) {
     const filesMap = filesStructure.getFileMap();
     const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
 
@@ -215,7 +221,8 @@ export class SyncService {
 
       let md = '';
       md += 'Renamed to: ';
-      md += '[' + newFile.name + '](' + newFile.localPath + ')\n';
+      const relativePath = linkTranslator.convertToRelativeMarkDownPath(newFile.localPath, file.localPath);
+      md += '[' + newFile.name + '](' + relativePath + ')\n';
 
       dest.write(md);
       dest.close();
