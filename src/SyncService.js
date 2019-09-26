@@ -166,6 +166,11 @@ export class SyncService {
 
       await this.googleDocsService.download(auth, file,
         [markDownTransform, frontMatterTransform, dest], linkTranslator);
+
+      const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
+
+      await this.googleDocsService.download(auth, file,
+        [destJson], linkTranslator);
     }
   }
 

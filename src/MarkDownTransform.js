@@ -31,6 +31,7 @@ export class MarkDownTransform extends Transform {
     this.document = JSON.parse(this.json);
 
     this.styles = this.transformNamedStyles(this.document.namedStyles);
+    this.lists = this.document.lists;
     this.headings = {};
 
     this.push(await this.convert());
@@ -55,7 +56,6 @@ export class MarkDownTransform extends Transform {
   async convertImageLink(url) {
     if (this.document.inlineObjects[url]) {
       const inlineObject = this.document.inlineObjects[url];
-      // console.log(url, JSON.stringify(inlineObject, null, 2));
 
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
@@ -74,9 +74,10 @@ export class MarkDownTransform extends Transform {
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
 
-      // console.log( JSON.stringify(child, null, 2));
       const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
-      text += '* ' + result.text;
+      if (result.text.trim().length > 0) {
+        text += '* ' + result.text;
+      }
     }
 
     return text;
@@ -92,6 +93,8 @@ export class MarkDownTransform extends Transform {
 
     const textElements = [];
     let pOut = '';
+
+    const result = {};
 
     if (element.table) {
       textElements.push('<table>\n');
@@ -126,6 +129,7 @@ export class MarkDownTransform extends Transform {
         const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
         if (fontFamily === 'Courier New') {
           textElements.push('```\n');
+          result.codeParagraph = true;
         }
       }
 
@@ -134,25 +138,9 @@ export class MarkDownTransform extends Transform {
       for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
         const element = paragraph.elements[elementNo];
 
-        // console.log(element);
-
         if (element.textRun) {
-          // console.log(element.textRun);
           let txt = element.textRun.content;
           paragraphTxt += txt;
-          //
-          // if (element.textRun.textStyle.link) {
-          //   // console.log(element.textRun.textStyle.link);
-          //
-          //   if (element.textRun.textStyle.link.url) {
-          //     txt = '[' + txt + '](' + this.convertLink(element.textRun.textStyle.link.url) + ')';
-          //   } else
-          //   if (element.textRun.textStyle.link.headingId) {
-          //     txt = '[' + txt + '][' + element.textRun.textStyle.link.headingId + ']';
-          //   }
-          // }
-          //
-          // element.textRun.content = txt;
 
           pOut += txt;
 
@@ -183,8 +171,6 @@ export class MarkDownTransform extends Transform {
     } else {
       console.log('Unknown element', element);
     }
-
-    const result = {};
 
     if (textElements.length === 0) {
       // Isn't result empty now?
@@ -219,53 +205,69 @@ export class MarkDownTransform extends Transform {
 
       // replace Unicode quotation marks
       pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
-
-      result.text = prefix + pOut;
+      result.text =   prefix + pOut;
     }
 
     return result;
   }
 
   // Add correct prefix to list items.
-  findPrefix(inSrc, element) {
+  findPrefix(inSrc, element, listCounters) {
+    if (inSrc) {
+      return '';
+    }
+    if (!element.paragraph) {
+      return '';
+    }
     let prefix = '';
-    if (!inSrc) {
-      if (element.paragraph) {
 
-        switch (element.paragraph.paragraphStyle.namedStyleType) {
-          // Add a # for each heading level. No break, so we accumulate the right number.
-          case 'HEADING_6': prefix += '#'; // eslint-disable-line no-fallthrough
-          case 'HEADING_5': prefix += '#'; // eslint-disable-line no-fallthrough
-          case 'HEADING_4': prefix += '#'; // eslint-disable-line no-fallthrough
-          case 'HEADING_3': prefix += '#'; // eslint-disable-line no-fallthrough
-          case 'HEADING_2': prefix += '#'; // eslint-disable-line no-fallthrough
-          case 'HEADING_1': prefix += '# '; // eslint-disable-line no-fallthrough
-        }
+    switch (element.paragraph.paragraphStyle.namedStyleType) {
+      // Add a # for each heading level. No break, so we accumulate the right number.
+      case 'HEADING_6': prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_5': prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_4': prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_3': prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_2': prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_1': prefix += '# '; // eslint-disable-line no-fallthrough
+    }
+
+    if (element.paragraph.bullet) {
+      const nesting = element.paragraph.bullet.nestingLevel || 0;
+      for (let i=0; i < nesting; i++) {
+        prefix += '    ';
       }
 
-      // if (element.getType()===DocumentApp.ElementType.LIST_ITEM) {
-      //   var listItem = element;
-      //   var nesting = listItem.getNestingLevel()
-      //   for (var i=0; i<nesting; i++) {
-      //     prefix += "    ";
-      //   }
-      //   var gt = listItem.getGlyphType();
-      //   // Bullet list (<ul>):
-      //   if (gt === DocumentApp.GlyphType.BULLET
-      //     || gt === DocumentApp.GlyphType.HOLLOW_BULLET
-      //     || gt === DocumentApp.GlyphType.SQUARE_BULLET) {
-      //     prefix += "* ";
-      //   } else {
-      //     // Ordered list (<ol>):
-      //     var key = listItem.getListId() + '.' + listItem.getNestingLevel();
-      //     var counter = listCounters[key] || 0;
-      //     counter++;
-      //     listCounters[key] = counter;
-      //     prefix += counter+". ";
-      //   }
-      // }
+      if (element.paragraph.bullet.listId) {
+        const listId = element.paragraph.bullet.listId;
+        const list = this.lists[listId];
+        const key = listId + '.' + nesting;
+        let counter = listCounters[key] || 0;
+        if (list) {
 
+          const listNestingLevel = list.listProperties.nestingLevels[nesting];
+          switch (listNestingLevel.glyphSymbol) {
+            case '-':
+            case '●':
+            case '○':
+            case '■':
+              prefix += '* ';
+              break;
+            default:
+              // Ordered list (<ol>):
+              counter++;
+              listCounters[key] = counter;
+
+              if (listNestingLevel.glyphType === 'ALPHA') {
+                prefix += String.fromCharCode(64 + counter) + '. ';
+              } else { // DECIMAL
+                prefix += counter + '. ';
+              }
+          }
+
+        }
+      }
     }
+
     return prefix;
   }
 
@@ -328,11 +330,22 @@ export class MarkDownTransform extends Transform {
     const globalListCounters = {};
     let srcIndent = '';
 
-    const attachments = [];
-
+    const results = [];
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
       const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
+
+      const prevResult = results.length > 0 ? results[results.length - 1] : null;
+
+      if (prevResult && prevResult.codeParagraph && result.codeParagraph) {
+        prevResult.text += result.text;
+      } else {
+        results.push(result);
+      }
+    }
+
+    for (let childNo = 0; childNo < results.length; childNo++) {
+      const result = results[childNo];
 
       globalImageCounter += (result && result.images) ? result.images.length : 0;
       if (result !== null) {
@@ -355,22 +368,15 @@ export class MarkDownTransform extends Transform {
           inClass = false;
           text += '</div>\n\n';
         } else if (inClass) {
-          text += result.text;
-          // text += result.text + '\n\n';
+          // text += result.text;
+          text += result.text + '\n\n';
         } else if (inSrc) {
           text += (srcIndent + escapeHTML(result.text) + '\n');
         } else if (result.text && result.text.length > 0) {
-          text += result.text;
-          // text += result.text + '\n\n';
-        }
-
-        if (result.images && result.images.length > 0) {
-          for (let j = 0; j < result.images.length; j++) {
-            attachments.push({
-              fileName: result.images[j].name,
-              mimeType: result.images[j].type,
-              content: result.images[j].bytes
-            });
+          if (result.codeParagraph || inSrc) {
+            text += result.text;
+          } else {
+            text += result.text + '\n';
           }
         }
       } else if (inSrc) { // support empty lines inside source code
