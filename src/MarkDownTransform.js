@@ -1,22 +1,41 @@
-/* eslint-disable no-fallthrough */
 'use strict';
 
 import slugify from 'slugify';
+import {Transform} from 'stream';
 
 function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export class MarkDownConverter {
+export class MarkDownTransform extends Transform {
 
-  constructor(document, options) {
-    this.document = document;
-    this.options = options;
-    this.linkTranslator = options.linkTranslator;
-    this.localPath = options.localPath;
+  constructor(localPath, linkTranslator) {
+    super();
 
-    this.styles = this.transformNamedStyles(document.namedStyles);
+    this.localPath = localPath;
+    this.linkTranslator = linkTranslator;
+    this.json = '';
+  }
+
+  _transform(chunk, encoding, callback) {
+    if (encoding === 'buffer') {
+      chunk = chunk.toString();
+    }
+
+    this.json += chunk;
+
+    callback();
+  }
+
+  async _flush(callback) {
+    this.document = JSON.parse(this.json);
+
+    this.styles = this.transformNamedStyles(this.document.namedStyles);
     this.headings = {};
+
+    this.push(await this.convert());
+
+    callback();
   }
 
   transformNamedStyles(namedStyles) {
@@ -43,7 +62,7 @@ export class MarkDownConverter {
     }
 
     const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
-    return this.linkTranslator.convertToRelativePath(localPath, this.localPath);
+    return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
   }
 
   async processTos(content) {
@@ -205,34 +224,6 @@ export class MarkDownConverter {
     }
 
     return result;
-
-    // // Set up for real results.
-    // const imagePrefix = 'image_';
-
-    // // Process various types (ElementType).
-    // for (var i = 0; i < element.getNumChildren(); i++) {
-    //   var t = element.getChild(i).getType();
-
-    //   if (t === DocumentApp.ElementType.TABLE_ROW) {
-    //     // do nothing: already handled TABLE_ROW
-    //   } else if (t === DocumentApp.ElementType.TEXT) {
-    //     // var txt=element.getChild(i);
-    //     // pOut += txt.getText();
-    //     // textElements.push(txt);
-    //   } else if (t === DocumentApp.ElementType.INLINE_IMAGE) {
-    //   } else if (t === DocumentApp.ElementType.PAGE_BREAK) {
-    //     // ignore
-    //   } else if (t === DocumentApp.ElementType.HORIZONTAL_RULE) {
-    //     textElements.push('* * *\n');
-    //   } else if (t === DocumentApp.ElementType.FOOTNOTE) {
-    //     textElements.push(' (NOTE: ' + element.getChild(i).getFootnoteContents().getText() + ')');
-    //   } else {
-    //     throw 'Paragraph ' + index + ' of type ' + element.getType() + ' has an unsupported child: '
-    //       + t + ' ' + (element.getChild(i)['getText'] ? element.getChild(i).getText() : '') + ' index=' + index;
-    //   }
-    // }
-
-    // return result;
   }
 
   // Add correct prefix to list items.
@@ -243,23 +234,13 @@ export class MarkDownConverter {
 
         switch (element.paragraph.paragraphStyle.namedStyleType) {
           // Add a # for each heading level. No break, so we accumulate the right number.
-        case 'HEADING_6':
-          prefix += '#';
-        case 'HEADING_5':
-          prefix += '#';
-        case 'HEADING_4':
-          prefix += '#';
-        case 'HEADING_3':
-          prefix += '#';
-        case 'HEADING_2':
-          prefix += '#';
-        case 'HEADING_1':
-          prefix += '# ';
-        default:
+          case 'HEADING_6': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_5': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_4': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_3': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_2': prefix += '#'; // eslint-disable-line no-fallthrough
+          case 'HEADING_1': prefix += '# '; // eslint-disable-line no-fallthrough
         }
-      } else {
-        // TODO list
-        // console.log('aaa', element);
       }
 
       // if (element.getType()===DocumentApp.ElementType.LIST_ITEM) {
@@ -307,10 +288,11 @@ export class MarkDownConverter {
     const font = getFontFamily(style);
 
     if (element.textRun.textStyle.link) {
-      // console.log(element.textRun.textStyle.link);
 
       if (element.textRun.textStyle.link.url) {
-        pOut = '[' + pOut + '](' + await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url) + ')';
+        const localPath = await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url);
+        const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+        pOut = '[' + pOut + '](' + relativePath + ')';
       } else
       if (element.textRun.textStyle.link.headingId) {
         pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
@@ -339,12 +321,12 @@ export class MarkDownConverter {
 
   async convert() {
     const content = this.document.body.content;
-    var text = '';
-    var inSrc = false;
-    var inClass = false;
-    var globalImageCounter = 0;
-    var globalListCounters = {};
-    var srcIndent = '';
+    let text = '';
+    let inSrc = false;
+    let inClass = false;
+    let globalImageCounter = 0;
+    const globalListCounters = {};
+    let srcIndent = '';
 
     const attachments = [];
 

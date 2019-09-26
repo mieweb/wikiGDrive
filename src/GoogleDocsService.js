@@ -1,11 +1,11 @@
 'use strict';
 
-import { google } from 'googleapis';
-import { MarkDownConverter } from './MarkDownConverter';
+import {google} from 'googleapis';
+import {Readable} from 'stream';
 
 export class GoogleDocsService {
 
-  async download(auth, file, dest, linkTranslator) {
+  async download(auth, file, dest, ) {
     return new Promise((resolve, reject) => {
       const docs = google.docs({ version: 'v1', auth });
 
@@ -17,38 +17,31 @@ export class GoogleDocsService {
             reject(err);
           }
 
-          const data = res.data;
+          const readable = new Readable();
 
-          // console.log(JSON.stringify(data, null, 2))
+          let stream = readable
+            .on('end', () => {
+            })
+            .on('error', err => {
+              reject(err);
+            });
 
-          const converter = new MarkDownConverter(data, {
-            linkTranslator,
-            localPath: file.localPath
-          });
-          const md = await converter.convert();
-
-          let frontMatter = '---\n';
-          frontMatter += 'title: ' + file.name + '\n';
-          frontMatter += 'date: ' + file.modifiedTime + '\n';
-          if (file.lastAuthor) {
-            frontMatter += 'author: ' + file.lastAuthor + '\n';
+          if (Array.isArray(dest)) {
+            dest.forEach(pipe => stream = stream.pipe(pipe));
+            stream.on('finish', () => {
+              resolve();
+            });
+          } else {
+            stream.pipe(dest);
+            dest.on('finish', () => {
+              resolve();
+            });
           }
-          frontMatter += 'id: ' + file.id + '\n';
-          frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
-          if (file.htmlPath) {
-            frontMatter += 'url: "' + file.htmlPath + '"\n';
-          }
-          frontMatter += '---\n';
 
-          dest.write(frontMatter);
-          dest.write(md);
-          dest.end();
-
-          resolve();
+          readable.push(JSON.stringify(res.data, null, 2));
+          readable.push(null);
         });
-
     });
-
   }
 
 }

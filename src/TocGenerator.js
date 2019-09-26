@@ -1,8 +1,14 @@
 'use strict';
 
 import path from 'path';
+import {FilesStructure} from './FilesStructure';
 
 export class TocGenerator {
+
+  constructor(localPath, linkTranslator) {
+    this.localPath = localPath;
+    this.linkTranslator = linkTranslator;
+  }
 
   addLevels(fileMap) {
     const copy = {};
@@ -17,10 +23,10 @@ export class TocGenerator {
 
   sortLevel(files) {
     return files.sort((file1, file2) => {
-      if ((file1.mimeType === 'application/vnd.google-apps.folder') && (file2.mimeType !== 'application/vnd.google-apps.folder')) {
+      if ((file1.mimeType === FilesStructure.FOLDER_MIME) && (file2.mimeType !== FilesStructure.FOLDER_MIME)) {
         return -1;
       }
-      if ((file1.mimeType !== 'application/vnd.google-apps.folder') && (file2.mimeType === 'application/vnd.google-apps.folder')) {
+      if ((file1.mimeType !== FilesStructure.FOLDER_MIME) && (file2.mimeType === FilesStructure.FOLDER_MIME)) {
         return 1;
       }
 
@@ -39,37 +45,37 @@ export class TocGenerator {
     return this.sortLevel(arr);
   }
 
-  outputDir(fileMap, writeStream, level, prefix) {
+  async outputDir(fileMap, writeStream, level, prefix) {
     const rootDir = this.getDir(fileMap, level, prefix);
-    rootDir.forEach((file) => {
+
+    for (let dirNo = 0; dirNo < rootDir.length; dirNo++) {
+      const file = rootDir[dirNo];
       let lineStart = '*';
       for (let i = 0; i <= level; i++) {
         lineStart = ' ' + lineStart;
       }
 
-      if (file.mimeType === 'application/vnd.google-apps.folder') {
+      if (file.mimeType === FilesStructure.FOLDER_MIME) {
         writeStream.write(lineStart + ' ' + file.name + '\n');
-        this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
-      } else {
-        const localPath = (file.htmlPath || file.localPath);
-        writeStream.write(lineStart + ' [' + file.name + '](' + (localPath) + ')\n');
+        await this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
+      } else
+      if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
+        const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, this.localPath);
+        writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n');
       }
-    });
-    console.log(rootDir);
+    }
   }
 
-  generate(fileMap, writeStream, htmlPath) {
+  async generate(filesStructure, writeStream) {
+    const fileMap = filesStructure.getFileMap();
     let frontMatter = '---\n';
-    if (htmlPath) {
-      frontMatter += 'url: "' + htmlPath + '"\n';
-    }
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
     writeStream.write(frontMatter);
 
-    fileMap = this.addLevels(fileMap);
-    this.outputDir(fileMap, writeStream, 0, '');
+    const fileMapCopy = this.addLevels(fileMap);
+    await this.outputDir(fileMapCopy, writeStream, 0, '');
     writeStream.end();
   }
 

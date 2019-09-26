@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const fs = require('fs');
 
 module.exports = {
+  target: 'node',
   plugins: [
     new webpack.BannerPlugin({
       banner: '#!/usr/bin/env node',
@@ -9,7 +10,9 @@ module.exports = {
     }),
     function () {
       this.plugin('done', () => {
-        fs.chmodSync(`${__dirname}/dist/main.js`, '755');
+        if (fs.existsSync(`${__dirname}/dist/main.js`)) {
+          fs.chmodSync(`${__dirname}/dist/main.js`, '755');
+        }
       });
     },
   ],

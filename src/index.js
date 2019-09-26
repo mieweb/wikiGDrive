@@ -15,6 +15,7 @@ Options:
     --client_secret
     --dest (current working folder)
     --watch (keep scanning for changes, ie: daemon)
+    --link_mode [mdURLs|dirURLs|uglyURLs]
 
 Examples:
     $ wikigdrive https://google.drive...
@@ -38,6 +39,8 @@ async function index() {
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
+
+  params['link_mode'] = argv['link_mode'] || 'mdURLs';
 
   const mainService = new SyncService(params);
   return await mainService.start();

@@ -36,15 +36,14 @@ export class GoogleAuthService {
     // console.log(oAuth2Client);
     // return oAuth2Client;
 
-    return new Promise(async (resolve) => {
-      const config = await this.configService.loadConfig();
-      if (config.google_auth) {
-        oAuth2Client.setCredentials(config.google_auth);
-        resolve(oAuth2Client);
-      } else {
-        resolve(this.getAccessToken(oAuth2Client));
-      }
-    });
+    const config = await this.configService.loadConfig();
+
+    if (config.google_auth) {
+      oAuth2Client.setCredentials(config.google_auth);
+      return oAuth2Client;
+    } else {
+      return this.getAccessToken(oAuth2Client);
+    }
   }
 
   getAccessToken(oAuth2Client) {
