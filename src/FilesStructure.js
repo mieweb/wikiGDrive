@@ -110,7 +110,7 @@ class FilesStructure {
         file.conflictId = conflictFile.counter;
       }
 
-      file.localPath = conflictFile.desiredLocalPath.replace('.md', '_'+ file.conflictId + '.md');
+      file.localPath = conflictFile.desiredLocalPath.replace('.md', '_' + file.conflictId + '.md');
       this.fileMap[file.id] = file;
       conflicting.push(file.id);
     });
@@ -177,4 +177,4 @@ FilesStructure.DRAWING_MIME = 'application/vnd.google-apps.drawing';
 FilesStructure.CONFLICT_MIME = 'conflict';
 FilesStructure.REDIRECT_MIME = 'redirect';
 
-export {FilesStructure};
+export { FilesStructure };

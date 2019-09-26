@@ -2,7 +2,7 @@
 
 import path from 'path';
 import minimist from 'minimist';
-import {SyncService} from './SyncService';
+import { SyncService } from './SyncService';
 
 function usage() {
   console.log(
@@ -57,4 +57,3 @@ index()
     console.error('Error', err);
     process.exit(1);
   });
-

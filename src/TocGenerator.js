@@ -1,7 +1,7 @@
 'use strict';
 
 import path from 'path';
-import {FilesStructure} from './FilesStructure';
+import { FilesStructure } from './FilesStructure';
 
 export class TocGenerator {
 

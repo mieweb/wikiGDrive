@@ -1,6 +1,6 @@
 'use strict';
 
-import {google} from 'googleapis';
+import { google } from 'googleapis';
 import slugify from 'slugify';
 
 export class GoogleDriveService {
@@ -72,7 +72,7 @@ export class GoogleDriveService {
   listFiles(auth, folderId, modifiedTime, nextPageToken) {
     return new Promise((resolve, reject) => {
 
-      const drive = google.drive({version: 'v3', auth});
+      const drive = google.drive({ version: 'v3', auth });
 
       let query = '\'' + folderId + '\' in parents and trashed = false';
       if (modifiedTime) {
@@ -106,12 +106,12 @@ export class GoogleDriveService {
             }
 
             switch (file.mimeType) {
-              case 'application/vnd.google-apps.drawing':
-                file.desiredLocalPath += '.svg';
-                break;
-              case 'application/vnd.google-apps.document':
-                file.desiredLocalPath += '.md';
-                break;
+            case 'application/vnd.google-apps.drawing':
+              file.desiredLocalPath += '.svg';
+              break;
+            case 'application/vnd.google-apps.document':
+              file.desiredLocalPath += '.md';
+              break;
             }
           });
 
@@ -123,13 +123,13 @@ export class GoogleDriveService {
 
   download(auth, file, dest) {
     return new Promise((resolve, reject) => {
-      const drive = google.drive({version: 'v3', auth});
+      const drive = google.drive({ version: 'v3', auth });
 
       drive.files.get({
         fileId: file.id,
         alt: 'media',
         supportsAllDrives: true
-      }, {responseType: 'stream'}, async (err, res) => {
+      }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
           reject(err);
         }
@@ -139,8 +139,8 @@ export class GoogleDriveService {
             resolve();
           })
           .on('error', err => {
-              reject(err);
-            })
+            reject(err);
+          })
           .pipe(dest);
       });
     });
@@ -148,20 +148,19 @@ export class GoogleDriveService {
 
   exportDocument(auth, file, dest) {
     return new Promise((resolve, reject) => {
-      const drive = google.drive({version: 'v3', auth});
+      const drive = google.drive({ version: 'v3', auth });
 
       drive.files.export({
         fileId: file.id,
         mimeType: file.mimeType,
         supportsAllDrives: true
-      }, {responseType: 'stream'}, async (err, res) => {
+      }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
           reject(err);
         }
 
         let stream = res.data
-          .on('end', () => {
-          })
+          .on('end', () => {})
           .on('error', err => {
             reject(err);
           });
