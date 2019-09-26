@@ -1,7 +1,7 @@
-import {assert} from 'chai';
+import { assert } from 'chai';
 
-import {LinkTranslator} from "../src/LinkTranslator";
-import {FilesStructure} from "../src/FilesStructure";
+import { LinkTranslator } from '../src/LinkTranslator';
+import { FilesStructure } from '../src/FilesStructure';
 
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', () => {
@@ -55,6 +55,4 @@ describe('LinkTranslatorTest', () => {
     assert.equal(linkTranslator.convertExtension('xxx/zzz/aaa'), 'xxx/zzz/aaa');
     assert.equal(linkTranslator.convertExtension('xxx/zzz/aaa.svg'), 'xxx/zzz/aaa.svg');
   });
-
-
 });
