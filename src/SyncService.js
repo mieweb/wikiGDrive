@@ -162,7 +162,7 @@ export class SyncService {
       const dest = fs.createWriteStream(targetPath);
 
       const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
-      const frontMatterTransform = new FrontMatterTransform(file);
+      const frontMatterTransform = new FrontMatterTransform(file, linkTranslator);
 
       await this.googleDocsService.download(auth, file,
         [markDownTransform, frontMatterTransform, dest], linkTranslator);

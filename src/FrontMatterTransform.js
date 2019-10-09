@@ -4,10 +4,11 @@ import { Transform } from 'stream';
 
 export class FrontMatterTransform extends Transform {
 
-  constructor(file) {
+  constructor(file, linkTranslator) {
     super();
 
     this.file = file;
+    this.linkTranslator = linkTranslator;
     this.data = '';
   }
 
@@ -25,6 +26,10 @@ export class FrontMatterTransform extends Transform {
     let frontMatter = '---\n';
     frontMatter += 'title: ' + this.file.name + '\n';
     frontMatter += 'date: ' + this.file.modifiedTime + '\n';
+    const htmlPath = this.linkTranslator.convertToRelativeMarkDownPath(this.file.localPath, '');
+    if (htmlPath) {
+      frontMatter += 'url: "' + htmlPath + '"\n';
+    }
     if (this.file.lastAuthor) {
       frontMatter += 'author: ' + this.file.lastAuthor + '\n';
     }

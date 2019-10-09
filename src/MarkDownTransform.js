@@ -148,7 +148,14 @@ export class MarkDownTransform extends Transform {
           textElements.push(element);
 
         } else if (element.inlineObjectElement) {
-          textElements.push('![](' + (await this.convertImageLink(element.inlineObjectElement.inlineObjectId)) + ')');
+          const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+            if (imageLink.endsWith('.svg')) {
+            textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
+              '<img src="' + imageLink + '" />' +
+              '</object>');
+          } else {
+            textElements.push('![](' + (imageLink) + ')');
+          }
         } else {
           console.log(element);
         }
