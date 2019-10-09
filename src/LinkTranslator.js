@@ -117,6 +117,8 @@ export class LinkTranslator {
   }
 
   convertToRelativeMarkDownPath(localPath, basePath) {
+    if (localPath.startsWith('https://')) return localPath;
+    if (localPath.startsWith('http://')) return localPath;
     if (basePath === localPath) return '.';
 
     const host = '//example.com/';
@@ -126,6 +128,8 @@ export class LinkTranslator {
   }
 
   convertToRelativeSvgPath(localPath, basePath) {
+    if (localPath.startsWith('https://')) return localPath;
+    if (localPath.startsWith('http://')) return localPath;
     if (basePath === localPath) return '.';
 
     localPath = this.convertExtension(localPath);
