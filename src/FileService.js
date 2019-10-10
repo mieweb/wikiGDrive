@@ -7,7 +7,7 @@ export class FileService {
 
   readFile(filePath) {
     return new Promise((resolve, reject) => {
-      fs.readFile(filePath, function(err, data) {
+      fs.readFile(filePath, function (err, data) {
         if (err) return reject(err);
 
         resolve(data.toString());
@@ -31,10 +31,10 @@ export class FileService {
 
       const fd = fs.createReadStream(filePath);
       fd
-        .on('error', function(err) {
+        .on('error', function (err) {
           reject(err);
         })
-        .on('end', function() {
+        .on('end', function () {
           hash.end();
           resolve(hash.read()); // the desired sha1sum
         });

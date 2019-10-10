@@ -11,9 +11,9 @@ export class LinkTranslator {
     this.externalFiles = externalFiles;
 
     /*
-    * uglyURLs - https://gohugo.io/getting-started/configuration/
-    *
-    */
+     * uglyURLs - https://gohugo.io/getting-started/configuration/
+     *
+     */
     this.mode = 'uglyURLs';
   }
 
@@ -92,24 +92,24 @@ export class LinkTranslator {
       const ext = parts[parts.length - 1];
 
       switch (ext) {
-        case 'md':
+      case 'md':
 
-          switch (mode) {
-            case 'uglyURLs':
-              parts[parts.length - 1] = 'html';
-              break;
-
-            case 'dirURLs':
-              parts.pop();
-              break;
-
-            case 'mdURLs':
-            default:
-              parts[parts.length - 1] = 'md';
-              break;
-          }
-
+        switch (mode) {
+        case 'uglyURLs':
+          parts[parts.length - 1] = 'html';
           break;
+
+        case 'dirURLs':
+          parts.pop();
+          break;
+
+        case 'mdURLs':
+        default:
+          parts[parts.length - 1] = 'md';
+          break;
+        }
+
+        break;
       }
     }
 

@@ -1,7 +1,7 @@
 'use strict';
 
 import slugify from 'slugify';
-import {Transform} from 'stream';
+import { Transform } from 'stream';
 
 function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');

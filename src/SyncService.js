@@ -3,19 +3,19 @@
 import path from 'path';
 import fs from 'fs';
 
-import {ConfigService} from './ConfigService';
-import {GoogleDriveService} from './GoogleDriveService';
-import {GoogleAuthService} from './GoogleAuthService';
-import {GoogleDocsService} from './GoogleDocsService';
-import {SvgTransform} from './SvgTransform';
-import {LinkTranslator} from './LinkTranslator';
-import {HttpClient} from './HttpClient';
-import {FileService} from './FileService';
-import {TocGenerator} from './TocGenerator';
-import {MarkDownTransform} from './MarkDownTransform';
-import {FrontMatterTransform} from './FrontMatterTransform';
-import {FilesStructure} from './FilesStructure';
-import {ExternalFiles} from './ExternalFiles';
+import { ConfigService } from './ConfigService';
+import { GoogleDriveService } from './GoogleDriveService';
+import { GoogleAuthService } from './GoogleAuthService';
+import { GoogleDocsService } from './GoogleDocsService';
+import { SvgTransform } from './SvgTransform';
+import { LinkTranslator } from './LinkTranslator';
+import { HttpClient } from './HttpClient';
+import { FileService } from './FileService';
+import { TocGenerator } from './TocGenerator';
+import { MarkDownTransform } from './MarkDownTransform';
+import { FrontMatterTransform } from './FrontMatterTransform';
+import { FilesStructure } from './FilesStructure';
+import { ExternalFiles } from './ExternalFiles';
 
 export class SyncService {
 

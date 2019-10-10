@@ -1,7 +1,7 @@
 'use strict';
 
-import {google} from 'googleapis';
-import {Readable} from 'stream';
+import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 export class GoogleDocsService {
 
@@ -20,8 +20,7 @@ export class GoogleDocsService {
           const readable = new Readable();
 
           let stream = readable
-            .on('end', () => {
-            })
+            .on('end', () => {})
             .on('error', err => {
               reject(err);
             });
