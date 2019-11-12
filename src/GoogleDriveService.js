@@ -6,7 +6,7 @@ import slugify from 'slugify';
 export class GoogleDriveService {
 
   urlToFolderId(url) {
-    if (url.match(/drive.google.com\/drive.*folders\//)) {
+    if (url.match(/drive\.google\.com\/drive.*folders\//)) {
       let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
       if (id.indexOf('/') > 0) {
         id = id.substr(0, id.indexOf('/'));
