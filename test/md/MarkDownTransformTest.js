@@ -37,6 +37,17 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
+  it('test ./example-document.md.json', async () => {
+
+    const doc = require('./example-document.md.json');
+    const testMarkdown = require('!!raw-loader!./example-document.md').default;
+
+    const markdown = await transform(doc);
+    assert.ok(compareTexts(testMarkdown, markdown));
+
+    return Promise.resolve();
+  });
+
 });
 
 function compareTexts(testMarkdown, markdown) {
