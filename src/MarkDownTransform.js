@@ -3,10 +3,6 @@
 import slugify from 'slugify';
 import { Transform } from 'stream';
 
-function escapeHTML(text) {
-  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
 export class MarkDownTransform extends Transform {
 
   constructor(localPath, linkTranslator) {
@@ -67,14 +63,12 @@ export class MarkDownTransform extends Transform {
 
   async processTos(content) {
     let text = '';
-    const inSrc = false;
-    const globalImageCounter = 0;
     const globalListCounters = {};
 
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
 
-      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
+      const result = await this.processParagraph(childNo, child, globalListCounters);
       if (result.text.trim().length > 0) {
         text += '* ' + result.text;
       }
@@ -83,7 +77,7 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(index, element, inSrc, imageCounter, listCounters) {
+  async processParagraph(index, element, listCounters) {
     if (element.tableOfContents) {
       const tableOfContentsText = await this.processTos(element.tableOfContents.content);
       return {
@@ -92,7 +86,6 @@ export class MarkDownTransform extends Transform {
     }
 
     const textElements = [];
-    let pOut = '';
 
     const result = {};
 
@@ -142,12 +135,10 @@ export class MarkDownTransform extends Transform {
           let txt = element.textRun.content;
           paragraphTxt += txt;
 
-          pOut += txt;
-
           element.paragraphStyle = paragraph.paragraphStyle;
           textElements.push(element);
-
-        } else if (element.inlineObjectElement) {
+        } else
+        if (element.inlineObjectElement) {
           const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
             if (imageLink.endsWith('.svg')) {
             textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
@@ -184,45 +175,22 @@ export class MarkDownTransform extends Transform {
       return result;
     }
 
-    // evb: Add source pretty too. (And abbreviations: src and srcp.)
-    // process source code block:
-    if (/^\s*---\s+srcp\s*$/.test(pOut) || /^\s*---\s+source pretty\s*$/.test(pOut)) {
-      result.sourcePretty = 'start';
-    } else if (/^\s*---\s+src\s*$/.test(pOut) || /^\s*---\s+source code\s*$/.test(pOut)) {
-      result.source = 'start';
-    } else if (/^\s*---\s+class\s+([^ ]+)\s*$/.test(pOut)) {
-      result.inClass = 'start';
-      result.className = RegExp.$1;
-    } else if (/^\s*---\s*$/.test(pOut)) {
-      result.source = 'end';
-      result.sourcePretty = 'end';
-      result.inClass = 'end';
-    } else if (/^\s*---\s+jsperf\s*([^ ]+)\s*$/.test(pOut)) {
-      result.text = '<iframe style="width: 100%; height: 340px; overflow: hidden; border: 0;" ' +
-        'src="http://www.html5rocks.com/static/jsperfview/embed.html?id=' + RegExp.$1 +
-        '"></iframe>';
-    } else {
+    const prefix = this.findPrefix(element, listCounters);
 
-      const prefix = this.findPrefix(inSrc, element, listCounters);
-
-      let pOut = '';
-      for (let i = 0; i < textElements.length; i++) {
-        pOut += await this.processTextElement(inSrc, textElements[i]);
-      }
-
-      // replace Unicode quotation marks
-      pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
-      result.text =   prefix + pOut;
+    let pOut = '';
+    for (let i = 0; i < textElements.length; i++) {
+      pOut += await this.processTextElement(textElements[i]);
     }
+
+    // replace Unicode quotation marks
+    pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+    result.text = prefix + pOut;
 
     return result;
   }
 
   // Add correct prefix to list items.
-  findPrefix(inSrc, element, listCounters) {
-    if (inSrc) {
-      return '';
-    }
+  findPrefix(element, listCounters) {
     if (!element.paragraph) {
       return '';
     }
@@ -278,7 +246,7 @@ export class MarkDownTransform extends Transform {
     return prefix;
   }
 
-  async processTextElement(inSrc, element) {
+  async processTextElement(element) {
     if (typeof element === 'string') {
       return element;
     }
@@ -311,7 +279,7 @@ export class MarkDownTransform extends Transform {
     }
 
     if (font) {
-      if (!inSrc && font === 'Courier New') {
+      if (font === 'Courier New') {
         pOut = '`' + pOut + '`';
       }
     }
@@ -331,16 +299,12 @@ export class MarkDownTransform extends Transform {
   async convert() {
     const content = this.document.body.content;
     let text = '';
-    let inSrc = false;
-    let inClass = false;
-    let globalImageCounter = 0;
     const globalListCounters = {};
-    let srcIndent = '';
 
     const results = [];
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
-      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
+      const result = await this.processParagraph(childNo, child, globalListCounters);
 
       const prevResult = results.length > 0 ? results[results.length - 1] : null;
 
@@ -354,40 +318,14 @@ export class MarkDownTransform extends Transform {
     for (let childNo = 0; childNo < results.length; childNo++) {
       const result = results[childNo];
 
-      globalImageCounter += (result && result.images) ? result.images.length : 0;
       if (result !== null) {
-        if (result.sourcePretty === 'start' && !inSrc) {
-          inSrc = true;
-          text += '<pre class="prettyprint">\n';
-        } else if (result.sourcePretty === 'end' && inSrc) {
-          inSrc = false;
-          text += '</pre>\n\n';
-        } else if (result.source === 'start' && !inSrc) {
-          inSrc = true;
-          text += '<pre>\n';
-        } else if (result.source === 'end' && inSrc) {
-          inSrc = false;
-          text += '</pre>\n\n';
-        } else if (result.inClass === 'start' && !inClass) {
-          inClass = true;
-          text += '<div class="' + result.className + '">\n';
-        } else if (result.inClass === 'end' && inClass) {
-          inClass = false;
-          text += '</div>\n\n';
-        } else if (inClass) {
-          // text += result.text;
-          text += result.text + '\n\n';
-        } else if (inSrc) {
-          text += (srcIndent + escapeHTML(result.text) + '\n');
-        } else if (result.text && result.text.length > 0) {
-          if (result.codeParagraph || inSrc) {
+        if (result.text && result.text.length > 0) {
+          if (result.codeParagraph) {
             text += result.text;
           } else {
             text += result.text + '\n';
           }
         }
-      } else if (inSrc) { // support empty lines inside source code
-        text += '\n';
       }
     }
 
