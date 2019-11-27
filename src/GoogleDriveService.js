@@ -49,12 +49,34 @@ export class GoogleDriveService {
     return false;
   }
 
+  removeDuplicates(files) {
+    const retVal = [];
+
+    files.sort((a, b) => {
+      return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
+    });
+
+    for (const file of files) {
+      if (retVal.find(entry => entry.id === file.id)) {
+        continue;
+      }
+      retVal.push(file);
+    }
+
+    return retVal;
+  }
+
   async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
     let files = await this.listFiles(auth, folderId, modifiedTime);
 
     if (parentDirName) {
       files.forEach(file => {
-        file.desiredLocalPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.desiredLocalPath;
+        const slugifiedParent = parentDirName
+          .split('/')
+          .map(part => slugify(part, { replacement: '-', lower: true }))
+          .join('/');
+
+        file.desiredLocalPath = slugifiedParent + '/' + file.desiredLocalPath;
       });
     }
 
@@ -62,11 +84,13 @@ export class GoogleDriveService {
       const file = files[fileNo];
       if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
 
-      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, file.name);
+      const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
+
+      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, newParentDirName);
       files = files.concat(moreFiles);
     }
 
-    return files;
+    return this.removeDuplicates(files);
   }
 
   listFiles(auth, folderId, modifiedTime, nextPageToken) {

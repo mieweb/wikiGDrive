@@ -54,7 +54,9 @@ export class MarkDownTransform extends Transform {
       const inlineObject = this.document.inlineObjects[url];
 
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+      }
     }
 
     const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
