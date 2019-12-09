@@ -100,7 +100,7 @@ export class MarkDownTransform extends Transform {
         tableRow.tableCells.forEach(tableCell => {
           const content = tableCell.content
             .map(node => {
-              const elements = node.paragraph.elements;
+              const elements = node.paragraph ? node.paragraph.elements : [];
               return elements.map(element => {
                 return element.textRun ? element.textRun.content : '';
               });
