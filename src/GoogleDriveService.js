@@ -69,6 +69,8 @@ export class GoogleDriveService {
   async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
     let files = await this.listFiles(auth, folderId, modifiedTime);
 
+    console.log('Listening folder:', parentDirName || '/');
+
     if (parentDirName) {
       files.forEach(file => {
         const slugifiedParent = parentDirName
