@@ -3,6 +3,8 @@
 import { google } from 'googleapis';
 import slugify from 'slugify';
 
+const MAX_FILENAME_LENGTH = 100;
+
 export class GoogleDriveService {
 
   urlToFolderId(url) {
@@ -76,6 +78,7 @@ export class GoogleDriveService {
         const slugifiedParent = parentDirName
           .split('/')
           .map(part => slugify(part, { replacement: '-', lower: true }))
+          .map(part => part.replace(/[/]+/g, '-'))
           .join('/');
 
         file.desiredLocalPath = slugifiedParent + '/' + file.desiredLocalPath;
@@ -125,10 +128,15 @@ export class GoogleDriveService {
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
+            file.name = file.name.replace(/[/]+/g, '-');
             file.desiredLocalPath = slugify(file.name, { replacement: '-', lower: true });
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;
+            }
+
+            if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+              file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
             }
 
             switch (file.mimeType) {
