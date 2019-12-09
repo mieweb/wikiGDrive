@@ -2,6 +2,7 @@
 
 import { google } from 'googleapis';
 import slugify from 'slugify';
+import {retryAsync} from './retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -99,7 +100,7 @@ export class GoogleDriveService {
   }
 
   listFiles(auth, folderId, modifiedTime, nextPageToken) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(10, (resolve, reject) => {
 
       const drive = google.drive({ version: 'v3', auth });
 
@@ -156,7 +157,7 @@ export class GoogleDriveService {
   }
 
   download(auth, file, dest) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(5, (resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       drive.files.get({
@@ -181,7 +182,7 @@ export class GoogleDriveService {
   }
 
   exportDocument(auth, file, dest) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(5, (resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       drive.files.export({
