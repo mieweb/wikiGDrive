@@ -102,7 +102,7 @@ export class MarkDownTransform extends Transform {
             .map(node => {
               const elements = node.paragraph.elements;
               return elements.map(element => {
-                return element.textRun.content;
+                return element.textRun ? element.textRun.content : '';
               });
             });
 
