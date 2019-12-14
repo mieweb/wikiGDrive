@@ -3,6 +3,27 @@
 import slugify from 'slugify';
 import { Transform } from 'stream';
 
+function fixBold(text) {
+  const lines = text.split('\n');
+
+  const retVal = [];
+  for (const line of lines) {
+    const count = line.split('**').length - 1;
+    if (count % 2 === 1) {
+      retVal.push(line + '**');
+    } else {
+      retVal.push(line);
+    }
+  }
+
+  return retVal.map(line => {
+    while (line.endsWith('****')) {
+      line = line.substr(0, line.length - '****'.length);
+    }
+    return line;
+  }).join('\n');
+}
+
 export class MarkDownTransform extends Transform {
 
   constructor(localPath, linkTranslator) {
@@ -56,7 +77,13 @@ export class MarkDownTransform extends Transform {
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
       if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
         url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+      } else {
+        url = '';
       }
+    }
+
+    if (!url) {
+      return '';
     }
 
     const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
@@ -117,7 +144,6 @@ export class MarkDownTransform extends Transform {
     } else
     if (element.paragraph) {
 
-      // console.log(element);
       const paragraph = element.paragraph;
 
       if (paragraph.paragraphStyle.namedStyleType) {
@@ -142,15 +168,15 @@ export class MarkDownTransform extends Transform {
         } else
         if (element.inlineObjectElement) {
           const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+          if (imageLink) {
             if (imageLink.endsWith('.svg')) {
-            textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
-              '<img src="' + imageLink + '" />' +
-              '</object>');
-          } else {
-            textElements.push('![](' + (imageLink) + ')');
+              textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
+                '<img src="' + imageLink + '" />' +
+                '</object>');
+            } else {
+              textElements.push('![](' + (imageLink) + ')');
+            }
           }
-        } else {
-          console.log(element);
         }
       }
 
@@ -186,6 +212,15 @@ export class MarkDownTransform extends Transform {
 
     // replace Unicode quotation marks
     pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+    pOut = fixBold(pOut);
+
+    if (prefix.match(/^#+ /)) {
+      if (pOut.startsWith('**') && pOut.trim().endsWith('**')) {
+        pOut = pOut.substr('**'.length);
+        pOut = pOut.substr(0, pOut.lastIndexOf('**'));
+      }
+    }
+
     result.text = prefix + pOut;
 
     return result;
@@ -253,7 +288,7 @@ export class MarkDownTransform extends Transform {
       return element;
     }
 
-    let pOut = element.textRun.content.trim();
+    let pOut = element.textRun.content;
 
     const style = Object.assign({}, element.paragraphStyle, element.textRun.textStyle);
     if (element.textRun.textStyle.namedStyleType) {

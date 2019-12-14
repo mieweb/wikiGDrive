@@ -1,7 +1,8 @@
 import { assert } from 'chai';
+import {Readable, Writable} from 'stream';
 
 import { MarkDownTransform } from '../../src/MarkDownTransform';
-import {Readable, Writable} from 'stream';
+import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
   it('test ./test-page.md.json', async () => {
@@ -48,11 +49,19 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-});
+  it('test ./intro-to-the-system.md.json', async () => {
 
-function compareTexts(testMarkdown, markdown) {
-  return testMarkdown === markdown;
-}
+    const doc = require('./intro-to-the-system.md.json');
+    const testMarkdown = require('!!raw-loader!./intro-to-the-system.md').default;
+
+    const markdown = await transform(doc);
+
+    assert.ok(compareTexts(testMarkdown, markdown));
+
+    return Promise.resolve();
+  });
+
+});
 
 async function transform(doc) {
 
