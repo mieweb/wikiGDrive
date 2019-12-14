@@ -20,8 +20,30 @@ function fixBold(text) {
     while (line.endsWith('****')) {
       line = line.substr(0, line.length - '****'.length);
     }
+    while (line.endsWith('<strong></strong>')) {
+      line = line.substr(0, line.length - '<strong></strong>'.length);
+    }
     return line;
   }).join('\n');
+}
+
+function wrapWith(wrapper, text, wrapper2) {
+  if (!text) return text;
+
+  let enterMode = false;
+  if (text.endsWith('\n')) {
+    enterMode = true;
+  }
+
+  if (enterMode) {
+    text = text.substr(0, text.length - 1);
+    text = wrapper + text + wrapper2;
+    text += '\n';
+  } else {
+    text = wrapper + text + wrapper2;
+  }
+
+  return text;
 }
 
 export class MarkDownTransform extends Transform {
@@ -206,19 +228,54 @@ export class MarkDownTransform extends Transform {
     const prefix = this.findPrefix(element, listCounters);
 
     let pOut = '';
+    const processed = [];
     for (let i = 0; i < textElements.length; i++) {
-      pOut += await this.processTextElement(textElements[i]);
+      processed.push(await this.processTextElement(textElements[i]));
     }
+    pOut = processed.join('');
 
     // replace Unicode quotation marks
     pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
     pOut = fixBold(pOut);
 
     if (prefix.match(/^#+ /)) {
-      if (pOut.startsWith('**') && pOut.trim().endsWith('**')) {
-        pOut = pOut.substr('**'.length);
-        pOut = pOut.substr(0, pOut.lastIndexOf('**'));
+      if (pOut.startsWith('<strong>') && pOut.trim().endsWith('</strong>')) {
+        pOut = pOut.substr('<strong>'.length);
+        pOut = pOut.substr(0, pOut.lastIndexOf('</strong>'));
       }
+    }
+
+    if (prefix.trim() === '*') {
+      const parts = pOut.split('**');
+
+      if (parts.length > 1) {
+        pOut = '';
+        parts.forEach((part, idx) => {
+          pOut += part;
+          if (idx % 2) {
+            pOut += '</strong>';
+          } else {
+            pOut += '<strong>';
+          }
+        });
+
+        if (parts.length % 2) {
+          pOut += '</strong>';
+        }
+
+        while (pOut.indexOf('<strong></strong>') > -1) {
+          pOut = pOut.replace('<strong></strong>', '');
+        }
+      }
+    }
+
+    if (!prefix) {
+      pOut = pOut.replace(/<strong><em>/g, '**_');
+      pOut = pOut.replace(/<\/em><\/strong>/g, '_**');
+      pOut = pOut.replace(/<strong>/g, '**');
+      pOut = pOut.replace(/<\/strong>/g, '**');
+      pOut = pOut.replace(/<em>/g, '*');
+      pOut = pOut.replace(/<\/em>/g, '*');
     }
 
     result.text = prefix + pOut;
@@ -322,12 +379,12 @@ export class MarkDownTransform extends Transform {
     }
     if (style.bold) {
       if (style.italic) {
-        pOut = '**_' + pOut + '_**';
+        pOut = wrapWith('<strong><em>', pOut, '</em></strong>');
       } else {
-        pOut = '**' + pOut + '**';
+        pOut = wrapWith('<strong>', pOut, '</strong>');
       }
     } else if (style.italic) {
-      pOut = '*' + pOut + '*';
+      pOut = wrapWith('<em>', pOut, '</em>');
     }
 
     return pOut;

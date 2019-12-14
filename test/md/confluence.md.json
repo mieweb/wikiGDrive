@@ -496,7 +496,8 @@
               "textRun": {
                 "content": "Example Block Macro:",
                 "textStyle": {
-                  "bold": true
+                  "bold": true,
+                  "italic": true
                 }
               }
             },

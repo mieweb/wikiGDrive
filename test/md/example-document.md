@@ -163,8 +163,8 @@ This is after the horizontal line.
 
 ### Text equivalent
 
-*E=mc**2**
-*
+*E=mc**2*
+
 ## Footnotes
 
  This is some sample text with a footnote.

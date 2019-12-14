@@ -30,9 +30,9 @@ A new github repo with a node.js script specific to this conversion.
 
     * Macros can be wrapped in {curlies} and dumped as text
 
-        * **Example Block Macro:**  {macroname propertyname=’value’ propertyname=’value’}macro body, if exists{/macroname}
+        * <strong><em>Example Block Macro:</em></strong>  {macroname propertyname=’value’ propertyname=’value’}macro body, if exists{/macroname}
 
-        * **Example Inline Macro:**{macroname propertyname=’value’ propertyname=’value’ /}
+        * <strong>Example Inline Macro:</strong>{macroname propertyname=’value’ propertyname=’value’ /}
 
     * Tables should be kept tables
 

@@ -198,15 +198,15 @@ Then sometime later, "Example 1" is renamed to “Sample 1” the folder layout 
 
 * Container
 
-    * **Sample**-1.md
+    * <strong>Sample</strong>-1.md
 
-    * Example-1.md -> **Sample**-1.md
+    * Example-1.md -> <strong>Sample</strong>-1.md
 
     * Example-2.md
 
 * Folder
 
-    * Example-1.md -> /Container/**Sample**-1.md
+    * Example-1.md -> /Container/<strong>Sample</strong>-1.md
 
     * Example-2.md -> /Container/Example-2.md
 
