@@ -253,7 +253,7 @@ export class MarkDownTransform extends Transform {
       return element;
     }
 
-    let pOut = element.textRun.content;
+    let pOut = element.textRun.content.trim();
 
     const style = Object.assign({}, element.paragraphStyle, element.textRun.textStyle);
     if (element.textRun.textStyle.namedStyleType) {
