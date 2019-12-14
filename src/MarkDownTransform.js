@@ -433,7 +433,26 @@ export class MarkDownTransform extends Transform {
       }
     }
 
+    text = this.processMacros(text);
+
     return text;
+  }
+
+  processMacros(text) {
+    const blocks = text.split('```');
+
+    const retVal = [];
+    blocks.forEach((block, idx) =>{
+      if (idx % 2 == 0) {
+        block = block.replace(/{?{/g, '{{< ');
+        block = block.replace(/ ?}?}/g, ' >}}');
+        block = block.replace(/ \/ >}}/g, ' />}}');
+      }
+
+      retVal.push(block);
+    });
+
+    return retVal.join('```');
   }
 
 }

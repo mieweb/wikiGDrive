@@ -87,7 +87,7 @@ Code blocks are part of the Markdown spec, but syntax highlighting isn't. Howeve
 
 ### Typescript / Javascript
 
-{{markdown}}
+{{< markdown >}}
 
 ```javascript
 
@@ -121,7 +121,7 @@ myArray.forEach(() => { }); // fat arrow syntax
 
 ```
 
-{{/markdown}}
+{{< /markdown >}}
 
 
 
