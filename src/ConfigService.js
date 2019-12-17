@@ -24,4 +24,23 @@ export class ConfigService {
     return this.fileService.writeFile(this.filePath, content);
   }
 
+  async resetConfig(section) {
+    if (!section || !section.trim()) {
+      return;
+    }
+
+    if (!await this.fileService.exists(this.filePath)) {
+      throw 'Config file .wikigdrive does not exists';
+    }
+
+    section = section.split('.');
+
+    const config = await this.loadConfig();
+
+    for (const key of section) {
+      delete config[key.trim()];
+    }
+
+    await this.saveConfig(config);
+  }
 }
