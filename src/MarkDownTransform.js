@@ -444,9 +444,9 @@ export class MarkDownTransform extends Transform {
     const retVal = [];
     blocks.forEach((block, idx) =>{
       if (idx % 2 == 0) {
-        block = block.replace(/{?{/g, '{{< ');
-        block = block.replace(/ ?}?}/g, ' >}}');
-        block = block.replace(/ \/ >}}/g, ' />}}');
+        block = block.replace(/{?{/g, '{{% ');
+        block = block.replace(/ ?}?}/g, ' %}}');
+        block = block.replace(/ \/ %}}/g, ' /%}}');
       }
 
       retVal.push(block);

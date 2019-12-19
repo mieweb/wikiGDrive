@@ -28,11 +28,11 @@ A new github repo with a node.js script specific to this conversion.
 
     * Images (which are attachments in Confluence) should be embedded in google docs
 
-    * Macros can be wrapped in {{< curlies >}} and dumped as text
+    * Macros can be wrapped in {{% curlies %}} and dumped as text
 
-        * <strong><em>Example Block Macro:</em></strong>  {{< macroname propertyname=’value’ propertyname=’value’ >}}macro body, if exists{{< /macroname >}}
+        * <strong><em>Example Block Macro:</em></strong>  {{% macroname propertyname=’value’ propertyname=’value’ %}}macro body, if exists{{% /macroname %}}
 
-        * <strong>Example Inline Macro:</strong>{{< macroname propertyname=’value’ propertyname=’value’ />}}
+        * <strong>Example Inline Macro:</strong>{{% macroname propertyname=’value’ propertyname=’value’ /%}}
 
     * Tables should be kept tables
 
