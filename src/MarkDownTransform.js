@@ -443,13 +443,61 @@ export class MarkDownTransform extends Transform {
 
     const retVal = [];
     blocks.forEach((block, idx) =>{
+      let newBlock = '';
       if (idx % 2 == 0) {
-        block = block.replace(/{?{/g, '{{% ');
-        block = block.replace(/ ?}?}/g, ' %}}');
-        block = block.replace(/ \/ %}}/g, ' /%}}');
+        let prevChar = '';
+        for (let colNo = 0; colNo < block.length; colNo++) {
+          let char = block.substr(colNo, 1);
+
+          if (prevChar === '\\') {
+            switch (char) {
+              case '\\':
+                newBlock += char;
+                char = '';
+                break;
+              case '{':
+                newBlock += '\\{';
+                break;
+              case '}':
+                newBlock += '\\}';
+                break;
+              default:
+                newBlock += char;
+            }
+          } else {
+            switch (char) {
+              case '\\':
+                break;
+              case '{':
+                if (prevChar !== '{') {
+                  newBlock += '{{% ';
+                }
+                break;
+              case '}':
+                if (prevChar !== '}') {
+                  if (prevChar === '/' || prevChar === ' ') {
+                    newBlock += '%}}';
+                  } else {
+                    newBlock += ' %}}';
+                  }
+                }
+                break;
+              default:
+                newBlock += char;
+            }
+          }
+
+          prevChar = char;
+        }
+
+        // block = block.replace(/{?{/g, '{{% ');
+        // block = block.replace(/ ?}?}/g, ' %}}');
+        // block = block.replace(/ \/ %}}/g, ' /%}}');
+      } else {
+        newBlock = block;
       }
 
-      retVal.push(block);
+      retVal.push(newBlock);
     });
 
     return retVal.join('```');

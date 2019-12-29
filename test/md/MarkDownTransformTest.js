@@ -5,6 +5,17 @@ import { MarkDownTransform } from '../../src/MarkDownTransform';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
+  it('test ./curly-braces.md.json', async () => {
+
+    const doc = require('./curly-braces.md.json');
+    const testMarkdown = require('!!raw-loader!./curly-braces.md').default;
+
+    const markdown = await transform(doc);
+    assert.ok(compareTexts(testMarkdown, markdown));
+
+    return Promise.resolve();
+  });
+
   it('test ./test-page.md.json', async () => {
 
     const doc = require('./test-page.md.json');
