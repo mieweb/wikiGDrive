@@ -12,7 +12,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha-webpack --mode development",
+    "test": "mocha-webpack --mode development 'test/**/*.js'",
     "lint": "eslint .",
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production"
@@ -41,12 +41,15 @@
   "devDependencies": {
     "babel-eslint": "^10.0.3",
     "chai": "^4.2.0",
+    "colors": "1.4.0",
+    "diff": "4.0.1",
     "eslint": "^6.4.0",
     "husky": "^3.0.5",
     "jshint": "^2.10.2",
     "mocha": "^6.2.0",
     "mocha-webpack": "2.0.0-beta.0",
-    "webpack": "^4.40.2",
+    "raw-loader": "^3.1.0",
+    "webpack": "^4.41.3",
     "webpack-cli": "^3.3.9"
   },
   "husky": {

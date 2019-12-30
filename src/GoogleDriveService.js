@@ -2,6 +2,9 @@
 
 import { google } from 'googleapis';
 import slugify from 'slugify';
+import {retryAsync} from './retryAsync';
+
+const MAX_FILENAME_LENGTH = 100;
 
 export class GoogleDriveService {
 
@@ -49,12 +52,37 @@ export class GoogleDriveService {
     return false;
   }
 
+  removeDuplicates(files) {
+    const retVal = [];
+
+    files.sort((a, b) => {
+      return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
+    });
+
+    for (const file of files) {
+      if (retVal.find(entry => entry.id === file.id)) {
+        continue;
+      }
+      retVal.push(file);
+    }
+
+    return retVal;
+  }
+
   async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
     let files = await this.listFiles(auth, folderId, modifiedTime);
 
+    console.log('Listening folder:', parentDirName || '/');
+
     if (parentDirName) {
       files.forEach(file => {
-        file.desiredLocalPath = slugify(parentDirName, { replacement: '-', lower: true }) + '/' + file.desiredLocalPath;
+        const slugifiedParent = parentDirName
+          .split('/')
+          .map(part => slugify(part, { replacement: '-', lower: true }))
+          .map(part => part.replace(/[/]+/g, '-'))
+          .join('/');
+
+        file.desiredLocalPath = slugifiedParent + '/' + file.desiredLocalPath;
       });
     }
 
@@ -62,15 +90,17 @@ export class GoogleDriveService {
       const file = files[fileNo];
       if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
 
-      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, file.name);
+      const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
+
+      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, newParentDirName);
       files = files.concat(moreFiles);
     }
 
-    return files;
+    return this.removeDuplicates(files);
   }
 
   listFiles(auth, folderId, modifiedTime, nextPageToken) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(10, (resolve, reject) => {
 
       const drive = google.drive({ version: 'v3', auth });
 
@@ -99,10 +129,15 @@ export class GoogleDriveService {
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
+            file.name = file.name.replace(/[/]+/g, '-');
             file.desiredLocalPath = slugify(file.name, { replacement: '-', lower: true });
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;
+            }
+
+            if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+              file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
             }
 
             switch (file.mimeType) {
@@ -122,7 +157,7 @@ export class GoogleDriveService {
   }
 
   download(auth, file, dest) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(5, (resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       drive.files.get({
@@ -147,7 +182,7 @@ export class GoogleDriveService {
   }
 
   exportDocument(auth, file, dest) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(5, (resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       drive.files.export({

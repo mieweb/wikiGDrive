@@ -3,8 +3,47 @@
 import slugify from 'slugify';
 import { Transform } from 'stream';
 
-function escapeHTML(text) {
-  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function fixBold(text) {
+  const lines = text.split('\n');
+
+  const retVal = [];
+  for (const line of lines) {
+    const count = line.split('**').length - 1;
+    if (count % 2 === 1) {
+      retVal.push(line + '**');
+    } else {
+      retVal.push(line);
+    }
+  }
+
+  return retVal.map(line => {
+    while (line.endsWith('****')) {
+      line = line.substr(0, line.length - '****'.length);
+    }
+    while (line.endsWith('<strong></strong>')) {
+      line = line.substr(0, line.length - '<strong></strong>'.length);
+    }
+    return line;
+  }).join('\n');
+}
+
+function wrapWith(wrapper, text, wrapper2) {
+  if (!text) return text;
+
+  let enterMode = false;
+  if (text.endsWith('\n')) {
+    enterMode = true;
+  }
+
+  if (enterMode) {
+    text = text.substr(0, text.length - 1);
+    text = wrapper + text + wrapper2;
+    text += '\n';
+  } else {
+    text = wrapper + text + wrapper2;
+  }
+
+  return text;
 }
 
 export class MarkDownTransform extends Transform {
@@ -58,7 +97,15 @@ export class MarkDownTransform extends Transform {
       const inlineObject = this.document.inlineObjects[url];
 
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+      } else {
+        url = '';
+      }
+    }
+
+    if (!url) {
+      return '';
     }
 
     const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
@@ -67,14 +114,12 @@ export class MarkDownTransform extends Transform {
 
   async processTos(content) {
     let text = '';
-    const inSrc = false;
-    const globalImageCounter = 0;
     const globalListCounters = {};
 
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
 
-      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
+      const result = await this.processParagraph(childNo, child, globalListCounters);
       if (result.text.trim().length > 0) {
         text += '* ' + result.text;
       }
@@ -83,7 +128,7 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(index, element, inSrc, imageCounter, listCounters) {
+  async processParagraph(index, element, listCounters) {
     if (element.tableOfContents) {
       const tableOfContentsText = await this.processTos(element.tableOfContents.content);
       return {
@@ -92,7 +137,6 @@ export class MarkDownTransform extends Transform {
     }
 
     const textElements = [];
-    let pOut = '';
 
     const result = {};
 
@@ -105,9 +149,9 @@ export class MarkDownTransform extends Transform {
         tableRow.tableCells.forEach(tableCell => {
           const content = tableCell.content
             .map(node => {
-              const elements = node.paragraph.elements;
+              const elements = node.paragraph ? node.paragraph.elements : [];
               return elements.map(element => {
-                return element.textRun.content;
+                return element.textRun ? element.textRun.content : '';
               });
             });
 
@@ -122,7 +166,6 @@ export class MarkDownTransform extends Transform {
     } else
     if (element.paragraph) {
 
-      // console.log(element);
       const paragraph = element.paragraph;
 
       if (paragraph.paragraphStyle.namedStyleType) {
@@ -142,22 +185,20 @@ export class MarkDownTransform extends Transform {
           let txt = element.textRun.content;
           paragraphTxt += txt;
 
-          pOut += txt;
-
           element.paragraphStyle = paragraph.paragraphStyle;
           textElements.push(element);
-
-        } else if (element.inlineObjectElement) {
+        } else
+        if (element.inlineObjectElement) {
           const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+          if (imageLink) {
             if (imageLink.endsWith('.svg')) {
-            textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
-              '<img src="' + imageLink + '" />' +
-              '</object>');
-          } else {
-            textElements.push('![](' + (imageLink) + ')');
+              textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
+                '<img src="' + imageLink + '" />' +
+                '</object>');
+            } else {
+              textElements.push('![](' + (imageLink) + ')');
+            }
           }
-        } else {
-          console.log(element);
         }
       }
 
@@ -184,45 +225,66 @@ export class MarkDownTransform extends Transform {
       return result;
     }
 
-    // evb: Add source pretty too. (And abbreviations: src and srcp.)
-    // process source code block:
-    if (/^\s*---\s+srcp\s*$/.test(pOut) || /^\s*---\s+source pretty\s*$/.test(pOut)) {
-      result.sourcePretty = 'start';
-    } else if (/^\s*---\s+src\s*$/.test(pOut) || /^\s*---\s+source code\s*$/.test(pOut)) {
-      result.source = 'start';
-    } else if (/^\s*---\s+class\s+([^ ]+)\s*$/.test(pOut)) {
-      result.inClass = 'start';
-      result.className = RegExp.$1;
-    } else if (/^\s*---\s*$/.test(pOut)) {
-      result.source = 'end';
-      result.sourcePretty = 'end';
-      result.inClass = 'end';
-    } else if (/^\s*---\s+jsperf\s*([^ ]+)\s*$/.test(pOut)) {
-      result.text = '<iframe style="width: 100%; height: 340px; overflow: hidden; border: 0;" ' +
-        'src="http://www.html5rocks.com/static/jsperfview/embed.html?id=' + RegExp.$1 +
-        '"></iframe>';
-    } else {
+    const prefix = this.findPrefix(element, listCounters);
 
-      const prefix = this.findPrefix(inSrc, element, listCounters);
-
-      let pOut = '';
-      for (let i = 0; i < textElements.length; i++) {
-        pOut += await this.processTextElement(inSrc, textElements[i]);
-      }
-
-      // replace Unicode quotation marks
-      pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
-      result.text =   prefix + pOut;
+    let pOut = '';
+    const processed = [];
+    for (let i = 0; i < textElements.length; i++) {
+      processed.push(await this.processTextElement(textElements[i]));
     }
+    pOut = processed.join('');
+
+    // replace Unicode quotation marks
+    pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+    pOut = fixBold(pOut);
+
+    if (prefix.match(/^#+ /)) {
+      if (pOut.startsWith('<strong>') && pOut.trim().endsWith('</strong>')) {
+        pOut = pOut.substr('<strong>'.length);
+        pOut = pOut.substr(0, pOut.lastIndexOf('</strong>'));
+      }
+    }
+
+    if (prefix.trim() === '*') {
+      const parts = pOut.split('**');
+
+      if (parts.length > 1) {
+        pOut = '';
+        parts.forEach((part, idx) => {
+          pOut += part;
+          if (idx % 2) {
+            pOut += '</strong>';
+          } else {
+            pOut += '<strong>';
+          }
+        });
+
+        if (parts.length % 2) {
+          pOut += '</strong>';
+        }
+
+        while (pOut.indexOf('<strong></strong>') > -1) {
+          pOut = pOut.replace('<strong></strong>', '');
+        }
+      }
+    }
+
+    if (!prefix) {
+      pOut = pOut.replace(/<strong><em>/g, '**_');
+      pOut = pOut.replace(/<\/em><\/strong>/g, '_**');
+      pOut = pOut.replace(/<strong>/g, '**');
+      pOut = pOut.replace(/<\/strong>/g, '**');
+      pOut = pOut.replace(/<em>/g, '*');
+      pOut = pOut.replace(/<\/em>/g, '*');
+    }
+
+    result.text = prefix + pOut;
 
     return result;
   }
 
   // Add correct prefix to list items.
-  findPrefix(inSrc, element, listCounters) {
-    if (inSrc) {
-      return '';
-    }
+  findPrefix(element, listCounters) {
     if (!element.paragraph) {
       return '';
     }
@@ -278,7 +340,7 @@ export class MarkDownTransform extends Transform {
     return prefix;
   }
 
-  async processTextElement(inSrc, element) {
+  async processTextElement(element) {
     if (typeof element === 'string') {
       return element;
     }
@@ -311,18 +373,18 @@ export class MarkDownTransform extends Transform {
     }
 
     if (font) {
-      if (!inSrc && font === 'Courier New') {
+      if (font === 'Courier New') {
         pOut = '`' + pOut + '`';
       }
     }
     if (style.bold) {
       if (style.italic) {
-        pOut = '**_' + pOut + '_**';
+        pOut = wrapWith('<strong><em>', pOut, '</em></strong>');
       } else {
-        pOut = '**' + pOut + '**';
+        pOut = wrapWith('<strong>', pOut, '</strong>');
       }
     } else if (style.italic) {
-      pOut = '*' + pOut + '*';
+      pOut = wrapWith('<em>', pOut, '</em>');
     }
 
     return pOut;
@@ -331,16 +393,12 @@ export class MarkDownTransform extends Transform {
   async convert() {
     const content = this.document.body.content;
     let text = '';
-    let inSrc = false;
-    let inClass = false;
-    let globalImageCounter = 0;
     const globalListCounters = {};
-    let srcIndent = '';
 
     const results = [];
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
-      const result = await this.processParagraph(childNo, child, inSrc, globalImageCounter, globalListCounters);
+      const result = await this.processParagraph(childNo, child, globalListCounters);
 
       const prevResult = results.length > 0 ? results[results.length - 1] : null;
 
@@ -354,40 +412,14 @@ export class MarkDownTransform extends Transform {
     for (let childNo = 0; childNo < results.length; childNo++) {
       const result = results[childNo];
 
-      globalImageCounter += (result && result.images) ? result.images.length : 0;
       if (result !== null) {
-        if (result.sourcePretty === 'start' && !inSrc) {
-          inSrc = true;
-          text += '<pre class="prettyprint">\n';
-        } else if (result.sourcePretty === 'end' && inSrc) {
-          inSrc = false;
-          text += '</pre>\n\n';
-        } else if (result.source === 'start' && !inSrc) {
-          inSrc = true;
-          text += '<pre>\n';
-        } else if (result.source === 'end' && inSrc) {
-          inSrc = false;
-          text += '</pre>\n\n';
-        } else if (result.inClass === 'start' && !inClass) {
-          inClass = true;
-          text += '<div class="' + result.className + '">\n';
-        } else if (result.inClass === 'end' && inClass) {
-          inClass = false;
-          text += '</div>\n\n';
-        } else if (inClass) {
-          // text += result.text;
-          text += result.text + '\n\n';
-        } else if (inSrc) {
-          text += (srcIndent + escapeHTML(result.text) + '\n');
-        } else if (result.text && result.text.length > 0) {
-          if (result.codeParagraph || inSrc) {
+        if (result.text && result.text.length > 0) {
+          if (result.codeParagraph) {
             text += result.text;
           } else {
             text += result.text + '\n';
           }
         }
-      } else if (inSrc) { // support empty lines inside source code
-        text += '\n';
       }
     }
 
@@ -401,7 +433,74 @@ export class MarkDownTransform extends Transform {
       }
     }
 
+    text = this.processMacros(text);
+
     return text;
+  }
+
+  processMacros(text) {
+    const blocks = text.split('```');
+
+    const retVal = [];
+    blocks.forEach((block, idx) =>{
+      let newBlock = '';
+      if (idx % 2 == 0) {
+        let prevChar = '';
+        for (let colNo = 0; colNo < block.length; colNo++) {
+          let char = block.substr(colNo, 1);
+
+          if (prevChar === '\\') {
+            switch (char) {
+              case '\\':
+                newBlock += char;
+                char = '';
+                break;
+              case '{':
+                newBlock += '\\{';
+                break;
+              case '}':
+                newBlock += '\\}';
+                break;
+              default:
+                newBlock += char;
+            }
+          } else {
+            switch (char) {
+              case '\\':
+                break;
+              case '{':
+                if (prevChar !== '{') {
+                  newBlock += '{{% ';
+                }
+                break;
+              case '}':
+                if (prevChar !== '}') {
+                  if (prevChar === '/' || prevChar === ' ') {
+                    newBlock += '%}}';
+                  } else {
+                    newBlock += ' %}}';
+                  }
+                }
+                break;
+              default:
+                newBlock += char;
+            }
+          }
+
+          prevChar = char;
+        }
+
+        // block = block.replace(/{?{/g, '{{% ');
+        // block = block.replace(/ ?}?}/g, ' %}}');
+        // block = block.replace(/ \/ %}}/g, ' /%}}');
+      } else {
+        newBlock = block;
+      }
+
+      retVal.push(newBlock);
+    });
+
+    return retVal.join('```');
   }
 
 }

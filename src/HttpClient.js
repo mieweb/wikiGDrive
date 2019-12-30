@@ -2,11 +2,12 @@
 
 import fetch from 'node-fetch';
 import crypto from 'crypto';
+import {retryAsync} from './retryAsync';
 
 export class HttpClient {
 
   downloadUrl(url, writeStream) {
-    return new Promise((resolve, reject) => {
+    return retryAsync(10, (resolve, reject) => {
       fetch(url)
         .then(res => {
           res.body
@@ -17,6 +18,9 @@ export class HttpClient {
               resolve();
             })
             .pipe(writeStream);
+        })
+        .catch(err => {
+          reject(err);
         });
     });
   }

@@ -17,6 +17,11 @@ Options:
     --watch (keep scanning for changes, ie: daemon)
     --link_mode [mdURLs|dirURLs|uglyURLs]
 
+    --config-reset google_auth # removes google_auth object from .wikidgrive file
+    --config-reset fileMap # removes fileMap object from .wikidgrive file
+    --config-reset binaryFiles # removes binaryFiles object from .wikidgrive file
+    --config-reset-all # leaves empty .wikigdrive file
+
 Examples:
     $ wikigdrive https://google.drive...
     `);
@@ -41,6 +46,11 @@ async function index() {
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
 
   params['link_mode'] = argv['link_mode'] || 'mdURLs';
+
+  params['config-reset'] = argv['config-reset'] || '';
+  if (argv['config-reset-all']) {
+    params['config-reset'] = 'google_auth,fileMap,binaryFiles';
+  }
 
   const mainService = new SyncService(params);
   return await mainService.start();

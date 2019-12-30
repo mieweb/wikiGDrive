@@ -21,6 +21,29 @@ npm install -g wikigdrive
 4. Credentials ->  Create Credentials (OAuth Client ID) -> Other
 5. Put credentials into .env or run wikigdrive with --client_id CLIENT_ID --client_secret SECRET
 
+## Usage and options
+
+```
+wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
+
+--config /location/of/.wikigdrive - Location of config file
+--dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
+--watch - Run program in loop, watch for gdrive changes
+
+--client_id - ID of google app, alternatively can be passed in .env or through environment variable CLIENT_ID;
+--client_secret - Secret of google app, alternatively can be passed in .env or through environment variable CLIENT_SECRET;
+
+--link_mode - Style of internal markdown links
+--link_mode mdURLs - `/filename.md`
+--link_mode dirURLs - `/filename/`
+--link_mode uglyURLs - `/filename.html` - see https://gohugo.io/getting-started/configuration/
+
+--config-reset [sectionName] - Reset sections of .wikigdrive section. It cleans them at the app start
+--config-reset google_auth - Reset `google_auth` section
+--config-reset google_auth,fileMap,binaryFiles - Reset `google_auth,fileMap,binaryFiles` sections
+--config-reset-all - Reset all sections
+```
+
 ## Example usage with Hugo Generator
 
 1. Install hugo https://gohugo.io/getting-started/quick-start/

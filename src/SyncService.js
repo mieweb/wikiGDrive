@@ -28,6 +28,7 @@ export class SyncService {
   }
 
   async start() {
+    await this.configService.resetConfig(this.params['config-reset']);
     let config = await this.configService.loadConfig();
 
     if (config.credentials) {
