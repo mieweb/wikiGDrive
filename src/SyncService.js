@@ -16,6 +16,7 @@ import { MarkDownTransform } from './MarkDownTransform';
 import { FrontMatterTransform } from './FrontMatterTransform';
 import { FilesStructure } from './FilesStructure';
 import { ExternalFiles } from './ExternalFiles';
+import {NavigationTransform} from './NavigationTransform';
 
 export class SyncService {
 
@@ -154,6 +155,15 @@ export class SyncService {
   async downloadDocuments(auth, files, linkTranslator) {
     files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
 
+    const navigationFile = files.find(file => file.name === '.navigation');
+
+    const navigationTransform = new NavigationTransform(files);
+
+    if (navigationFile) {
+      const markDownTransform = new MarkDownTransform('.navigation', linkTranslator);
+      await this.googleDocsService.download(auth, navigationFile, [markDownTransform, navigationTransform], linkTranslator);
+    }
+
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
       const file = files[fileNo];
 
@@ -163,7 +173,7 @@ export class SyncService {
       const dest = fs.createWriteStream(targetPath);
 
       const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
-      const frontMatterTransform = new FrontMatterTransform(file, linkTranslator);
+      const frontMatterTransform = new FrontMatterTransform(file, linkTranslator, navigationTransform.hierarchy);
 
       await this.googleDocsService.download(auth, file,
         [markDownTransform, frontMatterTransform, dest], linkTranslator);

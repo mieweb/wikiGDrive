@@ -5,7 +5,7 @@ import { MarkDownTransform } from '../../src/MarkDownTransform';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
-  it('test ./curly-braces.md.json', async () => {
+  it('test ./curly-braces.md.markdown', async () => {
 
     const doc = require('./curly-braces.md.json');
     const testMarkdown = require('!!raw-loader!./curly-braces.md').default;
@@ -16,7 +16,7 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-  it('test ./test-page.md.json', async () => {
+  it('test ./test-page.md.markdown', async () => {
 
     const doc = require('./test-page.md.json');
     const testMarkdown = require('!!raw-loader!./test-page.md').default;
@@ -27,7 +27,7 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-  it('test ./confluence.md.json', async () => {
+  it('test ./confluence.md.markdown', async () => {
 
     const doc = require('./confluence.md.json');
     const testMarkdown = require('!!raw-loader!./confluence.md').default;
@@ -38,7 +38,7 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-  it('test ./project-overview.md.json', async () => {
+  it('test ./project-overview.md.markdown', async () => {
 
     const doc = require('./project-overview.md.json');
     const testMarkdown = require('!!raw-loader!./project-overview.md').default;
@@ -49,7 +49,7 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-  it('test ./example-document.md.json', async () => {
+  it('test ./example-document.md.markdown', async () => {
 
     const doc = require('./example-document.md.json');
     const testMarkdown = require('!!raw-loader!./example-document.md').default;
@@ -60,7 +60,7 @@ describe('MarkDownTransformTest', () => {
     return Promise.resolve();
   });
 
-  it('test ./intro-to-the-system.md.json', async () => {
+  it('test ./intro-to-the-system.md.markdown', async () => {
 
     const doc = require('./intro-to-the-system.md.json');
     const testMarkdown = require('!!raw-loader!./intro-to-the-system.md').default;

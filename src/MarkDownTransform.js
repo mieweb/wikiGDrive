@@ -3,6 +3,8 @@
 import slugify from 'slugify';
 import { Transform } from 'stream';
 
+export const PREFIX_LEVEL = '    ';
+
 function fixBold(text) {
   const lines = text.split('\n');
 
@@ -303,7 +305,7 @@ export class MarkDownTransform extends Transform {
     if (element.paragraph.bullet) {
       const nesting = element.paragraph.bullet.nestingLevel || 0;
       for (let i=0; i < nesting; i++) {
-        prefix += '    ';
+        prefix += PREFIX_LEVEL;
       }
 
       if (element.paragraph.bullet.listId) {
