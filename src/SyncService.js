@@ -24,7 +24,7 @@ export class SyncService {
     this.params = params;
     this.configService = new ConfigService(this.params.config);
     this.googleAuthService = new GoogleAuthService(this.configService);
-    this.googleDriveService = new GoogleDriveService();
+    this.googleDriveService = new GoogleDriveService(this.params);
     this.googleDocsService = new GoogleDocsService();
   }
 

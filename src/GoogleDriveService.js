@@ -15,6 +15,10 @@ export function getDesiredPath(name) {
 }
 
 export class GoogleDriveService {
+  constructor(params) {
+    this.params = params;
+  }
+
 
   urlToFolderId(url) {
     if (url.match(/drive\.google\.com\/drive.*folders\//)) {
@@ -82,7 +86,7 @@ export class GoogleDriveService {
 
     console.log('Listening folder:', parentDirName || '/');
 
-    if (parentDirName) {
+    if (parentDirName && !this.params['flat-folder-structure']) {
       files.forEach(file => {
         const slugifiedParent = parentDirName
           .split('/')
