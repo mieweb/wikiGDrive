@@ -6,6 +6,14 @@ import {retryAsync} from './retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
+export function getDesiredPath(name) {
+  name = name.replace(/[&]+/g, ' and ');
+  name = name.replace(/[/:()]+/g, ' ');
+  name = name.trim();
+  name = slugify(name, { replacement: '-', lower: true });
+  return name;
+}
+
 export class GoogleDriveService {
 
   urlToFolderId(url) {
@@ -78,8 +86,7 @@ export class GoogleDriveService {
       files.forEach(file => {
         const slugifiedParent = parentDirName
           .split('/')
-          .map(part => slugify(part, { replacement: '-', lower: true }))
-          .map(part => part.replace(/[/]+/g, '-'))
+          .map(part => getDesiredPath(part))
           .join('/');
 
         file.desiredLocalPath = slugifiedParent + '/' + file.desiredLocalPath;
@@ -129,8 +136,7 @@ export class GoogleDriveService {
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
-            file.name = file.name.replace(/[/]+/g, '-');
-            file.desiredLocalPath = slugify(file.name, { replacement: '-', lower: true });
+            file.desiredLocalPath = getDesiredPath(file.name);
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
               delete file.lastModifyingUser;
