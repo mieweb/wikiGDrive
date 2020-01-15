@@ -436,6 +436,7 @@ export class MarkDownTransform extends Transform {
     }
 
     text = this.processMacros(text);
+    text = this.fixQuotes(text);
 
     return text;
   }
@@ -503,6 +504,13 @@ export class MarkDownTransform extends Transform {
     });
 
     return retVal.join('```');
+  }
+
+  fixQuotes(text) {
+    return text
+      .replace(/’/g, '\'')
+      .replace(/“/g, '"')
+      .replace(/”/g, '"');
   }
 
 }

@@ -26,7 +26,7 @@ To the right:
 
 ### Quick View
 
-Most users see this page when they sign in to the system. It is a customizable dashboard featuring information from throughout the system pertinent to the user’s daily job functions. This information is organized into areas called Portlets. Portlets can be collapsed and expanded — or moved by dragging and dropping, so what's important to a specific user can be placed at the top. You can also remove Portlets entirely.
+Most users see this page when they sign in to the system. It is a customizable dashboard featuring information from throughout the system pertinent to the user's daily job functions. This information is organized into areas called Portlets. Portlets can be collapsed and expanded — or moved by dragging and dropping, so what's important to a specific user can be placed at the top. You can also remove Portlets entirely.
 
 ### E-Chart
 
@@ -38,7 +38,7 @@ E-chart navigation includes a number of toolbars, including:
 
 right corner.
 
-1. The Patient Info toolbar displays the patient’s name and medical record number.
+1. The Patient Info toolbar displays the patient's name and medical record number.
 
     1. Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past
 
