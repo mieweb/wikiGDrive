@@ -185,15 +185,22 @@ export class SyncService {
     }
   }
 
-  createFolderStructure(files) {
-    files = files.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
+  createFolderStructure(allFiles) {
+    let directories = allFiles.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
 
-    files.sort((a, b) => {
+    if (this.params['flat-folder-structure']) {
+      directories = directories.filter(dir => {
+        const found = allFiles.find(file => file.mimeType !== FilesStructure.FOLDER_MIME && file.desiredLocalPath.startsWith(dir.desiredLocalPath));
+        return found;
+      });
+    }
+
+    directories.sort((a, b) => {
       return a.localPath.length - b.localPath.length;
     });
 
-    files.forEach(file => {
-      const targetPath = path.join(this.params.dest, file.localPath);
+    directories.forEach(directory => {
+      const targetPath = path.join(this.params.dest, directory.localPath);
       fs.mkdirSync(targetPath, { recursive: true });
     });
 
