@@ -3,6 +3,7 @@
 import { google } from 'googleapis';
 import slugify from 'slugify';
 import {retryAsync} from './retryAsync';
+import {FilesStructure} from './FilesStructure';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -18,7 +19,6 @@ export class GoogleDriveService {
   constructor(params) {
     this.params = params;
   }
-
 
   urlToFolderId(url) {
     if (url.match(/drive\.google\.com\/drive.*folders\//)) {
@@ -82,9 +82,8 @@ export class GoogleDriveService {
   }
 
   async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
-    let files = await this.listFiles(auth, folderId, modifiedTime);
-
     console.log('Listening folder:', parentDirName || '/');
+    let files = await this.listFiles(auth, folderId, modifiedTime);
 
     if (parentDirName && !this.params['flat-folder-structure']) {
       files.forEach(file => {
@@ -107,7 +106,73 @@ export class GoogleDriveService {
       files = files.concat(moreFiles);
     }
 
+    if (modifiedTime) {
+      files = files.filter(dir => {
+        const isOldDir = dir.mimeType === FilesStructure.FOLDER_MIME && dir.modifiedTime < modifiedTime;
+        return !isOldDir;
+      });
+    }
+
     return this.removeDuplicates(files);
+  }
+
+  getStartTrackToken(auth) {
+    return new Promise((resolve, reject) => {
+      const drive = google.drive({ version: 'v3', auth });
+
+      drive.changes.getStartPageToken({}, function (err, res) {
+        if (err) {
+          return reject(err);
+        }
+        resolve(res.data.startPageToken);
+      });
+    });
+  }
+
+  watchChanges(auth, pageToken) {
+    return new Promise(((resolve, reject) => {
+      const drive = google.drive({ version: 'v3', auth });
+
+      drive.changes.list({
+        pageToken: pageToken,
+        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents))'
+      }, (err, res) => {
+        if (err) {
+          console.error(err);
+          return reject(err);
+        } else {
+          const files = res.data.changes
+            .map(change => change.file)
+            .map((file) => {
+              file.desiredLocalPath = getDesiredPath(file.name);
+              if (file.lastModifyingUser) {
+                file.lastAuthor = file.lastModifyingUser.displayName;
+                delete file.lastModifyingUser;
+              }
+
+              if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+                file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
+              }
+
+              switch (file.mimeType) {
+                case 'application/vnd.google-apps.drawing':
+                  file.desiredLocalPath += '.svg';
+                  break;
+                case 'application/vnd.google-apps.document':
+                  file.desiredLocalPath += '.md';
+                  break;
+              }
+
+              return file;
+            });
+
+          resolve({
+            token: res.data.newStartPageToken,
+            files: files
+          });
+        }
+      });
+    }));
   }
 
   listFiles(auth, folderId, modifiedTime, nextPageToken) {
@@ -117,7 +182,7 @@ export class GoogleDriveService {
 
       let query = '\'' + folderId + '\' in parents and trashed = false';
       if (modifiedTime) {
-        query += ' and modifiedTime > \'' + modifiedTime + '\'';
+        query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'application/vnd.google-apps.folder\' )';
       }
 
       drive.files.list({
@@ -132,7 +197,7 @@ export class GoogleDriveService {
         orderBy: 'modifiedTime desc'
       }, async (err, res) => {
         if (err) {
-          reject(err);
+          return reject(err);
         }
 
         if (res.data.nextPageToken) {

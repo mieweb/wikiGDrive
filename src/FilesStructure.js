@@ -146,6 +146,11 @@ class FilesStructure {
     return retVal;
   }
 
+  containsFile(fileId) {
+    if (this.fileMap[fileId]) return true;
+    return false;
+  }
+
   getMaxModifiedTime() {
     let maxModifiedTime = null;
 

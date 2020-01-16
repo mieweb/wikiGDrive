@@ -55,6 +55,12 @@ export class SyncService {
       linkTranslator.mode = this.params['link_mode'];
     }
 
+    let startTrackToken = null;
+    if (this.params.watch) {
+      startTrackToken = await this.googleDriveService.getStartTrackToken(auth);
+      console.log('startTrackToken', startTrackToken);
+    }
+
     await this.createFolderStructure(mergedFiles);
     await this.downloadAssets(auth, mergedFiles);
     await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
@@ -70,34 +76,51 @@ export class SyncService {
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
-      console.log('Watching for changes');
-      let lastMTime = filesStructure.getMaxModifiedTime();
+      console.log('Watching changes');
+
       await new Promise(() => setInterval(async () => {
-        const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId, lastMTime);
-        if (changedFiles.length > 0) {
-          console.log(changedFiles.length + ' files modified');
+        try {
+          const result = await this.googleDriveService.watchChanges(auth, startTrackToken);
 
-          const mergedFiles = filesStructure.merge(changedFiles);
+          const changedFiles = result.files.filter(file => {
+            let retVal = false;
+            file.parents.forEach((parentId) => {
+              if (filesStructure.containsFile(parentId)) {
+                retVal = true;
+              }
+            });
+            return retVal;
+          });
 
-          await this.createFolderStructure(mergedFiles);
-          await this.downloadAssets(auth, mergedFiles);
-          await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
-          await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-          await this.generateConflicts(filesStructure, linkTranslator);
-          await this.generateRedirects(filesStructure, linkTranslator);
+          if (changedFiles.length > 0) {
+            console.log(changedFiles.length + ' files modified');
 
-          const tocGenerator = new TocGenerator('toc.md', linkTranslator);
-          await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+            const mergedFiles = filesStructure.merge(changedFiles);
 
-          config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
-          config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
-          await this.configService.saveConfig(config);
-          console.log('Pulled latest changes');
-          lastMTime = filesStructure.getMaxModifiedTime(); // eslint-disable-line require-atomic-updates
-        } else {
-          console.log('No changes detected. Sleeping for 10 seconds.');
+            await this.createFolderStructure(mergedFiles);
+            await this.downloadAssets(auth, mergedFiles);
+            await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
+            await this.downloadDocuments(auth, mergedFiles, linkTranslator);
+            await this.generateConflicts(filesStructure, linkTranslator);
+            await this.generateRedirects(filesStructure, linkTranslator);
+
+            const tocGenerator = new TocGenerator('toc.md', linkTranslator);
+            await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+
+            config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
+            config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
+            await this.configService.saveConfig(config);
+            console.log('Pulled latest changes');
+          } else {
+            console.log('No changes detected. Sleeping for 10 seconds.');
+          }
+
+          startTrackToken = result.token; // eslint-disable-line require-atomic-updates
+        } catch (e) {
+          console.error(e);
         }
       }, 10000));
+
     }
   }
 
