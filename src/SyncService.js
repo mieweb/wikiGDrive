@@ -180,7 +180,7 @@ export class SyncService {
 
     const navigationFile = files.find(file => file.name === '.navigation');
 
-    const navigationTransform = new NavigationTransform(files);
+    const navigationTransform = new NavigationTransform(files, this.params['link_mode']);
 
     if (navigationFile) {
       const markDownTransform = new MarkDownTransform('.navigation', linkTranslator);

@@ -5,9 +5,10 @@ import {PREFIX_LEVEL} from './MarkDownTransform';
 
 export class NavigationTransform extends Transform {
 
-  constructor(files) {
+  constructor(files, link_mode) {
     super();
 
+    this.link_mode = link_mode;
     this.files = files;
     this.hierarchy = {};
     this.markdown = '';
@@ -31,11 +32,27 @@ export class NavigationTransform extends Transform {
     const levels = {};
 
     let counter = 30;
+
     for (const line of lines) {
       const level = line.replace(/^([\s]*).*$/, '$1').length / PREFIX_LEVEL.length;
 
-      const bracketStart = line.indexOf('(') + 1;
-      const localPath = line.substr(bracketStart, line.indexOf(')') - bracketStart);
+      const squareBracketEnd = line.lastIndexOf(']');
+      const bracketStart = line.indexOf('(', squareBracketEnd) + 1;
+      let localPath = line.substr(bracketStart, line.indexOf(')', squareBracketEnd) - bracketStart);
+
+      switch (this.link_mode) {
+        case 'uglyURLs':
+          localPath = localPath.replace(/.html$/, '.md');
+          break;
+
+        case 'dirURLs':
+          localPath += '.md';
+          break;
+
+        case 'mdURLs':
+        default:
+          break;
+      }
 
       const file = this.files.find(file => file.localPath === localPath);
 
