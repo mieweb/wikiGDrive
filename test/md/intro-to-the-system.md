@@ -9,17 +9,13 @@ The linked text on the left side of the system features a number of tabs that li
 Starting on the left:
 
 1. The Menu button displays or hides the left side menu.
-
 2. The Home button brings you back to this page from any page in {{% system-name %}} SYSTEM {{% /system-name %}} while the default is the Quick View page, a user can specify their home page.
-
 3. The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.
 
 To the right:
 
 1. The signed-in user and their role is displayed.
-
 2. The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.
-
 3. The question mark icon links to available help documentation — if help is available the icon is orange.
 
 

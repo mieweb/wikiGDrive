@@ -278,6 +278,8 @@ export class MarkDownTransform extends Transform {
       pOut = pOut.replace(/<\/strong>/g, '**');
       pOut = pOut.replace(/<em>/g, '*');
       pOut = pOut.replace(/<\/em>/g, '*');
+    } else {
+      pOut = pOut.replace(/\n$/, '');
     }
 
     result.text = prefix + pOut;
