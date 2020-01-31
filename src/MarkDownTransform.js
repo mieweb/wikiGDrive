@@ -278,8 +278,15 @@ export class MarkDownTransform extends Transform {
       pOut = pOut.replace(/<\/strong>/g, '**');
       pOut = pOut.replace(/<em>/g, '*');
       pOut = pOut.replace(/<\/em>/g, '*');
-    } else {
+    }
+
+    if (prefix && !prefix.trim().startsWith('#')) {
       pOut = pOut.replace(/\n$/, '');
+      result.listParagraph = true;
+    } else
+    if (prefix && prefix.trim().startsWith('#')) {
+      pOut = pOut.replace(/\n$/, '');
+      result.headerParagraph = true;
     }
 
     result.text = prefix + pOut;
@@ -330,13 +337,25 @@ export class MarkDownTransform extends Transform {
               counter++;
               listCounters[key] = counter;
 
-              if (listNestingLevel.glyphType === 'ALPHA') {
-                prefix += String.fromCharCode(64 + counter) + '. ';
-              } else { // DECIMAL
-                prefix += counter + '. ';
+              switch (listNestingLevel.glyphType) {
+                case 'ALPHA':
+                case 'UPPER_ALPHA':
+                  // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
+                  prefix += counter + '. ';
+                  break;
+
+                case 'DECIMAL':
+                case 'ROMAN':
+                case 'UPPER_ROMAN':
+                  prefix += counter + '. ';
+                  break;
+
+                case 'GLYPH_TYPE_UNSPECIFIED':
+                default:
+                  prefix += '* ';
+                  break;
               }
           }
-
         }
       }
     }
@@ -413,18 +432,37 @@ export class MarkDownTransform extends Transform {
       }
     }
 
+    let prevParaIsList = false;
     for (let childNo = 0; childNo < results.length; childNo++) {
       const result = results[childNo];
 
+      let currentParaIsList = false;
+
+      let line = '';
+
       if (result !== null) {
         if (result.text && result.text.length > 0) {
+          if (result.listParagraph) {
+            currentParaIsList = true;
+            line = result.text + '\n';
+          } else
+          if (result.headerParagraph) {
+            line = result.text + '\n\n';
+          } else
           if (result.codeParagraph) {
-            text += result.text;
+            line = result.text;
           } else {
-            text += result.text + '\n';
+            line = result.text + '\n';
           }
         }
       }
+
+      if (!currentParaIsList && prevParaIsList) {
+        line = '\n' + line;
+      }
+
+      text += line;
+      prevParaIsList = currentParaIsList;
     }
 
     while (text.indexOf('```\n```\n') > -1) {

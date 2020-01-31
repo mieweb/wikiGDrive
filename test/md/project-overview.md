@@ -83,9 +83,9 @@ The app must:
 
 4. Convert google docs to markdown while preserving as much of the meaning of the document. (Headings, images, drawings, tables, etc). 
 
-    A. Each generated file should have parsable comments embedded in the original source google doc is known. 
+    1. Each generated file should have parsable comments embedded in the original source google doc is known. 
 
-    B. Embedded images (not originally stored on the shared folder will have to be extracted to the filesystem with a hashing system to prevent duplicate copies files in cases where images are pasted into multiple documents.
+    2. Embedded images (not originally stored on the shared folder will have to be extracted to the filesystem with a hashing system to prevent duplicate copies files in cases where images are pasted into multiple documents.
 
 5. Convert google drawings to svg and fix up urls as well. 
 
@@ -95,9 +95,9 @@ The app must:
 
 8. Construct a [table of contents and an index](#table-of-contents-and-index) from all of the documents in the shared drive.
 
-    C. It should be parsable so Javascript on the client could search and build navigation 
+    3. It should be parsable so Javascript on the client could search and build navigation 
 
-    D. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#index))
+    4. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#index))
 
 
 

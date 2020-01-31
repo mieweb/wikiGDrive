@@ -8,15 +8,15 @@ The linked text on the left side of the system features a number of tabs that li
 
 Starting on the left:
 
-1. The Menu button displays or hides the left side menu.
-2. The Home button brings you back to this page from any page in {{% system-name %}} SYSTEM {{% /system-name %}} while the default is the Quick View page, a user can specify their home page.
-3. The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.
+* The Menu button displays or hides the left side menu.
+* The Home button brings you back to this page from any page in {{% system-name %}} SYSTEM {{% /system-name %}} while the default is the Quick View page, a user can specify their home page.
+* The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.
 
 To the right:
 
-1. The signed-in user and their role is displayed.
-2. The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.
-3. The question mark icon links to available help documentation — if help is available the icon is orange.
+* The signed-in user and their role is displayed.
+* The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.
+* The question mark icon links to available help documentation — if help is available the icon is orange.
 
 
 
@@ -30,21 +30,19 @@ Searching for a patient's chart still begins at the E-Chart tab. The overall loo
 
 E-chart navigation includes a number of toolbars, including:
 
-1. The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower
+* The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower
 
 right corner.
 
-1. The Patient Info toolbar displays the patient's name and medical record number.
+* The Patient Info toolbar displays the patient's name and medical record number.
 
-    1. Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past
+    * Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past
 
 encounters, notes and comments.
 
-1. The Patient Extended Toolbar displays demographic, encounter, and other related information.
-
-2. The Alerts toolbar displays available alert information — such as allergies or do not release requests.
-
-3. The Encounter toolbar displays information and links to the open patient encounter.
+* The Patient Extended Toolbar displays demographic, encounter, and other related information.
+* The Alerts toolbar displays available alert information — such as allergies or do not release requests.
+* The Encounter toolbar displays information and links to the open patient encounter.
 
 ### Dynamic Encounter
 
@@ -54,31 +52,24 @@ Note: Multiple users can open a dynamic encounter at the same time. A warning me
 
 The dynamic encounter is divided into a number of sections. Tabs that link to each section appear in the tab toolbar. These sections include:
 
-1. Subjective
-
-2. Objective
-
-3. Assessment
-
-4. Plan
-
-5. Summary
+* Subjective
+* Objective
+* Assessment
+* Plan
+* Summary
 
 Click the section heading to open a section for editing. When the section is open for editing, the following buttons appear:
 
-1. Next - Saves data entered into the current section and opens the next section.
-
-2. Cancel - Closes the section. Any data entered is not saved.
-
-3. Hide section - Removes the section from the encounter.
+* Next - Saves data entered into the current section and opens the next section.
+* Cancel - Closes the section. Any data entered is not saved.
+* Hide section - Removes the section from the encounter.
 
 When a section is open for editing, a Next button appears at the bottom. Click the next button to open the next available section for editing. Some sections have display options. The following options are available:
 
-1. Summary view - Displays data in a bulleted list.
-
-2. Detail view - Displays data in a table.
+* Summary view - Displays data in a bulleted list.
+* Detail view - Displays data in a table.
 
 ## Related Pages
 
-1. [System Anatomy](test.md)
+* [System Anatomy](test.md)
 

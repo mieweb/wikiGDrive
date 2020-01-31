@@ -16,3 +16,18 @@ export function compareTexts(input, output) {
 
   return diff.length === 0;
 }
+
+export function compareTextsWithLines(input, output) {
+  const diff = Diff.diffLines(input, output, {
+    ignoreWhitespace: true,
+  }).filter(row => (row.added || row.removed));
+
+  diff.forEach(function(part) {
+    // process.stdout.write(Math.floor(idx / 2 + 2) + ':\t');
+    const color = part.added ? 'green' : part.removed ? 'red' : 'grey';
+    process.stdout.write(part.value[color]);
+    // console.log('');
+  });
+
+  return diff.length === 0;
+}
