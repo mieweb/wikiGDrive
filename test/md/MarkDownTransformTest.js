@@ -5,6 +5,18 @@ import { MarkDownTransform } from '../../src/MarkDownTransform';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
+
+  it('test ./block-macro.md.markdown', async () => {
+
+    const doc = require('./block-macro.md.json');
+    const testMarkdown = require('!!raw-loader!./block-macro.md').default;
+
+    const markdown = await transform(doc);
+    assert.ok(compareTexts(testMarkdown, markdown));
+
+    return Promise.resolve();
+  });
+
   it('test ./bullets.md.markdown', async () => {
 
     const doc = require('./bullets.md.json');
