@@ -1,4 +1,4 @@
-The following page addresses the basic navigation and functionality of {{% system-name %}} SYSTEM {{% /system-name %}} . If you're a current user, you'll notice some things might look a little different. We've improved the user experience — making {{% system-name %}} SYSTEM {{% /system-name %}} even more intuitive and efficient.
+The following page addresses the basic navigation and functionality of {{% system-name %}} . If you're a current user, you'll notice some things might look a little different. We've improved the user experience — making {{% system-name %}} even more intuitive and efficient.
 
 
 
@@ -9,7 +9,7 @@ The linked text on the left side of the system features a number of tabs that li
 Starting on the left:
 
 * The Menu button displays or hides the left side menu.
-* The Home button brings you back to this page from any page in {{% system-name %}} SYSTEM {{% /system-name %}} while the default is the Quick View page, a user can specify their home page.
+* The Home button brings you back to this page from any page in {{% system-name %}} while the default is the Quick View page, a user can specify their home page.
 * The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.
 
 To the right:
@@ -26,7 +26,7 @@ Most users see this page when they sign in to the system. It is a customizable d
 
 ### E-Chart
 
-Searching for a patient's chart still begins at the E-Chart tab. The overall look and feel of the patient search matches the new {{% system-name %}} SYSTEM {{% /system-name %}} styling, including the tabs. The E-Chart defaults to the Patient Summary page. The Patient Summary displays data in portlets much like the Quick View.
+Searching for a patient's chart still begins at the E-Chart tab. The overall look and feel of the patient search matches the new {{% system-name %}} styling, including the tabs. The E-Chart defaults to the Patient Summary page. The Patient Summary displays data in portlets much like the Quick View.
 
 E-chart navigation includes a number of toolbars, including:
 
