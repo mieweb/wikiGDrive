@@ -17,6 +17,7 @@ import { FrontMatterTransform } from './FrontMatterTransform';
 import { FilesStructure } from './FilesStructure';
 import { ExternalFiles } from './ExternalFiles';
 import {NavigationTransform} from './NavigationTransform';
+import {GoogleListFixer} from './GoogleListFixer';
 
 export class SyncService {
 
@@ -198,8 +199,13 @@ export class SyncService {
       const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
       const frontMatterTransform = new FrontMatterTransform(file, linkTranslator, navigationTransform.hierarchy);
 
+      const destDoc = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.html'));
+      await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destDoc);
+
+      const googleListFixer = new GoogleListFixer(path.join(this.params.dest, file.localPath + '.html'));
+
       await this.googleDocsService.download(auth, file,
-        [markDownTransform, frontMatterTransform, dest], linkTranslator);
+        [googleListFixer, markDownTransform, frontMatterTransform, dest], linkTranslator);
 
       const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
 

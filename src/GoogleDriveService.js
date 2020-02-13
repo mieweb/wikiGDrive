@@ -267,6 +267,9 @@ export class GoogleDriveService {
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
           reject(err);
+          console.error(err);
+          console.log('res', res);
+          return;
         }
 
         let stream = res.data
