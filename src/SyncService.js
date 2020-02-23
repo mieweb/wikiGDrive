@@ -18,6 +18,7 @@ import { FilesStructure } from './FilesStructure';
 import { ExternalFiles } from './ExternalFiles';
 import {NavigationTransform} from './NavigationTransform';
 import {GoogleListFixer} from './GoogleListFixer';
+import {EmbedImageFixed} from './EmbedImageFixed';
 
 export class SyncService {
 
@@ -203,9 +204,10 @@ export class SyncService {
       await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destDoc);
 
       const googleListFixer = new GoogleListFixer(path.join(this.params.dest, file.localPath + '.html'));
+      const embedImageFixed = new EmbedImageFixed(path.join(this.params.dest, file.localPath + '.html'));
 
       await this.googleDocsService.download(auth, file,
-        [googleListFixer, markDownTransform, frontMatterTransform, dest], linkTranslator);
+        [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], linkTranslator);
 
       const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
 

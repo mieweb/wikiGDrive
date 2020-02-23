@@ -99,10 +99,12 @@ export class MarkDownTransform extends Transform {
       const inlineObject = this.document.inlineObjects[url];
 
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-      } else {
-        url = '';
+      if (embeddedObject.imageProperties) {
+        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+        } else {
+          url = '';
+        }
       }
     }
 
