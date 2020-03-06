@@ -3,6 +3,8 @@
 import slugify from 'slugify';
 import { Transform } from 'stream';
 
+export const PREFIX_LEVEL = '    ';
+
 function fixBold(text) {
   const lines = text.split('\n');
 
@@ -97,10 +99,12 @@ export class MarkDownTransform extends Transform {
       const inlineObject = this.document.inlineObjects[url];
 
       const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-      } else {
-        url = '';
+      if (embeddedObject.imageProperties) {
+        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+        } else {
+          url = '';
+        }
       }
     }
 
@@ -170,7 +174,7 @@ export class MarkDownTransform extends Transform {
 
       if (paragraph.paragraphStyle.namedStyleType) {
         const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-        if (fontFamily === 'Courier New') {
+        if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
           textElements.push('```\n');
           result.codeParagraph = true;
         }
@@ -208,7 +212,7 @@ export class MarkDownTransform extends Transform {
 
       if (paragraph.paragraphStyle.namedStyleType) {
         const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-        if (fontFamily === 'Courier New') {
+        if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
           textElements.push('```\n');
         }
       }
@@ -278,6 +282,15 @@ export class MarkDownTransform extends Transform {
       pOut = pOut.replace(/<\/em>/g, '*');
     }
 
+    if (prefix && !prefix.trim().startsWith('#')) {
+      pOut = pOut.replace(/\n$/, '');
+      result.listParagraph = true;
+    } else
+    if (prefix && prefix.trim().startsWith('#')) {
+      pOut = pOut.replace(/\n$/, '');
+      result.headerParagraph = true;
+    }
+
     result.text = prefix + pOut;
 
     return result;
@@ -303,7 +316,7 @@ export class MarkDownTransform extends Transform {
     if (element.paragraph.bullet) {
       const nesting = element.paragraph.bullet.nestingLevel || 0;
       for (let i=0; i < nesting; i++) {
-        prefix += '    ';
+        prefix += PREFIX_LEVEL;
       }
 
       if (element.paragraph.bullet.listId) {
@@ -326,13 +339,25 @@ export class MarkDownTransform extends Transform {
               counter++;
               listCounters[key] = counter;
 
-              if (listNestingLevel.glyphType === 'ALPHA') {
-                prefix += String.fromCharCode(64 + counter) + '. ';
-              } else { // DECIMAL
-                prefix += counter + '. ';
+              switch (listNestingLevel.glyphType) {
+                case 'ALPHA':
+                case 'UPPER_ALPHA':
+                  // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
+                  prefix += counter + '. ';
+                  break;
+
+                case 'DECIMAL':
+                case 'ROMAN':
+                case 'UPPER_ROMAN':
+                  prefix += counter + '. ';
+                  break;
+
+                case 'GLYPH_TYPE_UNSPECIFIED':
+                default:
+                  prefix += '* ';
+                  break;
               }
           }
-
         }
       }
     }
@@ -353,6 +378,9 @@ export class MarkDownTransform extends Transform {
     }
 
     function getFontFamily(style) {
+      if (style.weightedFontFamily) {
+        return style.weightedFontFamily.fontFamily;
+      }
       return style.fontFamily;
     }
 
@@ -373,7 +401,7 @@ export class MarkDownTransform extends Transform {
     }
 
     if (font) {
-      if (font === 'Courier New') {
+      if (font === 'Courier New' || font === 'Courier') {
         pOut = '`' + pOut + '`';
       }
     }
@@ -409,18 +437,37 @@ export class MarkDownTransform extends Transform {
       }
     }
 
+    let prevParaIsList = false;
     for (let childNo = 0; childNo < results.length; childNo++) {
       const result = results[childNo];
 
+      let currentParaIsList = false;
+
+      let line = '';
+
       if (result !== null) {
         if (result.text && result.text.length > 0) {
+          if (result.listParagraph) {
+            currentParaIsList = true;
+            line = result.text + '\n';
+          } else
+          if (result.headerParagraph) {
+            line = result.text + '\n\n';
+          } else
           if (result.codeParagraph) {
-            text += result.text;
+            line = result.text;
           } else {
-            text += result.text + '\n';
+            line = result.text + '\n';
           }
         }
       }
+
+      if (!currentParaIsList && prevParaIsList) {
+        line = '\n' + line;
+      }
+
+      text += line;
+      prevParaIsList = currentParaIsList;
     }
 
     while (text.indexOf('```\n```\n') > -1) {
@@ -434,8 +481,63 @@ export class MarkDownTransform extends Transform {
     }
 
     text = this.processMacros(text);
+    text = this.fixBlockMacros(text);
+    text = this.fixQuotes(text);
+
+    /*eslint no-control-regex: "off"*/
+    text = text.replace(/\x0b/g, ' ');
 
     return text;
+  }
+
+  fixBlockMacros(text) {
+    const lines = text.split('\n').map(line => {
+      let idxStart;
+      let idxEnd = 0;
+
+      while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
+        idxEnd = line.indexOf(' %}}', idxStart);
+        if (idxEnd > -1) {
+          const parts = [ line.substr(0, idxStart),
+            line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+            line.substr(idxEnd + ' %}}'.length)
+          ];
+
+          if (parts[1].startsWith('{{% /')) {
+            line = parts[0] + parts[1] + '\n' + parts[2];
+            idxEnd++;
+          } else {
+            const idxOfClosing = line.indexOf(parts[1].replace('{{% ', '{{% /'), idxEnd);
+
+            if (idxOfClosing > -1) {
+              const parts = [ line.substr(0, idxStart),
+                line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+                line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
+                line.substr(idxOfClosing)
+              ];
+
+              parts[2] = parts[2].replace(/<strong><em>/g, '**_');
+              parts[2] = parts[2].replace(/<\/em><\/strong>/g, '_**');
+              parts[2] = parts[2].replace(/<strong>/g, '**');
+              parts[2] = parts[2].replace(/<\/strong>/g, '**');
+              parts[2] = parts[2].replace(/<em>/g, '*');
+              parts[2] = parts[2].replace(/<\/em>/g, '*');
+
+              line = parts[0] + '\n\n' + parts[1] + parts[2] + parts[3];
+              idxEnd += 2;
+            }
+          }
+        } else {
+          break;
+        }
+
+
+      }
+
+      return line;
+    });
+
+    return lines.join('\n');
   }
 
   processMacros(text) {
@@ -501,6 +603,13 @@ export class MarkDownTransform extends Transform {
     });
 
     return retVal.join('```');
+  }
+
+  fixQuotes(text) {
+    return text
+      .replace(/’/g, '\'')
+      .replace(/“/g, '"')
+      .replace(/”/g, '"');
   }
 
 }

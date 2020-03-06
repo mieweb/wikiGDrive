@@ -1,0 +1,4236 @@
+{
+  "title": "Block Macro Issue",
+  "body": {
+    "content": [
+      {
+        "endIndex": 1,
+        "sectionBreak": {
+          "sectionStyle": {
+            "columnSeparatorStyle": "NONE",
+            "contentDirection": "LEFT_TO_RIGHT",
+            "sectionType": "CONTINUOUS"
+          }
+        }
+      },
+      {
+        "startIndex": 1,
+        "endIndex": 451,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 1,
+              "endIndex": 451,
+              "textRun": {
+                "content": "In order to better serve client needs, {system-name } has streamlined the concepts and efforts of quality reporting participation, in order to serve all interested entities. If, as a standard, a business would like to track ongoing quality of care initiatives, or even participate in sponsored quality programs, {system-name } systems now offer a plethora of quantifiable and reportable measures, designed to track and improve overall care delivery.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      },
+      {
+        "startIndex": 451,
+        "endIndex": 781,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 451,
+              "endIndex": 742,
+              "textRun": {
+                "content": "The following information is intended to walk users through the basic enrollment process, which will in turn allow for ongoing tracking of relevant care-specific data, processes, and outcomes. For detailed specifications regarding the available measures, please feel free to navigate to our ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 742,
+              "endIndex": 765,
+              "textRun": {
+                "content": "Measures Specifications",
+                "textStyle": {
+                  "underline": true,
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {
+                        "blue": 0.93333334
+                      }
+                    }
+                  },
+                  "link": {
+                    "url": "https://confluence.mieweb.com/display/MIG/Measures"
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 765,
+              "endIndex": 781,
+              "textRun": {
+                "content": " documentation.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "spaceBelow": {
+              "magnitude": 11.25,
+              "unit": "PT"
+            },
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      },
+      {
+        "startIndex": 781,
+        "endIndex": 818,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 781,
+              "endIndex": 818,
+              "textRun": {
+                "content": "Enroll via Quality Reporting Portlet\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "HEADING_2",
+            "direction": "LEFT_TO_RIGHT",
+            "spaceAbove": {
+              "unit": "PT"
+            },
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      },
+      {
+        "startIndex": 818,
+        "endIndex": 1124,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 818,
+              "endIndex": 908,
+              "textRun": {
+                "content": "Navigate to the {syslink \"Quick View\" \"func=omniscope\"} from the sidemenu, and locate the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 908,
+              "endIndex": 925,
+              "textRun": {
+                "content": "Quality Reporting",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 925,
+              "endIndex": 934,
+              "textRun": {
+                "content": " portlet.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 934,
+              "endIndex": 935,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 935,
+              "endIndex": 1001,
+              "textRun": {
+                "content": "{tip }\u000bIf the Quality Reporting portlet is not enabled, click the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1001,
+              "endIndex": 1016,
+              "textRun": {
+                "content": "Select Portlets",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 1016,
+              "endIndex": 1061,
+              "textRun": {
+                "content": " link toward the top of the page. Select the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1061,
+              "endIndex": 1078,
+              "textRun": {
+                "content": "Quality Reporting",
+                "textStyle": {
+                  "italic": true
+                }
+              }
+            },
+            {
+              "startIndex": 1078,
+              "endIndex": 1102,
+              "textRun": {
+                "content": " portlet, and click the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1102,
+              "endIndex": 1106,
+              "textRun": {
+                "content": "Save",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 1106,
+              "endIndex": 1115,
+              "textRun": {
+                "content": " button.\u000b",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1115,
+              "endIndex": 1116,
+              "inlineObjectElement": {
+                "inlineObjectId": "kix.z2yu4cjvxzz0",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1116,
+              "endIndex": 1124,
+              "textRun": {
+                "content": "\u000b{/tip}\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 1124,
+        "endIndex": 1555,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 1124,
+              "endIndex": 1297,
+              "textRun": {
+                "content": "Click the {syslink \"Enroll\" \"f=layout&module=MIPS&name=Advanced+Measure+Enrollment&user_id=50&redirect=f%3Domniscope&tabmodule=+\"} hyperlink to begin the enrollment process.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1297,
+              "endIndex": 1301,
+              "textRun": {
+                "content": "\u000b\u000b\u000b\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1301,
+              "endIndex": 1302,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.1",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1302,
+              "endIndex": 1303,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1303,
+              "endIndex": 1313,
+              "textRun": {
+                "content": "{warning }",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1313,
+              "endIndex": 1314,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1314,
+              "endIndex": 1541,
+              "textRun": {
+                "content": "Ensure all participating provider profiles are edited with the correct National Provider Identifier (NPI) and Tax Identification Number (TIN), so that the JSON file to be submitted successfully uploads to the reporting website.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1541,
+              "endIndex": 1542,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1542,
+              "endIndex": 1543,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.2",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1543,
+              "endIndex": 1544,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1544,
+              "endIndex": 1555,
+              "textRun": {
+                "content": "{/warning}\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 1555,
+        "endIndex": 1791,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 1555,
+              "endIndex": 1585,
+              "textRun": {
+                "content": "After the page loads, use the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1585,
+              "endIndex": 1591,
+              "textRun": {
+                "content": "Opt In",
+                "textStyle": {
+                  "italic": true
+                }
+              }
+            },
+            {
+              "startIndex": 1591,
+              "endIndex": 1661,
+              "textRun": {
+                "content": " section to begin enrolling users, accordingly. Begin typing into the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1661,
+              "endIndex": 1665,
+              "textRun": {
+                "content": "User",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 1665,
+              "endIndex": 1785,
+              "textRun": {
+                "content": " autocomplete each name of the user(s)/provider(s) being enrolled. Multiple users/providers may be enrolled at one time.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1785,
+              "endIndex": 1789,
+              "textRun": {
+                "content": "\u000b\u000b\u000b\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1789,
+              "endIndex": 1790,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.3",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1790,
+              "endIndex": 1791,
+              "textRun": {
+                "content": "\n",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 1791,
+        "endIndex": 1964,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 1791,
+              "endIndex": 1883,
+              "textRun": {
+                "content": "If enrolling in a specific program, or one of the sponsored incentive programs, specify the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1883,
+              "endIndex": 1898,
+              "textRun": {
+                "content": "Start/End Dates",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 1898,
+              "endIndex": 1958,
+              "textRun": {
+                "content": " of the intended performance period. Otherwise, leave blank.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1958,
+              "endIndex": 1962,
+              "textRun": {
+                "content": "\u000b\u000b\u000b\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1962,
+              "endIndex": 1963,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.4",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 1963,
+              "endIndex": 1964,
+              "textRun": {
+                "content": "\n",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 1964,
+        "endIndex": 2810,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 1964,
+              "endIndex": 1979,
+              "textRun": {
+                "content": "Next, from the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 1979,
+              "endIndex": 1997,
+              "textRun": {
+                "content": "Available Measures",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 1997,
+              "endIndex": 2012,
+              "textRun": {
+                "content": " table, select ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2012,
+              "endIndex": 2046,
+              "textRun": {
+                "content": "all measures needing to be tracked",
+                "textStyle": {
+                  "bold": true,
+                  "underline": true
+                }
+              }
+            },
+            {
+              "startIndex": 2046,
+              "endIndex": 2155,
+              "textRun": {
+                "content": ", specific to the relevant program(s) opted into by the enrolled provider(s). Filter the columns, as needed. ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2155,
+              "endIndex": 2156,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2156,
+              "endIndex": 2157,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.5",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2157,
+              "endIndex": 2158,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2158,
+              "endIndex": 2165,
+              "textRun": {
+                "content": "{info }",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2165,
+              "endIndex": 2166,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2166,
+              "endIndex": 2244,
+              "textRun": {
+                "content": "For more information on filtering tables and using the DataVis grids, see the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2244,
+              "endIndex": 2263,
+              "textRun": {
+                "content": "Using DataVis Grids",
+                "textStyle": {
+                  "underline": true,
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {
+                        "blue": 0.93333334
+                      }
+                    }
+                  },
+                  "link": {
+                    "url": "https://confluence.mieweb.com/display/MIG/Using+DataVis+Grids+-+Data+Tools"
+                  }
+                }
+              }
+            },
+            {
+              "startIndex": 2263,
+              "endIndex": 2283,
+              "textRun": {
+                "content": " help documentation.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2283,
+              "endIndex": 2284,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2284,
+              "endIndex": 2291,
+              "textRun": {
+                "content": "{/info}",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2291,
+              "endIndex": 2292,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2292,
+              "endIndex": 2302,
+              "textRun": {
+                "content": "{warning }",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2302,
+              "endIndex": 2303,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2303,
+              "endIndex": 2796,
+              "textRun": {
+                "content": "It is very important to select the correct measure associated with your Performance Period (i.e., 2018 measures for any performance period between 1-1-2018 to 12-31-2018, 2019 measures for any performance period between 1-1-2019 to 12-31-2019, etc.). Be sure to enroll in ONLY the measures for which supporting documentation can be provided, as outlined by the measure specification. DO NOT enroll in any measures for which supporting documentation cannot be provided in the event of an audit.",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 2796,
+              "endIndex": 2797,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2797,
+              "endIndex": 2807,
+              "textRun": {
+                "content": "{/warning}",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2807,
+              "endIndex": 2810,
+              "textRun": {
+                "content": "\u000b\u000b\n",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 2810,
+        "endIndex": 3025,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 2810,
+              "endIndex": 2868,
+              "textRun": {
+                "content": "Once all necessary measures have been selected, click the ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2868,
+              "endIndex": 2874,
+              "textRun": {
+                "content": "Submit",
+                "textStyle": {
+                  "bold": true
+                }
+              }
+            },
+            {
+              "startIndex": 2874,
+              "endIndex": 2883,
+              "textRun": {
+                "content": " button. ",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2883,
+              "endIndex": 2884,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2884,
+              "endIndex": 2885,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.6",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2885,
+              "endIndex": 2886,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2886,
+              "endIndex": 2893,
+              "textRun": {
+                "content": "{info }",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 2893,
+              "endIndex": 2894,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 2894,
+              "endIndex": 3014,
+              "textRun": {
+                "content": "The logged-in user will now be able to track the enrolled measures from the Quality Reporting portlet on the Quick View.",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 3014,
+              "endIndex": 3015,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 3015,
+              "endIndex": 3016,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.7",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 3016,
+              "endIndex": 3017,
+              "textRun": {
+                "content": "\u000b",
+                "textStyle": {
+                  "bold": false,
+                  "italic": false,
+                  "underline": false,
+                  "strikethrough": false,
+                  "smallCaps": false,
+                  "backgroundColor": {},
+                  "foregroundColor": {
+                    "color": {
+                      "rgbColor": {}
+                    }
+                  },
+                  "fontSize": {
+                    "magnitude": 11,
+                    "unit": "PT"
+                  },
+                  "weightedFontFamily": {
+                    "fontFamily": "Arial",
+                    "weight": 400
+                  },
+                  "baselineOffset": "NONE"
+                }
+              }
+            },
+            {
+              "startIndex": 3017,
+              "endIndex": 3025,
+              "textRun": {
+                "content": "{/info}\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          },
+          "bullet": {
+            "listId": "kix.list.1",
+            "textStyle": {}
+          }
+        }
+      },
+      {
+        "startIndex": 6002,
+        "endIndex": 6003,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 6002,
+              "endIndex": 6003,
+              "textRun": {
+                "content": "\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      },
+      {
+        "startIndex": 6003,
+        "endIndex": 6004,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 6003,
+              "endIndex": 6004,
+              "textRun": {
+                "content": "\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      },
+      {
+        "startIndex": 6004,
+        "endIndex": 6226,
+        "paragraph": {
+          "elements": [
+            {
+              "startIndex": 6004,
+              "endIndex": 6005,
+              "inlineObjectElement": {
+                "inlineObjectId": "i.14",
+                "textStyle": {}
+              }
+            },
+            {
+              "startIndex": 6005,
+              "endIndex": 6226,
+              "textRun": {
+                "content": "After selecting the appropriate report, all relevant statuses for either patient encounters or providers will display. These reports provide an overall view of the collected data, as it relates to the available measures.\n",
+                "textStyle": {}
+              }
+            }
+          ],
+          "paragraphStyle": {
+            "namedStyleType": "NORMAL_TEXT",
+            "direction": "LEFT_TO_RIGHT",
+            "borderBetween": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderTop": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderBottom": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderLeft": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "borderRight": {
+              "color": {},
+              "width": {
+                "unit": "PT"
+              },
+              "padding": {
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "shading": {
+              "backgroundColor": {}
+            }
+          }
+        }
+      }
+    ]
+  },
+  "documentStyle": {
+    "background": {
+      "color": {}
+    },
+    "pageNumberStart": 1,
+    "marginTop": {
+      "magnitude": 72,
+      "unit": "PT"
+    },
+    "marginBottom": {
+      "magnitude": 72,
+      "unit": "PT"
+    },
+    "marginRight": {
+      "magnitude": 72,
+      "unit": "PT"
+    },
+    "marginLeft": {
+      "magnitude": 72,
+      "unit": "PT"
+    },
+    "pageSize": {
+      "height": {
+        "magnitude": 792,
+        "unit": "PT"
+      },
+      "width": {
+        "magnitude": 612,
+        "unit": "PT"
+      }
+    },
+    "marginHeader": {
+      "magnitude": 36,
+      "unit": "PT"
+    },
+    "marginFooter": {
+      "magnitude": 36,
+      "unit": "PT"
+    }
+  },
+  "namedStyles": {
+    "styles": [
+      {
+        "namedStyleType": "NORMAL_TEXT",
+        "textStyle": {},
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "alignment": "START",
+          "lineSpacing": 100,
+          "direction": "LEFT_TO_RIGHT",
+          "spacingMode": "COLLAPSE_LISTS",
+          "spaceAbove": {
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "indentFirstLine": {
+            "unit": "PT"
+          },
+          "indentStart": {
+            "unit": "PT"
+          },
+          "indentEnd": {
+            "unit": "PT"
+          },
+          "keepLinesTogether": false,
+          "keepWithNext": false,
+          "avoidWidowAndOrphan": false,
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_1",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 24,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 12,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 12,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_2",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 18,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 11.25,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 11.25,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_3",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 14,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 12,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 12,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_4",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 12,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 12.75,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 12.75,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_5",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 9,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 12.75,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 12.75,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "HEADING_6",
+        "textStyle": {
+          "bold": true,
+          "italic": false,
+          "fontSize": {
+            "magnitude": 8,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 18,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 18,
+            "unit": "PT"
+          },
+          "borderBetween": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderTop": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderBottom": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderLeft": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "borderRight": {
+            "color": {},
+            "width": {
+              "unit": "PT"
+            },
+            "padding": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "shading": {
+            "backgroundColor": {}
+          }
+        }
+      },
+      {
+        "namedStyleType": "TITLE",
+        "textStyle": {
+          "bold": true,
+          "fontSize": {
+            "magnitude": 36,
+            "unit": "PT"
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 24,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 6,
+            "unit": "PT"
+          },
+          "keepLinesTogether": true,
+          "keepWithNext": true
+        }
+      },
+      {
+        "namedStyleType": "SUBTITLE",
+        "textStyle": {
+          "italic": true,
+          "foregroundColor": {
+            "color": {
+              "rgbColor": {
+                "red": 0.4,
+                "green": 0.4,
+                "blue": 0.4
+              }
+            }
+          },
+          "fontSize": {
+            "magnitude": 24,
+            "unit": "PT"
+          },
+          "weightedFontFamily": {
+            "fontFamily": "Georgia",
+            "weight": 400
+          }
+        },
+        "paragraphStyle": {
+          "namedStyleType": "NORMAL_TEXT",
+          "direction": "LEFT_TO_RIGHT",
+          "spaceAbove": {
+            "magnitude": 18,
+            "unit": "PT"
+          },
+          "spaceBelow": {
+            "magnitude": 4,
+            "unit": "PT"
+          },
+          "keepLinesTogether": true,
+          "keepWithNext": true
+        }
+      }
+    ]
+  },
+  "lists": {
+    "kix.list.1": {
+      "listProperties": {
+        "nestingLevels": [
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 54,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 72,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 90,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 108,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 126,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 144,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 162,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 180,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 198,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 216,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 234,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 252,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 270,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 288,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 306,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 324,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          }
+        ]
+      }
+    },
+    "kix.list.2": {
+      "listProperties": {
+        "nestingLevels": [
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 12,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 30,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 54,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 72,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 90,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 108,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 126,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 144,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 162,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 180,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 198,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 216,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 234,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 252,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 270,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 288,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          },
+          {
+            "bulletAlignment": "START",
+            "glyphType": "GLYPH_TYPE_UNSPECIFIED",
+            "indentFirstLine": {
+              "magnitude": 306,
+              "unit": "PT"
+            },
+            "indentStart": {
+              "magnitude": 324,
+              "unit": "PT"
+            },
+            "textStyle": {
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "strikethrough": false,
+              "smallCaps": false,
+              "backgroundColor": {},
+              "foregroundColor": {
+                "color": {
+                  "rgbColor": {}
+                }
+              },
+              "fontSize": {
+                "magnitude": 11,
+                "unit": "PT"
+              },
+              "weightedFontFamily": {
+                "fontFamily": "Arial",
+                "weight": 400
+              },
+              "baselineOffset": "NONE"
+            },
+            "startNumber": 1
+          }
+        ]
+      }
+    }
+  },
+  "revisionId": "AOV_f482fBbgUJRIiUJELbnoeZw3yOkhF2zFlQXBsd8vlalWCQoQRQE0JXaYFsOQidHWIfYFWj9YwjbGVXkbHw",
+  "suggestionsViewMode": "SUGGESTIONS_INLINE",
+  "inlineObjects": {
+    "i.2": {
+      "objectId": "i.2",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/xyM2Iq8H3MNNJUCaaB7_3P0XC0Md6C1RdWROxAfnKTdFzUAw4Wq3pnsofLxj91CaVbAoKixTo4fTZCbEW1chEW5lQ_d5LR_aWH6DdS2-dnfOjvPN4-rzIDWos0T9x_yMOFocH0uT992-BNl4Ig",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 489.8821721311475,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.1": {
+      "objectId": "i.1",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh6.googleusercontent.com/5LBvLpMv-gaFfKT8X9EdpPNC0oKtRGctxyWB18y5V33-WBNK-ZoWCkI4F7Wkv4YJRTUOpyx5A7z4AgD8m_IXvCQfK6hyjEKnXfgEGUrHhSN47fL817_kNdOYhl85AK73DhFiqc3uYo76uR10Xg",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 530.6603773584906,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.4": {
+      "objectId": "i.4",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh5.googleusercontent.com/6CcGBksPnSRb00eB9xrvQDcw7RWzK42inToOleCp1RVZaBaLCeJ_RWrA31p9ZZbaxAzYXy11GRlBHjz7SaHqxsw0ibjpFmb6gI7_Wii3T-iAG7QmR77RiJ4FHbI9rMj0DkYCF23m54oGCJuGyQ",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 581.7891373801917,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.3": {
+      "objectId": "i.3",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh6.googleusercontent.com/0eWnlR3Xn7snuC-A0exEjwHyaCmU3g17fdkOyd9-OAuKmF9QlkoPIs2B8VInH7On2tgdTV7GJRYd6z7UJH7lh1WLazncCQFFXJc2CLa_vVIV2MxiMPF_c3LrOdsnUoADA8usljH5wWynxovENw",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 582.2683706070287,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.6": {
+      "objectId": "i.6",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh5.googleusercontent.com/KvypXxdm8kn9kP4xtrnPR0sDD74VN7PGoHZe1F_bwL-mTHLdLGFIi-gz9I4UwSN8OMU37xW0bL7Ij94bUrbAydrwHo-j7E6WpuLDQ35hs4DEk4OBNJhWyrij6n577JOSNmT1keDjnCfVnBxR7g",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 667.9035250463822,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.5": {
+      "objectId": "i.5",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/TxrIi-vrikJjlp8HCYbZZoR7DEB3XAXt5jQyPOizAOW_9H8WJRk2qKrQd9GKDVnfbf8DvjAjEUTHi2QTiZ43QL9B04bEwvGAXkvp9DyBATKdRUlfhi1sfTiy7I_eUClEo0N6C4wB3Mx5WN7Kxw",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 548.4939759036145,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.8": {
+      "objectId": "i.8",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh6.googleusercontent.com/5LBvLpMv-gaFfKT8X9EdpPNC0oKtRGctxyWB18y5V33-WBNK-ZoWCkI4F7Wkv4YJRTUOpyx5A7z4AgD8m_IXvCQfK6hyjEKnXfgEGUrHhSN47fL817_kNdOYhl85AK73DhFiqc3uYo76uR10Xg",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 530.6603773584906,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.7": {
+      "objectId": "i.7",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/yO-iEqdsv1znh8UgwtvYCHUh0EmZBE3YzavQW0ohy693dTOmNYMlodbjyNHy48WnzDw9XXTOQuVMW3iRIt0yDkYVTJ_UDGalrYmd99b8YgyHNSQnPHCyYdnJ2OVRQRWtotmArHKuFG8q0DfJNQ",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 404.04040404040404,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.10": {
+      "objectId": "i.10",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh4.googleusercontent.com/PGuGPKQMQIMic_VbKbgqumohL5AvxSGM7qmhWvUci9b4MUUhLcYRYLRC6ey8ABrX60jocbQmhF5kZq2GfC1UnkkyJzJvGygy9FlM-1z0WqnrbsOviRGoBUAuXfxPMnXh0HlMZzYlpQ3uhNYg2w",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 628.4916201117319,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.11": {
+      "objectId": "i.11",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh6.googleusercontent.com/P_9j0553Gb-QnGLtcW7-CuiFyfEXSaGPoIk9F_YxsGfM7eCKohjbjjHjPKAMaQo-FqmpKFHb0XQLJcuDpB71MVaR9-IjK2WIVyKOAea9M0EKk_omg3Hgv0DuNIs9lspxJ1Q-jNgW6libIS20aw",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 503.43007915567284,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.9": {
+      "objectId": "i.9",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/qk3xJ5DHviYi6b9JYGqkeEff6xy3kNsZb67cvNiTjniqalO7dyl76i06BqpAGrLl4pWGI-gLAHGbHYCVnkUap05EZ4yeicpjcHQR_PjJf804II7UQLkXT5cUWIC_4rZInuIpe3Ugh9T3Pgif4A",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 574.1214057507988,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.12": {
+      "objectId": "i.12",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh5.googleusercontent.com/YO7Gx61VacKZ5jKKZ6Bdm6LPUJWKwZa0oh4speiN_nhpNbV4JwZDLFROC9ZvbwZfd53_K7DG2rUvq2MLpXryifkj0LeyI1jHFd9fM4X-x5wJtjTp6O6NCXOySh6hbxA7SAPHRDTJij819ganmg",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 142.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 515.25,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.13": {
+      "objectId": "i.13",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/zJb3F0BL-PIA8Yl783EEuUKs42XdlUcOwRhIx44OMva41imRhSo8JMCNJRDlnEYoHc6petWjZd2UZvDYh0hjlabWzugSTnkLgaYTTjyIZIJW5xYMa7cCo6FFluAObdNZxniFx49LtzlAHOQ-hg",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 187.5,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 343.0851063829787,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "i.14": {
+      "objectId": "i.14",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/X04Te8dqbGsD4OVxfdNJDk2CuK54cJgRxPHa-caIaebprMhW8ld6dyCEdjTKYRAfqIKgTA7LPzjqWZm0p1JJGUPptgIny_QLV6OsOzz0i2mTD7XZKf6OdVWl_Xu4flTxj7v8LZDLdjdBZCZD0g",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 626.8502581755594,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    },
+    "kix.z2yu4cjvxzz0": {
+      "objectId": "kix.z2yu4cjvxzz0",
+      "inlineObjectProperties": {
+        "embeddedObject": {
+          "imageProperties": {
+            "contentUri": "https://lh3.googleusercontent.com/Y6d1ahzFGjnNI8Cq3H2iWXQ_7zCwwfHJvBGgULcqo9pmTKEIg4rtq4fNU-9FW_GDHIjke-DcaXQl5SjViPOa3gCrJQPRv9RQYQz2hk22URgVGMGdVYGvpMmJdlnkQJNLme-GG9uJhJmxz3Z2-w",
+            "cropProperties": {}
+          },
+          "embeddedObjectBorder": {
+            "color": {
+              "color": {
+                "rgbColor": {}
+              }
+            },
+            "width": {
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID",
+            "propertyState": "NOT_RENDERED"
+          },
+          "size": {
+            "height": {
+              "magnitude": 300,
+              "unit": "PT"
+            },
+            "width": {
+              "magnitude": 254.3918918918919,
+              "unit": "PT"
+            }
+          },
+          "marginTop": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginBottom": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginRight": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          },
+          "marginLeft": {
+            "magnitude": 1.5,
+            "unit": "PT"
+          }
+        }
+      }
+    }
+  },
+  "documentId": "1lUQ68GXS0TAo7tLK1YTT3i6XjdccG2RB2NqVY6yd4Dc"
+}

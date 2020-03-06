@@ -83,9 +83,9 @@ The app must:
 
 4. Convert google docs to markdown while preserving as much of the meaning of the document. (Headings, images, drawings, tables, etc). 
 
-    A. Each generated file should have parsable comments embedded in the original source google doc is known. 
+    1. Each generated file should have parsable comments embedded in the original source google doc is known. 
 
-    B. Embedded images (not originally stored on the shared folder will have to be extracted to the filesystem with a hashing system to prevent duplicate copies files in cases where images are pasted into multiple documents.
+    2. Embedded images (not originally stored on the shared folder will have to be extracted to the filesystem with a hashing system to prevent duplicate copies files in cases where images are pasted into multiple documents.
 
 5. Convert google drawings to svg and fix up urls as well. 
 
@@ -95,9 +95,9 @@ The app must:
 
 8. Construct a [table of contents and an index](#table-of-contents-and-index) from all of the documents in the shared drive.
 
-    C. It should be parsable so Javascript on the client could search and build navigation 
+    3. It should be parsable so Javascript on the client could search and build navigation 
 
-    D. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#index))
+    4. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#index))
 
 
 
@@ -109,7 +109,7 @@ Later phase:
 
 * Scientific notation for headers (as an option)
 
-* Google sheets to CSV with MIE’s datavis
+* Google sheets to CSV with MIE's datavis
 
 * Markdown -> Google Docs converter
 
@@ -153,7 +153,7 @@ wikigdrive keeps a local JSON config file in the dest directory with state from 
 
 ## Renames and Redirecting 
 
-When a Document is renamed or moved in the shared drive the driveId says the same, but its place in the filesystem changes. For example a document named "Carbon" would be created as Carbon.md. Sometime later its renamed to “Carbon Fiber” then a new file “Carbon Fiber.md” would be made with the content and the old “Carbon.md” is changed to:
+When a Document is renamed or moved in the shared drive the driveId says the same, but its place in the filesystem changes. For example a document named "Carbon" would be created as Carbon.md. Sometime later its renamed to "Carbon Fiber" then a new file "Carbon Fiber.md" would be made with the content and the old "Carbon.md" is changed to:
 
 
 
@@ -194,7 +194,7 @@ If Folder is renamed to Container, the new layout would be:
 
 
 
-Then sometime later, "Example 1" is renamed to “Sample 1” the folder layout should be:
+Then sometime later, "Example 1" is renamed to "Sample 1" the folder layout should be:
 
 * Container
 
@@ -266,13 +266,13 @@ The index is a listing of all of the defined terms and their references in the d
 
 * Why not just use google docs?
 
-    * Would love it if it were possible, but the drive does not offer the ability to publish pages in a clean way. The URLs are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has [disambiguation](test.md) pages), a reader could be redirected to the proper content. Google doesn’t, so this project is an attempt to fill that gap. 
+    * Would love it if it were possible, but the drive does not offer the ability to publish pages in a clean way. The URLs are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has [disambiguation](test.md) pages), a reader could be redirected to the proper content. Google doesn't, so this project is an attempt to fill that gap. 
 
     * Also, Google does not have a good blame system for contributions to a document. Hopefully, this is fixed someday but in the meantime, GitHub on markdown can *help* fill the void. 
 
 * Why markdown?
 
-    * All ears for a different preferred format. It’s easy to read when editing directly and when doing a diff for changes it’s clean
+    * All ears for a different preferred format. It's easy to read when editing directly and when doing a diff for changes it's clean
 
 * What about mismatches in Docs vs Markdown
 

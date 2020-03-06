@@ -50,7 +50,7 @@ export class LinkTranslator {
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
 
-      if (url.indexOf(fileId) > -1) {
+      if (url.indexOf(fileId) > -1 && url.indexOf('parent=' + fileId) === -1) {
         url = file.localPath;
         return url;
       }

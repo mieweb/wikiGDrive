@@ -42,6 +42,8 @@ wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
 --config-reset google_auth - Reset `google_auth` section
 --config-reset google_auth,fileMap,binaryFiles - Reset `google_auth,fileMap,binaryFiles` sections
 --config-reset-all - Reset all sections
+
+--without-folder-structure    Download documents into single, flat folder
 ```
 
 ## Example usage with Hugo Generator
