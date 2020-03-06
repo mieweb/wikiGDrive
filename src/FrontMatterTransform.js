@@ -25,7 +25,7 @@ export class FrontMatterTransform extends Transform {
 
   async _flush(callback) {
     let frontMatter = '---\n';
-    frontMatter += 'title: ' + this.file.name + '\n';
+    frontMatter += 'title: "' + this.file.name + '"\n';
     frontMatter += 'date: ' + this.file.modifiedTime + '\n';
     const htmlPath = this.linkTranslator.convertToRelativeMarkDownPath(this.file.localPath, '');
     if (htmlPath) {

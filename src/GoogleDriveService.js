@@ -2,8 +2,8 @@
 
 import { google } from 'googleapis';
 import slugify from 'slugify';
-import {retryAsync} from './retryAsync';
-import {FilesStructure} from './FilesStructure';
+import { retryAsync } from './retryAsync';
+import { FilesStructure } from './FilesStructure';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -135,6 +135,8 @@ export class GoogleDriveService {
 
       drive.changes.list({
         pageToken: pageToken,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
         fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents))'
       }, (err, res) => {
         if (err) {
@@ -155,12 +157,12 @@ export class GoogleDriveService {
               }
 
               switch (file.mimeType) {
-                case 'application/vnd.google-apps.drawing':
-                  file.desiredLocalPath += '.svg';
-                  break;
-                case 'application/vnd.google-apps.document':
-                  file.desiredLocalPath += '.md';
-                  break;
+              case 'application/vnd.google-apps.drawing':
+                file.desiredLocalPath += '.svg';
+                break;
+              case 'application/vnd.google-apps.document':
+                file.desiredLocalPath += '.md';
+                break;
               }
 
               return file;
