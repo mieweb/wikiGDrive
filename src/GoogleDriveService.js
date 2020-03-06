@@ -81,9 +81,9 @@ export class GoogleDriveService {
     return retVal;
   }
 
-  async listFilesRecursive(auth, folderId, modifiedTime, parentDirName) {
+  async listFilesRecursive(auth, context, modifiedTime, parentDirName) {
     console.log('Listening folder:', parentDirName || '/');
-    let files = await this.listFiles(auth, folderId, modifiedTime);
+    let files = await this.listFiles(auth, context, modifiedTime);
 
     if (parentDirName && !this.params['flat-folder-structure']) {
       files.forEach(file => {
@@ -102,7 +102,8 @@ export class GoogleDriveService {
 
       const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
 
-      const moreFiles = await this.listFilesRecursive(auth, file.id, modifiedTime, newParentDirName);
+      const moreFiles = await this.listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }),
+        modifiedTime, newParentDirName);
       files = files.concat(moreFiles);
     }
 
@@ -175,17 +176,17 @@ export class GoogleDriveService {
     }));
   }
 
-  listFiles(auth, folderId, modifiedTime, nextPageToken) {
+  listFiles(auth, context, modifiedTime, nextPageToken) {
     return retryAsync(10, (resolve, reject) => {
 
       const drive = google.drive({ version: 'v3', auth });
 
-      let query = '\'' + folderId + '\' in parents and trashed = false';
+      let query = '\'' + context.folderId + '\' in parents and trashed = false';
       if (modifiedTime) {
         query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'application/vnd.google-apps.folder\' )';
       }
 
-      drive.files.list({
+      const listParams = {
         corpora: 'allDrives',
         q: query,
         pageToken: nextPageToken,
@@ -195,13 +196,20 @@ export class GoogleDriveService {
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         orderBy: 'modifiedTime desc'
-      }, async (err, res) => {
+      };
+
+      if (context.driveId) {
+        listParams.driveId = context.driveId;
+      }
+
+
+      drive.files.list(listParams, async (err, res) => {
         if (err) {
           return reject(err);
         }
 
         if (res.data.nextPageToken) {
-          const nextFiles = await this.listFiles(auth, folderId, modifiedTime, res.data.nextPageToken);
+          const nextFiles = await this.listFiles(auth, context, modifiedTime, res.data.nextPageToken);
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {
@@ -238,6 +246,7 @@ export class GoogleDriveService {
       drive.files.get({
         fileId: file.id,
         alt: 'media',
+        includeItemsFromAllDrives: true,
         supportsAllDrives: true
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
@@ -263,6 +272,7 @@ export class GoogleDriveService {
       drive.files.export({
         fileId: file.id,
         mimeType: file.mimeType,
+        includeItemsFromAllDrives: true,
         supportsAllDrives: true
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {

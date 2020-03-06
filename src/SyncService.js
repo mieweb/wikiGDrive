@@ -49,7 +49,12 @@ export class SyncService {
     const httpClient = new HttpClient();
     const externalFiles = new ExternalFiles(config.binaryFiles || {}, httpClient, this.params.dest);
 
-    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
+    const context = { folderId: folderId };
+    if (this.params.drive_id) {
+      context.driveId = this.params.drive_id;
+    }
+
+    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, context);
     const mergedFiles = filesStructure.merge(changedFiles);
 
     const linkTranslator = new LinkTranslator(filesStructure, externalFiles);

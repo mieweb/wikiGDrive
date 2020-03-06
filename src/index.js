@@ -16,6 +16,7 @@ Options:
     --dest (current working folder)
     --watch (keep scanning for changes, ie: daemon)
     --link_mode [mdURLs|dirURLs|uglyURLs]
+    --drive_id
 
     --config-reset google_auth # removes google_auth object from .wikidgrive file
     --config-reset fileMap # removes fileMap object from .wikidgrive file
@@ -52,6 +53,8 @@ async function index() {
     params['config-reset'] = 'google_auth,fileMap,binaryFiles';
   }
   params['flat-folder-structure'] = !!argv['without-folder-structure'];
+
+  params['drive_id'] = argv['drive_id'] || '';
 
   const mainService = new SyncService(params);
   return await mainService.start();

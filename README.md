@@ -30,6 +30,8 @@ wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
 --dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
 --watch - Run program in loop, watch for gdrive changes
 
+--drive_id - An ID of the drive
+
 --client_id - ID of google app, alternatively can be passed in .env or through environment variable CLIENT_ID;
 --client_secret - Secret of google app, alternatively can be passed in .env or through environment variable CLIENT_SECRET;
 
