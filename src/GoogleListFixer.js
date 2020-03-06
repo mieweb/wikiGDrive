@@ -1,14 +1,13 @@
-import fs from 'fs';
 import {Transform} from 'stream';
 import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
 
 export class GoogleListFixer extends Transform {
 
-  constructor(localPath) {
+  constructor(content) {
     super();
 
-    this.localPath = localPath;
+    this.content = content;
     this.json = '';
   }
 
@@ -82,7 +81,7 @@ export class GoogleListFixer extends Transform {
   }
 
   async _flush(callback) {
-    const html = fs.readFileSync(this.localPath).toString();
+    const html = this.content;
     const dom = await this.createDom(html);
 
     this.document = JSON.parse(this.json);
