@@ -305,17 +305,23 @@ export class MarkDownTransform extends Transform {
 
     switch (element.paragraph.paragraphStyle.namedStyleType) {
       // Add a # for each heading level. No break, so we accumulate the right number.
-      case 'HEADING_6': prefix += '#'; // eslint-disable-line no-fallthrough
-      case 'HEADING_5': prefix += '#'; // eslint-disable-line no-fallthrough
-      case 'HEADING_4': prefix += '#'; // eslint-disable-line no-fallthrough
-      case 'HEADING_3': prefix += '#'; // eslint-disable-line no-fallthrough
-      case 'HEADING_2': prefix += '#'; // eslint-disable-line no-fallthrough
-      case 'HEADING_1': prefix += '# '; // eslint-disable-line no-fallthrough
+    case 'HEADING_6':
+      prefix += '#'; // eslint-disable-line no-fallthrough
+    case 'HEADING_5':
+      prefix += '#'; // eslint-disable-line no-fallthrough
+    case 'HEADING_4':
+      prefix += '#'; // eslint-disable-line no-fallthrough
+    case 'HEADING_3':
+      prefix += '#'; // eslint-disable-line no-fallthrough
+    case 'HEADING_2':
+      prefix += '#'; // eslint-disable-line no-fallthrough
+    case 'HEADING_1':
+      prefix += '# '; // eslint-disable-line no-fallthrough
     }
 
     if (element.paragraph.bullet) {
       const nesting = element.paragraph.bullet.nestingLevel || 0;
-      for (let i=0; i < nesting; i++) {
+      for (let i = 0; i < nesting; i++) {
         prefix += PREFIX_LEVEL;
       }
 
@@ -328,35 +334,35 @@ export class MarkDownTransform extends Transform {
 
           const listNestingLevel = list.listProperties.nestingLevels[nesting];
           switch (listNestingLevel.glyphSymbol) {
-            case '-':
-            case '●':
-            case '○':
-            case '■':
+          case '-':
+          case '●':
+          case '○':
+          case '■':
+            prefix += '* ';
+            break;
+          default:
+            // Ordered list (<ol>):
+            counter++;
+            listCounters[key] = counter;
+
+            switch (listNestingLevel.glyphType) {
+            case 'ALPHA':
+            case 'UPPER_ALPHA':
+              // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
+              prefix += counter + '. ';
+              break;
+
+            case 'DECIMAL':
+            case 'ROMAN':
+            case 'UPPER_ROMAN':
+              prefix += counter + '. ';
+              break;
+
+            case 'GLYPH_TYPE_UNSPECIFIED':
+            default:
               prefix += '* ';
               break;
-            default:
-              // Ordered list (<ol>):
-              counter++;
-              listCounters[key] = counter;
-
-              switch (listNestingLevel.glyphType) {
-                case 'ALPHA':
-                case 'UPPER_ALPHA':
-                  // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
-                  prefix += counter + '. ';
-                  break;
-
-                case 'DECIMAL':
-                case 'ROMAN':
-                case 'UPPER_ROMAN':
-                  prefix += counter + '. ';
-                  break;
-
-                case 'GLYPH_TYPE_UNSPECIFIED':
-                default:
-                  prefix += '* ';
-                  break;
-              }
+            }
           }
         }
       }
@@ -371,6 +377,13 @@ export class MarkDownTransform extends Transform {
     }
 
     let pOut = element.textRun.content;
+
+    if (pOut === '\n' && element.textRun.textStyle.italic) {
+      return '';
+    }
+    if (pOut.substr(0, 3) === '{{%' && element.textRun.textStyle.italic) {
+      return pOut;
+    }
 
     const style = Object.assign({}, element.paragraphStyle, element.textRun.textStyle);
     if (element.textRun.textStyle.namedStyleType) {
@@ -498,7 +511,7 @@ export class MarkDownTransform extends Transform {
       while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
         idxEnd = line.indexOf(' %}}', idxStart);
         if (idxEnd > -1) {
-          const parts = [ line.substr(0, idxStart),
+          const parts = [line.substr(0, idxStart),
             line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
             line.substr(idxEnd + ' %}}'.length)
           ];
@@ -510,7 +523,7 @@ export class MarkDownTransform extends Transform {
             const idxOfClosing = line.indexOf(parts[1].replace('{{% ', '{{% /'), idxEnd);
 
             if (idxOfClosing > -1) {
-              const parts = [ line.substr(0, idxStart),
+              const parts = [line.substr(0, idxStart),
                 line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
                 line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
                 line.substr(idxOfClosing)
@@ -544,7 +557,7 @@ export class MarkDownTransform extends Transform {
     const blocks = text.split('```');
 
     const retVal = [];
-    blocks.forEach((block, idx) =>{
+    blocks.forEach((block, idx) => {
       let newBlock = '';
       if (idx % 2 == 0) {
         let prevChar = '';
@@ -553,39 +566,25 @@ export class MarkDownTransform extends Transform {
 
           if (prevChar === '\\') {
             switch (char) {
-              case '\\':
-                newBlock += char;
-                char = '';
-                break;
-              case '{':
-                newBlock += '\\{';
-                break;
-              case '}':
-                newBlock += '\\}';
-                break;
-              default:
-                newBlock += char;
+            case '\\':
+              newBlock += char;
+              char = '';
+              break;
+            case '{':
+              newBlock += '\\{';
+              break;
+            case '}':
+              newBlock += '\\}';
+              break;
+            default:
+              newBlock += char;
             }
           } else {
             switch (char) {
-              case '\\':
-                break;
-              case '{':
-                if (prevChar !== '{') {
-                  newBlock += '{{% ';
-                }
-                break;
-              case '}':
-                if (prevChar !== '}') {
-                  if (prevChar === '/' || prevChar === ' ') {
-                    newBlock += '%}}';
-                  } else {
-                    newBlock += ' %}}';
-                  }
-                }
-                break;
-              default:
-                newBlock += char;
+            case '\\':
+              break;
+            default:
+              newBlock += char;
             }
           }
 
