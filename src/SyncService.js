@@ -96,14 +96,16 @@ export class SyncService {
 
           const changedFiles = result.files.filter(file => {
             let retVal = false;
-            file.parents.forEach((parentId) => {
-              if (folderId === parentId) {
-                retVal = true;
-              } else
-              if (filesStructure.containsFile(parentId)) {
-                retVal = true;
-              }
-            });
+            if (file.parents) {
+              file.parents.forEach((parentId) => {
+                if (folderId === parentId) {
+                  retVal = true;
+                } else
+                if (filesStructure.containsFile(parentId)) {
+                  retVal = true;
+                }
+              });
+            }
             return retVal;
           });
 
