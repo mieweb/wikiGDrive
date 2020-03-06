@@ -123,7 +123,7 @@ export class MarkDownTransform extends Transform {
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
 
-      const result = await this.processParagraph(childNo, child, globalListCounters);
+      const result = await this.processParagraph(child, globalListCounters);
       if (result.text.trim().length > 0) {
         text += '* ' + result.text;
       }
@@ -132,7 +132,7 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(index, element, listCounters) {
+  async processParagraph(element, listCounters) {
     if (element.tableOfContents) {
       const tableOfContentsText = await this.processTos(element.tableOfContents.content);
       return {
@@ -147,23 +147,26 @@ export class MarkDownTransform extends Transform {
     if (element.table) {
       textElements.push('<table>\n');
 
-      element.table.tableRows.forEach(tableRow => {
+      for (const tableRow of element.table.tableRows) {
         textElements.push('  <tr>\n');
 
-        tableRow.tableCells.forEach(tableCell => {
-          const content = tableCell.content
-            .map(node => {
-              const elements = node.paragraph ? node.paragraph.elements : [];
-              return elements.map(element => {
-                return element.textRun ? element.textRun.content : '';
-              });
-            });
-
-          textElements.push('    <td>' + content.join().trim() + '</td>\n');
-        });
+        for (let cellNo = 0; cellNo < tableRow.tableCells.length; cellNo++) {
+          const tableCell = tableRow.tableCells[cellNo];
+          let tableParams = '';
+          if (tableCell && tableCell.tableCellStyle) {
+            if (tableCell.tableCellStyle.columnSpan > 1) {
+              tableParams += ' colspan="' + tableCell.tableCellStyle.columnSpan + '"';
+              cellNo += tableCell.tableCellStyle.columnSpan - 1;
+            }
+          }
+          textElements.push('    <td' + tableParams + '>\n');
+          const text = await this.elementsToText(tableCell.content, listCounters);
+          textElements.push(text);
+          textElements.push('    </td>\n');
+        }
 
         textElements.push('  </tr>\n');
-      });
+      }
 
       textElements.push('</table>\n');
 
@@ -431,15 +434,11 @@ export class MarkDownTransform extends Transform {
     return pOut;
   }
 
-  async convert() {
-    const content = this.document.body.content;
-    let text = '';
-    const globalListCounters = {};
-
+  async elementsToText(content, globalListCounters) {
     const results = [];
     for (let childNo = 0; childNo < content.length; childNo++) {
       const child = content[childNo];
-      const result = await this.processParagraph(childNo, child, globalListCounters);
+      const result = await this.processParagraph(child, globalListCounters);
 
       const prevResult = results.length > 0 ? results[results.length - 1] : null;
 
@@ -450,6 +449,7 @@ export class MarkDownTransform extends Transform {
       }
     }
 
+    let text = '';
     let prevParaIsList = false;
     for (let childNo = 0; childNo < results.length; childNo++) {
       const result = results[childNo];
@@ -492,6 +492,14 @@ export class MarkDownTransform extends Transform {
         text = text.replace(heading, this.headings[heading]);
       }
     }
+
+    return text;
+  }
+
+  async convert() {
+    const globalListCounters = {};
+
+    let text = await this.elementsToText(this.document.body.content, globalListCounters);
 
     text = this.processMacros(text);
     text = this.fixBlockMacros(text);
