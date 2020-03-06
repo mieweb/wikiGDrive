@@ -1,8 +1,7 @@
 {
   "title": "Block Macro Issue",
   "body": {
-    "content": [
-      {
+    "content": [{
         "endIndex": 1,
         "sectionBreak": {
           "sectionStyle": {
@@ -16,16 +15,14 @@
         "startIndex": 1,
         "endIndex": 451,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1,
-              "endIndex": 451,
-              "textRun": {
-                "content": "In order to better serve client needs, {system-name } has streamlined the concepts and efforts of quality reporting participation, in order to serve all interested entities. If, as a standard, a business would like to track ongoing quality of care initiatives, or even participate in sponsored quality programs, {system-name } systems now offer a plethora of quantifiable and reportable measures, designed to track and improve overall care delivery.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1,
+            "endIndex": 451,
+            "textRun": {
+              "content": "In order to better serve client needs, {{% system-name %}} has streamlined the concepts and efforts of quality reporting participation, in order to serve all interested entities. If, as a standard, a business would like to track ongoing quality of care initiatives, or even participate in sponsored quality programs, {{% system-name %}} systems now offer a plethora of quantifiable and reportable measures, designed to track and improve overall care delivery.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -89,8 +86,7 @@
         "startIndex": 451,
         "endIndex": 781,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 451,
               "endIndex": 742,
               "textRun": {
@@ -194,16 +190,14 @@
         "startIndex": 781,
         "endIndex": 818,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 781,
-              "endIndex": 818,
-              "textRun": {
-                "content": "Enroll via Quality Reporting Portlet\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 781,
+            "endIndex": 818,
+            "textRun": {
+              "content": "Enroll via Quality Reporting Portlet\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_2",
             "direction": "LEFT_TO_RIGHT",
@@ -270,12 +264,11 @@
         "startIndex": 818,
         "endIndex": 1124,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 818,
               "endIndex": 908,
               "textRun": {
-                "content": "Navigate to the {syslink \"Quick View\" \"func=omniscope\"} from the sidemenu, and locate the ",
+                "content": "Navigate to the {{% syslink \"Quick View\" \"func=omniscope\" %}} from the sidemenu, and locate the ",
                 "textStyle": {}
               }
             },
@@ -330,7 +323,7 @@
               "startIndex": 935,
               "endIndex": 1001,
               "textRun": {
-                "content": "{tip }\u000bIf the Quality Reporting portlet is not enabled, click the ",
+                "content": "{{% tip %}}\u000bIf the Quality Reporting portlet is not enabled, click the ",
                 "textStyle": {}
               }
             },
@@ -400,7 +393,7 @@
               "startIndex": 1116,
               "endIndex": 1124,
               "textRun": {
-                "content": "\u000b{/tip}\n",
+                "content": "\u000b{{% /tip %}}\n",
                 "textStyle": {}
               }
             }
@@ -480,12 +473,11 @@
         "startIndex": 1124,
         "endIndex": 1555,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 1124,
               "endIndex": 1297,
               "textRun": {
-                "content": "Click the {syslink \"Enroll\" \"f=layout&module=MIPS&name=Advanced+Measure+Enrollment&user_id=50&redirect=f%3Domniscope&tabmodule=+\"} hyperlink to begin the enrollment process.",
+                "content": "Click the {{% syslink \"Enroll\" \"f=layout&module=MIPS&name=Advanced+Measure+Enrollment&user_id=50&redirect=f%3Domniscope&tabmodule=+\" %}} hyperlink to begin the enrollment process.",
                 "textStyle": {}
               }
             },
@@ -580,7 +572,7 @@
               "startIndex": 1303,
               "endIndex": 1313,
               "textRun": {
-                "content": "{warning }",
+                "content": "{{% warning %}}",
                 "textStyle": {}
               }
             },
@@ -712,7 +704,7 @@
               "startIndex": 1544,
               "endIndex": 1555,
               "textRun": {
-                "content": "{/warning}\n",
+                "content": "{{% /warning %}}\n",
                 "textStyle": {}
               }
             }
@@ -792,8 +784,7 @@
         "startIndex": 1555,
         "endIndex": 1791,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 1555,
               "endIndex": 1585,
               "textRun": {
@@ -1000,8 +991,7 @@
         "startIndex": 1791,
         "endIndex": 1964,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 1791,
               "endIndex": 1883,
               "textRun": {
@@ -1190,8 +1180,7 @@
         "startIndex": 1964,
         "endIndex": 2810,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 1964,
               "endIndex": 1979,
               "textRun": {
@@ -1327,7 +1316,7 @@
               "startIndex": 2158,
               "endIndex": 2165,
               "textRun": {
-                "content": "{info }",
+                "content": "{{% info %}}",
                 "textStyle": {}
               }
             },
@@ -1429,7 +1418,7 @@
               "startIndex": 2284,
               "endIndex": 2291,
               "textRun": {
-                "content": "{/info}",
+                "content": "{{% /info %}}",
                 "textStyle": {}
               }
             },
@@ -1466,7 +1455,7 @@
               "startIndex": 2292,
               "endIndex": 2302,
               "textRun": {
-                "content": "{warning }",
+                "content": "{{% warning %}}",
                 "textStyle": {}
               }
             },
@@ -1542,7 +1531,7 @@
               "startIndex": 2797,
               "endIndex": 2807,
               "textRun": {
-                "content": "{/warning}",
+                "content": "{{% /warning %}}",
                 "textStyle": {}
               }
             },
@@ -1651,8 +1640,7 @@
         "startIndex": 2810,
         "endIndex": 3025,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 2810,
               "endIndex": 2868,
               "textRun": {
@@ -1769,7 +1757,7 @@
               "startIndex": 2886,
               "endIndex": 2893,
               "textRun": {
-                "content": "{info }",
+                "content": "{{% info %}}",
                 "textStyle": {}
               }
             },
@@ -1901,7 +1889,7 @@
               "startIndex": 3017,
               "endIndex": 3025,
               "textRun": {
-                "content": "{/info}\n",
+                "content": "{{% /info %}}\n",
                 "textStyle": {}
               }
             }
@@ -1981,16 +1969,14 @@
         "startIndex": 6002,
         "endIndex": 6003,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 6002,
-              "endIndex": 6003,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 6002,
+            "endIndex": 6003,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2054,16 +2040,14 @@
         "startIndex": 6003,
         "endIndex": 6004,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 6003,
-              "endIndex": 6004,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 6003,
+            "endIndex": 6004,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2127,8 +2111,7 @@
         "startIndex": 6004,
         "endIndex": 6226,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 6004,
               "endIndex": 6005,
               "inlineObjectElement": {
@@ -2247,8 +2230,7 @@
     }
   },
   "namedStyles": {
-    "styles": [
-      {
+    "styles": [{
         "namedStyleType": "NORMAL_TEXT",
         "textStyle": {},
         "paragraphStyle": {
@@ -2852,8 +2834,7 @@
   "lists": {
     "kix.list.1": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -3173,8 +3154,7 @@
     },
     "kix.list.2": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
