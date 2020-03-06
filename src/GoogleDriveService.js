@@ -136,14 +136,20 @@ export class GoogleDriveService {
     });
   }
 
-  watchChanges(auth, pageToken) {
+  watchChanges(auth, pageToken, context) {
     return new Promise(((resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
-      drive.changes.list({
+      const params = {
+        supportsAllDrives: true,
         pageToken: pageToken,
         fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents))'
-      }, (err, res) => {
+      };
+      if (context.drive_id) {
+        params.driveId = context.drive_id;
+      }
+
+      drive.changes.list(params, (err, res) => {
         if (err) {
           console.error(err);
           return reject(err);

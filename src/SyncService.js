@@ -92,7 +92,11 @@ export class SyncService {
 
       await new Promise(() => setInterval(async () => {
         try {
-          const result = await this.googleDriveService.watchChanges(auth, startTrackToken);
+          const context = {};
+          if (this.params.drive_id) {
+            context.drive_id = this.params.drive_id;
+          }
+          const result = await this.googleDriveService.watchChanges(auth, startTrackToken, context);
 
           const changedFiles = result.files.filter(file => {
             let retVal = false;
