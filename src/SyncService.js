@@ -19,6 +19,7 @@ import { ExternalFiles } from './ExternalFiles';
 import {NavigationTransform} from './NavigationTransform';
 import {GoogleListFixer} from './GoogleListFixer';
 import {StringWritable} from './StringWritable';
+import {EmbedImageFixed} from './EmbedImageFixed';
 
 export class SyncService {
 
@@ -204,9 +205,10 @@ export class SyncService {
       await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destHtml);
 
       const googleListFixer = new GoogleListFixer(destHtml.getString());
+      const embedImageFixed = new EmbedImageFixed(path.join(this.params.dest, file.localPath + '.html'));
 
       await this.googleDocsService.download(auth, file,
-        [googleListFixer, markDownTransform, frontMatterTransform, dest], linkTranslator);
+        [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], linkTranslator);
 
       if (this.params.debug) {
         fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
