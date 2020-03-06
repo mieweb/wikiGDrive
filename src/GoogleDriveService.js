@@ -116,11 +116,18 @@ export class GoogleDriveService {
     return this.removeDuplicates(files);
   }
 
-  getStartTrackToken(auth) {
+  getStartTrackToken(auth, context) {
     return new Promise((resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
-      drive.changes.getStartPageToken({}, function (err, res) {
+      const params = {
+        supportsAllDrives: true
+      };
+      if (context.drive_id) {
+        params.driveId = context.drive_id;
+      }
+
+      drive.changes.getStartPageToken(params, function (err, res) {
         if (err) {
           return reject(err);
         }

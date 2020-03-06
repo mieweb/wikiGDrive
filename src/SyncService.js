@@ -38,42 +38,53 @@ export class SyncService {
       if (!this.params.client_secret) this.params.client_secret = config.credentials.client_secret;
     }
 
+    const httpClient = new HttpClient();
+
     const auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
     config = await this.configService.loadConfig(); // eslint-disable-line require-atomic-updates
 
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
 
     const filesStructure = new FilesStructure(config.fileMap);
-
-    const httpClient = new HttpClient();
     const externalFiles = new ExternalFiles(config.binaryFiles || {}, httpClient, this.params.dest);
-
-    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
-    const mergedFiles = filesStructure.merge(changedFiles);
 
     const linkTranslator = new LinkTranslator(filesStructure, externalFiles);
     if (this.params['link_mode']) {
       linkTranslator.mode = this.params['link_mode'];
     }
 
-    let startTrackToken = null;
+    const initialStartToken = config.startTrackToken;
+    let startTrackToken = initialStartToken || null;
     if (this.params.watch) {
-      startTrackToken = await this.googleDriveService.getStartTrackToken(auth);
+      if (!config.startTrackToken) {
+        const context = {};
+        if (this.params.drive_id) {
+          context.drive_id = this.params.drive_id;
+        }
+        startTrackToken = await this.googleDriveService.getStartTrackToken(auth, context);
+      }
       console.log('startTrackToken', startTrackToken);
     }
 
-    await this.createFolderStructure(mergedFiles);
-    await this.downloadAssets(auth, mergedFiles);
-    await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
-    await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-    await this.generateConflicts(filesStructure, linkTranslator);
-    await this.generateRedirects(filesStructure, linkTranslator);
+    if (!this.params.watch || !initialStartToken) {
+      const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
+      const mergedFiles = filesStructure.merge(changedFiles);
 
-    const tocGenerator = new TocGenerator('toc.md', linkTranslator);
-    await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+      await this.createFolderStructure(mergedFiles);
+      await this.downloadAssets(auth, mergedFiles);
+      await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
+      await this.downloadDocuments(auth, mergedFiles, linkTranslator);
+      await this.generateConflicts(filesStructure, linkTranslator);
+      await this.generateRedirects(filesStructure, linkTranslator);
+
+      const tocGenerator = new TocGenerator('toc.md', linkTranslator);
+      await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+    }
 
     config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
     config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
+    config.startTrackToken = startTrackToken; // eslint-disable-line require-atomic-updates
+
     await this.configService.saveConfig(config);
 
     if (this.params.watch) {
@@ -86,12 +97,19 @@ export class SyncService {
           const changedFiles = result.files.filter(file => {
             let retVal = false;
             file.parents.forEach((parentId) => {
+              if (folderId === parentId) {
+                retVal = true;
+              } else
               if (filesStructure.containsFile(parentId)) {
                 retVal = true;
               }
             });
             return retVal;
           });
+
+          startTrackToken = result.token; // eslint-disable-line require-atomic-updates
+
+          config.startTrackToken = startTrackToken;
 
           if (changedFiles.length > 0) {
             console.log(changedFiles.length + ' files modified');
@@ -115,8 +133,6 @@ export class SyncService {
           } else {
             console.log('No changes detected. Sleeping for 10 seconds.');
           }
-
-          startTrackToken = result.token; // eslint-disable-line require-atomic-updates
         } catch (e) {
           console.error(e);
         }
@@ -186,6 +202,14 @@ export class SyncService {
     if (navigationFile) {
       const markDownTransform = new MarkDownTransform('.navigation', linkTranslator);
       await this.googleDocsService.download(auth, navigationFile, [markDownTransform, navigationTransform], linkTranslator);
+    } else {
+      const navigationPath = path.join(this.params.dest, '.navigation.md');
+      const fileService = new FileService();
+      if (await fileService.exists(navigationPath)) {
+        const navigationContent = await fileService.readFile(navigationPath);
+        navigationTransform.write(navigationContent);
+        navigationTransform.end();
+      }
     }
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {

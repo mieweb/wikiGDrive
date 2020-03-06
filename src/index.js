@@ -49,7 +49,7 @@ async function index() {
 
   params['config-reset'] = argv['config-reset'] || '';
   if (argv['config-reset-all']) {
-    params['config-reset'] = 'google_auth,fileMap,binaryFiles';
+    params['config-reset'] = 'google_auth,fileMap,binaryFiles,startTrackToken';
   }
   params['flat-folder-structure'] = !!argv['without-folder-structure'];
 
