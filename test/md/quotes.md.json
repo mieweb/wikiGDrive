@@ -1,8 +1,7 @@
 {
   "title": "Test Page",
   "body": {
-    "content": [
-      {
+    "content": [{
         "endIndex": 1,
         "sectionBreak": {
           "sectionStyle": {
@@ -15,16 +14,14 @@
         "startIndex": 1,
         "endIndex": 43,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1,
-              "endIndex": 43,
-              "textRun": {
-                "content": "{only sys=\"sysname” }\n{only sys=’sysname’ }\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1,
+            "endIndex": 43,
+            "textRun": {
+              "content": "{{% only sys=\"sysname” %}}\n{{% only sys=’sysname’ %}}\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT"
@@ -66,8 +63,7 @@
     }
   },
   "namedStyles": {
-    "styles": [
-      {
+    "styles": [{
         "namedStyleType": "NORMAL_TEXT",
         "textStyle": {
           "bold": false,

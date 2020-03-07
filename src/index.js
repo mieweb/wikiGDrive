@@ -52,6 +52,7 @@ async function index() {
     params['config-reset'] = 'google_auth,fileMap,binaryFiles';
   }
   params['flat-folder-structure'] = !!argv['without-folder-structure'];
+  params['debug'] = !!argv['debug'];
 
   const mainService = new SyncService(params);
   return await mainService.start();
