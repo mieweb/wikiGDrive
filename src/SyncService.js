@@ -17,6 +17,7 @@ import { FrontMatterTransform } from './FrontMatterTransform';
 import { FilesStructure } from './FilesStructure';
 import { ExternalFiles } from './ExternalFiles';
 import {NavigationTransform} from './NavigationTransform';
+import {StringWritable} from './StringWritable';
 import {GoogleListFixer} from './GoogleListFixer';
 import {EmbedImageFixed} from './EmbedImageFixed';
 
@@ -200,19 +201,22 @@ export class SyncService {
       const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
       const frontMatterTransform = new FrontMatterTransform(file, linkTranslator, navigationTransform.hierarchy);
 
-      const destDoc = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.html'));
-      await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destDoc);
+      const destHtml = new StringWritable();
+      await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destHtml);
 
-      const googleListFixer = new GoogleListFixer(path.join(this.params.dest, file.localPath + '.html'));
-      const embedImageFixed = new EmbedImageFixed(path.join(this.params.dest, file.localPath + '.html'));
+      const googleListFixer = new GoogleListFixer(destHtml.getString());
+      const embedImageFixed = new EmbedImageFixed(destHtml.getString());
 
       await this.googleDocsService.download(auth, file,
         [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], linkTranslator);
 
-      const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
+      if (this.params.debug) {
+        fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
 
-      await this.googleDocsService.download(auth, file,
-        [destJson], linkTranslator);
+        const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
+        await this.googleDocsService.download(auth, file,
+          [destJson], linkTranslator);
+      }
     }
   }
 
