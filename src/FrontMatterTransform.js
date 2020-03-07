@@ -39,11 +39,13 @@ export class FrontMatterTransform extends Transform {
 
     if (this.navigationHierarchy[this.file.id]) {
       const navigationData = this.navigationHierarchy[this.file.id];
+
       frontMatter += 'menu:\n';
       frontMatter += '    main:\n';
-      frontMatter += '        identifier: "' + navigationData.identifier +'"\n';
+      frontMatter += '        name: "' + navigationData.name + '"\n';
+      frontMatter += '        identifier: "' + navigationData.identifier + '"\n';
       if (navigationData.parent) {
-        frontMatter += '        parent: "' + navigationData.parent +'"\n';
+        frontMatter += '        parent: "' + navigationData.parent + '"\n';
       }
       frontMatter += '        weight: ' + navigationData.weight + '\n';
     }
