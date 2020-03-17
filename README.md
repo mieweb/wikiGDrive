@@ -8,9 +8,15 @@ Google Drive to MarkDown synchronization
 [![Project Dependencies](https://david-dm.org/mieweb/wikiGDrive.svg)](https://david-dm.org/mieweb/wikiGDrive)
 [![devDependencies Status](https://david-dm.org/mieweb/wikiGDrive/dev-status.svg)](https://david-dm.org/mieweb/wikiGDrive?type=dev)
 
-## Install - TODO: put into npm
 
-npm install -g wikigdrive
+## Install from NPM
+
+[![View this project on NPM](https://img.shields.io/npm/v/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
+[![NPM downloads](https://img.shields.io/npm/dm/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
+![Publish wikigdrive to NPM](https://github.com/mieweb/wikiGDrive/workflows/Publish%20wikigdrive%20to%20NPM/badge.svg)
+```
+npm i -g @mieweb/wikigdrive
+```
 
 ## App setup
 
@@ -65,10 +71,10 @@ git submodule add https://github.com/budparr/gohugo-theme-ananke.git themes/anan
 echo 'theme = "ananke"' >> config.toml
 ```
 
-4. Install wikigdrive - TODO: use npm install 
+4. Install wikigdrive
 
 ```
-npm link wikigdrive .....pathtowikigdrive
+npm i -g @mieweb/wikigdrive
 ```
 
 5. Sync GDrive

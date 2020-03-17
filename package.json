@@ -1,18 +1,20 @@
 {
   "name": "@mieweb/wikigdrive",
-  "version": "1.0.1",
-  "description": "The complete spec is here: https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#",
+  "version": "1.0.3",
+  "description": "Google Drive to MarkDown synchronization",
   "keywords": [
     "GDrive",
     "CLI",
-    "MarkDown"
+    "MarkDown",
+    "Google Docs",
+    "Wiki"
   ],
   "bin": {
     "wikigdrive": "./dist/main.js"
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha-webpack --mode development 'test/**/*.js'",
+    "test": "mocha-webpack --mode development",
     "lint": "eslint .",
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production"
@@ -21,43 +23,66 @@
     "type": "git",
     "url": "git+https://github.com/mieweb/wikiGDrive.git"
   },
-  "author": "",
+  "author": {
+    "name": "Medical Informatics Engineering",
+    "url": "https://www.mieweb.com/"
+  },
+  "contributors": [{
+      "name": "Doug Horner",
+      "email": "horner@mieweb.com",
+      "url": "https://github.com/horner"
+    },
+    {
+      "name": "William Reiske",
+      "email": "wreiske@mieweb.com",
+      "url": "https://github.com/wreiske"
+    },
+    {
+      "name": "Alan Quandt",
+      "email": "aquandt@mieweb.com",
+      "url": "https://github.com/thedigicraft"
+    },
+    {
+      "name": "Grzegorz Godlewski",
+      "url": "https://github.com/ggodlewski"
+    }
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/mieweb/wikiGDrive/issues"
   },
   "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "dependencies": {
-    "buffer": "^5.4.3",
-    "dotenv": "^8.1.0",
+    "buffer": "^5.5.0",
+    "dotenv": "^8.2.0",
     "googleapis": "^43.0.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.5",
     "node-fetch": "^2.6.0",
     "relateurl": "^0.2.7",
-    "slugify": "^1.3.5",
-    "stream": "0.0.2",
+    "slugify": "^1.4.0",
+    "stream": "^0.0.2",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
+    "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
-    "colors": "1.4.0",
-    "diff": "4.0.1",
-    "eslint": "^6.4.0",
-    "husky": "^3.0.5",
-    "jshint": "^2.10.2",
-    "mocha": "^6.2.0",
-    "mocha-webpack": "2.0.0-beta.0",
-    "raw-loader": "^3.1.0",
-    "webpack": "^4.41.3",
-    "webpack-cli": "^3.3.9",
+    "colors": "^1.4.0",
+    "diff": "^4.0.2",
     "domutils": "^2.0.0",
-    "htmlparser2": "^4.0.0"
+    "eslint": "^6.8.0",
+    "htmlparser2": "^4.1.0",
+    "husky": "^4.2.3",
+    "jshint": "^2.11.0",
+    "mocha": "^7.1.0",
+    "mocha-webpack": "2.0.0-beta.0",
+    "raw-loader": "^4.0.0",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.11"
   },
   "husky": {
     "hooks": {
       "pre-commit": "npm run lint",
-      "pre-push": "npm run lint"
+      "pre-push": "npm run lint && npm run test"
     }
   }
 }
