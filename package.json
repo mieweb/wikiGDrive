@@ -1,6 +1,6 @@
 {
   "name": "@mieweb/wikigdrive",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Google Drive to MarkDown synchronization",
   "keywords": [
     "GDrive",
@@ -27,8 +27,7 @@
     "name": "Medical Informatics Engineering",
     "url": "https://www.mieweb.com/"
   },
-  "contributors": [
-    {
+  "contributors": [{
       "name": "Doug Horner",
       "email": "horner@mieweb.com",
       "url": "https://github.com/horner"
