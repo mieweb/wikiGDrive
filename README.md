@@ -14,7 +14,9 @@ Google Drive to MarkDown synchronization
 [![View this project on NPM](https://img.shields.io/npm/v/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
 [![NPM downloads](https://img.shields.io/npm/dm/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
 
+```
 npm i -g @mieweb/wikigdrive
+```
 
 ## App setup
 
