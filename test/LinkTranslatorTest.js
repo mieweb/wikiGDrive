@@ -1,7 +1,6 @@
 import { assert } from 'chai';
-
-import { LinkTranslator } from '../src/LinkTranslator';
 import { FilesStructure } from '../src/FilesStructure';
+import { LinkTranslator } from '../src/LinkTranslator';
 
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', () => {

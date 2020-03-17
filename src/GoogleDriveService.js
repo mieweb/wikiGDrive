@@ -2,8 +2,8 @@
 
 import { google } from 'googleapis';
 import slugify from 'slugify';
-import { retryAsync } from './retryAsync';
 import { FilesStructure } from './FilesStructure';
+import { retryAsync } from './retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -293,7 +293,5 @@ export class GoogleDriveService {
         }
       });
     });
-
   }
-
 }
