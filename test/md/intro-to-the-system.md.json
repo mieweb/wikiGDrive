@@ -1,8 +1,7 @@
 {
   "title": "Intro to the System",
   "body": {
-    "content": [
-      {
+    "content": [{
         "endIndex": 1,
         "sectionBreak": {
           "sectionStyle": {
@@ -15,16 +14,14 @@
         "startIndex": 1,
         "endIndex": 310,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1,
-              "endIndex": 310,
-              "textRun": {
-                "content": "The following page addresses the basic navigation and functionality of {system-name } SYSTEM {/system-name} . If you're a current user, you'll notice some things might look a little different. We've improved the user experience — making {system-name } SYSTEM {/system-name} even more intuitive and efficient.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1,
+            "endIndex": 310,
+            "textRun": {
+              "content": "The following page addresses the basic navigation and functionality of {{% system-name %}} . If you're a current user, you'll notice some things might look a little different. We've improved the user experience — making {{% system-name %}} even more intuitive and efficient.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -88,16 +85,14 @@
         "startIndex": 310,
         "endIndex": 311,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 310,
-              "endIndex": 311,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 310,
+            "endIndex": 311,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -161,23 +156,21 @@
         "startIndex": 311,
         "endIndex": 326,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 311,
-              "endIndex": 326,
-              "textRun": {
-                "content": "User Interface\n",
-                "textStyle": {
-                  "bold": true,
-                  "italic": false,
-                  "fontSize": {
-                    "magnitude": 18,
-                    "unit": "PT"
-                  }
+          "elements": [{
+            "startIndex": 311,
+            "endIndex": 326,
+            "textRun": {
+              "content": "User Interface\n",
+              "textStyle": {
+                "bold": true,
+                "italic": false,
+                "fontSize": {
+                  "magnitude": 18,
+                  "unit": "PT"
                 }
               }
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_2",
             "direction": "LEFT_TO_RIGHT",
@@ -244,16 +237,14 @@
         "startIndex": 326,
         "endIndex": 592,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 326,
-              "endIndex": 592,
-              "textRun": {
-                "content": "The linked text on the left side of the system features a number of tabs that link to different areas of the system. This menu can be hidden to provide more real estate, or pinned open with the pin icon. The first tab on the left side menu is the to the Quick View.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 326,
+            "endIndex": 592,
+            "textRun": {
+              "content": "The linked text on the left side of the system features a number of tabs that link to different areas of the system. This menu can be hidden to provide more real estate, or pinned open with the pin icon. The first tab on the left side menu is the to the Quick View.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -317,16 +308,14 @@
         "startIndex": 592,
         "endIndex": 614,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 592,
-              "endIndex": 614,
-              "textRun": {
-                "content": "Starting on the left:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 592,
+            "endIndex": 614,
+            "textRun": {
+              "content": "Starting on the left:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -390,16 +379,14 @@
         "startIndex": 614,
         "endIndex": 668,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 614,
-              "endIndex": 668,
-              "textRun": {
-                "content": "The Menu button displays or hides the left side menu.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 614,
+            "endIndex": 668,
+            "textRun": {
+              "content": "The Menu button displays or hides the left side menu.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -475,16 +462,14 @@
         "startIndex": 668,
         "endIndex": 845,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 668,
-              "endIndex": 845,
-              "textRun": {
-                "content": "The Home button brings you back to this page from any page in {system-name } SYSTEM {/system-name} while the default is the Quick View page, a user can specify their home page.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 668,
+            "endIndex": 845,
+            "textRun": {
+              "content": "The Home button brings you back to this page from any page in {{% system-name %}} while the default is the Quick View page, a user can specify their home page.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -560,16 +545,14 @@
         "startIndex": 845,
         "endIndex": 969,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 845,
-              "endIndex": 969,
-              "textRun": {
-                "content": "The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 845,
+            "endIndex": 969,
+            "textRun": {
+              "content": "The Doc Queue indicates open designated lists for tasks, documents, and other information assigned to a user or department.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -645,16 +628,14 @@
         "startIndex": 969,
         "endIndex": 983,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 969,
-              "endIndex": 983,
-              "textRun": {
-                "content": "To the right:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 969,
+            "endIndex": 983,
+            "textRun": {
+              "content": "To the right:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -718,16 +699,14 @@
         "startIndex": 983,
         "endIndex": 1031,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 983,
-              "endIndex": 1031,
-              "textRun": {
-                "content": "The signed-in user and their role is displayed.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 983,
+            "endIndex": 1031,
+            "textRun": {
+              "content": "The signed-in user and their role is displayed.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -803,16 +782,14 @@
         "startIndex": 1031,
         "endIndex": 1234,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1031,
-              "endIndex": 1234,
-              "textRun": {
-                "content": "The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1031,
+            "endIndex": 1234,
+            "textRun": {
+              "content": "The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -888,16 +865,14 @@
         "startIndex": 1234,
         "endIndex": 1338,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1234,
-              "endIndex": 1338,
-              "textRun": {
-                "content": "The question mark icon links to available help documentation — if help is available the icon is orange.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1234,
+            "endIndex": 1338,
+            "textRun": {
+              "content": "The question mark icon links to available help documentation — if help is available the icon is orange.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -973,16 +948,14 @@
         "startIndex": 1338,
         "endIndex": 1339,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1338,
-              "endIndex": 1339,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1338,
+            "endIndex": 1339,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1046,23 +1019,21 @@
         "startIndex": 1339,
         "endIndex": 1350,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1339,
-              "endIndex": 1350,
-              "textRun": {
-                "content": "Quick View\n",
-                "textStyle": {
-                  "bold": true,
-                  "italic": false,
-                  "fontSize": {
-                    "magnitude": 14,
-                    "unit": "PT"
-                  }
+          "elements": [{
+            "startIndex": 1339,
+            "endIndex": 1350,
+            "textRun": {
+              "content": "Quick View\n",
+              "textStyle": {
+                "bold": true,
+                "italic": false,
+                "fontSize": {
+                  "magnitude": 14,
+                  "unit": "PT"
                 }
               }
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_3",
             "direction": "LEFT_TO_RIGHT",
@@ -1129,16 +1100,14 @@
         "startIndex": 1350,
         "endIndex": 1771,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1350,
-              "endIndex": 1771,
-              "textRun": {
-                "content": "Most users see this page when they sign in to the system. It is a customizable dashboard featuring information from throughout the system pertinent to the user’s daily job functions. This information is organized into areas called Portlets. Portlets can be collapsed and expanded — or moved by dragging and dropping, so what's important to a specific user can be placed at the top. You can also remove Portlets entirely.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1350,
+            "endIndex": 1771,
+            "textRun": {
+              "content": "Most users see this page when they sign in to the system. It is a customizable dashboard featuring information from throughout the system pertinent to the user’s daily job functions. This information is organized into areas called Portlets. Portlets can be collapsed and expanded — or moved by dragging and dropping, so what's important to a specific user can be placed at the top. You can also remove Portlets entirely.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1202,8 +1171,7 @@
         "startIndex": 1771,
         "endIndex": 1773,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 1771,
               "endIndex": 1772,
               "inlineObjectElement": {
@@ -1283,16 +1251,14 @@
         "startIndex": 1773,
         "endIndex": 1774,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1773,
-              "endIndex": 1774,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1773,
+            "endIndex": 1774,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1356,23 +1322,21 @@
         "startIndex": 1774,
         "endIndex": 1782,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1774,
-              "endIndex": 1782,
-              "textRun": {
-                "content": "E-Chart\n",
-                "textStyle": {
-                  "bold": true,
-                  "italic": false,
-                  "fontSize": {
-                    "magnitude": 14,
-                    "unit": "PT"
-                  }
+          "elements": [{
+            "startIndex": 1774,
+            "endIndex": 1782,
+            "textRun": {
+              "content": "E-Chart\n",
+              "textStyle": {
+                "bold": true,
+                "italic": false,
+                "fontSize": {
+                  "magnitude": 14,
+                  "unit": "PT"
                 }
               }
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_3",
             "direction": "LEFT_TO_RIGHT",
@@ -1439,16 +1403,14 @@
         "startIndex": 1782,
         "endIndex": 2099,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 1782,
-              "endIndex": 2099,
-              "textRun": {
-                "content": "Searching for a patient's chart still begins at the E-Chart tab. The overall look and feel of the patient search matches the new {system-name } SYSTEM {/system-name} styling, including the tabs. The E-Chart defaults to the Patient Summary page. The Patient Summary displays data in portlets much like the Quick View.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 1782,
+            "endIndex": 2099,
+            "textRun": {
+              "content": "Searching for a patient's chart still begins at the E-Chart tab. The overall look and feel of the patient search matches the new {{% system-name %}} styling, including the tabs. The E-Chart defaults to the Patient Summary page. The Patient Summary displays data in portlets much like the Quick View.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1512,16 +1474,14 @@
         "startIndex": 2099,
         "endIndex": 2160,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2099,
-              "endIndex": 2160,
-              "textRun": {
-                "content": "E-chart navigation includes a number of toolbars, including:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2099,
+            "endIndex": 2160,
+            "textRun": {
+              "content": "E-chart navigation includes a number of toolbars, including:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1585,16 +1545,14 @@
         "startIndex": 2160,
         "endIndex": 2315,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2160,
-              "endIndex": 2315,
-              "textRun": {
-                "content": "The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2160,
+            "endIndex": 2315,
+            "textRun": {
+              "content": "The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1670,16 +1628,14 @@
         "startIndex": 2315,
         "endIndex": 2329,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2315,
-              "endIndex": 2329,
-              "textRun": {
-                "content": "right corner.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2315,
+            "endIndex": 2329,
+            "textRun": {
+              "content": "right corner.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1743,16 +1699,14 @@
         "startIndex": 2329,
         "endIndex": 2409,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2329,
-              "endIndex": 2409,
-              "textRun": {
-                "content": "The Patient Info toolbar displays the patient’s name and medical record number.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2329,
+            "endIndex": 2409,
+            "textRun": {
+              "content": "The Patient Info toolbar displays the patient’s name and medical record number.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1828,16 +1782,14 @@
         "startIndex": 2409,
         "endIndex": 2552,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2409,
-              "endIndex": 2552,
-              "textRun": {
-                "content": "Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2409,
+            "endIndex": 2552,
+            "textRun": {
+              "content": "Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1914,16 +1866,14 @@
         "startIndex": 2552,
         "endIndex": 2584,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2552,
-              "endIndex": 2584,
-              "textRun": {
-                "content": "encounters, notes and comments.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2552,
+            "endIndex": 2584,
+            "textRun": {
+              "content": "encounters, notes and comments.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -1987,16 +1937,14 @@
         "startIndex": 2584,
         "endIndex": 2677,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2584,
-              "endIndex": 2677,
-              "textRun": {
-                "content": "The Patient Extended Toolbar displays demographic, encounter, and other related information.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2584,
+            "endIndex": 2677,
+            "textRun": {
+              "content": "The Patient Extended Toolbar displays demographic, encounter, and other related information.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2072,16 +2020,14 @@
         "startIndex": 2677,
         "endIndex": 2781,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2677,
-              "endIndex": 2781,
-              "textRun": {
-                "content": "The Alerts toolbar displays available alert information — such as allergies or do not release requests.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2677,
+            "endIndex": 2781,
+            "textRun": {
+              "content": "The Alerts toolbar displays available alert information — such as allergies or do not release requests.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2157,16 +2103,14 @@
         "startIndex": 2781,
         "endIndex": 2865,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2781,
-              "endIndex": 2865,
-              "textRun": {
-                "content": "The Encounter toolbar displays information and links to the open patient encounter.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2781,
+            "endIndex": 2865,
+            "textRun": {
+              "content": "The Encounter toolbar displays information and links to the open patient encounter.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2242,8 +2186,7 @@
         "startIndex": 2865,
         "endIndex": 2867,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 2865,
               "endIndex": 2866,
               "inlineObjectElement": {
@@ -2323,16 +2266,14 @@
         "startIndex": 2867,
         "endIndex": 2868,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2867,
-              "endIndex": 2868,
-              "textRun": {
-                "content": "\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2867,
+            "endIndex": 2868,
+            "textRun": {
+              "content": "\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2396,23 +2337,21 @@
         "startIndex": 2868,
         "endIndex": 2886,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2868,
-              "endIndex": 2886,
-              "textRun": {
-                "content": "Dynamic Encounter\n",
-                "textStyle": {
-                  "bold": true,
-                  "italic": false,
-                  "fontSize": {
-                    "magnitude": 14,
-                    "unit": "PT"
-                  }
+          "elements": [{
+            "startIndex": 2868,
+            "endIndex": 2886,
+            "textRun": {
+              "content": "Dynamic Encounter\n",
+              "textStyle": {
+                "bold": true,
+                "italic": false,
+                "fontSize": {
+                  "magnitude": 14,
+                  "unit": "PT"
                 }
               }
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_3",
             "direction": "LEFT_TO_RIGHT",
@@ -2479,16 +2418,14 @@
         "startIndex": 2886,
         "endIndex": 3261,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 2886,
-              "endIndex": 3261,
-              "textRun": {
-                "content": "As its name suggests, the dynamic encounter can be customized on the fly. The Show hidden section list button displays any available section options that do not already appear on the page. The dynamic encounter features the same patient-related toolbars as the E-Chart. The Show exam sections pop-up window allows the user click on a section name to add it to the encounter.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 2886,
+            "endIndex": 3261,
+            "textRun": {
+              "content": "As its name suggests, the dynamic encounter can be customized on the fly. The Show hidden section list button displays any available section options that do not already appear on the page. The dynamic encounter features the same patient-related toolbars as the E-Chart. The Show exam sections pop-up window allows the user click on a section name to add it to the encounter.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2552,16 +2489,14 @@
         "startIndex": 3261,
         "endIndex": 3464,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3261,
-              "endIndex": 3464,
-              "textRun": {
-                "content": "Note: Multiple users can open a dynamic encounter at the same time. A warning message displays in red at the top of the dynamic encounter to notify the logged in user if another user owns the encounter.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3261,
+            "endIndex": 3464,
+            "textRun": {
+              "content": "Note: Multiple users can open a dynamic encounter at the same time. A warning message displays in red at the top of the dynamic encounter to notify the logged in user if another user owns the encounter.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2625,16 +2560,14 @@
         "startIndex": 3464,
         "endIndex": 3606,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3464,
-              "endIndex": 3606,
-              "textRun": {
-                "content": "The dynamic encounter is divided into a number of sections. Tabs that link to each section appear in the tab toolbar. These sections include:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3464,
+            "endIndex": 3606,
+            "textRun": {
+              "content": "The dynamic encounter is divided into a number of sections. Tabs that link to each section appear in the tab toolbar. These sections include:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2698,16 +2631,14 @@
         "startIndex": 3606,
         "endIndex": 3617,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3606,
-              "endIndex": 3617,
-              "textRun": {
-                "content": "Subjective\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3606,
+            "endIndex": 3617,
+            "textRun": {
+              "content": "Subjective\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2783,16 +2714,14 @@
         "startIndex": 3617,
         "endIndex": 3627,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3617,
-              "endIndex": 3627,
-              "textRun": {
-                "content": "Objective\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3617,
+            "endIndex": 3627,
+            "textRun": {
+              "content": "Objective\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2868,16 +2797,14 @@
         "startIndex": 3627,
         "endIndex": 3638,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3627,
-              "endIndex": 3638,
-              "textRun": {
-                "content": "Assessment\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3627,
+            "endIndex": 3638,
+            "textRun": {
+              "content": "Assessment\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -2953,16 +2880,14 @@
         "startIndex": 3638,
         "endIndex": 3643,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3638,
-              "endIndex": 3643,
-              "textRun": {
-                "content": "Plan\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3638,
+            "endIndex": 3643,
+            "textRun": {
+              "content": "Plan\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3038,16 +2963,14 @@
         "startIndex": 3643,
         "endIndex": 3651,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3643,
-              "endIndex": 3651,
-              "textRun": {
-                "content": "Summary\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3643,
+            "endIndex": 3651,
+            "textRun": {
+              "content": "Summary\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3123,16 +3046,14 @@
         "startIndex": 3651,
         "endIndex": 3776,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3651,
-              "endIndex": 3776,
-              "textRun": {
-                "content": "Click the section heading to open a section for editing. When the section is open for editing, the following buttons appear:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3651,
+            "endIndex": 3776,
+            "textRun": {
+              "content": "Click the section heading to open a section for editing. When the section is open for editing, the following buttons appear:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3196,16 +3117,14 @@
         "startIndex": 3776,
         "endIndex": 3855,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3776,
-              "endIndex": 3855,
-              "textRun": {
-                "content": "Next - Saves data entered into the current section and opens the next section.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3776,
+            "endIndex": 3855,
+            "textRun": {
+              "content": "Next - Saves data entered into the current section and opens the next section.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3281,16 +3200,14 @@
         "startIndex": 3855,
         "endIndex": 3915,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3855,
-              "endIndex": 3915,
-              "textRun": {
-                "content": "Cancel - Closes the section. Any data entered is not saved.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3855,
+            "endIndex": 3915,
+            "textRun": {
+              "content": "Cancel - Closes the section. Any data entered is not saved.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3366,16 +3283,14 @@
         "startIndex": 3915,
         "endIndex": 3970,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3915,
-              "endIndex": 3970,
-              "textRun": {
-                "content": "Hide section - Removes the section from the encounter.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3915,
+            "endIndex": 3970,
+            "textRun": {
+              "content": "Hide section - Removes the section from the encounter.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3451,16 +3366,14 @@
         "startIndex": 3970,
         "endIndex": 4186,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 3970,
-              "endIndex": 4186,
-              "textRun": {
-                "content": "When a section is open for editing, a Next button appears at the bottom. Click the next button to open the next available section for editing. Some sections have display options. The following options are available:\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 3970,
+            "endIndex": 4186,
+            "textRun": {
+              "content": "When a section is open for editing, a Next button appears at the bottom. Click the next button to open the next available section for editing. Some sections have display options. The following options are available:\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3524,16 +3437,14 @@
         "startIndex": 4186,
         "endIndex": 4235,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 4186,
-              "endIndex": 4235,
-              "textRun": {
-                "content": "Summary view - Displays data in a bulleted list.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 4186,
+            "endIndex": 4235,
+            "textRun": {
+              "content": "Summary view - Displays data in a bulleted list.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3609,16 +3520,14 @@
         "startIndex": 4235,
         "endIndex": 4275,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 4235,
-              "endIndex": 4275,
-              "textRun": {
-                "content": "Detail view - Displays data in a table.\n",
-                "textStyle": {}
-              }
+          "elements": [{
+            "startIndex": 4235,
+            "endIndex": 4275,
+            "textRun": {
+              "content": "Detail view - Displays data in a table.\n",
+              "textStyle": {}
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "NORMAL_TEXT",
             "direction": "LEFT_TO_RIGHT",
@@ -3694,8 +3603,7 @@
         "startIndex": 4275,
         "endIndex": 4277,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 4275,
               "endIndex": 4276,
               "inlineObjectElement": {
@@ -3779,23 +3687,21 @@
         "startIndex": 4277,
         "endIndex": 4291,
         "paragraph": {
-          "elements": [
-            {
-              "startIndex": 4277,
-              "endIndex": 4291,
-              "textRun": {
-                "content": "Related Pages\n",
-                "textStyle": {
-                  "bold": true,
-                  "italic": false,
-                  "fontSize": {
-                    "magnitude": 18,
-                    "unit": "PT"
-                  }
+          "elements": [{
+            "startIndex": 4277,
+            "endIndex": 4291,
+            "textRun": {
+              "content": "Related Pages\n",
+              "textStyle": {
+                "bold": true,
+                "italic": false,
+                "fontSize": {
+                  "magnitude": 18,
+                  "unit": "PT"
                 }
               }
             }
-          ],
+          }],
           "paragraphStyle": {
             "namedStyleType": "HEADING_2",
             "direction": "LEFT_TO_RIGHT",
@@ -3862,8 +3768,7 @@
         "startIndex": 4291,
         "endIndex": 4306,
         "paragraph": {
-          "elements": [
-            {
+          "elements": [{
               "startIndex": 4291,
               "endIndex": 4305,
               "textRun": {
@@ -4009,8 +3914,7 @@
     }
   },
   "namedStyles": {
-    "styles": [
-      {
+    "styles": [{
         "namedStyleType": "NORMAL_TEXT",
         "textStyle": {},
         "paragraphStyle": {
@@ -4614,8 +4518,7 @@
   "lists": {
     "kix.list.4": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -4917,8 +4820,7 @@
     },
     "kix.list.5": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -5220,8 +5122,7 @@
     },
     "kix.list.6": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -5523,8 +5424,7 @@
     },
     "kix.list.7": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -5826,8 +5726,7 @@
     },
     "kix.list.8": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -6129,8 +6028,7 @@
     },
     "kix.list.9": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -6432,8 +6330,7 @@
     },
     "kix.list.1": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -6735,8 +6632,7 @@
     },
     "kix.list.2": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -7038,8 +6934,7 @@
     },
     "kix.list.3": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {
@@ -7341,8 +7236,7 @@
     },
     "kix.list.a": {
       "listProperties": {
-        "nestingLevels": [
-          {
+        "nestingLevels": [{
             "bulletAlignment": "START",
             "glyphType": "GLYPH_TYPE_UNSPECIFIED",
             "indentFirstLine": {

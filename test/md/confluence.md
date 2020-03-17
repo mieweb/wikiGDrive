@@ -30,9 +30,9 @@ A new github repo with a node.js script specific to this conversion.
 
     * Macros can be wrapped in {{% curlies %}} and dumped as text
 
-        * <strong><em>Example Block Macro:</em></strong>  {{% macroname propertyname=’value’ propertyname=’value’ %}}macro body, if exists{{% /macroname %}}
+        * <strong><em>Example Block Macro:</em></strong>   {{% macroname propertyname='value' propertyname='value' %}} macro body, if exists {{% /macroname %}}
 
-        * <strong>Example Inline Macro:</strong>{{% macroname propertyname=’value’ propertyname=’value’ /%}}
+        * <strong>Example Inline Macro:</strong> {{% macroname propertyname='value' propertyname='value' /%}}
 
     * Tables should be kept tables
 
@@ -54,28 +54,16 @@ confluence2google <path to space> <path to google shared drive>
 ## Links and Possible Approaches
 
 1. Use REST API
-
-    A. [Confluence Cloud REST API](test.md)
-
-    B. [Confluence Server REST API](test.md)
-
-    C. [https://confluence.example.com/rest/api/space/DOCS/content](test.md)
-
-    D. Tiny Example Space: [https://confluence.example.com/rest/api/space/TEST/content](test.md) 
-
+    1. [Confluence Cloud REST API](test.md)
+    2. [Confluence Server REST API](test.md)
+    3. [https://confluence.example.com/rest/api/space/DOCS/content](test.md)
+    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TEST/content](test.md) 
 2. Use export file
-
-    E. [Confluence Export](test.md) makes a zipped file with [XML Format](test.md)
-
-    F. [Example HTML zip file](test.md) 
-
-    G. [Example XML zip file](test.md)
-
+    5. [Confluence Export](test.md) makes a zipped file with [XML Format](test.md)
+    6. [Example HTML zip file](test.md) 
+    7. [Example XML zip file](test.md)
 3. Use HTML
-
-    H. [Confluence Export](test.md) that makes an HTML file
-
-
+    8. [Confluence Export](test.md) that makes an HTML file
 
 ## Examples
 
