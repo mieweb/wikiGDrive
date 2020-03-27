@@ -24,7 +24,7 @@ npm i -g @mieweb/wikigdrive
 2. Create New Project 
 2. Enable Apis -> add Google Drive API
 3. Enable Apis -> Add Google Docs API
-4. Credentials ->  Create Credentials (OAuth Client ID) -> Other
+4. Credentials ->  Create Credentials (OAuth Client ID) -> Other ( see authorization section )
 5. Put credentials into .env or run wikigdrive with --client_id CLIENT_ID --client_secret SECRET
 
 ## Usage and options
@@ -88,6 +88,13 @@ wikigdrive https://drive.google.com.pathtothefolder --dest ./content
 ```
 hugo
 ```
+
+## Authorization
+
+There are two methods: individual credentials or a service account.
+
+- [Individual](https://cloud.google.com/docs/authentication/end-user#creating_your_client_credentials)
+- [Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority)
 
 ## FAQ
 
