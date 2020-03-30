@@ -17,6 +17,7 @@ Options:
     --watch (keep scanning for changes, ie: daemon)
     --link_mode [mdURLs|dirURLs|uglyURLs]
     --drive_id
+    --service_account=./private_key.json
 
     --config-reset google_auth # removes google_auth object from .wikidgrive file
     --config-reset fileMap # removes fileMap object from .wikidgrive file
@@ -56,6 +57,7 @@ async function index() {
   params['debug'] = !!argv['debug'];
 
   params['drive_id'] = argv['drive_id'] || '';
+  params['service_account'] = argv['service_account'] || null;
 
   const mainService = new SyncService(params);
   return await mainService.start();
