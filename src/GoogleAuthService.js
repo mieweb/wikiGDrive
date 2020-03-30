@@ -1,8 +1,11 @@
 /* eslint-disable no-async-promise-executor */
 'use strict';
 
-import { google } from 'googleapis';
+import {google} from 'googleapis';
 import readline from 'readline';
+import fs from 'fs';
+
+import {JWT} from 'google-auth-library';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -16,6 +19,12 @@ export class GoogleAuthService {
 
   constructor(configService) {
     this.configService = configService;
+  }
+
+  async authorizeServiceAccount(account_json_file_name) {
+    const opts = JSON.parse(fs.readFileSync(account_json_file_name));
+
+    return new JWT(opts.client_email, null, opts.private_key, SCOPES);
   }
 
   async authorize(client_id, client_secret) {
@@ -35,6 +44,12 @@ export class GoogleAuthService {
     //
     // console.log(oAuth2Client);
     // return oAuth2Client;
+
+
+    // https://developers.google.com/identity/protocols/oauth2/service-account
+
+    // Client name: Service Account Unique ID
+    // API interfaces: https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly
 
     const config = await this.configService.loadConfig();
 

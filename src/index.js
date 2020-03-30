@@ -16,6 +16,7 @@ Options:
     --dest (current working folder)
     --watch (keep scanning for changes, ie: daemon)
     --link_mode [mdURLs|dirURLs|uglyURLs]
+    --service_account=./private_key.json
 
     --config-reset google_auth # removes google_auth object from .wikidgrive file
     --config-reset fileMap # removes fileMap object from .wikidgrive file
@@ -53,6 +54,8 @@ async function index() {
   }
   params['flat-folder-structure'] = !!argv['without-folder-structure'];
   params['debug'] = !!argv['debug'];
+
+  params['service_account'] = argv['service_account'] || null;
 
   const mainService = new SyncService(params);
   return await mainService.start();
