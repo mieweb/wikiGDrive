@@ -40,7 +40,13 @@ export class SyncService {
       if (!this.params.client_secret) this.params.client_secret = config.credentials.client_secret;
     }
 
-    const auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
+    let auth;
+    if (this.params.service_account) {
+      auth = await this.googleAuthService.authorizeServiceAccount(this.params.service_account);
+    } else {
+      auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
+    }
+
     config = await this.configService.loadConfig(); // eslint-disable-line require-atomic-updates
 
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
@@ -50,7 +56,12 @@ export class SyncService {
     const httpClient = new HttpClient();
     const externalFiles = new ExternalFiles(config.binaryFiles || {}, httpClient, this.params.dest);
 
-    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, folderId);
+    const context = { folderId: folderId };
+    if (this.params.drive_id) {
+      context.driveId = this.params.drive_id;
+    }
+
+    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, context);
     const mergedFiles = filesStructure.merge(changedFiles);
 
     const linkTranslator = new LinkTranslator(filesStructure, externalFiles);

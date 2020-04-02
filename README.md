@@ -8,9 +8,15 @@ Google Drive to MarkDown synchronization
 [![Project Dependencies](https://david-dm.org/mieweb/wikiGDrive.svg)](https://david-dm.org/mieweb/wikiGDrive)
 [![devDependencies Status](https://david-dm.org/mieweb/wikiGDrive/dev-status.svg)](https://david-dm.org/mieweb/wikiGDrive?type=dev)
 
-## Install - TODO: put into npm
 
-npm install -g wikigdrive
+## Install from NPM
+
+[![View this project on NPM](https://img.shields.io/npm/v/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
+[![NPM downloads](https://img.shields.io/npm/dm/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
+![Publish wikigdrive to NPM](https://github.com/mieweb/wikiGDrive/workflows/Publish%20wikigdrive%20to%20NPM/badge.svg)
+```
+npm i -g @mieweb/wikigdrive
+```
 
 ## App setup
 
@@ -18,7 +24,7 @@ npm install -g wikigdrive
 2. Create New Project 
 2. Enable Apis -> add Google Drive API
 3. Enable Apis -> Add Google Docs API
-4. Credentials ->  Create Credentials (OAuth Client ID) -> Other
+4. Credentials ->  Create Credentials (OAuth Client ID) -> Other ( see authorization section )
 5. Put credentials into .env or run wikigdrive with --client_id CLIENT_ID --client_secret SECRET
 
 ## Usage and options
@@ -29,6 +35,8 @@ wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
 --config /location/of/.wikigdrive - Location of config file
 --dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
 --watch - Run program in loop, watch for gdrive changes
+
+--drive_id - An ID of the drive
 
 --client_id - ID of google app, alternatively can be passed in .env or through environment variable CLIENT_ID;
 --client_secret - Secret of google app, alternatively can be passed in .env or through environment variable CLIENT_SECRET;
@@ -65,15 +73,17 @@ git submodule add https://github.com/budparr/gohugo-theme-ananke.git themes/anan
 echo 'theme = "ananke"' >> config.toml
 ```
 
-4. Install wikigdrive - TODO: use npm install 
+4. Install wikigdrive
 
 ```
-npm link wikigdrive .....pathtowikigdrive
+npm i -g @mieweb/wikigdrive
 ```
 
 5. Sync GDrive
 
+```
 wikigdrive https://drive.google.com.pathtothefolder --dest ./content
+```
 
 6. Generate HTML
 
@@ -81,21 +91,28 @@ wikigdrive https://drive.google.com.pathtothefolder --dest ./content
 hugo
 ```
 
+## Authorization
+
+There are two methods: individual credentials or a service account.
+
+- [Individual](https://cloud.google.com/docs/authentication/end-user#creating_your_client_credentials)
+- [Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority)
+
 ## FAQ
 
 ### What is the purpose of this tool?
 
 To enable collaborative editing of documentation and the ability to publish that documentation as well as linking it to revision control system branches (like in git)
 
-### Why use google at all. Why not use markdown and github?
+### Why use Google at all. Why not use markdown and GitHub?
 
-No collaboration in real time. Also markdown requires a skill when managing screenshots and diagrams that are not easily accomplished in markdown. 
+No collaboration in real-time. Also, markdown requires skill when managing screenshots and diagrams that are not easily accomplished in markdown.
 
-### Why not just use google docs?
+### Why not just use Google Docs?
 
-Would love it if it were possible, but drive does not offer the ability to publish pages in a clean way. The urls are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has disambugation pages), a reader could be redirected to the proper content. Google doesn’t, so this project is an attempt to fill that gap. 
+Would love it if it were possible, but drive does not offer the ability to publish pages cleanly. The URLs are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has disambiguation pages), a reader could be redirected to the proper content. Google doesn’t, so this project is an attempt to fill that gap.
 
-Also google does not have a good blame system for contributions to a document. Hopefully this is fixed someday but in the meantime GitHub on markdown can *help* fill the void. 
+Also, Google does not have a good blame system for contributions to a document. Hopefully this is fixed someday but in the meantime, GitHub on markdown can *help* fill the void.
 
 ### Why markdown?
 
@@ -103,12 +120,12 @@ All ears for a different preferred format. It’s easy to read when editing dire
 
 ### What about mismatches in Docs vs Markdown
 
-There are features of google Docs that are not going to be supported. Like coloring text, page breaks, headers, comments, etc. These features are not core to our goals for clean WYSIYYM. 
+There are features of Google Docs that are not going to be supported. Like coloring text, page breaks, headers, comments, etc. These features are not core to our goals for clean WYSIYYM.
 
-Keeping a WYSIWYM style insures a good mobile experience to view and edit. 
+Keeping a WYSIWYM style ensures a good mobile experience to view and edit.
 
 ### Why not make a website front end to a Google shared drive?
 
-Our goals are to be able to take versions of the content and commit them along with a version of the code at a point in time. By just making a website, it would allow for real time viewing of the content but no way to go to a specific version of the documentation at a given time.
+Our goals are to be able to take versions of the content and commit them along with a version of the code at a point in time. By just making a website, it would allow for real-time viewing of the content but no way to go to a specific version of the documentation at a given time.
 
-A website front end is a goal for real-time testing of the viewing experience but initially we want to make markdown that can be committed. 
+A website front end is a goal for real-time testing of the viewing experience, but initially, we want to make markdown that can be committed.

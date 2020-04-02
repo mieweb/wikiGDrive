@@ -1,7 +1,7 @@
 'use strict';
 
-import {Transform} from 'stream';
-import {PREFIX_LEVEL} from './MarkDownTransform';
+import { Transform } from 'stream';
+import { PREFIX_LEVEL } from './MarkDownTransform';
 
 export class NavigationTransform extends Transform {
 
@@ -34,24 +34,26 @@ export class NavigationTransform extends Transform {
     let counter = 30;
 
     for (const line of lines) {
+
       const level = line.replace(/^([\s]*).*$/, '$1').length / PREFIX_LEVEL.length;
 
       const squareBracketEnd = line.lastIndexOf(']');
       const bracketStart = line.indexOf('(', squareBracketEnd) + 1;
       let localPath = line.substr(bracketStart, line.indexOf(')', squareBracketEnd) - bracketStart);
+      let navLabel = line.substr(line.indexOf('[') + 1, line.indexOf(']') - (line.indexOf('[') + 1));
 
       switch (this.link_mode) {
-        case 'uglyURLs':
-          localPath = localPath.replace(/.html$/, '.md');
-          break;
+      case 'uglyURLs':
+        localPath = localPath.replace(/.html$/, '.md');
+        break;
 
-        case 'dirURLs':
-          localPath += '.md';
-          break;
+      case 'dirURLs':
+        localPath += '.md';
+        break;
 
-        case 'mdURLs':
-        default:
-          break;
+      case 'mdURLs':
+      default:
+        break;
       }
 
       const file = this.files.find(file => file.localPath === localPath);
@@ -60,6 +62,7 @@ export class NavigationTransform extends Transform {
         levels[level] = file;
 
         const hierarchyFrontMatter = {
+          name: navLabel,
           weight: counter,
           identifier: file.id
         };
