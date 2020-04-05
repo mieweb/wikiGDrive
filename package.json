@@ -1,6 +1,6 @@
 {
   "name": "@mieweb/wikigdrive",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Google Drive to MarkDown synchronization",
   "keywords": [
     "GDrive",
