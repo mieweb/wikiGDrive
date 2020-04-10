@@ -1,7 +1,7 @@
 'use strict';
 
 import { Transform } from 'stream';
-import { PREFIX_LEVEL } from './MarkDownTransform';
+import { PREFIX_LEVEL } from './markdown/MarkDownTransform';
 
 export class NavigationTransform extends Transform {
 

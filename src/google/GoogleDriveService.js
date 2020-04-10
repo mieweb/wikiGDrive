@@ -2,8 +2,8 @@
 
 import { google } from 'googleapis';
 import slugify from 'slugify';
-import { FilesStructure } from './FilesStructure';
-import { retryAsync } from './retryAsync';
+import { FilesStructure } from '../storage/FilesStructure';
+import { retryAsync } from '../utils/retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -13,6 +13,23 @@ export function getDesiredPath(name) {
   name = name.trim();
   name = slugify(name, { replacement: '-', lower: true });
   return name;
+}
+
+function removeDuplicates(files) {
+  const retVal = [];
+
+  files.sort((a, b) => {
+    return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
+  });
+
+  for (const file of files) {
+    if (retVal.find(entry => entry.id === file.id)) {
+      continue;
+    }
+    retVal.push(file);
+  }
+
+  return retVal;
 }
 
 export class GoogleDriveService {
@@ -64,26 +81,9 @@ export class GoogleDriveService {
     return false;
   }
 
-  removeDuplicates(files) {
-    const retVal = [];
-
-    files.sort((a, b) => {
-      return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
-    });
-
-    for (const file of files) {
-      if (retVal.find(entry => entry.id === file.id)) {
-        continue;
-      }
-      retVal.push(file);
-    }
-
-    return retVal;
-  }
-
   async listFilesRecursive(auth, context, modifiedTime, parentDirName) {
     console.log('Listening folder:', parentDirName || '/');
-    let files = await this.listFiles(auth, context, modifiedTime);
+    let files = await this._listFiles(auth, context, modifiedTime);
 
     if (parentDirName && !this.params['flat-folder-structure']) {
       files.forEach(file => {
@@ -114,7 +114,7 @@ export class GoogleDriveService {
       });
     }
 
-    return this.removeDuplicates(files);
+    return removeDuplicates(files);
   }
 
   getStartTrackToken(auth) {
@@ -178,7 +178,7 @@ export class GoogleDriveService {
     }));
   }
 
-  listFiles(auth, context, modifiedTime, nextPageToken) {
+  _listFiles(auth, context, modifiedTime, nextPageToken) {
     return retryAsync(10, (resolve, reject) => {
 
       const drive = google.drive({ version: 'v3', auth });
@@ -211,7 +211,7 @@ export class GoogleDriveService {
         }
 
         if (res.data.nextPageToken) {
-          const nextFiles = await this.listFiles(auth, context, modifiedTime, res.data.nextPageToken);
+          const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
           resolve(res.data.files.concat(nextFiles));
         } else {
           res.data.files.forEach(file => {

@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { FilesStructure } from '../src/FilesStructure';
+import { FilesStructure } from '../src/storage/FilesStructure';
 
 describe('FileStructure', () => {
   it('test collisions', () => {

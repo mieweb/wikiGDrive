@@ -51,10 +51,10 @@ export class GoogleAuthService {
     // Client name: Service Account Unique ID
     // API interfaces: https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly
 
-    const config = await this.configService.loadConfig();
+    const google_auth = await this.configService.loadGoogleAuth();
 
-    if (config.google_auth) {
-      oAuth2Client.setCredentials(config.google_auth);
+    if (google_auth) {
+      oAuth2Client.setCredentials(google_auth);
       return oAuth2Client;
     } else {
       return this.getAccessToken(oAuth2Client);
@@ -77,14 +77,12 @@ export class GoogleAuthService {
 
       rl.question('Enter the code from that page here: ', (code) => {
         rl.close();
-        oAuth2Client.getToken(code, async (err, token) => {
+        oAuth2Client.getToken(code, async (err, credentials) => {
           if (err) return console.error('Error retrieving access token', err);
-          oAuth2Client.setCredentials(token);
+          oAuth2Client.setCredentials(credentials);
           // Store the token to disk for later program executions
 
-          const config = await this.configService.loadConfig();
-          config.google_auth = token;
-          await this.configService.saveConfig(config);
+          await this.configService.saveGoogleAuth(credentials);
 
           resolve(oAuth2Client);
         });

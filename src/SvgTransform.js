@@ -2,7 +2,7 @@
 
 import { Transform } from 'stream';
 import xmldoc from 'xmldoc';
-import { GoogleDriveService } from './GoogleDriveService';
+import { GoogleDriveService } from './google/GoogleDriveService';
 
 export class SvgTransform extends Transform {
 
