@@ -3,23 +3,23 @@
 import path from 'path';
 import fs from 'fs';
 
-import { ConfigService } from './ConfigService';
-import { GoogleDriveService } from './GoogleDriveService';
-import { GoogleAuthService } from './GoogleAuthService';
-import { GoogleDocsService } from './GoogleDocsService';
+import { ConfigService } from './storage/ConfigService';
+import { GoogleDriveService } from './google/GoogleDriveService';
+import { GoogleAuthService } from './google/GoogleAuthService';
+import { GoogleDocsService } from './google/GoogleDocsService';
 import { SvgTransform } from './SvgTransform';
 import { LinkTranslator } from './LinkTranslator';
-import { HttpClient } from './HttpClient';
-import { FileService } from './FileService';
+import { HttpClient } from './utils/HttpClient';
+import { FileService } from './utils/FileService';
 import { TocGenerator } from './TocGenerator';
-import { MarkDownTransform } from './MarkDownTransform';
-import { FrontMatterTransform } from './FrontMatterTransform';
-import { FilesStructure } from './FilesStructure';
+import { MarkDownTransform } from './markdown/MarkDownTransform';
+import { FrontMatterTransform } from './markdown/FrontMatterTransform';
+import { FilesStructure } from './storage/FilesStructure';
 import { ExternalFiles } from './ExternalFiles';
-import {NavigationTransform} from './NavigationTransform';
-import {StringWritable} from './StringWritable';
-import {GoogleListFixer} from './GoogleListFixer';
-import {EmbedImageFixed} from './EmbedImageFixed';
+import { NavigationTransform } from './NavigationTransform';
+import { StringWritable } from './utils/StringWritable';
+import { GoogleListFixer } from './html/GoogleListFixer';
+import { EmbedImageFixed } from './html/EmbedImageFixed';
 
 export class SyncService {
 
@@ -33,11 +33,11 @@ export class SyncService {
 
   async start() {
     await this.configService.resetConfig(this.params['config-reset']);
-    let config = await this.configService.loadConfig();
+    const configCredentials = await this.configService.loadCredentials();
 
-    if (config.credentials) {
-      if (!this.params.client_id) this.params.client_id = config.credentials.client_id;
-      if (!this.params.client_secret) this.params.client_secret = config.credentials.client_secret;
+    if (configCredentials) {
+      if (!this.params.client_id) this.params.client_id = configCredentials.client_id;
+      if (!this.params.client_secret) this.params.client_secret = configCredentials.client_secret;
     }
 
     let auth;
@@ -47,23 +47,21 @@ export class SyncService {
       auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
     }
 
-    config = await this.configService.loadConfig(); // eslint-disable-line require-atomic-updates
-
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
-
-    const filesStructure = new FilesStructure(config.fileMap);
-
-    const httpClient = new HttpClient();
-    const externalFiles = new ExternalFiles(config.binaryFiles || {}, httpClient, this.params.dest);
 
     const context = { folderId: folderId };
     if (this.params.drive_id) {
       context.driveId = this.params.drive_id;
     }
 
+    const fileMap = await this.configService.loadFileMap();
+    const binaryFiles = await this.configService.loadBinaryFiles();
+    const filesStructure = new FilesStructure(fileMap);
+
     const changedFiles = await this.googleDriveService.listFilesRecursive(auth, context);
     const mergedFiles = filesStructure.merge(changedFiles);
 
+    const externalFiles = new ExternalFiles(binaryFiles || {}, new HttpClient(), this.params.dest);
     const linkTranslator = new LinkTranslator(filesStructure, externalFiles);
     if (this.params['link_mode']) {
       linkTranslator.mode = this.params['link_mode'];
@@ -85,9 +83,8 @@ export class SyncService {
     const tocGenerator = new TocGenerator('toc.md', linkTranslator);
     await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-    config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
-    config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
-    await this.configService.saveConfig(config);
+    await this.configService.saveFileMap(filesStructure.getFileMap());
+    await this.configService.saveBinaryFiles(externalFiles.getBinaryFiles());
 
     if (this.params.watch) {
       console.log('Watching changes');
@@ -121,9 +118,8 @@ export class SyncService {
             const tocGenerator = new TocGenerator('toc.md', linkTranslator);
             await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
 
-            config.fileMap = filesStructure.getFileMap(); // eslint-disable-line require-atomic-updates
-            config.binaryFiles = externalFiles.getBinaryFiles(); // eslint-disable-line require-atomic-updates
-            await this.configService.saveConfig(config);
+            await this.configService.saveFileMap(filesStructure.getFileMap());
+            await this.configService.saveBinaryFiles(externalFiles.getBinaryFiles());
             console.log('Pulled latest changes');
           } else {
             console.log('No changes detected. Sleeping for 10 seconds.');

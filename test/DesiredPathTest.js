@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { getDesiredPath } from '../src/GoogleDriveService';
+import { getDesiredPath } from '../src/google/GoogleDriveService';
 
 describe('DesiredPathTest', () => {
   it('test slugified path', () => {
