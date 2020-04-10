@@ -6,18 +6,19 @@ import { FileService } from './utils/FileService';
 
 export class ExternalFiles {
 
-  constructor(binaryFiles, httpClient, dest) {
-    this.binaryFiles = binaryFiles;
+  constructor(configService, httpClient, dest) {
+    this.configService = configService;
     this.httpClient = httpClient;
     this.dest = dest;
   }
 
-  getBinaryFiles() {
-    return this.binaryFiles;
+  async init() {
+    this.binaryFiles = await this.configService.loadBinaryFiles();
   }
 
-  putFile(file) {
+  async putFile(file) {
     this.binaryFiles[file.md5Checksum] = file;
+    await this.configService.saveBinaryFiles(this.binaryFiles);
   }
 
   async getMd5(url) {
