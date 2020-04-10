@@ -9,6 +9,9 @@ export class ConfigService {
     this.filePath = filePath;
   }
 
+  async flush() {
+  }
+
   async _loadConfig() {
     try {
       const content = await this.fileService.readFile(this.filePath);
@@ -47,7 +50,7 @@ export class ConfigService {
 
   async loadBinaryFiles() {
     const config = await this._loadConfig();
-    return config.binaryFiles;
+    return config.binaryFiles || {};
   }
 
   async saveBinaryFiles(binaryFiles) {
