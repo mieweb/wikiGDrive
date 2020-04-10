@@ -29,22 +29,31 @@ export class SyncService {
     this.googleAuthService = new GoogleAuthService(this.configService);
     this.googleDriveService = new GoogleDriveService(this.params);
     this.googleDocsService = new GoogleDocsService();
+    this.filesStructure = new FilesStructure(this.configService);
+    this.externalFiles = new ExternalFiles(this.configService, new HttpClient(), this.params.dest);
   }
 
   async start() {
     await this.configService.resetConfig(this.params['config-reset']);
-    const configCredentials = await this.configService.loadCredentials();
 
+    await this.filesStructure.init();
+    await this.externalFiles.init();
+
+    this.linkTranslator = new LinkTranslator(this.filesStructure, this.externalFiles);
+    if (this.params['link_mode']) {
+      this.linkTranslator.mode = this.params['link_mode'];
+    }
+
+    const configCredentials = await this.configService.loadCredentials();
     if (configCredentials) {
       if (!this.params.client_id) this.params.client_id = configCredentials.client_id;
       if (!this.params.client_secret) this.params.client_secret = configCredentials.client_secret;
     }
 
-    let auth;
     if (this.params.service_account) {
-      auth = await this.googleAuthService.authorizeServiceAccount(this.params.service_account);
+      this.auth = await this.googleAuthService.authorizeServiceAccount(this.params.service_account);
     } else {
-      auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
+      this.auth = await this.googleAuthService.authorize(this.params.client_id, this.params.client_secret);
     }
 
     const folderId = this.googleDriveService.urlToFolderId(this.params['drive']);
@@ -54,49 +63,25 @@ export class SyncService {
       context.driveId = this.params.drive_id;
     }
 
-    const fileMap = await this.configService.loadFileMap();
-    const binaryFiles = await this.configService.loadBinaryFiles();
-    const filesStructure = new FilesStructure(fileMap);
+    if (!this.params.watch) {
+      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context);
+      await this.handleChangedFiles(changedFiles);
+    } else {
+      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context);
+      await this.handleChangedFiles(changedFiles);
 
-    const changedFiles = await this.googleDriveService.listFilesRecursive(auth, context);
-    const mergedFiles = filesStructure.merge(changedFiles);
-
-    const externalFiles = new ExternalFiles(binaryFiles || {}, new HttpClient(), this.params.dest);
-    const linkTranslator = new LinkTranslator(filesStructure, externalFiles);
-    if (this.params['link_mode']) {
-      linkTranslator.mode = this.params['link_mode'];
-    }
-
-    let startTrackToken = null;
-    if (this.params.watch) {
-      startTrackToken = await this.googleDriveService.getStartTrackToken(auth);
+      let startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
       console.log('startTrackToken', startTrackToken);
-    }
-
-    await this.createFolderStructure(mergedFiles);
-    await this.downloadAssets(auth, mergedFiles);
-    await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
-    await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-    await this.generateConflicts(filesStructure, linkTranslator);
-    await this.generateRedirects(filesStructure, linkTranslator);
-
-    const tocGenerator = new TocGenerator('toc.md', linkTranslator);
-    await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
-
-    await this.configService.saveFileMap(filesStructure.getFileMap());
-    await this.configService.saveBinaryFiles(externalFiles.getBinaryFiles());
-
-    if (this.params.watch) {
       console.log('Watching changes');
 
       await new Promise(() => setInterval(async () => {
         try {
-          const result = await this.googleDriveService.watchChanges(auth, startTrackToken);
+          const result = await this.googleDriveService.watchChanges(this.auth, startTrackToken);
 
           const changedFiles = result.files.filter(file => {
             let retVal = false;
             file.parents.forEach((parentId) => {
-              if (filesStructure.containsFile(parentId)) {
+              if (this.filesStructure.containsFile(parentId)) {
                 retVal = true;
               }
             });
@@ -106,20 +91,8 @@ export class SyncService {
           if (changedFiles.length > 0) {
             console.log(changedFiles.length + ' files modified');
 
-            const mergedFiles = filesStructure.merge(changedFiles);
+            await this.handleChangedFiles(changedFiles);
 
-            await this.createFolderStructure(mergedFiles);
-            await this.downloadAssets(auth, mergedFiles);
-            await this.downloadDiagrams(auth, mergedFiles, linkTranslator, externalFiles);
-            await this.downloadDocuments(auth, mergedFiles, linkTranslator);
-            await this.generateConflicts(filesStructure, linkTranslator);
-            await this.generateRedirects(filesStructure, linkTranslator);
-
-            const tocGenerator = new TocGenerator('toc.md', linkTranslator);
-            await tocGenerator.generate(filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
-
-            await this.configService.saveFileMap(filesStructure.getFileMap());
-            await this.configService.saveBinaryFiles(externalFiles.getBinaryFiles());
             console.log('Pulled latest changes');
           } else {
             console.log('No changes detected. Sleeping for 10 seconds.');
@@ -134,7 +107,7 @@ export class SyncService {
     }
   }
 
-  async downloadAssets(auth, files) {
+  async downloadAssets(files) {
     files = files.filter(file => file.size !== undefined);
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
@@ -145,11 +118,11 @@ export class SyncService {
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
-      await this.googleDriveService.download(auth, file, dest);
+      await this.googleDriveService.download(this.auth, file, dest);
     }
   }
 
-  async downloadDiagrams(auth, files, linkTranslator, externalFiles) {
+  async downloadDiagrams(files) {
     files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
@@ -160,24 +133,24 @@ export class SyncService {
       const targetPath = path.join(this.params.dest, file.localPath);
       const writeStream = fs.createWriteStream(targetPath);
 
-      const svgTransform = new SvgTransform(linkTranslator, file.localPath);
+      const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
 
       await this.googleDriveService.exportDocument(
-        auth,
+        this.auth,
         Object.assign({}, file, { mimeType: 'image/svg+xml' }),
         [svgTransform, writeStream]);
 
       const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
       await this.googleDriveService.exportDocument(
-        auth,
+        this.auth,
         Object.assign({}, file, { mimeType: 'image/png' }),
         writeStreamPng);
 
       const fileService = new FileService();
       const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
-      externalFiles.putFile({
+      this.externalFiles.putFile({
         localPath: file.localPath.replace(/.svg$/, '.png'),
         localDocumentPath: file.localPath,
         md5Checksum: md5Checksum
@@ -185,7 +158,7 @@ export class SyncService {
     }
   }
 
-  async downloadDocuments(auth, files, linkTranslator) {
+  async downloadDocuments(files) {
     files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
 
     const navigationFile = files.find(file => file.name === '.navigation');
@@ -193,8 +166,8 @@ export class SyncService {
     const navigationTransform = new NavigationTransform(files, this.params['link_mode']);
 
     if (navigationFile) {
-      const markDownTransform = new MarkDownTransform('.navigation', linkTranslator);
-      await this.googleDocsService.download(auth, navigationFile, [markDownTransform, navigationTransform], linkTranslator);
+      const markDownTransform = new MarkDownTransform('.navigation', this.linkTranslator);
+      await this.googleDocsService.download(this.auth, navigationFile, [markDownTransform, navigationTransform], this.linkTranslator);
     }
 
     for (let fileNo = 0; fileNo < files.length; fileNo++) {
@@ -205,24 +178,24 @@ export class SyncService {
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
-      const markDownTransform = new MarkDownTransform(file.localPath, linkTranslator);
-      const frontMatterTransform = new FrontMatterTransform(file, linkTranslator, navigationTransform.hierarchy);
+      const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
+      const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
       const destHtml = new StringWritable();
-      await this.googleDriveService.exportDocument(auth, { id: file.id, mimeType: 'text/html' }, destHtml);
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
 
       const googleListFixer = new GoogleListFixer(destHtml.getString());
       const embedImageFixed = new EmbedImageFixed(destHtml.getString());
 
-      await this.googleDocsService.download(auth, file,
-        [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], linkTranslator);
+      await this.googleDocsService.download(this.auth, file,
+        [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], this.linkTranslator);
 
       if (this.params.debug) {
         fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
 
         const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
-        await this.googleDocsService.download(auth, file,
-          [destJson], linkTranslator);
+        await this.googleDocsService.download(this.auth, file,
+          [destJson], this.linkTranslator);
       }
     }
   }
@@ -249,9 +222,9 @@ export class SyncService {
     fs.mkdirSync(path.join(this.params.dest, 'external_files'), { recursive: true });
   }
 
-  async generateConflicts(filesStructure, linkTranslator) {
-    const filesMap = filesStructure.getFileMap();
-    const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+  async generateConflicts() {
+    const filesMap = this.filesStructure.getFileMap();
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
 
     files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);
@@ -264,7 +237,7 @@ export class SyncService {
         const id = file.conflicting[fileNo];
         const conflictingFile = filesMap[id];
 
-        const relativePath = linkTranslator.convertToRelativeMarkDownPath(conflictingFile.localPath, file.localPath);
+        const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(conflictingFile.localPath, file.localPath);
         md += '* [' + conflictingFile.name + '](' + relativePath + ')\n';
       }
 
@@ -273,9 +246,9 @@ export class SyncService {
     });
   }
 
-  async generateRedirects(filesStructure, linkTranslator) {
-    const filesMap = filesStructure.getFileMap();
-    const files = filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+  async generateRedirects() {
+    const filesMap = this.filesStructure.getFileMap();
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
 
     files.forEach(file => {
       const targetPath = path.join(this.params.dest, file.localPath);
@@ -285,12 +258,30 @@ export class SyncService {
 
       let md = '';
       md += 'Renamed to: ';
-      const relativePath = linkTranslator.convertToRelativeMarkDownPath(newFile.localPath, file.localPath);
+      const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(newFile.localPath, file.localPath);
       md += '[' + newFile.name + '](' + relativePath + ')\n';
 
       dest.write(md);
       dest.close();
     });
+  }
+
+  async generateMetaFiles() {
+    await this.generateConflicts();
+    await this.generateRedirects();
+    const tocGenerator = new TocGenerator('toc.md', this.linkTranslator);
+    await tocGenerator.generate(this.filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+  }
+
+  async handleChangedFiles(changedFiles) {
+    const mergedFiles = await this.filesStructure.merge(changedFiles);
+
+    await this.createFolderStructure(mergedFiles);
+    await this.downloadAssets(mergedFiles);
+    await this.downloadDiagrams(mergedFiles);
+    await this.downloadDocuments(mergedFiles);
+
+    await this.generateMetaFiles();
   }
 
 }

@@ -1,8 +1,17 @@
 'use strict';
 
+function generateUniqId() {
+  return Math.random().toString(26).slice(2);
+}
+
 class FilesStructure {
 
-  constructor(fileMap) {
+  constructor(configService) {
+    this.configService = configService;
+  }
+
+  async init() {
+    const fileMap = await this.configService.loadFileMap();
     this.fileMap = fileMap || {};
   }
 
@@ -10,17 +19,17 @@ class FilesStructure {
     return this.fileMap;
   }
 
-  merge(files) {
+  async merge(files) {
     const mergedFiles = [];
 
-    files.forEach(file => {
+    for (const file of files) {
       const oldEntry = this.fileMap[file.id];
       let oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
 
       if (!oldEntry) {
-        this.insertFile(file);
+        await this._insertFile(file);
       } else {
-        this.updateFile(file);
+        await this._updateFile(file);
       }
 
       if (oldDesiredLocalPath) {
@@ -38,18 +47,20 @@ class FilesStructure {
             mergedFiles.push(found);
           }
         });
-    });
+    }
+
+    await this.configService.saveFileMap(this.fileMap);
 
     return mergedFiles;
   }
 
-  updateFile(file) {
+  async _updateFile(file) {
     const oldFile = this.fileMap[file.id];
 
     if (oldFile.desiredLocalPath !== file.desiredLocalPath) {
 
       const redirectFile = {
-        id: this.generateUniqId(),
+        id: generateUniqId(),
         name: oldFile.name,
         mimeType: FilesStructure.REDIRECT_MIME,
         localPath: oldFile.localPath,
@@ -75,10 +86,12 @@ class FilesStructure {
 
     this.fileMap[oldFile.id] = oldFile;
 
-    this.checkConflicts(oldFile.desiredLocalPath);
+    await this.configService.saveFileMap(this.fileMap);
+
+    await this._checkConflicts(oldFile.desiredLocalPath);
   }
 
-  checkConflicts(desiredLocalPath) {
+  async _checkConflicts(desiredLocalPath) {
     const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== FilesStructure.CONFLICT_MIME);
 
     if (files.length < 2) {
@@ -91,7 +104,7 @@ class FilesStructure {
     let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === FilesStructure.CONFLICT_MIME);
     if (!conflictFile) {
       conflictFile = {
-        id: this.generateUniqId(),
+        id: generateUniqId(),
         name: files[0].name,
         mimeType: FilesStructure.CONFLICT_MIME,
         localPath: desiredLocalPath,
@@ -117,13 +130,16 @@ class FilesStructure {
 
     conflictFile.conflicting = conflicting;
     this.fileMap[conflictFile.id] = conflictFile;
+
+    await this.configService.saveFileMap(this.fileMap);
   }
 
-  insertFile(fileToInsert) {
+  async _insertFile(fileToInsert) {
     delete fileToInsert.conflictId;
     this.fileMap[fileToInsert.id] = fileToInsert;
+    await this.configService.saveFileMap(this.fileMap);
 
-    this.checkConflicts(fileToInsert.desiredLocalPath);
+    this._checkConflicts(fileToInsert.desiredLocalPath);
   }
 
   findFile(checker) {
@@ -147,8 +163,8 @@ class FilesStructure {
   }
 
   containsFile(fileId) {
-    if (this.fileMap[fileId]) return true;
-    return false;
+    return !!this.fileMap[fileId];
+
   }
 
   getMaxModifiedTime() {
@@ -167,10 +183,6 @@ class FilesStructure {
     }
 
     return maxModifiedTime;
-  }
-
-  generateUniqId() {
-    return Math.random().toString(26).slice(2);
   }
 
 }
