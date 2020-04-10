@@ -36,7 +36,7 @@ export class ExternalFiles {
     const fileService = new FileService();
     const md5 = await fileService.md5File(targetPath);
 
-    this.putFile({
+    await this.putFile({
       localPath: localPath,
       md5Checksum: md5
     });

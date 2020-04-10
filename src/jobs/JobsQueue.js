@@ -1,6 +1,28 @@
+/* eslint-disable no-async-promise-executor */
 'use strict';
 
 import EventEmitter from 'events';
+
+class Job {
+
+  constructor(starter) {
+    this.starter = starter;
+    this.promise = new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
+  }
+
+  async execute() {
+    try {
+      const result = await this.starter();
+      this.resolve(result);
+    } catch (err) {
+      this.reject(err);
+    }
+  }
+
+}
 
 export class JobsQueue extends EventEmitter {
 
@@ -9,15 +31,12 @@ export class JobsQueue extends EventEmitter {
     this.jobs = [];
   }
 
-  pushOrReplaceJob(job) {
-    const idx = this.jobs.findIndex(item => item.id === job.id);
-    if (idx > -1) {
-      this.jobs[idx] = job;
-    } else {
-      this.jobs.push(job);
-    }
-
+  pushJob(starter) {
+    const job = new Job(starter);
+    this.jobs.push(job);
     this.emit('update', this);
+
+    return job.promise;
   }
 
   popJob() {
@@ -28,6 +47,10 @@ export class JobsQueue extends EventEmitter {
     }
 
     return job;
+  }
+
+  size() {
+    return this.jobs.length;
   }
 
 }

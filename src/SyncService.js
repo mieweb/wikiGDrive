@@ -1,3 +1,4 @@
+/* eslint-disable no-async-promise-executor */
 'use strict';
 
 import path from 'path';
@@ -20,6 +21,8 @@ import { NavigationTransform } from './NavigationTransform';
 import { StringWritable } from './utils/StringWritable';
 import { GoogleListFixer } from './html/GoogleListFixer';
 import { EmbedImageFixed } from './html/EmbedImageFixed';
+import {JobsPool} from './jobs/JobsPool';
+import {JobsQueue} from './jobs/JobsQueue';
 
 export class SyncService {
 
@@ -31,6 +34,9 @@ export class SyncService {
     this.googleDocsService = new GoogleDocsService();
     this.filesStructure = new FilesStructure(this.configService);
     this.externalFiles = new ExternalFiles(this.configService, new HttpClient(), this.params.dest);
+
+    this.jobsQueue = new JobsQueue();
+    this.jobsPool = new JobsPool(10, this.jobsQueue);
   }
 
   async start() {
@@ -105,6 +111,12 @@ export class SyncService {
       }, 10000));
 
     }
+
+    await new Promise(async (resolve, reject) => {
+      setTimeout(() => reject, 3600 * 1000);
+
+      await this.configService.flush();
+    });
   }
 
   async downloadAssets(files) {
@@ -150,7 +162,7 @@ export class SyncService {
       const fileService = new FileService();
       const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
-      this.externalFiles.putFile({
+      await this.externalFiles.putFile({
         localPath: file.localPath.replace(/.svg$/, '.png'),
         localDocumentPath: file.localPath,
         md5Checksum: md5Checksum
@@ -170,34 +182,40 @@ export class SyncService {
       await this.googleDocsService.download(this.auth, navigationFile, [markDownTransform, navigationTransform], this.linkTranslator);
     }
 
-    for (let fileNo = 0; fileNo < files.length; fileNo++) {
-      const file = files[fileNo];
+    const promises = [];
 
-      console.log('Downloading: ' + file.localPath);
+    console.log('filesfilesfiles', files.length);
 
-      const targetPath = path.join(this.params.dest, file.localPath);
-      const dest = fs.createWriteStream(targetPath);
+    for (const file of files) {
+      promises.push(this.jobsQueue.pushJob(async () => {
+        console.log('Downloading: ' + file.localPath);
 
-      const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
-      const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
+        const targetPath = path.join(this.params.dest, file.localPath);
+        const dest = fs.createWriteStream(targetPath);
 
-      const destHtml = new StringWritable();
-      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
+        const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
+        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
-      const googleListFixer = new GoogleListFixer(destHtml.getString());
-      const embedImageFixed = new EmbedImageFixed(destHtml.getString());
+        const destHtml = new StringWritable();
+        await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
 
-      await this.googleDocsService.download(this.auth, file,
-        [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], this.linkTranslator);
+        const googleListFixer = new GoogleListFixer(destHtml.getString());
+        const embedImageFixed = new EmbedImageFixed(destHtml.getString());
 
-      if (this.params.debug) {
-        fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
-
-        const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
         await this.googleDocsService.download(this.auth, file,
-          [destJson], this.linkTranslator);
-      }
+          [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], this.linkTranslator);
+
+        if (this.params.debug) {
+          fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
+
+          const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
+          await this.googleDocsService.download(this.auth, file,
+            [destJson], this.linkTranslator);
+        }
+      }));
     }
+
+    await Promise.all(promises);
   }
 
   createFolderStructure(allFiles) {
@@ -277,11 +295,28 @@ export class SyncService {
     const mergedFiles = await this.filesStructure.merge(changedFiles);
 
     await this.createFolderStructure(mergedFiles);
+    console.log('this.handleChangedFiles()');
     await this.downloadAssets(mergedFiles);
+    console.log('this.handleChangedFiles()1');
     await this.downloadDiagrams(mergedFiles);
+    console.log('this.handleChangedFiles()2');
     await this.downloadDocuments(mergedFiles);
+    console.log('this.handleChangedFiles()3');
 
     await this.generateMetaFiles();
+
+    console.log('fffff');
+
+    this.jobsQueue.once('empty', () => console.log('dddddddddddddddddddd'));
+    console.log('fffff2x');
+    await new Promise((resolve, reject) => {
+      setTimeout(() => reject, 3600 * 1000);
+      console.log('xxx');
+      this.jobsQueue.once('empty', resolve);
+      console.log('xxx2');
+    });
+
+    console.log('fffff2eee');
   }
 
 }

@@ -100,25 +100,55 @@ export class GoogleDriveService {
       });
     }
 
-    for (let fileNo = 0; fileNo < files.length; fileNo++) {
-      const file = files[fileNo];
-      if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
+    const retVal = [];
 
-      const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
+    let filesToProcess = [].concat(files);
+    retVal.push(...filesToProcess);
 
-      const moreFiles = await this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }),
-        modifiedTime, newParentDirName);
-      files = files.concat(moreFiles);
-    }
+    while (filesToProcess.length > 0) {
+      filesToProcess = [];
 
-    if (modifiedTime) {
-      files = files.filter(dir => {
-        const isOldDir = dir.mimeType === FilesStructure.FOLDER_MIME && dir.modifiedTime < modifiedTime;
-        return !isOldDir;
+      const promises = [];
+
+      for (let fileNo = 0; fileNo < files.length; fileNo++) {
+
+        const file = files[fileNo];
+        if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
+
+        const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
+
+        promises.push(this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName));
+
+        // const moreFiles = await
+        // filesToProcess = filesToProcess.concat(moreFiles);
+      }
+
+      await Promise.all(promises).then(list => {
+
+/*        if (list.length > 0) {
+          console.log('llll', promises.length, list);
+          process.exit(1);
+        }*/
+
+        for (const moreFiles of list) {
+          // filesToProcess = filesToProcess.concat(moreFiles);
+          retVal.push(...moreFiles);
+        }
       });
     }
 
-    return removeDuplicates(files);
+    if (modifiedTime) {
+      const filtered = retVal.filter(dir => {
+        const isOldDir = dir.mimeType === FilesStructure.FOLDER_MIME && dir.modifiedTime < modifiedTime;
+        return !isOldDir;
+      });
+
+      return removeDuplicates(filtered);
+    }
+
+    // console.log('retVal11', retVal.length);
+
+    return removeDuplicates(retVal);
   }
 
   getStartTrackToken(auth) {

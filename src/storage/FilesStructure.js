@@ -19,10 +19,10 @@ class FilesStructure {
     return this.fileMap;
   }
 
-  async merge(files) {
+  async merge(changedFiles) {
     const mergedFiles = [];
 
-    for (const file of files) {
+    for (const file of changedFiles) {
       const oldEntry = this.fileMap[file.id];
       let oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
 
@@ -48,8 +48,6 @@ class FilesStructure {
           }
         });
     }
-
-    await this.configService.saveFileMap(this.fileMap);
 
     return mergedFiles;
   }
@@ -139,7 +137,7 @@ class FilesStructure {
     this.fileMap[fileToInsert.id] = fileToInsert;
     await this.configService.saveFileMap(this.fileMap);
 
-    this._checkConflicts(fileToInsert.desiredLocalPath);
+    await this._checkConflicts(fileToInsert.desiredLocalPath);
   }
 
   findFile(checker) {
