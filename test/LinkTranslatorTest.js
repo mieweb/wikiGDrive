@@ -1,11 +1,14 @@
 import { assert } from 'chai';
 import { FilesStructure } from '../src/storage/FilesStructure';
 import { LinkTranslator } from '../src/LinkTranslator';
+import {DummyConfig} from './utils';
 
 describe('LinkTranslatorTest', () => {
-  it('test convertToRelativePath', () => {
+  it('test convertToRelativePath', async () => {
 
-    const filesStructure = new FilesStructure();
+    const filesStructure = new FilesStructure(new DummyConfig());
+    await filesStructure.init();
+
     const linkTranslator = new LinkTranslator(filesStructure);
 
     assert.equal(linkTranslator.convertToRelativeSvgPath('example folder', 'resources/Diagram.svg'), '../example folder');
@@ -24,11 +27,11 @@ describe('LinkTranslatorTest', () => {
     linkTranslator.mode = 'dirURLs';
 
     assert.equal(linkTranslator.convertToRelativeMarkDownPath('example-folder/sample-conflict_1.md', 'example-folder/sample-conflict.md'), 'sample-conflict_1');
-
   });
 
-  it('test convertExtension', () => {
-    const filesStructure = new FilesStructure();
+  it('test convertExtension', async () => {
+    const filesStructure = new FilesStructure(new DummyConfig());
+    await filesStructure.init();
     const linkTranslator = new LinkTranslator(filesStructure);
 
     linkTranslator.mode = 'uglyURLs';

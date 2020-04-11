@@ -1,10 +1,12 @@
 import { assert } from 'chai';
 import { FilesStructure } from '../src/storage/FilesStructure';
+import {DummyConfig} from './utils';
 
 describe('FileStructure', () => {
-  it('test collisions', () => {
+  it('test collisions', async () => {
 
-    const filesStructure = new FilesStructure();
+    const filesStructure = new FilesStructure(new DummyConfig());
+    await filesStructure.init();
 
     const files1 = [{
         'id': 'id1',
@@ -20,7 +22,7 @@ describe('FileStructure', () => {
       }
     ];
 
-    filesStructure.merge(files1);
+    await filesStructure.merge(files1);
 
     const fileMap = filesStructure.getFileMap();
 
@@ -44,11 +46,12 @@ describe('FileStructure', () => {
     assert.equal(file2.desiredLocalPath, 'test-file.md');
   });
 
-  it('test redirects', () => {
+  it('test redirects', async () => {
 
-    const filesStructure = new FilesStructure();
+    const filesStructure = new FilesStructure(new DummyConfig());
+    await filesStructure.init();
 
-    filesStructure.merge([{
+    await filesStructure.merge([{
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': 'application/vnd.google-apps.document',
@@ -68,7 +71,7 @@ describe('FileStructure', () => {
 
     //////////////////////////////
 
-    filesStructure.merge([{
+    await filesStructure.merge([{
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': 'application/vnd.google-apps.document',
@@ -112,7 +115,7 @@ describe('FileStructure', () => {
 
     //////////////////////////////
 
-    filesStructure.merge([{
+    await filesStructure.merge([{
         'id': 'id1',
         'name': 'Sample 1',
         'mimeType': 'application/vnd.google-apps.document',
