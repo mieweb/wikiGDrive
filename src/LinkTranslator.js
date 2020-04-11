@@ -73,8 +73,8 @@ export class LinkTranslator {
           return externalFile.localDocumentPath || externalFile.localPath;
         }
 
-        const localPath = path.join(this.externalFiles.dest, 'external_files', md5 + '.png');
-        await fileService.move(tempPath, path.join(localPath));
+        const localPath = path.join('external_files', md5 + '.png');
+        await fileService.move(tempPath, path.join(this.externalFiles.dest, localPath));
 
         await this.externalFiles.putFile({
           localPath: localPath,

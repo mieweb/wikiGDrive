@@ -42,9 +42,10 @@ export class ConfigService {
     return config.fileMap;
   }
 
-  async saveFileMap(fileMap) {
+  async putFile(id, file) {
     const config = await this._loadConfig();
-    config.fileMap = fileMap;
+    config.fileMap = config.fileMap || [];
+    config.fileMap[id] = file;
     await this._saveConfig(config);
   }
 
@@ -53,9 +54,10 @@ export class ConfigService {
     return config.binaryFiles || {};
   }
 
-  async saveBinaryFiles(binaryFiles) {
+  async putBinaryFile(id, file) {
     const config = await this._loadConfig();
-    config.binaryFiles = binaryFiles;
+    config.binaryFiles = config.binaryFiles || {};
+    config.binaryFiles[id] = file;
     await this._saveConfig(config);
   }
 

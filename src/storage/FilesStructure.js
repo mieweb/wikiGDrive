@@ -72,6 +72,8 @@ class FilesStructure {
       }
 
       this.fileMap[redirectFile.id] = redirectFile;
+      await this.configService.putFile(redirectFile.id, redirectFile);
+
 
       oldFile.desiredLocalPath = file.desiredLocalPath;
     }
@@ -83,8 +85,7 @@ class FilesStructure {
     });
 
     this.fileMap[oldFile.id] = oldFile;
-
-    await this.configService.saveFileMap(this.fileMap);
+    await this.configService.putFile(oldFile.id, oldFile);
 
     await this._checkConflicts(oldFile.desiredLocalPath);
   }
@@ -111,11 +112,12 @@ class FilesStructure {
         conflicting: []
       };
       this.fileMap[conflictFile.id] = conflictFile;
+      await this.configService.putFile(conflictFile.id, conflictFile);
     }
 
     const conflicting = [];
 
-    files.forEach(file => {
+    for (const file of files) {
       if (!file.conflictId) {
         conflictFile.counter++;
         file.conflictId = conflictFile.counter;
@@ -123,19 +125,19 @@ class FilesStructure {
 
       file.localPath = conflictFile.desiredLocalPath.replace('.md', '_' + file.conflictId + '.md');
       this.fileMap[file.id] = file;
+      await this.configService.putFile(file.id, file);
       conflicting.push(file.id);
-    });
+    }
 
     conflictFile.conflicting = conflicting;
     this.fileMap[conflictFile.id] = conflictFile;
-
-    await this.configService.saveFileMap(this.fileMap);
+    await this.configService.putFile(conflictFile.id, conflictFile);
   }
 
   async _insertFile(fileToInsert) {
     delete fileToInsert.conflictId;
     this.fileMap[fileToInsert.id] = fileToInsert;
-    await this.configService.saveFileMap(this.fileMap);
+    await this.configService.putFile(fileToInsert.id, fileToInsert);
 
     await this._checkConflicts(fileToInsert.desiredLocalPath);
   }
