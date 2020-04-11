@@ -2,7 +2,12 @@
 
 import path from 'path';
 import fs from 'fs';
-import { FileService } from './utils/FileService';
+import crypto from 'crypto';
+
+function createTempName(tmpdir) {
+  const filename = 'temp_' + crypto.randomBytes(4).readUInt32LE(0) + '_ext';
+  return path.join(tmpdir, filename);
+}
 
 export class ExternalFiles {
 
@@ -25,23 +30,15 @@ export class ExternalFiles {
     return await this.httpClient.md5Url(url);
   }
 
-  async download(url, localPath) {
-    const targetPath = path.join(this.dest, localPath);
+  async downloadTemp(url, dir) {
+    const targetPath = createTempName(dir);
     const writeStream = fs.createWriteStream(targetPath);
 
-    console.log('Downloading: ' + url + ' -> ' + localPath);
+    console.log('Downloading: ' + url + ' -> ' + targetPath);
 
     await this.httpClient.downloadUrl(url, writeStream);
 
-    const fileService = new FileService();
-    const md5 = await fileService.md5File(targetPath);
-
-    await this.putFile({
-      localPath: localPath,
-      md5Checksum: md5
-    });
-
-    return localPath;
+    return targetPath;
   }
 
   findFile(checker) {

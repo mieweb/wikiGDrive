@@ -21,8 +21,8 @@ import { NavigationTransform } from './NavigationTransform';
 import { StringWritable } from './utils/StringWritable';
 import { GoogleListFixer } from './html/GoogleListFixer';
 import { EmbedImageFixed } from './html/EmbedImageFixed';
-import {JobsPool} from './jobs/JobsPool';
-import {JobsQueue} from './jobs/JobsQueue';
+import { JobsPool } from './jobs/JobsPool';
+import { JobsQueue } from './jobs/JobsQueue';
 
 export class SyncService {
 
@@ -36,7 +36,7 @@ export class SyncService {
     this.externalFiles = new ExternalFiles(this.configService, new HttpClient(), this.params.dest);
 
     this.jobsQueue = new JobsQueue();
-    this.jobsPool = new JobsPool(10, this.jobsQueue);
+    this.jobsPool = new JobsPool(20, this.jobsQueue);
   }
 
   async start() {
@@ -114,60 +114,68 @@ export class SyncService {
 
     await new Promise(async (resolve, reject) => {
       setTimeout(() => reject, 3600 * 1000);
-
       await this.configService.flush();
+      resolve();
     });
   }
 
   async downloadAssets(files) {
     files = files.filter(file => file.size !== undefined);
 
-    for (let fileNo = 0; fileNo < files.length; fileNo++) {
-      const file = files[fileNo];
+    const promises = [];
 
-      console.log('Downloading: ' + file.localPath);
+    for (const file of files) {
+      promises.push(this.jobsQueue.pushJob(async () => {
+        console.log('Downloading: ' + file.localPath);
 
-      const targetPath = path.join(this.params.dest, file.localPath);
-      const dest = fs.createWriteStream(targetPath);
+        const targetPath = path.join(this.params.dest, file.localPath);
+        const dest = fs.createWriteStream(targetPath);
 
-      await this.googleDriveService.download(this.auth, file, dest);
+        await this.googleDriveService.download(this.auth, file, dest);
+      }));
     }
+
+    await Promise.all(promises);
   }
 
   async downloadDiagrams(files) {
     files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
 
-    for (let fileNo = 0; fileNo < files.length; fileNo++) {
-      const file = files[fileNo];
+    const promises = [];
 
-      console.log('Downloading: ' + file.localPath);
+    for (const file of files) {
+      promises.push(this.jobsQueue.pushJob(async () => {
+        console.log('Downloading: ' + file.localPath);
 
-      const targetPath = path.join(this.params.dest, file.localPath);
-      const writeStream = fs.createWriteStream(targetPath);
+        const targetPath = path.join(this.params.dest, file.localPath);
+        const writeStream = fs.createWriteStream(targetPath);
 
-      const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
+        const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
 
-      await this.googleDriveService.exportDocument(
-        this.auth,
-        Object.assign({}, file, { mimeType: 'image/svg+xml' }),
-        [svgTransform, writeStream]);
+        await this.googleDriveService.exportDocument(
+          this.auth,
+          Object.assign({}, file, { mimeType: 'image/svg+xml' }),
+          [svgTransform, writeStream]);
 
-      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+        const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
-      await this.googleDriveService.exportDocument(
-        this.auth,
-        Object.assign({}, file, { mimeType: 'image/png' }),
-        writeStreamPng);
+        await this.googleDriveService.exportDocument(
+          this.auth,
+          Object.assign({}, file, { mimeType: 'image/png' }),
+          writeStreamPng);
 
-      const fileService = new FileService();
-      const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
+        const fileService = new FileService();
+        const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
 
-      await this.externalFiles.putFile({
-        localPath: file.localPath.replace(/.svg$/, '.png'),
-        localDocumentPath: file.localPath,
-        md5Checksum: md5Checksum
-      });
+        await this.externalFiles.putFile({
+          localPath: file.localPath.replace(/.svg$/, '.png'),
+          localDocumentPath: file.localPath,
+          md5Checksum: md5Checksum
+        });
+      }));
     }
+
+    await Promise.all(promises);
   }
 
   async downloadDocuments(files) {
@@ -183,8 +191,6 @@ export class SyncService {
     }
 
     const promises = [];
-
-    console.log('filesfilesfiles', files.length);
 
     for (const file of files) {
       promises.push(this.jobsQueue.pushJob(async () => {
@@ -244,15 +250,14 @@ export class SyncService {
     const filesMap = this.filesStructure.getFileMap();
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
 
-    files.forEach(file => {
+    for (const file of files) {
       const targetPath = path.join(this.params.dest, file.localPath);
       const dest = fs.createWriteStream(targetPath);
 
       let md = '';
       md += 'There were two documents with the same name in the same folder:\n';
       md += '\n';
-      for (let fileNo = 0; fileNo < file.conflicting.length; fileNo++) {
-        const id = file.conflicting[fileNo];
+      for (const id of file.conflicting) {
         const conflictingFile = filesMap[id];
 
         const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(conflictingFile.localPath, file.localPath);
@@ -261,7 +266,7 @@ export class SyncService {
 
       dest.write(md);
       dest.close();
-    });
+    }
   }
 
   async generateRedirects() {
@@ -295,28 +300,18 @@ export class SyncService {
     const mergedFiles = await this.filesStructure.merge(changedFiles);
 
     await this.createFolderStructure(mergedFiles);
-    console.log('this.handleChangedFiles()');
     await this.downloadAssets(mergedFiles);
-    console.log('this.handleChangedFiles()1');
     await this.downloadDiagrams(mergedFiles);
-    console.log('this.handleChangedFiles()2');
     await this.downloadDocuments(mergedFiles);
-    console.log('this.handleChangedFiles()3');
 
     await this.generateMetaFiles();
 
-    console.log('fffff');
-
-    this.jobsQueue.once('empty', () => console.log('dddddddddddddddddddd'));
-    console.log('fffff2x');
-    await new Promise((resolve, reject) => {
-      setTimeout(() => reject, 3600 * 1000);
-      console.log('xxx');
-      this.jobsQueue.once('empty', resolve);
-      console.log('xxx2');
-    });
-
-    console.log('fffff2eee');
+    if (this.jobsQueue.size() > 0) {
+      await new Promise((resolve, reject) => {
+        setTimeout(() => reject, 60 * 1000);
+        this.jobsQueue.once('empty', resolve);
+      });
+    }
   }
 
 }
