@@ -44,7 +44,7 @@ export class ConfigService {
 
   async putFile(id, file) {
     const config = await this._loadConfig();
-    config.fileMap = config.fileMap || [];
+    config.fileMap = config.fileMap || {};
     config.fileMap[id] = file;
     await this._saveConfig(config);
   }

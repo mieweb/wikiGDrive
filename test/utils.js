@@ -2,6 +2,21 @@ import 'colors';
 
 import * as Diff from 'diff';
 
+export class DummyConfig {
+
+  constructor() {
+    this.fileMap = {};
+  }
+
+  async loadFileMap() {
+    return this.fileMap;
+  }
+
+  async putFile(id, file) {
+    this.fileMap[id] = file;
+  }
+}
+
 export function compareTexts(input, output) {
   const diff = Diff.diffLines(input, output, {
     ignoreWhitespace: true,
