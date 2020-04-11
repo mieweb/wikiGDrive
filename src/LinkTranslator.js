@@ -2,6 +2,7 @@
 
 import path from 'path';
 import RelateUrl from 'relateurl';
+import {FileService} from './utils/FileService';
 
 export class LinkTranslator {
 
@@ -57,7 +58,9 @@ export class LinkTranslator {
     }
 
     if (url.startsWith('https:') || url.startsWith('http:')) {
-      const md5 = await this.externalFiles.getMd5(url);
+      const tempPath = await this.externalFiles.downloadTemp(url, path.join(this.externalFiles.dest, 'external_files'));
+      const fileService = new FileService();
+      const md5 = await fileService.md5File(tempPath);
 
       if (md5) {
         const file = this.filesStructure.findFile(file => file.md5Checksum === md5);
@@ -70,10 +73,16 @@ export class LinkTranslator {
           return externalFile.localDocumentPath || externalFile.localPath;
         }
 
-        const localPath = path.join('external_files', md5 + '.png');
-        return await this.externalFiles.download(url, localPath);
-      }
+        const localPath = path.join(this.externalFiles.dest, 'external_files', md5 + '.png');
+        await fileService.move(tempPath, path.join(localPath));
 
+        await this.externalFiles.putFile({
+          localPath: localPath,
+          md5Checksum: md5
+        });
+
+        return localPath;
+      }
     }
 
     return url;

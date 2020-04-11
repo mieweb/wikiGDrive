@@ -51,4 +51,8 @@ export class FileService {
     });
   }
 
+  async move(path1, path2) {
+    fs.renameSync(path1, path2);
+  }
+
 }
