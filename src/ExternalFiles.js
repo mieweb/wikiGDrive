@@ -23,7 +23,7 @@ export class ExternalFiles {
 
   async putFile(file) {
     this.binaryFiles[file.md5Checksum] = file;
-    await this.configService.saveBinaryFiles(this.binaryFiles);
+    await this.configService.putBinaryFile(file.md5Checksum, file);
   }
 
   async getMd5(url) {

@@ -304,14 +304,14 @@ export class SyncService {
     await this.downloadDiagrams(mergedFiles);
     await this.downloadDocuments(mergedFiles);
 
-    await this.generateMetaFiles();
-
     if (this.jobsQueue.size() > 0) {
       await new Promise((resolve, reject) => {
         setTimeout(() => reject, 60 * 1000);
         this.jobsQueue.once('empty', resolve);
       });
     }
+
+    await this.generateMetaFiles();
   }
 
 }
