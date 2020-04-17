@@ -91,7 +91,7 @@ export class GoogleDriveService {
     return files;
   }
 
-  async _listFilesRecursive(auth, context, modifiedTime, parentDirName) {
+   async _listFilesRecursive(auth, context, modifiedTime, parentDirName) {
     console.log('Listening folder:', parentDirName || '/');
     let files = await this._listFiles(auth, context, modifiedTime);
 
@@ -142,8 +142,6 @@ export class GoogleDriveService {
       return removeDuplicates(filtered);
     }
 
-    // console.log('retVal11', retVal.length);
-
     return removeDuplicates(retVal);
   }
 
@@ -160,16 +158,23 @@ export class GoogleDriveService {
     });
   }
 
-  watchChanges(auth, pageToken) {
+  watchChanges(auth, pageToken, driveId) {
     return new Promise(((resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
-      drive.changes.list({
+      const params = {
         pageToken: pageToken,
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
+        includeCorpusRemovals: true,
         fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))'
-      }, (err, res) => {
+      };
+
+      if (driveId) {
+        params.drives = [ driveId ];
+      }
+
+      drive.changes.list(params, (err, res) => {
         if (err) {
           console.error(err);
           return reject(err);

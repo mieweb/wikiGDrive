@@ -14,7 +14,7 @@ Options:
     --client_id
     --client_secret
     --dest (current working folder)
-    --watch (keep scanning for changes, ie: daemon)
+    --watch [mtime|changes] (keep scanning for changes, ie: daemon)
     --link_mode [mdURLs|dirURLs|uglyURLs]
     --drive_id
     --service_account=./private_key.json
@@ -42,7 +42,7 @@ async function index() {
   params['drive'] = argv._[0];
   params['config'] = argv['config'] || path.join(process.env.PWD, '.wikigdrive');
   params['dest'] = argv['dest'] || process.env.PWD;
-  params['watch'] = !!argv['watch'];
+  params['watch'] = argv['watch'];
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
