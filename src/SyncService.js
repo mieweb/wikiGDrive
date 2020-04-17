@@ -4,25 +4,25 @@
 import path from 'path';
 import fs from 'fs';
 
-import { ConfigService } from './storage/ConfigService';
-import { GoogleDriveService } from './google/GoogleDriveService';
-import { GoogleAuthService } from './google/GoogleAuthService';
-import { GoogleDocsService } from './google/GoogleDocsService';
-import { SvgTransform } from './SvgTransform';
-import { LinkTranslator } from './LinkTranslator';
-import { HttpClient } from './utils/HttpClient';
-import { FileService } from './utils/FileService';
-import { TocGenerator } from './TocGenerator';
-import { MarkDownTransform } from './markdown/MarkDownTransform';
-import { FrontMatterTransform } from './markdown/FrontMatterTransform';
-import { FilesStructure } from './storage/FilesStructure';
-import { ExternalFiles } from './ExternalFiles';
-import { NavigationTransform } from './NavigationTransform';
-import { StringWritable } from './utils/StringWritable';
-import { GoogleListFixer } from './html/GoogleListFixer';
-import { EmbedImageFixed } from './html/EmbedImageFixed';
-import { JobsPool } from './jobs/JobsPool';
-import { JobsQueue } from './jobs/JobsQueue';
+import {ConfigService} from './storage/ConfigService';
+import {GoogleDriveService} from './google/GoogleDriveService';
+import {GoogleAuthService} from './google/GoogleAuthService';
+import {GoogleDocsService} from './google/GoogleDocsService';
+import {SvgTransform} from './SvgTransform';
+import {LinkTranslator} from './LinkTranslator';
+import {HttpClient} from './utils/HttpClient';
+import {FileService} from './utils/FileService';
+import {TocGenerator} from './TocGenerator';
+import {MarkDownTransform} from './markdown/MarkDownTransform';
+import {FrontMatterTransform} from './markdown/FrontMatterTransform';
+import {FilesStructure} from './storage/FilesStructure';
+import {ExternalFiles} from './ExternalFiles';
+import {NavigationTransform} from './NavigationTransform';
+import {StringWritable} from './utils/StringWritable';
+import {GoogleListFixer} from './html/GoogleListFixer';
+import {EmbedImageFixed} from './html/EmbedImageFixed';
+import {JobsPool} from './jobs/JobsPool';
+import {JobsQueue} from './jobs/JobsQueue';
 
 export class SyncService {
 
@@ -69,11 +69,12 @@ export class SyncService {
       context.driveId = this.params.drive_id;
     }
 
+    let lastMTime = this.filesStructure.getMaxModifiedTime();
     if (!this.params.watch) {
-      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context);
+      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context, lastMTime);
       await this.handleChangedFiles(changedFiles);
     } else {
-      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context);
+      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context, lastMTime);
       await this.handleChangedFiles(changedFiles);
 
       let startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
@@ -126,12 +127,13 @@ export class SyncService {
 
     for (const file of files) {
       promises.push(this.jobsQueue.pushJob(async () => {
-        console.log('Downloading: ' + file.localPath);
+        console.log('Downloading asset: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
         const dest = fs.createWriteStream(targetPath);
 
         await this.googleDriveService.download(this.auth, file, dest);
+        await this.filesStructure.markClean([ file ]);
       }));
     }
 
@@ -145,7 +147,7 @@ export class SyncService {
 
     for (const file of files) {
       promises.push(this.jobsQueue.pushJob(async () => {
-        console.log('Downloading: ' + file.localPath);
+        console.log('Downloading diagram: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
         const writeStream = fs.createWriteStream(targetPath);
@@ -172,6 +174,7 @@ export class SyncService {
           localDocumentPath: file.localPath,
           md5Checksum: md5Checksum
         });
+        await this.filesStructure.markClean([ file ]);
       }));
     }
 
@@ -194,7 +197,7 @@ export class SyncService {
 
     for (const file of files) {
       promises.push(this.jobsQueue.pushJob(async () => {
-        console.log('Downloading: ' + file.localPath);
+        console.log('Downloading document: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
         const dest = fs.createWriteStream(targetPath);
@@ -218,6 +221,8 @@ export class SyncService {
           await this.googleDocsService.download(this.auth, file,
             [destJson], this.linkTranslator);
         }
+
+        await this.filesStructure.markClean([ file ]);
       }));
     }
 
@@ -229,8 +234,7 @@ export class SyncService {
 
     if (this.params['flat-folder-structure']) {
       directories = directories.filter(dir => {
-        const found = allFiles.find(file => file.mimeType !== FilesStructure.FOLDER_MIME && file.desiredLocalPath.startsWith(dir.desiredLocalPath));
-        return found;
+        return !!allFiles.find(file => file.mimeType !== FilesStructure.FOLDER_MIME && file.desiredLocalPath.startsWith(dir.desiredLocalPath));
       });
     }
 
@@ -297,7 +301,9 @@ export class SyncService {
   }
 
   async handleChangedFiles(changedFiles) {
-    const mergedFiles = await this.filesStructure.merge(changedFiles);
+    await this.filesStructure.merge(changedFiles);
+
+    const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty);
 
     await this.createFolderStructure(mergedFiles);
     await this.downloadAssets(mergedFiles);
