@@ -121,8 +121,8 @@ class FilesStructure {
         id: generateUniqId(),
         name: files[0].name,
         mimeType: FilesStructure.CONFLICT_MIME,
-        localPath: desiredLocalPath + '.md',
-        desiredLocalPath: desiredLocalPath + '.md',
+        localPath: desiredLocalPath,
+        desiredLocalPath: desiredLocalPath,
         counter: 0,
         conflicting: []
       };
