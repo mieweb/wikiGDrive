@@ -72,19 +72,40 @@ export class SyncService {
     let lastMTime = this.filesStructure.getMaxModifiedTime();
     if (!this.params.watch) {
       const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
-      await this.handleChangedFiles(changedFiles);
+      await this.saveChangedFiles(changedFiles);
+      await this.handleChangedFiles();
+
+    } else if (this.params.watch === 'mtime') {
+      console.log('Watching changes with mtime');
+
+      while (true) { // eslint-disable-line no-constant-condition
+        try {
+          let lastMTime = this.filesStructure.getMaxModifiedTime();
+          const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+          await this.saveChangedFiles(changedFiles);
+          await this.handleChangedFiles();
+
+          console.log('Sleeping for 10 seconds.');
+
+          await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
     } else {
       let startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
       console.log('startTrackToken', startTrackToken);
 
       const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
-      await this.handleChangedFiles(changedFiles);
+      await this.saveChangedFiles(changedFiles);
+      await this.handleChangedFiles();
 
       console.log('Watching changes');
 
       await new Promise(() => setInterval(async () => {
         try {
-          const result = await this.googleDriveService.watchChanges(this.auth, startTrackToken);
+          const result = await this.googleDriveService.watchChanges(this.auth, startTrackToken, this.params.drive_id);
 
           const changedFiles = result.files.filter(file => {
             let retVal = false;
@@ -99,7 +120,8 @@ export class SyncService {
           if (changedFiles.length > 0) {
             console.log(changedFiles.length + ' files modified');
 
-            await this.handleChangedFiles(changedFiles);
+            await this.saveChangedFiles(changedFiles);
+            await this.handleChangedFiles();
 
             console.log('Pulled latest changes');
           } else {
@@ -115,7 +137,7 @@ export class SyncService {
     }
 
     await new Promise(async (resolve, reject) => {
-      setTimeout(() => reject, 3600 * 1000);
+      setTimeout(reject, 3600 * 1000);
       await this.configService.flush();
       resolve();
     });
@@ -301,9 +323,11 @@ export class SyncService {
     await tocGenerator.generate(this.filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
   }
 
-  async handleChangedFiles(changedFiles) {
+  async saveChangedFiles(changedFiles) {
     await this.filesStructure.merge(changedFiles);
+  }
 
+  async handleChangedFiles() {
     const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty);
 
     await this.createFolderStructure(mergedFiles);

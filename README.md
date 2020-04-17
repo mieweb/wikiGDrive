@@ -34,7 +34,7 @@ wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
 
 --config /location/of/.wikigdrive - Location of config file
 --dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
---watch - Run program in loop, watch for gdrive changes
+--watch [mtime|changes] - Run program in loop, watch for gdrive changes
 
 --drive_id - An ID of the drive
 
