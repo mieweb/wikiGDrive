@@ -165,9 +165,12 @@ A website front end is a goal for real-time testing of the viewing experience, b
 
 - id - Google's fileId
 - name - Title set inside google docs. It is not unique 
-- mimeType - Google's mime type
+- mimeType - Google's mime type or 'conflict' or 'redirect'
 - modifiedTime - Server-size mtime
 - desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
 - localPath - real local path, unique with handled conflicts and redirects (in case of title rename)
 - lastAuthor - Google's last author if available
 - dirty - file needs to be downloaded
+- conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
+- conflicting - array of fileIds when mimeType = 'conflict'
+- counter - current number of existing conflicts when mimeType = 'conflict'

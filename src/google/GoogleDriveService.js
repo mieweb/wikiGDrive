@@ -81,8 +81,14 @@ export class GoogleDriveService {
     return false;
   }
 
-  async listFilesRecursive(auth, context, modifiedTime) {
-    return await this._listFilesRecursive(auth, context, modifiedTime);
+  async listRootRecursive(auth, context, modifiedTime) {
+    const files = await this._listFilesRecursive(auth, context, modifiedTime);
+
+    if (!modifiedTime && files.length === 0) {
+      throw Error('Empty result for root directory check you auth data or add files');
+    }
+
+    return files;
   }
 
   async _listFilesRecursive(auth, context, modifiedTime, parentDirName) {
@@ -162,7 +168,7 @@ export class GoogleDriveService {
         pageToken: pageToken,
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
-        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents))'
+        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))'
       }, (err, res) => {
         if (err) {
           console.error(err);
@@ -217,7 +223,7 @@ export class GoogleDriveService {
         q: query,
         pageToken: nextPageToken,
         pageSize: 1000,
-        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser)',
+        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version)',
         // fields: 'nextPageToken, files(*)',
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,

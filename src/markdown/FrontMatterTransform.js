@@ -34,6 +34,9 @@ export class FrontMatterTransform extends Transform {
     if (this.file.lastAuthor) {
       frontMatter += 'author: ' + this.file.lastAuthor + '\n';
     }
+    if (this.file.version) {
+      frontMatter += 'version: ' + this.file.version + '\n';
+    }
     frontMatter += 'id: ' + this.file.id + '\n';
     frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + this.file.id + '\n';
 

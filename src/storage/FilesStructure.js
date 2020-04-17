@@ -90,11 +90,10 @@ class FilesStructure {
       this.fileMap[redirectFile.id] = redirectFile;
       await this.configService.putFile(redirectFile.id, redirectFile);
 
-
       oldFile.desiredLocalPath = file.desiredLocalPath;
     }
 
-    ['name', 'modifiedTime', 'lastAuthor'].forEach(key => {
+    ['name', 'modifiedTime', 'lastAuthor', 'version'].forEach(key => {
       if (file[key]) {
         oldFile[key] = file[key];
       }
@@ -122,8 +121,8 @@ class FilesStructure {
         id: generateUniqId(),
         name: files[0].name,
         mimeType: FilesStructure.CONFLICT_MIME,
-        localPath: desiredLocalPath,
-        desiredLocalPath: desiredLocalPath,
+        localPath: desiredLocalPath + '.md',
+        desiredLocalPath: desiredLocalPath + '.md',
         counter: 0,
         conflicting: []
       };
