@@ -81,8 +81,8 @@ export class GoogleDriveService {
     return false;
   }
 
-  async listFilesRecursive(auth, context) {
-    return await this._listFilesRecursive(auth, context);
+  async listFilesRecursive(auth, context, modifiedTime) {
+    return await this._listFilesRecursive(auth, context, modifiedTime);
   }
 
   async _listFilesRecursive(auth, context, modifiedTime, parentDirName) {
@@ -118,20 +118,10 @@ export class GoogleDriveService {
         const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
 
         promises.push(this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName));
-
-        // const moreFiles = await
-        // filesToProcess = filesToProcess.concat(moreFiles);
       }
 
       await Promise.all(promises).then(list => {
-
-/*        if (list.length > 0) {
-          console.log('llll', promises.length, list);
-          process.exit(1);
-        }*/
-
         for (const moreFiles of list) {
-          // filesToProcess = filesToProcess.concat(moreFiles);
           retVal.push(...moreFiles);
         }
       });
@@ -237,7 +227,6 @@ export class GoogleDriveService {
       if (context.driveId) {
         listParams.driveId = context.driveId;
       }
-
 
       drive.files.list(listParams, async (err, res) => {
         if (err) {

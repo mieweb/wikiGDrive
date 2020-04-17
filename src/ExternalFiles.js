@@ -34,7 +34,7 @@ export class ExternalFiles {
     const targetPath = createTempName(dir);
     const writeStream = fs.createWriteStream(targetPath);
 
-    console.log('Downloading: ' + url + ' -> ' + targetPath);
+    console.log('Downloading file: ' + url + ' -> ' + targetPath);
 
     await this.httpClient.downloadUrl(url, writeStream);
 

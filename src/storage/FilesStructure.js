@@ -22,6 +22,12 @@ class FilesStructure {
   async merge(changedFiles) {
     const mergedFiles = [];
 
+    function pushIfNotInArray(item) {
+      if (!mergedFiles.find(x => x.id === item.id)) {
+        mergedFiles.push(item);
+      }
+    }
+
     for (const file of changedFiles) {
       const oldEntry = this.fileMap[file.id];
       let oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
@@ -32,24 +38,34 @@ class FilesStructure {
         await this._updateFile(file);
       }
 
-      if (oldDesiredLocalPath) {
+      if (oldDesiredLocalPath) { // Get all files with oldDesiredLocalPath
         this.findFiles(found => found.desiredLocalPath === oldDesiredLocalPath)
           .forEach(found => {
-            if (!mergedFiles.find(x => x.id === found.id)) {
-              mergedFiles.push(found);
-            }
+            pushIfNotInArray(found);
           });
       }
 
       this.findFiles(found => found.desiredLocalPath === file.desiredLocalPath)
-        .forEach(found => {
-          if (!mergedFiles.find(x => x.id === found.id)) {
-            mergedFiles.push(found);
-          }
+        .forEach(found => { // Get all files with desiredLocalPath
+          pushIfNotInArray(found);
         });
     }
 
-    return mergedFiles;
+    await this.markDirty(mergedFiles);
+  }
+
+  async markDirty(files) {
+    for (const file of files) {
+      this.fileMap[file.id].dirty = true;
+      await this.configService.putFile(file.id, this.fileMap[file.id]);
+    }
+  }
+
+  async markClean(files) {
+    for (const file of files) {
+      this.fileMap[file.id].dirty = false;
+      await this.configService.putFile(file.id, this.fileMap[file.id]);
+    }
   }
 
   async _updateFile(file) {

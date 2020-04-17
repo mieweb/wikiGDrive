@@ -129,3 +129,45 @@ Keeping a WYSIWYM style ensures a good mobile experience to view and edit.
 Our goals are to be able to take versions of the content and commit them along with a version of the code at a point in time. By just making a website, it would allow for real-time viewing of the content but no way to go to a specific version of the documentation at a given time.
 
 A website front end is a goal for real-time testing of the viewing experience, but initially, we want to make markdown that can be committed.
+
+## Internals
+
+### .wikigdrive structure
+
+```
+{
+    "binaryFiles": {
+        "123123123": {
+            "localPath": "external_path/123123123.png",
+            "md5Checksum": "123123123"
+        }
+    },
+    "fileMap": {
+        "123123123": {
+            "id": "123123123",
+            "name": "A title of document",
+            "mimeType": "application/vnd.google-apps.document",
+            "modifiedTime": "2020-02-27T20:20:20.123Z",
+            "desiredLocalPath": "a-title-of-document",
+            "lastAuthor": "John Smith",
+            "localPath": "a-title-of-document"
+        }
+    }
+}
+```
+
+#### binaryFiles map is indexed with md5 sums
+
+- localPath - path to file, generated using md5 sum
+- md5Checksum - md5 sum
+
+#### fileMap is indexed with Google's fileId
+
+- id - Google's fileId
+- name - Title set inside google docs. It is not unique 
+- mimeType - Google's mime type
+- modifiedTime - Server-size mtime
+- desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
+- localPath - real local path, unique with handled conflicts and redirects (in case of title rename)
+- lastAuthor - Google's last author if available
+- dirty - file needs to be downloaded
