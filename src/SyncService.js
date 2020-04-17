@@ -71,14 +71,15 @@ export class SyncService {
 
     let lastMTime = this.filesStructure.getMaxModifiedTime();
     if (!this.params.watch) {
-      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context, lastMTime);
+      const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
       await this.handleChangedFiles(changedFiles);
     } else {
-      const changedFiles = await this.googleDriveService.listFilesRecursive(this.auth, context, lastMTime);
-      await this.handleChangedFiles(changedFiles);
-
       let startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
       console.log('startTrackToken', startTrackToken);
+
+      const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+      await this.handleChangedFiles(changedFiles);
+
       console.log('Watching changes');
 
       await new Promise(() => setInterval(async () => {
