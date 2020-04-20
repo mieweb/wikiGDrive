@@ -98,6 +98,8 @@ There are two methods: individual credentials or a service account.
 - [Individual](https://cloud.google.com/docs/authentication/end-user#creating_your_client_credentials)
 - [Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority)
 
+***Note: If the authentication is successful, but the account does not have access to documents in gdrive, there is currently no way to know if the directory is empty or just not possible to see.
+
 ## FAQ
 
 ### What is the purpose of this tool?
