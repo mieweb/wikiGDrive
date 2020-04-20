@@ -161,7 +161,7 @@ export class MarkDownTransform extends Transform {
           }
           textElements.push('    <td' + tableParams + '>\n');
           const text = await this.elementsToText(tableCell.content, listCounters);
-          textElements.push(text);
+          textElements.push(text.trim());  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
           textElements.push('    </td>\n');
         }
 
@@ -171,61 +171,61 @@ export class MarkDownTransform extends Transform {
       textElements.push('</table>\n');
 
     } else
-    if (element.paragraph) {
+      if (element.paragraph) {
 
-      const paragraph = element.paragraph;
+        const paragraph = element.paragraph;
 
-      if (paragraph.paragraphStyle.namedStyleType) {
-        const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-        if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
-          textElements.push('```\n');
-          result.codeParagraph = true;
-        }
-      }
-
-      let paragraphTxt = '';
-
-      for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
-        const element = paragraph.elements[elementNo];
-
-        if (element.textRun) {
-          let txt = element.textRun.content;
-          paragraphTxt += txt;
-
-          element.paragraphStyle = paragraph.paragraphStyle;
-          textElements.push(element);
-        } else
-        if (element.inlineObjectElement) {
-          const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
-          if (imageLink) {
-            if (imageLink.endsWith('.svg')) {
-              textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
-                '<img src="' + imageLink + '" />' +
-                '</object>');
-            } else {
-              textElements.push('![](' + (imageLink) + ')');
-            }
+        if (paragraph.paragraphStyle.namedStyleType) {
+          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
+            textElements.push('```\n');
+            result.codeParagraph = true;
           }
         }
-      }
 
-      if (paragraph.paragraphStyle.headingId) {
-        this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
-      }
+        let paragraphTxt = '';
 
-      if (paragraph.paragraphStyle.namedStyleType) {
-        const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-        if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
-          textElements.push('```\n');
+        for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
+          const element = paragraph.elements[elementNo];
+
+          if (element.textRun) {
+            let txt = element.textRun.content;
+            paragraphTxt += txt;
+
+            element.paragraphStyle = paragraph.paragraphStyle;
+            textElements.push(element);
+          } else
+            if (element.inlineObjectElement) {
+              const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+              if (imageLink) {
+                if (imageLink.endsWith('.svg')) {
+                  textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
+                    '<img src="' + imageLink + '" />' +
+                    '</object>');
+                } else {
+                  textElements.push('![](' + (imageLink) + ')');
+                }
+              }
+            }
         }
-      }
 
-    } else
-    if (element.sectionBreak) {
-      return null;
-    } else {
-      console.log('Unknown element', element);
-    }
+        if (paragraph.paragraphStyle.headingId) {
+          this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
+        }
+
+        if (paragraph.paragraphStyle.namedStyleType) {
+          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
+            textElements.push('```\n');
+          }
+        }
+
+      } else
+        if (element.sectionBreak) {
+          return null;
+        } else {
+          console.log('Unknown element', element);
+        }
 
     if (textElements.length === 0) {
       // Isn't result empty now?
@@ -289,10 +289,10 @@ export class MarkDownTransform extends Transform {
       pOut = pOut.replace(/\n$/, '');
       result.listParagraph = true;
     } else
-    if (prefix && prefix.trim().startsWith('#')) {
-      pOut = pOut.replace(/\n$/, '');
-      result.headerParagraph = true;
-    }
+      if (prefix && prefix.trim().startsWith('#')) {
+        pOut = pOut.replace(/\n$/, '');
+        result.headerParagraph = true;
+      }
 
     result.text = prefix + pOut;
 
@@ -308,18 +308,18 @@ export class MarkDownTransform extends Transform {
 
     switch (element.paragraph.paragraphStyle.namedStyleType) {
       // Add a # for each heading level. No break, so we accumulate the right number.
-    case 'HEADING_6':
-      prefix += '#'; // eslint-disable-line no-fallthrough
-    case 'HEADING_5':
-      prefix += '#'; // eslint-disable-line no-fallthrough
-    case 'HEADING_4':
-      prefix += '#'; // eslint-disable-line no-fallthrough
-    case 'HEADING_3':
-      prefix += '#'; // eslint-disable-line no-fallthrough
-    case 'HEADING_2':
-      prefix += '#'; // eslint-disable-line no-fallthrough
-    case 'HEADING_1':
-      prefix += '# '; // eslint-disable-line no-fallthrough
+      case 'HEADING_6':
+        prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_5':
+        prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_4':
+        prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_3':
+        prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_2':
+        prefix += '#'; // eslint-disable-line no-fallthrough
+      case 'HEADING_1':
+        prefix += '# '; // eslint-disable-line no-fallthrough
     }
 
     if (element.paragraph.bullet) {
@@ -337,35 +337,35 @@ export class MarkDownTransform extends Transform {
 
           const listNestingLevel = list.listProperties.nestingLevels[nesting];
           switch (listNestingLevel.glyphSymbol) {
-          case '-':
-          case '●':
-          case '○':
-          case '■':
-            prefix += '* ';
-            break;
-          default:
-            // Ordered list (<ol>):
-            counter++;
-            listCounters[key] = counter;
-
-            switch (listNestingLevel.glyphType) {
-            case 'ALPHA':
-            case 'UPPER_ALPHA':
-              // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
-              prefix += counter + '. ';
-              break;
-
-            case 'DECIMAL':
-            case 'ROMAN':
-            case 'UPPER_ROMAN':
-              prefix += counter + '. ';
-              break;
-
-            case 'GLYPH_TYPE_UNSPECIFIED':
-            default:
+            case '-':
+            case '●':
+            case '○':
+            case '■':
               prefix += '* ';
               break;
-            }
+            default:
+              // Ordered list (<ol>):
+              counter++;
+              listCounters[key] = counter;
+
+              switch (listNestingLevel.glyphType) {
+                case 'ALPHA':
+                case 'UPPER_ALPHA':
+                  // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha
+                  prefix += counter + '. ';
+                  break;
+
+                case 'DECIMAL':
+                case 'ROMAN':
+                case 'UPPER_ROMAN':
+                  prefix += counter + '. ';
+                  break;
+
+                case 'GLYPH_TYPE_UNSPECIFIED':
+                default:
+                  prefix += '* ';
+                  break;
+              }
           }
         }
       }
@@ -409,9 +409,9 @@ export class MarkDownTransform extends Transform {
         const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
         pOut = '[' + pOut + '](' + relativePath + ')';
       } else
-      if (element.textRun.textStyle.link.headingId) {
-        pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
-      }
+        if (element.textRun.textStyle.link.headingId) {
+          pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
+        }
 
       return pOut;
     }
@@ -464,14 +464,14 @@ export class MarkDownTransform extends Transform {
             currentParaIsList = true;
             line = result.text + '\n';
           } else
-          if (result.headerParagraph) {
-            line = result.text + '\n\n';
-          } else
-          if (result.codeParagraph) {
-            line = result.text;
-          } else {
-            line = result.text + '\n';
-          }
+            if (result.headerParagraph) {
+              line = result.text + '\n\n';
+            } else
+              if (result.codeParagraph) {
+                line = result.text;
+              } else {
+                line = result.text + '\n';
+              }
         }
       }
 
@@ -520,8 +520,8 @@ export class MarkDownTransform extends Transform {
         idxEnd = line.indexOf(' %}}', idxStart);
         if (idxEnd > -1) {
           const parts = [line.substr(0, idxStart),
-            line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-            line.substr(idxEnd + ' %}}'.length)
+          line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+          line.substr(idxEnd + ' %}}'.length)
           ];
 
           if (parts[1].startsWith('{{% /')) {
@@ -532,9 +532,9 @@ export class MarkDownTransform extends Transform {
 
             if (idxOfClosing > -1) {
               const parts = [line.substr(0, idxStart),
-                line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-                line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
-                line.substr(idxOfClosing)
+              line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+              line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
+              line.substr(idxOfClosing)
               ];
 
               parts[2] = parts[2].replace(/<strong><em>/g, '**_');
@@ -574,25 +574,25 @@ export class MarkDownTransform extends Transform {
 
           if (prevChar === '\\') {
             switch (char) {
-            case '\\':
-              newBlock += char;
-              char = '';
-              break;
-            case '{':
-              newBlock += '\\{';
-              break;
-            case '}':
-              newBlock += '\\}';
-              break;
-            default:
-              newBlock += char;
+              case '\\':
+                newBlock += char;
+                char = '';
+                break;
+              case '{':
+                newBlock += '\\{';
+                break;
+              case '}':
+                newBlock += '\\}';
+                break;
+              default:
+                newBlock += char;
             }
           } else {
             switch (char) {
-            case '\\':
-              break;
-            default:
-              newBlock += char;
+              case '\\':
+                break;
+              default:
+                newBlock += char;
             }
           }
 
