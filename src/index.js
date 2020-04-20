@@ -3,10 +3,12 @@
 import path from 'path';
 import minimist from 'minimist';
 import { SyncService } from './SyncService';
+import pkg from '../package.json';
 
 function usage() {
   console.log(
-    `Usage:
+    `version: ${pkg.version}${`
+    Usage:
     $ wikigdrive [shared drive url]
 
 Options:
@@ -26,7 +28,7 @@ Options:
 
 Examples:
     $ wikigdrive https://google.drive...
-    `);
+    `}`);
 }
 
 async function index() {
