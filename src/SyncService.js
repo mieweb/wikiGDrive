@@ -119,14 +119,13 @@ export class SyncService {
 
           if (changedFiles.length > 0) {
             console.log(changedFiles.length + ' files modified');
-
             await this.saveChangedFiles(changedFiles);
-            await this.handleChangedFiles();
-
             console.log('Pulled latest changes');
           } else {
             console.log('No changes detected. Sleeping for 10 seconds.');
           }
+
+          await this.handleChangedFiles();
 
           startTrackToken = result.token; // eslint-disable-line require-atomic-updates
         } catch (e) {
@@ -328,6 +327,7 @@ export class SyncService {
   }
 
   async handleChangedFiles() {
+    await this.scanFileSystem();
     const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty);
 
     await this.createFolderStructure(mergedFiles);
@@ -343,6 +343,21 @@ export class SyncService {
     }
 
     await this.generateMetaFiles();
+  }
+
+  async scanFileSystem() {
+    const files = this.filesStructure.findFiles(item => !item.dirty);
+    const fileService = new FileService();
+
+    for (const file of files) {
+      const targetPath = path.join(this.params.dest, file.localPath);
+
+      if (!await fileService.exists(targetPath)) {
+        await this.filesStructure.markDirty([file]);
+      }
+    }
+
+    await this.externalFiles.cleanup();
   }
 
 }
