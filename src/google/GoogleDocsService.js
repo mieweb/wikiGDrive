@@ -14,7 +14,26 @@ export class GoogleDocsService {
           documentId: file.id
         }, async (err, res) => {
           if (err) {
+            if (parseInt(err.code) === 403) { // Retry
+              if (err.config && err.config.url) {
+                console.error('Forbidden', err.config.url);
+              }
+              if (err.response && err.response.data) {
+                const chunks = [];
+                for await (const chunk of err.response.data) {
+                  chunks.push(chunk);
+                }
+                const errorData = Buffer.concat(chunks).toString();
+                console.log(errorData);
+                reject(new Error(errorData));
+                return;
+              }
+            }
+            console.error(err);
+            console.log('res', res);
+
             reject(err);
+            return;
           }
 
           const readable = new Readable();

@@ -11,7 +11,15 @@ export async function retryAsync(retryCount, asyncFunc) {
         setTimeout(() => {
           retryAsync(retryCount - 1, asyncFunc)
             .then(result => resolve(result))
-            .catch(err => reject(err));
+            .catch(err => {
+              if (err.message && JSON.stringify(err.message).indexOf('userRateLimitExceeded')) {
+                setTimeout(() => {
+                  reject(err);
+                }, 10000);
+              } else {
+                reject(err);
+              }
+            });
 
         }, DELAY);
 
