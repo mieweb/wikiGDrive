@@ -152,6 +152,7 @@ export class SyncService {
         console.log('Downloading asset: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
+        await this.ensureDir(targetPath);
         const dest = fs.createWriteStream(targetPath);
 
         await this.googleDriveService.download(this.auth, file, dest);
@@ -172,6 +173,7 @@ export class SyncService {
         console.log('Downloading diagram: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
+        await this.ensureDir(targetPath);
         const writeStream = fs.createWriteStream(targetPath);
 
         const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
@@ -222,6 +224,7 @@ export class SyncService {
         console.log('Downloading document: ' + file.localPath);
 
         const targetPath = path.join(this.params.dest, file.localPath);
+        await this.ensureDir(targetPath);
         const dest = fs.createWriteStream(targetPath);
 
         const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
@@ -278,6 +281,7 @@ export class SyncService {
 
     for (const file of files) {
       const targetPath = path.join(this.params.dest, file.localPath);
+      await this.ensureDir(targetPath);
       const dest = fs.createWriteStream(targetPath);
 
       let md = '';
@@ -299,8 +303,9 @@ export class SyncService {
     const filesMap = this.filesStructure.getFileMap();
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
 
-    files.forEach(file => {
+    for (const file of files) {
       const targetPath = path.join(this.params.dest, file.localPath);
+      await this.ensureDir(targetPath);
       const dest = fs.createWriteStream(targetPath);
 
       const newFile = filesMap[file.redirectTo];
@@ -312,7 +317,7 @@ export class SyncService {
 
       dest.write(md);
       dest.close();
-    });
+    }
   }
 
   async generateMetaFiles() {
@@ -358,6 +363,16 @@ export class SyncService {
     }
 
     await this.externalFiles.cleanup();
+  }
+
+  async ensureDir(filePath) {
+    const parts = filePath.split(path.sep);
+    if (parts.length < 2) {
+      return;
+    }
+    parts.pop();
+
+    fs.mkdirSync(parts.join(path.sep), { recursive: true });
   }
 
 }

@@ -4,6 +4,7 @@ import { google } from 'googleapis';
 import slugify from 'slugify';
 import { FilesStructure } from '../storage/FilesStructure';
 import { retryAsync } from '../utils/retryAsync';
+import {handleGoogleError} from './error';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -149,10 +150,11 @@ export class GoogleDriveService {
     return new Promise((resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
-      drive.changes.getStartPageToken({}, function (err, res) {
+      drive.changes.getStartPageToken({}, async (err, res) => {
         if (err) {
-          return reject(err);
+          return handleGoogleError(err, reject);
         }
+
         resolve(res.data.startPageToken);
       });
     });
@@ -174,41 +176,40 @@ export class GoogleDriveService {
         params.drives = [ driveId ];
       }
 
-      drive.changes.list(params, (err, res) => {
+      drive.changes.list(params, async (err, res) => {
         if (err) {
-          console.error(err);
-          return reject(err);
-        } else {
-          const files = res.data.changes
-            .map(change => change.file)
-            .map((file) => {
-              file.desiredLocalPath = getDesiredPath(file.name);
-              if (file.lastModifyingUser) {
-                file.lastAuthor = file.lastModifyingUser.displayName;
-                delete file.lastModifyingUser;
-              }
-
-              if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-                file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-              }
-
-              switch (file.mimeType) {
-              case 'application/vnd.google-apps.drawing':
-                file.desiredLocalPath += '.svg';
-                break;
-              case 'application/vnd.google-apps.document':
-                file.desiredLocalPath += '.md';
-                break;
-              }
-
-              return file;
-            });
-
-          resolve({
-            token: res.data.newStartPageToken,
-            files: files
-          });
+          return handleGoogleError(err, reject);
         }
+
+        const files = res.data.changes
+          .map(change => change.file)
+          .map((file) => {
+            file.desiredLocalPath = getDesiredPath(file.name);
+            if (file.lastModifyingUser) {
+              file.lastAuthor = file.lastModifyingUser.displayName;
+              delete file.lastModifyingUser;
+            }
+
+            if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+              file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
+            }
+
+            switch (file.mimeType) {
+            case 'application/vnd.google-apps.drawing':
+              file.desiredLocalPath += '.svg';
+              break;
+            case 'application/vnd.google-apps.document':
+              file.desiredLocalPath += '.md';
+              break;
+            }
+
+            return file;
+          });
+
+        resolve({
+          token: res.data.newStartPageToken,
+          files: files
+        });
       });
     }));
   }
@@ -241,7 +242,7 @@ export class GoogleDriveService {
 
       drive.files.list(listParams, async (err, res) => {
         if (err) {
-          return reject(err);
+          return handleGoogleError(err, reject);
         }
 
         if (res.data.nextPageToken) {
@@ -286,7 +287,7 @@ export class GoogleDriveService {
         supportsAllDrives: true
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
-          reject(err);
+          return handleGoogleError(err, reject);
         }
 
         res.data
@@ -312,10 +313,7 @@ export class GoogleDriveService {
         supportsAllDrives: true
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
-          reject(err);
-          console.error(err);
-          console.log('res', res);
-          return;
+          return handleGoogleError(err, reject);
         }
 
         let stream = res.data

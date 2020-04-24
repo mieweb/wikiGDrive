@@ -44,6 +44,10 @@ export class ExternalFiles {
   async cleanup() {
     const tempPath = path.join(this.dest, 'external_files');
 
+    if (!fs.existsSync(tempPath)) {
+      return;
+    }
+
     const files = fs.readdirSync(tempPath);
     for (const file of files) {
       if (file.startsWith('temp_') && file.endsWith('_ext')) {
