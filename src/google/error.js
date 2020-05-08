@@ -2,6 +2,12 @@ import {Readable} from 'stream';
 
 export async function handleGoogleError(err, reject) {
   if (parseInt(err.code) === 403) { // Retry
+
+    if (err.message && err.message.indexOf('User Rate Limit Exceeded') > -1) {
+      reject(err);
+      return;
+    }
+
     if (err.config && err.config.url) {
       console.error('Forbidden', err.config.url);
     }

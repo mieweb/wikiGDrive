@@ -23,13 +23,18 @@ import {GoogleListFixer} from './html/GoogleListFixer';
 import {EmbedImageFixed} from './html/EmbedImageFixed';
 import {JobsPool} from './jobs/JobsPool';
 import {JobsQueue} from './jobs/JobsQueue';
+import {QuotaLimiter} from './google/QuotaLimiter';
 
 export class SyncService {
 
   constructor(params) {
     this.params = params;
     this.configService = new ConfigService(this.params.config);
-    this.googleAuthService = new GoogleAuthService(this.configService);
+
+    const quotaLimiter = new QuotaLimiter(9500, 100);
+    // const quotaLimiter = new QuotaLimiter(1, 5);
+
+    this.googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
     this.googleDriveService = new GoogleDriveService(this.params);
     this.googleDocsService = new GoogleDocsService();
     this.filesStructure = new FilesStructure(this.configService);
@@ -355,6 +360,7 @@ export class SyncService {
     const fileService = new FileService();
 
     for (const file of files) {
+      console.log('sss', this.params.dest, file.localPath, file.id);
       const targetPath = path.join(this.params.dest, file.localPath);
 
       if (!await fileService.exists(targetPath)) {

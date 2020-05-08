@@ -1,11 +1,10 @@
 /* eslint-disable no-async-promise-executor */
 'use strict';
 
-import {google} from 'googleapis';
 import readline from 'readline';
 import fs from 'fs';
 
-import {JWT} from 'google-auth-library';
+import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -17,21 +16,25 @@ const SCOPES = [
 
 export class GoogleAuthService {
 
-  constructor(configService) {
+  constructor(configService, quotaLimiter) {
     this.configService = configService;
+    this.quotaLimiter = quotaLimiter;
   }
 
   async authorizeServiceAccount(account_json_file_name) {
     const opts = JSON.parse(fs.readFileSync(account_json_file_name));
 
-    return new JWT(opts.client_email, null, opts.private_key, SCOPES);
+    const oAuth2Client = new QuotaJwtClient(opts.client_email, null, opts.private_key, SCOPES);
+    oAuth2Client.setQuotaLimiter(this.quotaLimiter);
+    return oAuth2Client;
   }
 
   async authorize(client_id, client_secret) {
     if (!client_id) throw 'Unknown: client_id';
     if (!client_secret) throw 'Unknown: client_secret';
 
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
+    const oAuth2Client = new QuotaAuthClient(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
+    oAuth2Client.setQuotaLimiter(this.quotaLimiter);
 
     // Service account
 
