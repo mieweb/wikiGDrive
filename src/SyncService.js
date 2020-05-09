@@ -230,27 +230,43 @@ export class SyncService {
 
         const targetPath = path.join(this.params.dest, file.localPath);
         await this.ensureDir(targetPath);
-        const dest = fs.createWriteStream(targetPath);
-
-        const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
-        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
         const destHtml = new StringWritable();
         await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
 
+        fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
+
+        const gdocPath = path.join(this.params.dest, file.localPath + '.gdoc');
+        const destJson = fs.createWriteStream(gdocPath);
+        await this.googleDocsService.download(this.auth, file, destJson);
+
+        // TODO extract to transform queue
+
+        const dest = fs.createWriteStream(targetPath);
+
+        const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
+        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
         const googleListFixer = new GoogleListFixer(destHtml.getString());
         const embedImageFixed = new EmbedImageFixed(destHtml.getString());
 
-        await this.googleDocsService.download(this.auth, file,
-          [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest], this.linkTranslator);
+        const stream = fs.createReadStream(gdocPath)
+          .pipe(googleListFixer)
+          .pipe(embedImageFixed)
+          .pipe(markDownTransform)
+          .pipe(frontMatterTransform)
+          .pipe(dest);
 
-        if (this.params.debug) {
-          fs.writeFileSync(path.join(this.params.dest, file.localPath + '.html'), destHtml.getString());
+        await new Promise((resolve, reject) => {
+          stream.on('finish', () => {
+            resolve();
+          });
+          stream.on('error', err => {
+            reject(err);
+          });
+        });
 
-          const destJson = fs.createWriteStream(path.join(this.params.dest, file.localPath + '.json'));
-          await this.googleDocsService.download(this.auth, file,
-            [destJson], this.linkTranslator);
-        }
+        // await this.googleDocsService.download(this.auth, file,
+        //   [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest]);
 
         await this.filesStructure.markClean([ file ]);
       }));

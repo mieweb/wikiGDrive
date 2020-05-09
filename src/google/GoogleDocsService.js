@@ -6,7 +6,7 @@ import { handleGoogleError } from './error';
 
 export class GoogleDocsService {
 
-  async download(auth, file, dest, ) {
+  async download(auth, file, dest) {
     return new Promise((resolve, reject) => {
       const docs = google.docs({ version: 'v1', auth });
 
