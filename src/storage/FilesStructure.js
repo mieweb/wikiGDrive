@@ -1,17 +1,22 @@
 'use strict';
 
+import path from 'path';
+import {FileService} from '../utils/FileService';
+
 function generateUniqId() {
   return Math.random().toString(26).slice(2);
 }
 
 class FilesStructure {
 
-  constructor(configService) {
-    this.configService = configService;
+  constructor(config_dir) {
+    this.config_dir = config_dir;
+    this.fileService = new FileService();
+    this.filePath = path.join(config_dir, 'files.json');
   }
 
   async init() {
-    const fileMap = await this.configService.loadFileMap();
+    const fileMap = await this.loadFileMap();
     this.fileMap = fileMap || {};
   }
 
@@ -57,14 +62,14 @@ class FilesStructure {
   async markDirty(files) {
     for (const file of files) {
       this.fileMap[file.id].dirty = true;
-      await this.configService.putFile(file.id, this.fileMap[file.id]);
+      await this.putFile(file.id, this.fileMap[file.id]);
     }
   }
 
   async markClean(files) {
     for (const file of files) {
       this.fileMap[file.id].dirty = false;
-      await this.configService.putFile(file.id, this.fileMap[file.id]);
+      await this.putFile(file.id, this.fileMap[file.id]);
     }
   }
 
@@ -88,7 +93,7 @@ class FilesStructure {
       }
 
       this.fileMap[redirectFile.id] = redirectFile;
-      await this.configService.putFile(redirectFile.id, redirectFile);
+      await this.putFile(redirectFile.id, redirectFile);
 
       oldFile.desiredLocalPath = file.desiredLocalPath;
     }
@@ -100,7 +105,7 @@ class FilesStructure {
     });
 
     this.fileMap[oldFile.id] = oldFile;
-    await this.configService.putFile(oldFile.id, oldFile);
+    await this.putFile(oldFile.id, oldFile);
 
     await this._checkConflicts(oldFile.desiredLocalPath);
   }
@@ -127,7 +132,7 @@ class FilesStructure {
         conflicting: []
       };
       this.fileMap[conflictFile.id] = conflictFile;
-      await this.configService.putFile(conflictFile.id, conflictFile);
+      await this.putFile(conflictFile.id, conflictFile);
     }
 
     const conflicting = [];
@@ -140,19 +145,19 @@ class FilesStructure {
 
       file.localPath = conflictFile.desiredLocalPath.replace('.md', '_' + file.conflictId + '.md');
       this.fileMap[file.id] = file;
-      await this.configService.putFile(file.id, file);
+      await this.putFile(file.id, file);
       conflicting.push(file.id);
     }
 
     conflictFile.conflicting = conflicting;
     this.fileMap[conflictFile.id] = conflictFile;
-    await this.configService.putFile(conflictFile.id, conflictFile);
+    await this.putFile(conflictFile.id, conflictFile);
   }
 
   async _insertFile(fileToInsert) {
     delete fileToInsert.conflictId;
     this.fileMap[fileToInsert.id] = fileToInsert;
-    await this.configService.putFile(fileToInsert.id, fileToInsert);
+    await this.putFile(fileToInsert.id, fileToInsert);
 
     await this._checkConflicts(fileToInsert.desiredLocalPath);
   }
@@ -198,6 +203,27 @@ class FilesStructure {
     }
 
     return maxModifiedTime;
+  }
+
+  async loadFileMap() {
+    try {
+      const content = await this.fileService.readFile(this.filePath);
+      const config = JSON.parse(content);
+      return config;
+    } catch (error) {
+      return {};
+    }
+  }
+
+  async putFile(id, file) {
+    const fileMap = await this.loadFileMap() || {};
+    fileMap[id] = file;
+    await this._saveConfig(fileMap);
+  }
+
+  async _saveConfig(fileMap) {
+    const content = JSON.stringify(fileMap, null, 2);
+    return this.fileService.writeFile(this.filePath, content);
   }
 
 }

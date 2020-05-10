@@ -34,8 +34,8 @@ function removeDuplicates(files) {
 }
 
 export class GoogleDriveService {
-  constructor(params) {
-    this.params = params;
+  constructor(flat_folder_structure) {
+    this.flat_folder_structure = flat_folder_structure;
   }
 
   urlToFolderId(url) {
@@ -96,7 +96,7 @@ export class GoogleDriveService {
     console.log('Listening folder:', parentDirName || '/');
     let files = await this._listFiles(auth, context, modifiedTime);
 
-    if (parentDirName && !this.params['flat-folder-structure']) {
+    if (parentDirName && !this.flat_folder_structure) {
       files.forEach(file => {
         const slugifiedParent = parentDirName
           .split('/')

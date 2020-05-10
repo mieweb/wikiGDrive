@@ -9,18 +9,28 @@ function usage() {
   console.log(
     `version: ${pkg.version}${`
     Usage:
-    $ wikigdrive [shared drive url]
+    $ wikigdrive <command> [<options>]
 
-Options:
-    --config (.wikigdrive)
+Commands: 
+    wikigdrive init
+    --drive [shared drive url]
     --client_id
     --client_secret
-    --dest (current working folder)
-    --watch [mtime|changes] (keep scanning for changes, ie: daemon)
-    --link_mode [mdURLs|dirURLs|uglyURLs]
-    --drive_id
     --service_account=./private_key.json
+    --drive_id
+    --dest (current working folder)
+    --without-folder-structure
+    --link_mode [mdURLs|dirURLs|uglyURLs]
 
+    wikigdrive pull
+
+    wikigdrive watch
+    --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+
+Options:
+    --config_dir (.wikigdrive)
+
+TODO: remove?
     --config-reset google_auth # removes google_auth object from .wikidgrive file
     --config-reset fileMap # removes fileMap object from .wikidgrive file
     --config-reset binaryFiles # removes binaryFiles object from .wikidgrive file
@@ -41,10 +51,11 @@ async function index() {
 
   const params = {};
 
-  params['drive'] = argv._[0];
-  params['config'] = argv['config'] || path.join(process.env.PWD, '.wikigdrive');
+  params['command'] = argv._[0];
+  params['drive'] = argv['drive'];
+  params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wikigdrive');
   params['dest'] = argv['dest'] || process.env.PWD;
-  params['watch'] = argv['watch'];
+  params['watch_mode'] = argv['watch_mode'];
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
@@ -62,6 +73,13 @@ async function index() {
   params['service_account'] = argv['service_account'] || null;
 
   const mainService = new SyncService(params);
+  try {
+    await mainService.init();
+  } catch (err) {
+    usage();
+    console.error(err);
+    process.exit(1);
+  }
   return await mainService.start();
 }
 
