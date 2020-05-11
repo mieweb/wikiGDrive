@@ -112,8 +112,9 @@ export class MarkDownTransform extends Transform {
       return '';
     }
 
-    const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
-    return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+    return url;
+    // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
+    // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
   }
 
   async processTos(content) {

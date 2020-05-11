@@ -12,10 +12,10 @@ export class TransformPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       this.command = params.command;
     });
-    eventBus.on('drive_config', async (drive_config) => {
+    eventBus.on('drive_config:loaded', async (drive_config) => {
       this.link_mode = drive_config['link_mode'];
       this.drive_config = drive_config;
   // await this.onConfigLoaded();

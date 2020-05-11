@@ -6,18 +6,18 @@ export class WatchPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
     });
-    eventBus.on('drive_config', (drive_config) => {
+    eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
       this.watch_mode = drive_config.watch_mode;
     });
-    eventBus.on('files_initialized', ({ filesStructure }) => {
+    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
     });
-    eventBus.on('google_api_initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
 
@@ -25,26 +25,24 @@ export class WatchPlugin extends BasePlugin {
         await this.startWatch();
       }, 100);
     });
-    eventBus.on('list_done', ({ context, lastMTime }) => {
-      setTimeout(async () => {
-        await this.start(context, lastMTime);
-      }, 100);
+    eventBus.on('list_root:done', ({ context, lastMTime }) => {
+      this.context = context;
+      this.lastMTime = lastMTime;
+    });
+    eventBus.on('main:pre_list_root', async () => {
+      await this.start(this.context, this.lastMTime);
     });
   }
 
   async startWatch() {
     switch (this.command) {
       case 'pull':
-        this.eventBus.emit('watch_initialized');
-        this.resolve();
+        this.eventBus.emit('watch:initialized');
         return;
       case 'watch':
         await this.watch(this.watch_mode);
-        this.eventBus.emit('watch_initialized');
-        this.resolve();
+        this.eventBus.emit('watch:initialized');
         break;
-      default:
-        this.reject();
     }
   }
 

@@ -6,22 +6,21 @@ export class ListRootPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
     });
-    eventBus.on('drive_config', (drive_config) => {
+    eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
-      this.onConfigLoaded();
     });
-    eventBus.on('files_initialized', ({ filesStructure }) => {
+    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
     });
-    eventBus.on('google_api_initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('watch_initialized', async () => {
+    eventBus.on('main:run_list_root', async () => {
       await this.start();
     });
   }
@@ -39,31 +38,9 @@ export class ListRootPlugin extends BasePlugin {
     const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
     await this.filesStructure.merge(changedFiles);
 
-    this.eventBus.emit('list_done', {
+    this.eventBus.emit('list_root:done', {
       context,
       lastMTime
     });
-    this.eventBus.emit('file_structure_changed');
-
-    switch (this.command) {
-      case 'pull':
-      case 'watch':
-        this.resolve();
-        break;
-      default:
-        this.reject();
-    }
-  }
-
-  onConfigLoaded() {
-/*
-    switch (this.command) {
-      case 'pull':
-      case 'watch':
-        break;
-      default:
-        this.reject();
-    }
-*/
   }
 }

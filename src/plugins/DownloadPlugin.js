@@ -21,10 +21,10 @@ export class DownloadPlugin extends BasePlugin {
 
     this.googleDocsService = new GoogleDocsService();
 
-    eventBus.on('files_initialized', ({ filesStructure }) => {
+    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
     });
-    eventBus.on('file_structure_changed', async () => {
+    eventBus.on('files_structure:changed', async () => {
       await this.handleChangedFiles();
     });
   }

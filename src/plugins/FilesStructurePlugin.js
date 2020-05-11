@@ -7,15 +7,17 @@ export class FilesStructurePlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       await this.init(params);
-      this.resolve();
+    });
+    eventBus.on('list_root:done', () => {
+      this.eventBus.emit('files_structure:changed');
     });
   }
 
   async init(params) {
     const filesStructure = new FilesStructure(params.config_dir);
     await filesStructure.init();
-    this.eventBus.emit('files_initialized', { filesStructure });
+    this.eventBus.emit('files_structure:initialized', { filesStructure });
   }
 }

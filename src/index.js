@@ -2,7 +2,7 @@
 
 import path from 'path';
 import minimist from 'minimist';
-import { SyncService } from './SyncService';
+import { MainService } from './MainService';
 import pkg from '../package.json';
 
 function usage() {
@@ -72,7 +72,7 @@ async function index() {
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
 
-  const mainService = new SyncService(params);
+  const mainService = new MainService(params);
   try {
     await mainService.init();
   } catch (err) {

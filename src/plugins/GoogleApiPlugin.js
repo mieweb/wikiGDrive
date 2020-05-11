@@ -9,18 +9,16 @@ export class GoogleApiPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       this.command = params.command;
     });
-    eventBus.on('drive_config', async (drive_config) => {
+    eventBus.on('drive_config:loaded', async (drive_config) => {
       this.drive_config = drive_config;
       await this.onConfigLoaded();
     });
   }
 
   async onConfigLoaded() {
-    // console.log(this.drive_config);
-
     const quotaLimiter = new QuotaLimiter(9500, 100);
     // const quotaLimiter = new QuotaLimiter(1, 5);
 
@@ -32,22 +30,18 @@ export class GoogleApiPlugin extends BasePlugin {
       case 'watch':
         if (this.drive_config.service_account) {
           const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
-          this.eventBus.emit('google_api_initialized', {
+          this.eventBus.emit('google_api:initialized', {
             auth,
             googleDriveService
           });
         } else {
           const auth = await googleAuthService.authorize(this.drive_config.client_id, this.drive_config.client_secret);
-          this.eventBus.emit('google_api_initialized', {
+          this.eventBus.emit('google_api:initialized', {
             auth,
             googleDriveService
           });
         }
-
-        this.resolve();
         break;
-      default:
-        this.reject();
     }
   }
 }

@@ -14,9 +14,8 @@ export class ConfigDirPlugin extends BasePlugin {
     this.fileService = new FileService();
     // this.filePath = filePath;
 
-    eventBus.on('start', async (params) => {
+    eventBus.on('main:init', async (params) => {
       await this.init(params);
-      this.resolve();
     });
   }
 
@@ -58,18 +57,6 @@ export class ConfigDirPlugin extends BasePlugin {
     await this._saveConfig(path.join(params.config_dir, 'drive.json'), driveConfig);
   }
 
-  async init(params) {
-    switch (params.command) {
-      case 'init':
-        await this.initConfigDir(params);
-        process.exit(0);
-        return;
-      default:
-        await this.loadDriveConfig(params.config_dir);
-        break;
-    }
-  }
-
   async loadDriveConfig(config_dir) {
     if (!fs.existsSync(config_dir)) {
       this.eventBus.emit('panic', {
@@ -81,9 +68,12 @@ export class ConfigDirPlugin extends BasePlugin {
         message: 'File .wikigdrive is not a directory. Perhaps running in 1.x version dir. Create new work directory.'
       });
     }
+    if (!fs.existsSync(path.join(config_dir, 'temp'))) {
+      fs.mkdirSync(path.join(config_dir, 'temp'), { recursive: true });
+    }
 
     const driveConfig = await this._loadConfig(path.join(config_dir, 'drive.json'));
-    this.eventBus.emit('drive_config', driveConfig);
+    this.eventBus.emit('drive_config:loaded', driveConfig);
   }
 
   async _loadConfig(filePath) {
@@ -99,6 +89,18 @@ export class ConfigDirPlugin extends BasePlugin {
   async _saveConfig(filePath, config) {
     const content = JSON.stringify(config, null, 2);
     return this.fileService.writeFile(filePath, content);
+  }
+
+  async init(params) {
+    switch (params.command) {
+      case 'init':
+        await this.initConfigDir(params);
+        process.exit(0);
+        return;
+      default:
+        await this.loadDriveConfig(params.config_dir);
+        break;
+    }
   }
 
 }
