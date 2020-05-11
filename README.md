@@ -176,3 +176,7 @@ A website front end is a goal for real-time testing of the viewing experience, b
 - conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
 - conflicting - array of fileIds when mimeType = 'conflict'
 - counter - current number of existing conflicts when mimeType = 'conflict'
+
+### Plugin sequence
+
+![Plugin sequence](docs/plugin_sequence.svg)

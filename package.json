@@ -17,7 +17,8 @@
     "test": "mocha-webpack --mode development",
     "lint": "eslint .",
     "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "build:docs": "mmdc -i docs/plugin_sequence.mmd -o docs/plugin_sequence.svg -b '#FFFFFF'"
   },
   "repository": {
     "type": "git",
@@ -75,6 +76,8 @@
     "htmlparser2": "^4.1.0",
     "husky": "^4.2.3",
     "jshint": "^2.11.0",
+    "mermaid": "^8.5.0",
+    "mermaid.cli": "^0.5.1",
     "mocha": "^7.1.0",
     "mocha-webpack": "2.0.0-beta.0",
     "raw-loader": "^4.0.0",
