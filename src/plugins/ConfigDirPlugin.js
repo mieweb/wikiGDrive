@@ -15,7 +15,13 @@ export class ConfigDirPlugin extends BasePlugin {
     // this.filePath = filePath;
 
     eventBus.on('main:init', async (params) => {
+      this.params = params;
       await this.init(params);
+    });
+    eventBus.on('quota_jobs:save', async (jobs) => {
+      await this._saveConfig(path.join(this.params.config_dir, 'quota.json'), {
+        jobs
+      });
     });
   }
 
@@ -73,6 +79,8 @@ export class ConfigDirPlugin extends BasePlugin {
     }
 
     const driveConfig = await this._loadConfig(path.join(config_dir, 'drive.json'));
+    const quotaConfig = await this._loadConfig(path.join(config_dir, 'quota.json'));
+    this.eventBus.emit('quota_jobs:loaded', quotaConfig.jobs || []);
     this.eventBus.emit('drive_config:loaded', driveConfig);
   }
 

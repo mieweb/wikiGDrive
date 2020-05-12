@@ -55,7 +55,7 @@ async function index() {
   params['drive'] = argv['drive'];
   params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wikigdrive');
   params['dest'] = argv['dest'] || process.env.PWD;
-  params['watch_mode'] = argv['watch_mode'];
+  params['watch_mode'] = argv['watch_mode'] || 'changes';
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;

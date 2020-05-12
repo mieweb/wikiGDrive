@@ -11,6 +11,8 @@ export class ExternalFilesPlugin extends BasePlugin {
     eventBus.on('main:init', async (params) => {
       await this.init(params);
     });
+
+    // TODO trigger await this.externalFiles.cleanup();
   }
 
   async init(params) {

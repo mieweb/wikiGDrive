@@ -2,12 +2,16 @@
 
 export class QuotaLimiter {
 
-  constructor(queries, seconds) {
+  constructor(queries, seconds, initialJobs) {
     this.queries = queries;
     this.seconds = seconds;
-    this.jobs = [];
+    console.log('initialJobs', initialJobs);
+    this.jobs = [].concat((initialJobs || []));
     setInterval(() => {
       this.handleQueue();
+      if (this.saveHandler) {
+        this.saveHandler(this.jobs);
+      }
     }, 500);
   }
 
@@ -40,4 +44,7 @@ export class QuotaLimiter {
     this.jobs = this.jobs.filter(job => !job.ts || job.ts >= minTime);
   }
 
+  setSaveHandler(handler) {
+    this.saveHandler = handler;
+  }
 }
