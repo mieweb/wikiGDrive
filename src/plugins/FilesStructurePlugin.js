@@ -14,7 +14,8 @@ export class FilesStructurePlugin extends BasePlugin {
       await this.init(params);
     });
     eventBus.on('list_root:done', async () => {
-      await this.scanFileSystem();
+      this.eventBus.emit('files_structure:dirty');
+      // await this.scanFileSystem();
     });
   }
 

@@ -3,6 +3,23 @@
 import {google} from 'googleapis';
 import {JWT} from 'google-auth-library';
 
+function requestAsync(self, superRequestAsync, opts, retry = false) { // TODO
+  return new Promise(((resolve, reject) => {
+    self.quotaLimiter.addJob(async () => {
+      try {
+        const response = await superRequestAsync(opts, retry);
+        resolve(response);
+      } catch (err) {
+        if (err.error && err.error.message && err.error.message.indexOf('User Rate Limit Exceeded') > -1) {
+          console.log('RATE');
+          // TODO slow down
+        }
+        reject(err);
+      }
+    });
+  }));
+}
+
 export class QuotaAuthClient extends google.auth.OAuth2 {
   constructor(options) {
     super(options);
@@ -13,20 +30,7 @@ export class QuotaAuthClient extends google.auth.OAuth2 {
   }
 
   requestAsync(opts, retry = false) {
-    return new Promise(((resolve, reject) => {
-      this.quotaLimiter.addJob(() => {
-        try {
-          resolve(super.requestAsync(opts, retry));
-        } catch (err) {
-          console.error('xxxxxx', err);
-          if (err.error && err.error.message && err.error.message.indexOf('User Rate Limit Exceeded') > -1) {
-            console.log('RATE');
-            // TODO slow down
-          }
-          reject(err);
-        }
-      });
-    }));
+    return requestAsync(this, super.requestAsync, opts, retry);
   }
 }
 
@@ -40,19 +44,6 @@ export class QuotaJwtClient extends JWT {
   }
 
   requestAsync(opts, retry = false) {
-    return new Promise(((resolve, reject) => {
-      this.quotaLimiter.addJob(() => {
-        try {
-          resolve(super.requestAsync(opts, retry));
-        } catch (err) {
-          console.error('xxxxxx', err);
-          if (err.error && err.error.message && err.error.message.indexOf('User Rate Limit Exceeded') > -1) {
-            console.log('RATE');
-            // TODO slow down
-          }
-          reject(err);
-        }
-      });
-    }));
+    return requestAsync(this, super.requestAsync, opts, retry);
   }
 }

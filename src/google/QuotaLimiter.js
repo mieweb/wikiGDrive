@@ -10,7 +10,7 @@ export class QuotaLimiter {
     setInterval(() => {
       this.handleQueue();
       if (this.saveHandler) {
-        this.saveHandler(this.jobs);
+        this.saveHandler(this.jobs.filter(job => !!job.ts));
       }
     }, 500);
   }

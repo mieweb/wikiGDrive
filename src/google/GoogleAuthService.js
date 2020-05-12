@@ -22,7 +22,7 @@ export class GoogleAuthService {
   }
 
   async authorizeServiceAccount(account_json_file_name) {
-    const opts = JSON.parse(fs.readFileSync(account_json_file_name));
+    const opts = JSON.parse(fs.readFileSync(account_json_file_name).toString());
 
     const oAuth2Client = new QuotaJwtClient(opts.client_email, null, opts.private_key, SCOPES);
     oAuth2Client.setQuotaLimiter(this.quotaLimiter);

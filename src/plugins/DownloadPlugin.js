@@ -151,9 +151,7 @@ export class DownloadPlugin extends BasePlugin {
 
     const promises = [];
     const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
-    console.log('dirtyFiles', dirtyFiles.length);
     for (const file of dirtyFiles) {
-      console.log('dirtyF', file);
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       if (file.mimeType === FilesStructure.DRAWING_MIME) {
@@ -167,6 +165,15 @@ export class DownloadPlugin extends BasePlugin {
       }
     }
     await Promise.all(promises);
+
+    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
+    if (dirtyFilesAfter.length > 0) {
+      process.nextTick(() => {
+        this.eventBus.emit('files_structure:dirty');
+      });
+    } else {
+      this.eventBus.emit('download:clean');
+    }
 
     // async downloadAssets(files) {
     //   files = files.filter(file => file.size !== undefined);

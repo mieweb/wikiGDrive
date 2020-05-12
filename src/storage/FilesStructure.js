@@ -1,6 +1,8 @@
 'use strict';
 
+import fs from 'fs';
 import path from 'path';
+
 import {FileService} from '../utils/FileService';
 
 function generateUniqId() {
@@ -215,10 +217,15 @@ class FilesStructure {
     }
   }
 
-  async putFile(id, file) {
-    const fileMap = await this.loadFileMap() || {};
+  async putFile(id, file) { // Must be atomic (use fs sync functions)
+    let fileMap = {};
+    if (fs.existsSync(this.filePath)) {
+      const contentLoaded = fs.readFileSync(this.filePath).toString();
+      fileMap = JSON.parse(contentLoaded) || {};
+    }
     fileMap[id] = file;
-    await this._saveConfig(fileMap);
+    const content = JSON.stringify(fileMap, null, 2);
+    fs.writeFileSync(this.filePath, content);
   }
 
   async _saveConfig(fileMap) {

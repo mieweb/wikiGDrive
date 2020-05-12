@@ -32,9 +32,12 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('external_files:initialized', ({ externalFiles }) => {
       this.externalFiles = externalFiles;
     });
+    eventBus.on('download:clean', async () => {
+      await this.handleTransform();
+    });
   }
 
-  async handleDirtyFiles() {
+  async handleTransform() {
     this.linkTranslator = new LinkTranslator(this.filesStructure, this.externalFiles);
     if (this.link_mode) {
       this.linkTranslator.mode = this.link_mode;
