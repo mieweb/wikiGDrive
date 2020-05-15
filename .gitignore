@@ -1,6 +1,7 @@
 node_modules
 .idea
 .wikigdrive
+.wgd
 .env
 dist
 content

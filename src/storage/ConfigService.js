@@ -44,25 +44,4 @@ export class ConfigService {
     await this._saveConfig(config);
   }
 
-/*
-  async resetConfig(section) {
-    if (!section || !section.trim()) {
-      return;
-    }
-
-    if (!await this.fileService.exists(this.filePath)) {
-      throw 'Config file .wikigdrive does not exists';
-    }
-
-    section = section.split('.');
-
-    const config = await this._loadConfig();
-
-    for (const key of section) {
-      delete config[key.trim()];
-    }
-
-    await this._saveConfig(config);
-  }
-*/
 }

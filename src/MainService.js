@@ -19,7 +19,9 @@ export class MainService {
     this.params = params;
     this.eventBus = new EventEmitter();
 
-    this.attachDebug();
+    if (params.debug) {
+      this.attachDebug();
+    }
   }
 
   attachDebug() {

@@ -30,7 +30,7 @@ export class ConfigDirPlugin extends BasePlugin {
       if (fs.lstatSync(params.config_dir).isDirectory()) {
         throw 'WikiGDrive already initialized.';
       } else {
-        throw '.wikigdrive is not a directory';
+        throw '.wgd is not a directory';
       }
     }
 
@@ -71,7 +71,7 @@ export class ConfigDirPlugin extends BasePlugin {
     }
     if (!fs.lstatSync(config_dir).isDirectory()) {
       this.eventBus.emit('panic', {
-        message: 'File .wikigdrive is not a directory. Perhaps running in 1.x version dir. Create new work directory.'
+        message: 'File .wgd is not a directory.'
       });
     }
     if (!fs.existsSync(path.join(config_dir, 'temp'))) {

@@ -28,13 +28,7 @@ Commands:
     --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
 
 Options:
-    --config_dir (.wikigdrive)
-
-TODO: remove?
-    --config-reset google_auth # removes google_auth object from .wikidgrive file
-    --config-reset fileMap # removes fileMap object from .wikidgrive file
-    --config-reset binaryFiles # removes binaryFiles object from .wikidgrive file
-    --config-reset-all # leaves empty .wikigdrive file
+    --config_dir (.wgd)
 
 Examples:
     $ wikigdrive https://google.drive...
@@ -53,7 +47,7 @@ async function index() {
 
   params['command'] = argv._[0];
   params['drive'] = argv['drive'];
-  params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wikigdrive');
+  params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wgd');
   params['dest'] = argv['dest'] || process.env.PWD;
   params['watch_mode'] = argv['watch_mode'] || 'changes';
 

@@ -3,9 +3,9 @@
 import {google} from 'googleapis';
 import {JWT} from 'google-auth-library';
 
-function requestAsync(self, superRequestAsync, opts, retry = false) { // TODO
+function requestAsync(superRequestAsync, opts, retry = false) { // TODO
   return new Promise(((resolve, reject) => {
-    self.quotaLimiter.addJob(async () => {
+    this.quotaLimiter.addJob(async () => {
       try {
         const response = await superRequestAsync(opts, retry);
         resolve(response);
@@ -30,7 +30,7 @@ export class QuotaAuthClient extends google.auth.OAuth2 {
   }
 
   requestAsync(opts, retry = false) {
-    return requestAsync(this, super.requestAsync, opts, retry);
+    return requestAsync.apply(this, opts, retry);
   }
 }
 
@@ -44,6 +44,6 @@ export class QuotaJwtClient extends JWT {
   }
 
   requestAsync(opts, retry = false) {
-    return requestAsync(this, super.requestAsync, opts, retry);
+    return requestAsync.apply(this, opts, retry);
   }
 }
