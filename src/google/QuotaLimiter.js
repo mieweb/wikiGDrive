@@ -5,7 +5,6 @@ export class QuotaLimiter {
   constructor(queries, seconds, initialJobs) {
     this.queries = queries;
     this.seconds = seconds;
-    console.log('initialJobs', initialJobs);
     this.jobs = [].concat((initialJobs || []));
     setInterval(() => {
       this.handleQueue();
@@ -29,7 +28,7 @@ export class QuotaLimiter {
 
     let jobsToAdd = this.queries - jobsInLastPeriod;
     while (jobsToAdd > 0) {
-      const notStartedJob = this.jobs.find(job => !job.ts);
+      const notStartedJob = this.jobs.find(job => !job.ts && job.func);
       if (!notStartedJob) {
         break;
       }
