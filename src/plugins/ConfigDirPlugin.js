@@ -78,10 +78,10 @@ export class ConfigDirPlugin extends BasePlugin {
       fs.mkdirSync(path.join(config_dir, 'temp'), { recursive: true });
     }
 
-    const driveConfig = await this._loadConfig(path.join(config_dir, 'drive.json'));
+    this.driveConfig = await this._loadConfig(path.join(config_dir, 'drive.json'));
     const quotaConfig = await this._loadConfig(path.join(config_dir, 'quota.json'));
     this.eventBus.emit('quota_jobs:loaded', quotaConfig.jobs || []);
-    this.eventBus.emit('drive_config:loaded', driveConfig);
+    this.eventBus.emit('drive_config:loaded', this.driveConfig);
   }
 
   async _loadConfig(filePath) {
@@ -101,6 +101,11 @@ export class ConfigDirPlugin extends BasePlugin {
 
   async init(params) {
     switch (params.command) {
+      case 'status':
+        await this.loadDriveConfig(params.config_dir);
+        console.log('Drive config:', this.driveConfig);
+        process.exit(0);
+        return ;
       case 'init':
         await this.initConfigDir(params);
         process.exit(0);

@@ -42,6 +42,7 @@ export class MainService {
 
     switch (this.params.command) {
       case 'init':
+      case 'status':
         break;
       case 'pull':
         this.plugins.push(new FilesStructurePlugin(this.eventBus));
