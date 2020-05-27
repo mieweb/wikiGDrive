@@ -3,8 +3,8 @@
 import { google } from 'googleapis';
 import slugify from 'slugify';
 import { FilesStructure } from '../storage/FilesStructure';
-import { retryAsync } from '../utils/retryAsync';
-import {handleGoogleError} from './error';
+import { handleGoogleError } from './error';
+import {retryAsync} from '../utils/retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -127,11 +127,15 @@ export class GoogleDriveService {
         promises.push(this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName));
       }
 
-      await Promise.all(promises).then(list => {
-        for (const moreFiles of list) {
-          retVal.push(...moreFiles);
-        }
-      });
+      await Promise.all(promises)
+        .then(list => {
+          for (const moreFiles of list) {
+            retVal.push(...moreFiles);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
 
     if (modifiedTime) {
@@ -152,7 +156,7 @@ export class GoogleDriveService {
 
       drive.changes.getStartPageToken({}, async (err, res) => {
         if (err) {
-          return handleGoogleError(err, reject);
+          return handleGoogleError(err, reject, 'GoogleDriveService.getStartTrackToken');
         }
 
         resolve(res.data.startPageToken);
@@ -178,7 +182,7 @@ export class GoogleDriveService {
 
       drive.changes.list(params, async (err, res) => {
         if (err) {
-          return handleGoogleError(err, reject);
+          return handleGoogleError(err, reject, 'GoogleDriveService.watchChanges');
         }
 
         const files = res.data.changes
@@ -215,8 +219,7 @@ export class GoogleDriveService {
   }
 
   _listFiles(auth, context, modifiedTime, nextPageToken) {
-    return retryAsync(10, (resolve, reject) => {
-
+    return retryAsync(10, async (resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       let query = '\'' + context.folderId + '\' in parents and trashed = false';
@@ -240,11 +243,8 @@ export class GoogleDriveService {
         listParams.driveId = context.driveId;
       }
 
-      drive.files.list(listParams, async (err, res) => {
-        if (err) {
-          return handleGoogleError(err, reject);
-        }
-
+      try {
+        const res = await drive.files.list(listParams);
         if (res.data.nextPageToken) {
           const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
           resolve(res.data.files.concat(nextFiles));
@@ -261,23 +261,26 @@ export class GoogleDriveService {
             }
 
             switch (file.mimeType) {
-            case 'application/vnd.google-apps.drawing':
-              file.desiredLocalPath += '.svg';
-              break;
-            case 'application/vnd.google-apps.document':
-              file.desiredLocalPath += '.md';
-              break;
+              case 'application/vnd.google-apps.drawing':
+                file.desiredLocalPath += '.svg';
+                break;
+              case 'application/vnd.google-apps.document':
+                file.desiredLocalPath += '.md';
+                break;
             }
           });
 
           resolve(res.data.files);
         }
-      });
+      } catch (err) {
+        return handleGoogleError(err, reject, 'GoogleDriveService._listFiles(' + context.folderId + ', ' + context.driveId + ')');
+      }
+
     });
   }
 
   download(auth, file, dest) {
-    return retryAsync(5, (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const drive = google.drive({ version: 'v3', auth });
 
       drive.files.get({
@@ -287,7 +290,7 @@ export class GoogleDriveService {
         supportsAllDrives: true
       }, { responseType: 'stream' }, async (err, res) => {
         if (err) {
-          return handleGoogleError(err, reject);
+          return handleGoogleError(err, reject, 'GoogleDriveService.download(' + file.id + ')');
         }
 
         res.data
@@ -303,18 +306,16 @@ export class GoogleDriveService {
   }
 
   exportDocument(auth, file, dest) {
-    return retryAsync(5, (resolve, reject) => {
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       const drive = google.drive({ version: 'v3', auth });
 
-      drive.files.export({
-        fileId: file.id,
-        mimeType: file.mimeType,
-        includeItemsFromAllDrives: true,
-        supportsAllDrives: true
-      }, { responseType: 'stream' }, async (err, res) => {
-        if (err) {
-          return handleGoogleError(err, reject);
-        }
+      try {
+        const res = await drive.files.export({
+          fileId: file.id,
+          mimeType: file.mimeType,
+          includeItemsFromAllDrives: true,
+          supportsAllDrives: true
+        }, { responseType: 'stream' });
 
         let stream = res.data
           .on('end', () => {})
@@ -333,7 +334,10 @@ export class GoogleDriveService {
             resolve();
           });
         }
-      });
+      } catch (err) {
+        await handleGoogleError(err, reject, 'GoogleDriveService.exportDocument(' + file.id + ', ' + file.mimeType + ')');
+      }
+
     });
   }
 }

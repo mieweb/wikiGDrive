@@ -2,6 +2,7 @@
 
 import {google} from 'googleapis';
 import {JWT} from 'google-auth-library';
+import {handleGoogleError} from './error';
 
 export class QuotaAuthClient extends google.auth.OAuth2 {
   constructor(options) {
@@ -12,21 +13,21 @@ export class QuotaAuthClient extends google.auth.OAuth2 {
     this.quotaLimiter = quotaLimiter;
   }
 
-  requestAsync(opts, retry = false) {
-    return new Promise(((resolve, reject) => {
-      this.quotaLimiter.addJob(async () => {
+  async requestAsync(opts, retry = false) {
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
+      const job = async () => {
         try {
           const response = await super.requestAsync(opts, retry);
           resolve(response);
-        } catch (err) {
-          if (err.error && err.error.message && err.error.message.indexOf('User Rate Limit Exceeded') > -1) {
-            console.log('RATE');
-            // TODO slow down
-          }
-          reject(err);
+        } catch (originalErr) {
+          await handleGoogleError(originalErr, (err) => {
+            reject(err);
+            throw err;
+          }, 'QuotaAuthClient');
         }
-      });
-    }));
+      };
+      this.quotaLimiter.addJob(job);
+    });
   }
 }
 
@@ -39,20 +40,20 @@ export class QuotaJwtClient extends JWT {
     this.quotaLimiter = quotaLimiter;
   }
 
-  requestAsync(opts, retry = false) {
-    return new Promise(((resolve, reject) => {
-      this.quotaLimiter.addJob(async () => {
+  async requestAsync(opts, retry = false) {
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
+      const job = async () => {
         try {
           const response = await super.requestAsync(opts, retry);
           resolve(response);
-        } catch (err) {
-          if (err.error && err.error.message && err.error.message.indexOf('User Rate Limit Exceeded') > -1) {
-            console.log('RATE');
-            // TODO slow down
-          }
-          reject(err);
+        } catch (originalErr) {
+          await handleGoogleError(originalErr, (err) => {
+            reject(err);
+            throw err;
+          }, 'QuotaJwtClient');
         }
-      });
-    }));
+      };
+      this.quotaLimiter.addJob(job);
+    });
   }
 }

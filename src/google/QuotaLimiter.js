@@ -1,17 +1,46 @@
 'use strict';
 
+const CONCURRENCY = 16;
+const DELAY_AFTER_ERROR = 5;
+
 export class QuotaLimiter {
 
-  constructor(queries, seconds, initialJobs) {
-    this.queries = queries;
-    this.seconds = seconds;
+  constructor(initialJobs = []) {
+    this.limits = [];
     this.jobs = [].concat((initialJobs || []));
+    this.running = 0;
     setInterval(() => {
       this.handleQueue();
       if (this.saveHandler) {
         this.saveHandler(this.jobs.filter(job => !!job.ts));
       }
     }, 500);
+  }
+
+  addLimit(queries, seconds) {
+    if (seconds <= 0) return false;
+    if (queries <= 0) return false;
+
+    const now = +new Date() / 1000;
+
+    if (this.limits.length > 1) {
+      if (now - this.limits[0].ts < DELAY_AFTER_ERROR) { // Don't add limits more often than once 10s
+        return false;
+      }
+    }
+
+    this.limits.push({
+      queries, seconds, ts: now
+    });
+    this.limits.sort((a, b) => {
+      if (a.seconds === b.seconds) {
+        return a.queries - b.queries;
+      }
+
+      return a.seconds - b.seconds;
+    });
+
+    return true;
   }
 
   addJob(func) {
@@ -22,20 +51,60 @@ export class QuotaLimiter {
   }
 
   handleQueue() {
+    if (this.running > CONCURRENCY) {
+      return;
+    }
     const now = +new Date() / 1000;
-    this.removeOlderThan(now - this.seconds);
-    const jobsInLastPeriod = this.jobs.filter(job => !!job.ts).length;
+    const lastTs = this.getLastTs();
 
-    let jobsToAdd = this.queries - jobsInLastPeriod;
-    while (jobsToAdd > 0) {
+    if (now - lastTs < DELAY_AFTER_ERROR) { // Limit added within last 10s
+      return;
+    }
+
+    let maxLimiterSeconds = this.limits.length > 0 ? this.limits[this.limits.length - 1].seconds : 0;
+    this.removeOlderThan(now - maxLimiterSeconds);
+
+    let availableQuota = this.calculateAvailableQuota(now);
+
+
+    while (availableQuota > 0) {
       const notStartedJob = this.jobs.find(job => !job.ts && job.func);
       if (!notStartedJob) {
         break;
       }
 
-      jobsToAdd--;
+      availableQuota--;
       notStartedJob.ts = now;
-      notStartedJob.func();
+      this.running++;
+      process.nextTick(() => {
+
+      notStartedJob.func()
+        .then(() => {
+          this.running--;
+        })
+        .catch(async (err) => {
+          if (err.isQuotaError && this.limits.length > 0) {
+            const smallestLimit = this.limits[0];
+            const newLimits = {};
+            if (smallestLimit.seconds > 1) {
+              newLimits.queries = Math.floor(smallestLimit.queries / 2);
+              newLimits.seconds = Math.floor(smallestLimit.seconds / 2);
+            } else {
+              newLimits.queries = Math.floor(smallestLimit.queries / 2);
+              newLimits.seconds = 1;
+            }
+
+            if (this.addLimit(newLimits.queries, newLimits.seconds)) {
+              console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds);
+            }
+          }
+
+          this.running--;
+        });
+
+      });
+
+
     }
   }
 
@@ -43,7 +112,35 @@ export class QuotaLimiter {
     this.jobs = this.jobs.filter(job => !job.ts || job.ts >= minTime);
   }
 
+  calculateAvailableQuota(now) {
+    let availableQuota = CONCURRENCY;
+
+    for (const limit of this.limits) {
+      const quotaUsed = this.jobs.filter(job => !!job.ts && (now - job.ts) < limit.seconds).length;
+
+      if (availableQuota > limit.queries - quotaUsed) {
+        availableQuota = limit.queries - quotaUsed;
+      }
+    }
+
+    return availableQuota;
+  }
+
   setSaveHandler(handler) {
     this.saveHandler = handler;
+  }
+
+  getLastTs() {
+    let retVal = 0;
+    if (this.limits.length === 1) {
+      return 0;
+    }
+
+    for (const limit of this.limits) {
+      if (retVal < limit.ts) {
+        retVal = limit.ts;
+      }
+    }
+    return retVal;
   }
 }

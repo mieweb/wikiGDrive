@@ -164,7 +164,11 @@ export class DownloadPlugin extends BasePlugin {
         promises.push(this.downloadAsset(file, targetPath));
       }
     }
-    await Promise.all(promises);
+
+    try {
+      await Promise.all(promises);
+    } catch (ignore) { /* eslint-disable-line no-empty */
+    }
 
     const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
     if (dirtyFilesAfter.length > 0) {

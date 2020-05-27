@@ -66,6 +66,11 @@ async function index() {
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
 
+  process.on('unhandledRejection', function(err) {
+    console.error('process.on:unhandledRejection', err);
+    process.exit(1);
+  });
+
   const mainService = new MainService(params);
   try {
     await mainService.init();

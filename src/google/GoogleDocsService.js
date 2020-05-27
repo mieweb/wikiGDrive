@@ -15,7 +15,7 @@ export class GoogleDocsService {
           documentId: file.id
         }, async (err, res) => {
           if (err) {
-            return handleGoogleError(err, reject);
+            return handleGoogleError(err, reject, 'GoogleDocsService.download(' + file.id + ')');
           }
 
           const readable = new Readable();
