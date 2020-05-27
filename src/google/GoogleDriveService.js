@@ -307,7 +307,7 @@ export class GoogleDriveService {
           })
           .pipe(dest);
       } catch (err) {
-        reject(throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+        reject(new GoogleDriveServiceError('Error download file: ' + file.id, {
           file, dest, isQuotaError: err.isQuotaError
         }));
       }
@@ -344,7 +344,7 @@ export class GoogleDriveService {
           });
         }
       } catch (err) {
-        reject(throw new GoogleDriveServiceError('Error export document: ' + file.id, {
+        reject(new GoogleDriveServiceError('Error export document: ' + file.id, {
           file, dest, isQuotaError: err.isQuotaError
         }));
         reject(err);
