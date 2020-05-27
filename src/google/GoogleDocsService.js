@@ -2,45 +2,49 @@
 
 import { google } from 'googleapis';
 import { Readable } from 'stream';
-import { handleGoogleError } from './error';
+
+export class GoogleDocsServiceError extends Error {
+  constructor(msg, { file, dest, isQuotaError }) {
+    super(msg);
+    this.file = file;
+    this.dest = dest;
+    this.isQuotaError = isQuotaError;
+  }
+}
 
 export class GoogleDocsService {
 
   async download(auth, file, dest) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       const docs = google.docs({ version: 'v1', auth });
 
-      docs.documents
-        .get({
-          documentId: file.id
-        }, async (err, res) => {
-          if (err) {
-            return handleGoogleError(err, reject, 'GoogleDocsService.download(' + file.id + ')');
-          }
+      try {
+        const res = await docs.documents.get({ documentId: file.id });
+        const readable = new Readable();
 
-          const readable = new Readable();
+        let stream = readable
+          .on('end', () => {})
+          .on('error', err => {
+            reject(err);
+          });
 
-          let stream = readable
-            .on('end', () => {})
-            .on('error', err => {
-              reject(err);
-            });
+        if (Array.isArray(dest)) {
+          dest.forEach(pipe => stream = stream.pipe(pipe));
+          stream.on('finish', () => {
+            resolve();
+          });
+        } else {
+          stream.pipe(dest);
+          dest.on('finish', () => {
+            resolve();
+          });
+        }
 
-          if (Array.isArray(dest)) {
-            dest.forEach(pipe => stream = stream.pipe(pipe));
-            stream.on('finish', () => {
-              resolve();
-            });
-          } else {
-            stream.pipe(dest);
-            dest.on('finish', () => {
-              resolve();
-            });
-          }
-
-          readable.push(JSON.stringify(res.data, null, 2));
-          readable.push(null);
-        });
+        readable.push(JSON.stringify(res.data, null, 2));
+        readable.push(null);
+      } catch (err) {
+        reject(new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, dest, isQuotaError: err.isQuotaError }));
+      }
     });
   }
 

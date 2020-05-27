@@ -23,7 +23,8 @@ export class GoogleApiPlugin extends BasePlugin {
 
   async onConfigLoaded() {
     const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs);
-    quotaLimiter.addLimit(950, 100);
+    // quotaLimiter.addLimit(950, 100);
+    quotaLimiter.addLimit(95, 10);
     quotaLimiter.setSaveHandler((jobs) => {
       const str = JSON.stringify(jobs);
       if (this.oldSave === str) {
@@ -32,7 +33,6 @@ export class GoogleApiPlugin extends BasePlugin {
       this.eventBus.emit('quota_jobs:save', jobs);
       this.oldSave = str;
     });
-    // const quotaLimiter = new QuotaLimiter(1, 5);
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
     const googleDriveService = new GoogleDriveService(this.drive_config.flat_folder_structure);

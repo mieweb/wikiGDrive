@@ -38,6 +38,8 @@ export class ListRootPlugin extends BasePlugin {
     const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
     await this.filesStructure.merge(changedFiles);
 
+    console.log('Listening Google Drive done');
+
     this.eventBus.emit('list_root:done', {
       context,
       lastMTime

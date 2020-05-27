@@ -3,8 +3,6 @@
 import { google } from 'googleapis';
 import slugify from 'slugify';
 import { FilesStructure } from '../storage/FilesStructure';
-import { handleGoogleError } from './error';
-import {retryAsync} from '../utils/retryAsync';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -31,6 +29,18 @@ function removeDuplicates(files) {
   }
 
   return retVal;
+}
+
+export class GoogleDriveServiceError extends Error {
+  constructor(msg, params) {
+    super(msg);
+    if (params) {
+      this.file = params.file;
+      this.dest = params.dest;
+      this.folderId = params.folderId;
+      this.isQuotaError = params.isQuotaError;
+    }
+  }
 }
 
 export class GoogleDriveService {
@@ -86,7 +96,7 @@ export class GoogleDriveService {
     const files = await this._listFilesRecursive(auth, context, modifiedTime);
 
     if (!modifiedTime && files.length === 0) {
-      throw Error('Empty result for root directory check you auth data or add files');
+      throw new GoogleDriveServiceError('Empty result for root directory check you auth data or add files');
     }
 
     return files;
@@ -124,7 +134,12 @@ export class GoogleDriveService {
 
         const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
 
-        promises.push(this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName));
+        const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName);
+        promises.push(promise);
+
+        promise.catch(() => {
+          filesToProcess.push(file);
+        });
       }
 
       await Promise.all(promises)
@@ -133,9 +148,7 @@ export class GoogleDriveService {
             retVal.push(...moreFiles);
           }
         })
-        .catch((err) => {
-          console.error(err);
-        });
+        .catch(() => {}); /* eslint-disable-line no-useless-catch */
     }
 
     if (modifiedTime) {
@@ -150,22 +163,14 @@ export class GoogleDriveService {
     return removeDuplicates(retVal);
   }
 
-  getStartTrackToken(auth) {
-    return new Promise((resolve, reject) => {
-      const drive = google.drive({ version: 'v3', auth });
-
-      drive.changes.getStartPageToken({}, async (err, res) => {
-        if (err) {
-          return handleGoogleError(err, reject, 'GoogleDriveService.getStartTrackToken');
-        }
-
-        resolve(res.data.startPageToken);
-      });
-    });
+  async getStartTrackToken(auth) {
+    const drive = google.drive({ version: 'v3', auth });
+    const res = await drive.changes.getStartPageToken({});
+    return res.data.startPageToken;
   }
 
   watchChanges(auth, pageToken, driveId) {
-    return new Promise(((resolve, reject) => {
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       const drive = google.drive({ version: 'v3', auth });
 
       const params = {
@@ -180,76 +185,12 @@ export class GoogleDriveService {
         params.drives = [ driveId ];
       }
 
-      drive.changes.list(params, async (err, res) => {
-        if (err) {
-          return handleGoogleError(err, reject, 'GoogleDriveService.watchChanges');
-        }
+      try {
+        const res = await drive.changes.list(params);
 
         const files = res.data.changes
           .map(change => change.file)
           .map((file) => {
-            file.desiredLocalPath = getDesiredPath(file.name);
-            if (file.lastModifyingUser) {
-              file.lastAuthor = file.lastModifyingUser.displayName;
-              delete file.lastModifyingUser;
-            }
-
-            if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-              file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-            }
-
-            switch (file.mimeType) {
-            case 'application/vnd.google-apps.drawing':
-              file.desiredLocalPath += '.svg';
-              break;
-            case 'application/vnd.google-apps.document':
-              file.desiredLocalPath += '.md';
-              break;
-            }
-
-            return file;
-          });
-
-        resolve({
-          token: res.data.newStartPageToken,
-          files: files
-        });
-      });
-    }));
-  }
-
-  _listFiles(auth, context, modifiedTime, nextPageToken) {
-    return retryAsync(10, async (resolve, reject) => {
-      const drive = google.drive({ version: 'v3', auth });
-
-      let query = '\'' + context.folderId + '\' in parents and trashed = false';
-      if (modifiedTime) {
-        query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'application/vnd.google-apps.folder\' )';
-      }
-
-      const listParams = {
-        corpora: 'allDrives',
-        q: query,
-        pageToken: nextPageToken,
-        pageSize: 1000,
-        fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version)',
-        // fields: 'nextPageToken, files(*)',
-        includeItemsFromAllDrives: true,
-        supportsAllDrives: true,
-        orderBy: 'modifiedTime desc'
-      };
-
-      if (context.driveId) {
-        listParams.driveId = context.driveId;
-      }
-
-      try {
-        const res = await drive.files.list(listParams);
-        if (res.data.nextPageToken) {
-          const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
-          resolve(res.data.files.concat(nextFiles));
-        } else {
-          res.data.files.forEach(file => {
             file.desiredLocalPath = getDesiredPath(file.name);
             if (file.lastModifyingUser) {
               file.lastAuthor = file.lastModifyingUser.displayName;
@@ -268,30 +209,94 @@ export class GoogleDriveService {
                 file.desiredLocalPath += '.md';
                 break;
             }
+
+            return file;
           });
 
-          resolve(res.data.files);
-        }
+        resolve({
+          token: res.data.newStartPageToken,
+          files: files
+        });
       } catch (err) {
-        return handleGoogleError(err, reject, 'GoogleDriveService._listFiles(' + context.folderId + ', ' + context.driveId + ')');
+        reject(new GoogleDriveServiceError('Error watching changes', {
+          isQuotaError: err.isQuotaError
+        }));
       }
-
     });
   }
 
-  download(auth, file, dest) {
-    return new Promise((resolve, reject) => {
-      const drive = google.drive({ version: 'v3', auth });
+  async _listFiles(auth, context, modifiedTime, nextPageToken) {
+    const drive = google.drive({ version: 'v3', auth });
 
-      drive.files.get({
-        fileId: file.id,
-        alt: 'media',
-        includeItemsFromAllDrives: true,
-        supportsAllDrives: true
-      }, { responseType: 'stream' }, async (err, res) => {
-        if (err) {
-          return handleGoogleError(err, reject, 'GoogleDriveService.download(' + file.id + ')');
-        }
+    let query = '\'' + context.folderId + '\' in parents and trashed = false';
+    if (modifiedTime) {
+      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'application/vnd.google-apps.folder\' )';
+    }
+
+    const listParams = {
+      corpora: 'allDrives',
+      q: query,
+      pageToken: nextPageToken,
+      pageSize: 1000,
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version)',
+      // fields: 'nextPageToken, files(*)',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
+      orderBy: 'modifiedTime desc'
+    };
+
+    if (context.driveId) {
+      listParams.driveId = context.driveId;
+    }
+
+    try {
+      const res = await drive.files.list(listParams);
+      if (res.data.nextPageToken) {
+        const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
+        return res.data.files.concat(nextFiles);
+      } else {
+        res.data.files.forEach(file => {
+          file.desiredLocalPath = getDesiredPath(file.name);
+          if (file.lastModifyingUser) {
+            file.lastAuthor = file.lastModifyingUser.displayName;
+            delete file.lastModifyingUser;
+          }
+
+          if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+            file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
+          }
+
+          switch (file.mimeType) {
+            case 'application/vnd.google-apps.drawing':
+              file.desiredLocalPath += '.svg';
+              break;
+            case 'application/vnd.google-apps.document':
+              file.desiredLocalPath += '.md';
+              break;
+          }
+        });
+
+        return res.data.files;
+      }
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
+        folderId: context.folderId,
+        isQuotaError: err.isQuotaError
+      });
+    }
+  }
+
+  download(auth, file, dest) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
+      try {
+        const res = await drive.files.get({
+          fileId: file.id,
+          alt: 'media',
+          includeItemsFromAllDrives: true,
+          supportsAllDrives: true
+        }, { responseType: 'stream' });
 
         res.data
           .on('end', () => {
@@ -301,14 +306,18 @@ export class GoogleDriveService {
             reject(err);
           })
           .pipe(dest);
-      });
+      } catch (err) {
+        reject(throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+          file, dest, isQuotaError: err.isQuotaError
+        }));
+      }
     });
   }
 
   exportDocument(auth, file, dest) {
-    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
-      const drive = google.drive({ version: 'v3', auth });
+    const drive = google.drive({ version: 'v3', auth });
 
+    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       try {
         const res = await drive.files.export({
           fileId: file.id,
@@ -335,7 +344,10 @@ export class GoogleDriveService {
           });
         }
       } catch (err) {
-        await handleGoogleError(err, reject, 'GoogleDriveService.exportDocument(' + file.id + ', ' + file.mimeType + ')');
+        reject(throw new GoogleDriveServiceError('Error export document: ' + file.id, {
+          file, dest, isQuotaError: err.isQuotaError
+        }));
+        reject(err);
       }
 
     });

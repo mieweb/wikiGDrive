@@ -168,6 +168,7 @@ export class DownloadPlugin extends BasePlugin {
     try {
       await Promise.all(promises);
     } catch (ignore) { /* eslint-disable-line no-empty */
+      console.error(ignore);
     }
 
     const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);

@@ -39,30 +39,14 @@ export class MainService {
   async init() {
     this.plugins = [];
     this.plugins.push(new ConfigDirPlugin(this.eventBus));
-
-    switch (this.params.command) {
-      case 'init':
-      case 'status':
-        break;
-      case 'pull':
-        this.plugins.push(new FilesStructurePlugin(this.eventBus));
-        this.plugins.push(new ExternalFilesPlugin(this.eventBus));
-        this.plugins.push(new GoogleApiPlugin(this.eventBus));
-        this.plugins.push(new ListRootPlugin(this.eventBus));
-        this.plugins.push(new DownloadPlugin(this.eventBus));
-        this.plugins.push(new TransformPlugin(this.eventBus));
-        break;
-      case 'watch':
-        this.plugins.push(new FilesStructurePlugin(this.eventBus));
-        this.plugins.push(new ExternalFilesPlugin(this.eventBus));
-        this.plugins.push(new GoogleApiPlugin(this.eventBus));
-        this.plugins.push(new WatchMTimePlugin(this.eventBus));
-        this.plugins.push(new WatchChangesPlugin(this.eventBus));
-        this.plugins.push(new ListRootPlugin(this.eventBus));
-        this.plugins.push(new DownloadPlugin(this.eventBus));
-        this.plugins.push(new TransformPlugin(this.eventBus));
-        break;
-    }
+    this.plugins.push(new FilesStructurePlugin(this.eventBus));
+    this.plugins.push(new ExternalFilesPlugin(this.eventBus));
+    this.plugins.push(new GoogleApiPlugin(this.eventBus));
+    this.plugins.push(new WatchMTimePlugin(this.eventBus));
+    this.plugins.push(new WatchChangesPlugin(this.eventBus));
+    this.plugins.push(new ListRootPlugin(this.eventBus));
+    this.plugins.push(new DownloadPlugin(this.eventBus));
+    this.plugins.push(new TransformPlugin(this.eventBus));
   }
 
   async start() {
