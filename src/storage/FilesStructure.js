@@ -1,6 +1,5 @@
 'use strict';
 
-import fs from 'fs';
 import path from 'path';
 
 import {FileService} from '../utils/FileService';
@@ -18,8 +17,7 @@ class FilesStructure {
   }
 
   async init() {
-    const fileMap = await this.loadFileMap();
-    this.fileMap = fileMap || {};
+    await this.loadData();
   }
 
   getFileMap() {
@@ -209,30 +207,23 @@ class FilesStructure {
     return maxModifiedTime;
   }
 
-  async loadFileMap() {
+  async putFile(id, file) { // Must be atomic (use fs sync functions)
+    this.fileMap[id] = JSON.parse(JSON.stringify(file));
+    await this.saveData();
+  }
+
+  async loadData() {
     try {
       const content = await this.fileService.readFile(this.filePath);
-      const config = JSON.parse(content);
-      return config;
+      this.fileMap = JSON.parse(content) || {};
     } catch (error) {
-      return {};
+      this.fileMap = {};
     }
   }
 
-  async putFile(id, file) { // Must be atomic (use fs sync functions)
-    let fileMap = {};
-    if (fs.existsSync(this.filePath)) {
-      const contentLoaded = fs.readFileSync(this.filePath).toString();
-      fileMap = JSON.parse(contentLoaded) || {};
-    }
-    fileMap[id] = file;
-    const content = JSON.stringify(fileMap, null, 2);
-    fs.writeFileSync(this.filePath, content);
-  }
-
-  async _saveConfig(fileMap) {
-    const content = JSON.stringify(fileMap, null, 2);
-    return this.fileService.writeFile(this.filePath, content);
+  async saveData() {
+    const content = JSON.stringify(this.fileMap, null, 2);
+    return this.fileService.writeFile(this.filePath, content); // TODO debounce
   }
 
 }

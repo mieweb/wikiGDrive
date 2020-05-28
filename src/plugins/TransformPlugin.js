@@ -176,8 +176,6 @@ export class TransformPlugin extends BasePlugin {
       const targetPath = path.join(this.dest, directory.localPath);
       fs.mkdirSync(targetPath, { recursive: true });
     });
-
-    fs.mkdirSync(path.join(this.dest, 'external_files'), { recursive: true });
   }
 
 }

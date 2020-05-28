@@ -72,6 +72,11 @@ export class MainService {
         process.exit(0);
         break;
 
+      case 'external':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('external:process', this.params, [ 'external:done' ]);
+        break;
+
       case 'pull':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean' ]);
