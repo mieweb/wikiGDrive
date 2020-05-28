@@ -11,11 +11,13 @@ export class FilesStructurePlugin extends BasePlugin {
     super(eventBus);
 
     eventBus.on('main:init', async (params) => {
+      this.params = params;
+      this.config_dir = params.config_dir;
       await this.init(params);
     });
     eventBus.on('list_root:done', async () => {
-      this.eventBus.emit('files_structure:dirty');
-      // await this.scanFileSystem();
+      // this.eventBus.emit('files_structure:dirty');
+      await this.scanFileSystem();
     });
   }
 
@@ -23,7 +25,21 @@ export class FilesStructurePlugin extends BasePlugin {
     const filesStructure = new FilesStructure(params.config_dir);
     this.filesStructure = filesStructure;
     await filesStructure.init();
+    await this.cleanupDir();
+
     this.eventBus.emit('files_structure:initialized', { filesStructure });
+  }
+
+  async cleanupDir() {
+    const files = this.filesStructure.findFiles(item => FilesStructure.DOCUMENT_MIME === item.mimeType);
+    const fileService = new FileService();
+
+    for (const file of files) {
+      const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
+      if (await fileService.exists(targetPath) && await fileService.getSize(targetPath) === 0) {
+        await fileService.remove(targetPath);
+      }
+    }
   }
 
   async scanFileSystem() {
@@ -31,9 +47,12 @@ export class FilesStructurePlugin extends BasePlugin {
     const fileService = new FileService();
 
     for (const file of files) {
-      const targetPath = path.join(this.params.dest, file.localPath);
+      const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       if (!await fileService.exists(targetPath)) {
+        await this.filesStructure.markDirty([file]);
+      } else
+      if (await fileService.getSize(targetPath) === 0) {
         await this.filesStructure.markDirty([file]);
       }
     }

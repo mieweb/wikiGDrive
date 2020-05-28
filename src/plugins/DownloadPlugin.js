@@ -24,6 +24,9 @@ export class DownloadPlugin extends BasePlugin {
     eventBus.on('files_structure:dirty', async () => {
       await this.handleDirtyFiles();
     });
+    eventBus.on('download:retry', async () => {
+      await this.handleDirtyFiles();
+    });
     eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
@@ -48,9 +51,15 @@ export class DownloadPlugin extends BasePlugin {
   async downloadAsset(file, targetPath) {
     console.log('Downloading asset: ' + file.localPath);
     await this.ensureDir(targetPath);
-    const dest = fs.createWriteStream(targetPath);
 
-    await this.googleDriveService.download(this.auth, file, dest);
+    try {
+      const dest = fs.createWriteStream(targetPath);
+      await this.googleDriveService.download(this.auth, file, dest);
+    } catch (err) {
+      fs.unlinkSync(targetPath);
+      throw err;
+    }
+
     await this.filesStructure.markClean([ file ]);
   }
 
@@ -72,22 +81,33 @@ export class DownloadPlugin extends BasePlugin {
   async downloadDiagram(file, targetPath) {
     console.log('Downloading diagram: ' + file.localPath);
     await this.ensureDir(targetPath);
-    const writeStream = fs.createWriteStream(targetPath);
 
     // const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
 
-    await this.googleDriveService.exportDocument(
-      this.auth,
-      Object.assign({}, file, { mimeType: 'image/svg+xml' }),
-      writeStream);
+    try {
+      const writeStream = fs.createWriteStream(targetPath);
+      await this.googleDriveService.exportDocument(
+        this.auth,
+        Object.assign({}, file, { mimeType: 'image/svg+xml' }),
+        writeStream);
       // [svgTransform, writeStream]);
+    } catch (err) {
+      fs.unlinkSync(targetPath);
+      throw err;
+    }
 
-    const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+    try {
+      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
 
-    await this.googleDriveService.exportDocument(
-      this.auth,
-      Object.assign({}, file, { mimeType: 'image/png' }),
-      writeStreamPng);
+      await this.googleDriveService.exportDocument(
+        this.auth,
+        Object.assign({}, file, { mimeType: 'image/png' }),
+        writeStreamPng);
+    } catch (err) {
+      fs.unlinkSync(targetPath);
+      fs.unlinkSync(targetPath.replace(/.svg$/, '.png'));
+      throw err;
+    }
 
     const fileService = new FileService();
     const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
@@ -129,17 +149,25 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   async downloadDocument(file, targetPath) {
-    console.log('Downloading document: ' + file.localPath);
+    console.log('Downloading document: ' + file.id + '.gdoc [' + file.localPath + ']');
     await this.ensureDir(targetPath);
 
-    const destHtml = new StringWritable();
-    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
-
-    fs.writeFileSync(path.join(this.config_dir, 'files', file.id + '.html'), destHtml.getString());
-
+    const htmlPath = path.join(this.config_dir, 'files', file.id + '.html');
     const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
-    const destJson = fs.createWriteStream(gdocPath);
-    await this.googleDocsService.download(this.auth, file, destJson);
+
+    try {
+      const destHtml = new StringWritable();
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
+      fs.writeFileSync(htmlPath, destHtml.getString());
+
+      const destJson = new StringWritable();
+      await this.googleDocsService.download(this.auth, file, destJson);
+      fs.writeFileSync(gdocPath, destJson.getString());
+    } catch (err) {
+      fs.unlinkSync(htmlPath);
+      fs.unlinkSync(gdocPath);
+      throw err;
+    }
 
     await this.filesStructure.markClean([ file ]);
   }
@@ -151,6 +179,11 @@ export class DownloadPlugin extends BasePlugin {
 
     const promises = [];
     const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+
+    if (dirtyFiles.length > 0) {
+      console.log('Downloading modified files (' + dirtyFiles.length + ')');
+    }
+
     for (const file of dirtyFiles) {
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
@@ -168,13 +201,13 @@ export class DownloadPlugin extends BasePlugin {
     try {
       await Promise.all(promises);
     } catch (ignore) { /* eslint-disable-line no-empty */
-      console.error(ignore);
     }
 
     const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
     if (dirtyFilesAfter.length > 0) {
+      console.log('Download retry required');
       process.nextTick(() => {
-        this.eventBus.emit('files_structure:dirty');
+        this.eventBus.emit('download:retry');
       });
     } else {
       this.eventBus.emit('download:clean');

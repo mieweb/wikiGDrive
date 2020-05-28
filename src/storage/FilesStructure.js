@@ -63,6 +63,8 @@ class FilesStructure {
 
   async markDirty(files) {
     for (const file of files) {
+      if (file.mimeType === FilesStructure.FOLDER_MIME) continue;
+
       this.fileMap[file.id].dirty = true;
       await this.putFile(file.id, this.fileMap[file.id]);
     }

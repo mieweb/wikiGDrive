@@ -95,7 +95,7 @@ export class QuotaLimiter {
             }
 
             if (this.addLimit(newLimits.queries, newLimits.seconds)) {
-              console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds);
+              console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
             }
           }
 
@@ -103,8 +103,6 @@ export class QuotaLimiter {
         });
 
       });
-
-
     }
   }
 

@@ -44,7 +44,10 @@ export class TransformPlugin extends BasePlugin {
     }
 
     const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty); // TODO
+    console.log('Transforming documents: ' + mergedFiles.length);
     await this.transformDocuments(mergedFiles);
+
+    this.eventBus.emit('transform:clean');
   }
 
   async transformDocuments(files) {
