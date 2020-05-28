@@ -29,13 +29,17 @@ async function convertImageLink(document, url) {
 
   return url;
   // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
-  // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
 }
 
 async function processRecursive(json, func) {
+  if (Array.isArray(json)) {
+    for (const item of json) {
+      await processRecursive(item, func);
+    }
+  } else
   if (typeof json === 'object') {
     for (let k in json) {
-      await processRecursive(json[k]);
+      await processRecursive(json[k], func);
     }
     await func(json);
   }
@@ -88,7 +92,7 @@ export class ExternalFilesPlugin extends BasePlugin {
       const content = await fileService.readFile(filePath);
       const document = JSON.parse(content);
 
-      await processRecursive(document, async (json) => {
+      await processRecursive(document.body.content, async (json) => {
         if (json.inlineObjectElement) {
           const url = json.inlineObjectElement.inlineObjectId;
           links[await convertImageLink(document, url)] = true;
@@ -102,6 +106,12 @@ export class ExternalFilesPlugin extends BasePlugin {
 
   async download() {
     const linksToDownload = await this.externalFiles.findLinks(link => !link.md5);
+
+    if (linksToDownload.length > 0) {
+      console.log('Downloading external files (' + linksToDownload.length + ')');
+    } else {
+      return;
+    }
 
     const concurrency = 4;
 
