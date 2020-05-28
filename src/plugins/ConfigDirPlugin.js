@@ -15,6 +15,7 @@ export class ConfigDirPlugin extends BasePlugin {
     // this.filePath = filePath;
 
     eventBus.on('main:init', async (params) => {
+      this.command = params.command;
       this.params = params;
       await this.init(params);
     });
@@ -99,13 +100,14 @@ export class ConfigDirPlugin extends BasePlugin {
     return this.fileService.writeFile(filePath, content);
   }
 
+  async status() {
+    await this.loadDriveConfig(this.params.config_dir);
+    console.log('Config status:');
+    console.table(this.driveConfig);
+  }
+
   async init(params) {
-    switch (params.command) {
-      case 'status':
-        await this.loadDriveConfig(params.config_dir);
-        console.log('Drive config:', this.driveConfig);
-        process.exit(0);
-        return ;
+    switch (this.command) {
       case 'init':
         await this.initConfigDir(params);
         process.exit(0);

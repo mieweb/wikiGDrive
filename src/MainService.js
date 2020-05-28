@@ -17,6 +17,7 @@ export class MainService {
 
   constructor(params) {
     this.params = params;
+    this.command = this.params.command;
     this.eventBus = new EventEmitter();
 
     if (params.debug) {
@@ -49,45 +50,46 @@ export class MainService {
     this.plugins.push(new TransformPlugin(this.eventBus));
   }
 
+  async emitThanAwait(event, params, awaitEvents) {
+    this.eventBus.emit(event, params);
+    await Promise.all(awaitEvents.map(eventName => new Promise(resolve => this.eventBus.on(eventName, resolve))));
+  }
+
   async start() {
     this.eventBus.on('panic', (error) => {
       console.error(error.message);
       process.exit(1);
     });
 
-    const initPromises = [
-      new Promise(resolve => this.eventBus.on('google_api:initialized', resolve)),
-      new Promise(resolve => this.eventBus.on('files_structure:initialized', resolve))
-    ];
+    switch (this.command) {
+      case 'status':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized' ]);
+        for (const plugin of this.plugins) {
+          if (plugin.status) {
+            await plugin.status();
+          }
+        }
+        process.exit(0);
+        break;
 
-    this.eventBus.emit('main:init', this.params);
-
-    await Promise.all(initPromises);
-
-    this.eventBus.emit('main:pre_list_root');
-    this.eventBus.emit('main:run_list_root');
-
-    const promises = [];
-
-    switch (this.params.command) {
       case 'pull':
-        promises.push(new Promise(resolve => {
-          this.eventBus.on('list_root:done', resolve);
-        }));
-        promises.push(new Promise(resolve => {
-          this.eventBus.on('download:clean', resolve); // TODO: emit
-        }));
-        promises.push(new Promise(resolve => {
-          this.eventBus.on('transform:clean', resolve); // TODO: emit
-        }));
+        await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
+        await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean' ]);
         break;
       case 'watch':
-        promises.push(new Promise(() => {}));
-        this.eventBus.emit('main:run_watch');
+        await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
+        await this.emitThanAwait('main:fetch_watch_token', {}, [ 'watch:token_ready' ]);
+
+        this.eventBus.emit('main:run_list_root');
+
+        this.eventBus.on('list_root:done', () => {
+          this.eventBus.emit('main:run_watch');
+        });
+
+        await new Promise(() => {});
         break;
     }
 
-    await Promise.all(promises);
 /*
     await new Promise(async (resolve, reject) => {
       setTimeout(reject, 3600 * 1000);

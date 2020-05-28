@@ -25,10 +25,11 @@ export class WatchMTimePlugin extends BasePlugin {
       this.context = context;
       this.lastMTime = lastMTime;
     });
-    eventBus.on('main:pre_list_root', async () => {
+    eventBus.on('main:fetch_watch_token', async () => {
       if (this.watch_mode !== 'mtime') {
         return;
       }
+      eventBus.emit('watch:token_ready');
     });
     eventBus.on('main:run_watch', async () => {
       if (this.watch_mode !== 'mtime') {

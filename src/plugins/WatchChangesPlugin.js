@@ -25,11 +25,12 @@ export class WatchChangesPlugin extends BasePlugin {
       this.context = context;
       this.lastMTime = lastMTime;
     });
-    eventBus.on('main:pre_list_root', async () => {
+    eventBus.on('main:fetch_watch_token', async () => {
       if (this.watch_mode !== 'changes') {
         return;
       }
       this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
+      eventBus.emit('watch:token_ready');
     });
     eventBus.on('main:run_watch', async () => {
       if (this.watch_mode !== 'changes') {

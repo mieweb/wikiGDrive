@@ -42,6 +42,16 @@ export class FilesStructurePlugin extends BasePlugin {
     }
   }
 
+  async status() {
+    const allFiles = this.filesStructure.findFiles(item => !!item);
+    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+    console.log('Files status:');
+    console.table({
+      'All files': allFiles.length,
+      'Dirty files': dirtyFiles.length
+    });
+  }
+
   async scanFileSystem() {
     const files = this.filesStructure.findFiles(item => !item.dirty);
     const fileService = new FileService();
