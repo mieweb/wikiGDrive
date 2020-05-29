@@ -3,6 +3,7 @@
 import path from 'path';
 import RelateUrl from 'relateurl';
 import {FileService} from './utils/FileService';
+import {FilesStructure} from './storage/FilesStructure';
 
 export class LinkTranslator {
 
@@ -36,7 +37,7 @@ export class LinkTranslator {
       if (url.indexOf(fileId) > -1) {
         url = file.localPath;
 
-        if (file.mimeType === 'application/vnd.google-apps.folder') {
+        if (file.mimeType === FilesStructure.FOLDER_MIME) {
           // url += '/';
         }
 

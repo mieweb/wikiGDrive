@@ -56,6 +56,10 @@ export class ExternalFilesPlugin extends BasePlugin {
     eventBus.on('files_structure:initialized', async ({ filesStructure }) => {
       this.filesStructure = filesStructure;
     });
+    eventBus.on('download:clean', async () => {
+      await this.process();
+      this.eventBus.emit('external:done');
+    });
     eventBus.on('external:process', async () => {
       await this.process();
       this.eventBus.emit('external:done');

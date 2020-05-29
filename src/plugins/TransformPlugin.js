@@ -19,11 +19,11 @@ export class TransformPlugin extends BasePlugin {
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
+      this.dest = params.dest;
+      this.config_dir = params.config_dir;
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.link_mode = drive_config['link_mode'];
-      this.drive_config = drive_config;
-  // await this.onConfigLoaded();
       this.flat_folder_structure = drive_config.flat_folder_structure;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
@@ -32,7 +32,10 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('external_files:initialized', ({ externalFiles }) => {
       this.externalFiles = externalFiles;
     });
-    eventBus.on('download:clean', async () => {
+    eventBus.on('external:done', async () => {
+      await this.handleTransform();
+    });
+    eventBus.on('main:transform_start', async () => {
       await this.handleTransform();
     });
   }
@@ -43,9 +46,14 @@ export class TransformPlugin extends BasePlugin {
       this.linkTranslator.mode = this.link_mode;
     }
 
-    const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty); // TODO
-    console.log('Transforming documents: ' + mergedFiles.length);
-    await this.transformDocuments(mergedFiles);
+    const files = this.filesStructure.findFiles(item => !item.dirty); // TODO
+
+    await this.createFolderStructure(files);
+
+    console.log('Transforming documents: ' + files.length);
+    await this.transformDocuments(files);
+
+    await this.generateMetaFiles();
 
     this.eventBus.emit('transform:clean');
   }
@@ -102,7 +110,7 @@ export class TransformPlugin extends BasePlugin {
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
 
     for (const file of files) {
-      const targetPath = path.join(this.params.dest, file.localPath);
+      const targetPath = path.join(this.dest, file.localPath);
       await this.ensureDir(targetPath);
       const dest = fs.createWriteStream(targetPath);
 
@@ -126,7 +134,7 @@ export class TransformPlugin extends BasePlugin {
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
 
     for (const file of files) {
-      const targetPath = path.join(this.params.dest, file.localPath);
+      const targetPath = path.join(this.dest, file.localPath);
       await this.ensureDir(targetPath);
       const dest = fs.createWriteStream(targetPath);
 
@@ -146,7 +154,7 @@ export class TransformPlugin extends BasePlugin {
     await this.generateConflicts();
     await this.generateRedirects();
     const tocGenerator = new TocGenerator('toc.md', this.linkTranslator);
-    await tocGenerator.generate(this.filesStructure, fs.createWriteStream(path.join(this.params.dest, 'toc.md')), '/toc.html');
+    await tocGenerator.generate(this.filesStructure, fs.createWriteStream(path.join(this.dest, 'toc.md')), '/toc.html');
   }
 
   async ensureDir(filePath) {

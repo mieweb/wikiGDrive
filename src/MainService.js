@@ -61,6 +61,12 @@ export class MainService {
       process.exit(1);
     });
 
+    process.on('SIGINT', () => {
+      setTimeout(() => {
+        process.exit();
+      }, 1000);
+    });
+
     switch (this.command) {
       case 'status':
         await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized' ]);
@@ -72,14 +78,25 @@ export class MainService {
         process.exit(0);
         break;
 
+      case 'download':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'google_api:initialized', 'files_structure:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('download:process', this.params, [ 'download:clean' ]);
+        break;
+
       case 'external':
         await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized', 'external_files:initialized' ]);
         await this.emitThanAwait('external:process', this.params, [ 'external:done' ]);
         break;
 
+      case 'transform':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:transform_start', this.params, [ 'transform:clean' ]);
+        break;
+
       case 'pull':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean' ]);
+
         break;
       case 'watch':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
@@ -95,7 +112,14 @@ export class MainService {
         break;
     }
 
-/*
+
+    for (const plugin of this.plugins) {
+      if (plugin.flushData) {
+        await plugin.flushData();
+      }
+    }
+
+    /*
     await new Promise(async (resolve, reject) => {
       setTimeout(reject, 3600 * 1000);
       await this.configService.flush();

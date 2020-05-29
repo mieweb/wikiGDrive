@@ -1,8 +1,8 @@
 'use strict';
 
-import { google } from 'googleapis';
 import slugify from 'slugify';
-import { FilesStructure } from '../storage/FilesStructure';
+import {google} from 'googleapis';
+import {FilesStructure} from '../storage/FilesStructure';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -130,10 +130,9 @@ export class GoogleDriveService {
       for (let fileNo = 0; fileNo < files.length; fileNo++) {
 
         const file = files[fileNo];
-        if (file.mimeType !== 'application/vnd.google-apps.folder') continue;
+        if (file.mimeType !== FilesStructure.FOLDER_MIME) continue;
 
-        const newParentDirName = parentDirName ? (parentDirName + '/' + file.name) : file.name;
-
+        const newParentDirName = parentDirName ? (parentDirName + '/' + getDesiredPath(file.name)) : getDesiredPath(file.name);
         const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName);
         promises.push(promise);
 
@@ -230,7 +229,7 @@ export class GoogleDriveService {
 
     let query = '\'' + context.folderId + '\' in parents and trashed = false';
     if (modifiedTime) {
-      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'application/vnd.google-apps.folder\' )';
+      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + FilesStructure.FOLDER_MIME + '\' )';
     }
 
     const listParams = {

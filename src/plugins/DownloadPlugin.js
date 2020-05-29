@@ -21,31 +21,20 @@ export class DownloadPlugin extends BasePlugin {
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
     });
+    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+      this.auth = auth;
+      console.log('dididi', googleDriveService);
+      this.googleDriveService = googleDriveService;
+    });
     eventBus.on('files_structure:dirty', async () => {
+      await this.handleDirtyFiles();
+    });
+    eventBus.on('download:process', async () => {
       await this.handleDirtyFiles();
     });
     eventBus.on('download:retry', async () => {
       await this.handleDirtyFiles();
     });
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
-      this.auth = auth;
-      this.googleDriveService = googleDriveService;
-    });
-  }
-
-  async downloadAssets(files) {
-    files = files.filter(file => file.size !== undefined);
-
-    const promises = [];
-
-    for (const file of files) {
-      promises.push(this.jobsQueue.pushJob(async () => {
-        const targetPath = path.join(this.dest, file.localPath);
-        await this.downloadAsset(file, targetPath);
-      }));
-    }
-
-    await Promise.all(promises);
   }
 
   async downloadAsset(file, targetPath) {
@@ -56,26 +45,11 @@ export class DownloadPlugin extends BasePlugin {
       const dest = fs.createWriteStream(targetPath);
       await this.googleDriveService.download(this.auth, file, dest);
     } catch (err) {
-      fs.unlinkSync(targetPath);
+      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
       throw err;
     }
 
     await this.filesStructure.markClean([ file ]);
-  }
-
-  async downloadDiagrams(files) {
-    files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
-
-    const promises = [];
-
-    for (const file of files) {
-      promises.push(this.jobsQueue.pushJob(async () => {
-        const targetPath = path.join(this.dest, file.localPath);
-        await this.downloadDiagram(file, targetPath);
-      }));
-    }
-
-    await Promise.all(promises);
   }
 
   async downloadDiagram(file, targetPath) {
@@ -92,7 +66,7 @@ export class DownloadPlugin extends BasePlugin {
         writeStream);
       // [svgTransform, writeStream]);
     } catch (err) {
-      fs.unlinkSync(targetPath);
+      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
       throw err;
     }
 
@@ -104,8 +78,8 @@ export class DownloadPlugin extends BasePlugin {
         Object.assign({}, file, { mimeType: 'image/png' }),
         writeStreamPng);
     } catch (err) {
-      fs.unlinkSync(targetPath);
-      fs.unlinkSync(targetPath.replace(/.svg$/, '.png'));
+      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
+      if (fs.existsSync(targetPath.replace(/.svg$/, '.png'))) fs.unlinkSync(targetPath.replace(/.svg$/, '.png'));
       throw err;
     }
 
@@ -118,34 +92,6 @@ export class DownloadPlugin extends BasePlugin {
       md5Checksum: md5Checksum
     });
     await this.filesStructure.markClean([ file ]);
-  }
-
-  async downloadDocuments(files) {
-    files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
-
-/* MOVED TO TRANSFORM
-    const navigationFile = files.find(file => file.name === '.navigation');
-
-    const navigationTransform = new NavigationTransform(files, this.link_mode);
-
-    if (navigationFile) {
-      const markDownTransform = new MarkDownTransform('.navigation', this.linkTranslator);
-      await this.googleDocsService.download(this.auth, navigationFile, [markDownTransform, navigationTransform], this.linkTranslator);
-    }
-*/
-
-    const promises = [];
-
-    for (const file of files) {
-      promises.push(this.jobsQueue.pushJob(async () => {
-        const targetPath = path.join(this.dest, file.localPath);
-        await this.downloadDocument(file, targetPath);
-      }));
-    }
-
-    await Promise.all(promises);
-
-    // TODO trigger transform event
   }
 
   async downloadDocument(file, targetPath) {
@@ -164,8 +110,8 @@ export class DownloadPlugin extends BasePlugin {
       await this.googleDocsService.download(this.auth, file, destJson);
       fs.writeFileSync(gdocPath, destJson.getString());
     } catch (err) {
-      fs.unlinkSync(htmlPath);
-      fs.unlinkSync(gdocPath);
+      if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
+      if (fs.existsSync(gdocPath)) fs.unlinkSync(gdocPath);
       throw err;
     }
 
@@ -212,31 +158,7 @@ export class DownloadPlugin extends BasePlugin {
     } else {
       this.eventBus.emit('download:clean');
     }
-
-    // async downloadAssets(files) {
-    //   files = files.filter(file => file.size !== undefined);
-    // async downloadDiagrams(files) {
-    //   files = files.filter(file => file.mimeType === FilesStructure.DRAWING_MIME);
-    // async downloadDocuments(files) {
-    //   files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
-
-/*    const mergedFiles = this.filesStructure.findFiles(item => !!item.dirty);
-
-    await this.createFolderStructure(mergedFiles);
-    await this.downloadAssets(mergedFiles);
-    await this.downloadDiagrams(mergedFiles);
-    await this.downloadDocuments(mergedFiles);
-
-    if (this.jobsQueue.size() > 0) {
-      await new Promise((resolve, reject) => {
-        setTimeout(() => reject, 60 * 1000);
-        this.jobsQueue.once('empty', resolve);
-      });
-    }
-
-    await this.generateMetaFiles();*/
   }
-
 
   async ensureDir(filePath) {
     const parts = filePath.split(path.sep);

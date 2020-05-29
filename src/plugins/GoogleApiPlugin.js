@@ -40,6 +40,7 @@ export class GoogleApiPlugin extends BasePlugin {
     switch (this.command) {
       case 'pull':
       case 'watch':
+      case 'download':
         if (this.drive_config.service_account) {
           const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
           this.eventBus.emit('google_api:initialized', {

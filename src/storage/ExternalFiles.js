@@ -25,13 +25,19 @@ export class ExternalFiles {
   async init() {
     fs.mkdirSync(path.join(this.dest, 'external_files'), { recursive: true });
     await this.loadData();
+
+    process.on('SIGINT', () => {
+      this.flushData();
+    });
+    setInterval(() => {
+      this.flushData();
+    }, 500);
   }
 
   async putFile(file) {
     this.binaryFiles[file.md5Checksum] = file;
-    await this.saveData();
+    this.save_needed = true;
   }
-
 
   async addLink(url, link) {
     if (!url.startsWith('http:') && !url.startsWith('https:')) {
@@ -44,7 +50,7 @@ export class ExternalFiles {
 
     this.links[url] = link;
 
-    await this.saveData();
+    this.save_needed = true;
   }
 
   async getMd5(url) {
@@ -122,9 +128,14 @@ export class ExternalFiles {
     this.links = await this._loadJson(this.linksPath) || {};
   }
 
-  async saveData() {
-    await this.fileService.writeFile(this.filePath, JSON.stringify(this.binaryFiles, null, 2)); // TODO debounce
-    await this.fileService.writeFile(this.linksPath, JSON.stringify(this.links, null, 2)); // TODO debounce
+  async flushData() {
+    if (!this.save_needed) {
+      return ;
+    }
+
+    fs.writeFileSync(this.filePath,  JSON.stringify(this.binaryFiles, null, 2));
+    fs.writeFileSync(this.linksPath,  JSON.stringify(this.links, null, 2));
+    this.save_needed = false;
   }
 
 }
