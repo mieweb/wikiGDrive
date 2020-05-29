@@ -58,17 +58,36 @@ export class TransformPlugin extends BasePlugin {
     this.eventBus.emit('transform:clean');
   }
 
+  async transformNavigation(files, navigationFile) {
+    const navigationTransform = new NavigationTransform(files, this.link_mode);
+    if (navigationFile) {
+      const markDownTransform = new MarkDownTransform('.navigation', this.linkTranslator);
+
+      const gdocPath = path.join(this.config_dir, 'files', navigationFile.id + '.gdoc');
+
+      const stream = fs.createReadStream(gdocPath)
+        .pipe(markDownTransform)
+        .pipe(navigationTransform);
+
+      await new Promise((resolve, reject) => {
+        stream.on('finish', () => {
+          resolve();
+        });
+        stream.on('error', err => {
+          reject(err);
+        });
+      });
+    }
+
+    return navigationTransform;
+  }
+
   async transformDocuments(files) {
     files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
 
     const navigationFile = files.find(file => file.name === '.navigation');
 
-    const navigationTransform = new NavigationTransform(files, this.link_mode);
-
-    if (navigationFile) {
-      // const markDownTransform = new MarkDownTransform('.navigation', this.linkTranslator); // TODO
-      // await this.googleDocsService.download(this.auth, navigationFile, [markDownTransform, navigationTransform], this.linkTranslator); // TODO
-    }
+    const navigationTransform = await this.transformNavigation(files, navigationFile);
 
     for (const file of files) {
       const targetPath = path.join(this.dest, file.localPath);
@@ -99,9 +118,6 @@ export class TransformPlugin extends BasePlugin {
           reject(err);
         });
       });
-
-      // await this.googleDocsService.download(this.auth, file,
-      //   [googleListFixer, embedImageFixed, markDownTransform, frontMatterTransform, dest]);
     }
   }
 
