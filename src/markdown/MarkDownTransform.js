@@ -95,26 +95,26 @@ export class MarkDownTransform extends Transform {
   }
 
   async convertImageLink(url) {
-    if (this.document.inlineObjects[url]) {
-      const inlineObject = this.document.inlineObjects[url];
+    // if (this.document.inlineObjects[url]) {
+    //   const inlineObject = this.document.inlineObjects[url];
+    //
+    //   const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
+    //   if (embeddedObject.imageProperties) {
+    //     if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+    //       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+    //     } else {
+    //       url = '';
+    //     }
+    //   }
+    // }
+    //
+    // if (!url) {
+    //   return '';
+    // }
 
-      const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      if (embeddedObject.imageProperties) {
-        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-        } else {
-          url = '';
-        }
-      }
-    }
-
-    if (!url) {
-      return '';
-    }
-
-    return url;
     // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
     // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+    return this.linkTranslator.convertToRelativeMarkDownPath(url, this.localPath);
   }
 
   async processTos(content) {

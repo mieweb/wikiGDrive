@@ -10,8 +10,9 @@ import {LinkTranslator} from '../LinkTranslator';
 import {MarkDownTransform} from '../markdown/MarkDownTransform';
 import {FrontMatterTransform} from '../markdown/FrontMatterTransform';
 import {GoogleListFixer} from '../html/GoogleListFixer';
-import {EmbedImageFixed} from '../html/EmbedImageFixed';
+import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
+import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 
 export class TransformPlugin extends BasePlugin {
   constructor(eventBus) {
@@ -99,13 +100,15 @@ export class TransformPlugin extends BasePlugin {
 
       const destHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
       const googleListFixer = new GoogleListFixer(destHtml);
-      const embedImageFixed = new EmbedImageFixed(destHtml);
+      const embedImageFixed = new EmbedImageFixer(destHtml);
+      const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
 
       const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       const stream = fs.createReadStream(gdocPath)
         .pipe(googleListFixer)
         .pipe(embedImageFixed)
+        .pipe(externalToLocalTransform)
         .pipe(markDownTransform)
         .pipe(frontMatterTransform)
         .pipe(dest);

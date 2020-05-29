@@ -103,6 +103,15 @@ export class ExternalFiles {
     return retVal;
   }
 
+  findLink(checker) {
+    for (let id in this.links) {
+      const link = this.links[id];
+      if (checker(link)) {
+        return link;
+      }
+    }
+  }
+
   findLinks(checker) {
     const retVal = [];
     for (let id in this.links) {

@@ -28,7 +28,6 @@ async function convertImageLink(document, url) {
   }
 
   return url;
-  // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
 }
 
 async function processRecursive(json, func) {
