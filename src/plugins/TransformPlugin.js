@@ -170,7 +170,9 @@ export class TransformPlugin extends BasePlugin {
     await this.generateConflicts();
     await this.generateRedirects();
     const tocGenerator = new TocGenerator('toc.md', this.linkTranslator);
-    await tocGenerator.generate(this.filesStructure, fs.createWriteStream(path.join(this.dest, 'toc.md')), '/toc.html');
+    const writeStream = fs.createWriteStream(path.join(this.dest, 'toc.md'));
+    await tocGenerator.generate(this.filesStructure, writeStream);
+    writeStream.end();
   }
 
   async ensureDir(filePath) {
