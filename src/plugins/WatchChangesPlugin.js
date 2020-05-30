@@ -9,10 +9,10 @@ export class WatchChangesPlugin extends BasePlugin {
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
+      this.watch_mode = params.watch_mode;
     });
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
-      this.watch_mode = drive_config.watch_mode;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -64,8 +64,6 @@ export class WatchChangesPlugin extends BasePlugin {
         } else {
           console.log('No changes detected. Sleeping for 10 seconds.');
         }
-
-        await this.handleChangedFiles();
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
       } catch (e) {

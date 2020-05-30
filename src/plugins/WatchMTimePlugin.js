@@ -9,10 +9,10 @@ export class WatchMTimePlugin extends BasePlugin {
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
+      this.watch_mode = params.watch_mode;
     });
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
-      this.watch_mode = drive_config.watch_mode;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -26,6 +26,7 @@ export class WatchMTimePlugin extends BasePlugin {
       this.lastMTime = lastMTime;
     });
     eventBus.on('main:fetch_watch_token', async () => {
+      console.log('this.watch_mode', this.watch_mode);
       if (this.watch_mode !== 'mtime') {
         return;
       }
@@ -47,7 +48,6 @@ export class WatchMTimePlugin extends BasePlugin {
         lastMTime = this.filesStructure.getMaxModifiedTime();
         const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
         await this.filesStructure.merge(changedFiles);
-        await this.handleChangedFiles();
 
         console.log('Sleeping for 10 seconds.');
 
