@@ -12,6 +12,7 @@ import {DownloadPlugin} from './plugins/DownloadPlugin';
 import {FilesStructurePlugin} from './plugins/FilesStructurePlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
 import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
+import {GitPlugin} from './plugins/GitPlugin';
 
 export class MainService {
 
@@ -48,6 +49,7 @@ export class MainService {
     this.plugins.push(new ListRootPlugin(this.eventBus));
     this.plugins.push(new DownloadPlugin(this.eventBus));
     this.plugins.push(new TransformPlugin(this.eventBus));
+    this.plugins.push(new GitPlugin(this.eventBus));
   }
 
   async emitThanAwait(event, params, awaitEvents) {
@@ -94,12 +96,12 @@ export class MainService {
 
       case 'transform':
         await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized', 'external_files:initialized' ]);
-        await this.emitThanAwait('main:transform_start', this.params, [ 'transform:clean' ]);
+        await this.emitThanAwait('main:transform_start', this.params, [ 'transform:clean', 'git:done' ]);
         break;
 
       case 'pull':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
-        await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean' ]);
+        await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean', 'git:done' ]);
 
         break;
       case 'watch':

@@ -254,7 +254,7 @@ export class GoogleDriveService {
         const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
         return res.data.files.concat(nextFiles);
       } else {
-        res.data.files.forEach(file => {
+        for (const file of res.data.files) {
           file.desiredLocalPath = getDesiredPath(file.name);
           if (file.lastModifyingUser) {
             file.lastAuthor = file.lastModifyingUser.displayName;
@@ -273,7 +273,7 @@ export class GoogleDriveService {
               file.desiredLocalPath += '.md';
               break;
           }
-        });
+        }
 
         return res.data.files;
       }
