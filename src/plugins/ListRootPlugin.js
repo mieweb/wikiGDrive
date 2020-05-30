@@ -35,8 +35,15 @@ export class ListRootPlugin extends BasePlugin {
 
     let lastMTime = this.filesStructure.getMaxModifiedTime();
 
-    const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
-    await this.filesStructure.merge(changedFiles);
+    try {
+      const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+      await this.filesStructure.merge(changedFiles);
+    } catch (e) {
+      this.eventBus.emit('panic', {
+        message: e.message
+      });
+      return;
+    }
 
     console.log('Listening Google Drive done');
 

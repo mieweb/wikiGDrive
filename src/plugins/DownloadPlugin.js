@@ -23,7 +23,6 @@ export class DownloadPlugin extends BasePlugin {
     });
     eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
       this.auth = auth;
-      console.log('dididi', googleDriveService);
       this.googleDriveService = googleDriveService;
     });
     eventBus.on('files_structure:dirty', async () => {
