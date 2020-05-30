@@ -68,6 +68,10 @@ export class MainService {
     });
 
     switch (this.command) {
+      case 'init':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized' ]);
+        break;
+
       case 'status':
         await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized' ]);
         for (const plugin of this.plugins) {
