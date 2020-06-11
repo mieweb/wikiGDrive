@@ -6,7 +6,6 @@ const DELAY_AFTER_ERROR = 5;
 export class QuotaLimiter {
 
   constructor(initialJobs = []) {
-    this.limits = [];
     this.jobs = [].concat((initialJobs || []));
     this.running = 0;
     setInterval(() => {
@@ -15,30 +14,52 @@ export class QuotaLimiter {
         this.saveHandler(this.jobs.filter(job => !!job.ts));
       }
     }, 500);
+    setInterval(() => {
+      this.speedup();
+    }, 5000);
   }
 
-  addLimit(queries, seconds) {
+  setInitialLimit(queries, seconds) {
+    this.initialLimit = { queries, seconds };
+    this.setLimit(queries, seconds);
+  }
+
+  slowdown() {
+    const newLimits = {};
+    if (this.currentLimit.seconds > 1) {
+      newLimits.queries = Math.floor(this.currentLimit.queries / 2);
+      newLimits.seconds = Math.floor(this.currentLimit.seconds / 2);
+    } else {
+      newLimits.queries = Math.floor(this.currentLimit.queries / 2);
+      newLimits.seconds = 1;
+    }
+
+    if (this.setLimit(newLimits.queries, newLimits.seconds)) {
+      console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+    }
+  }
+
+  speedup() {
+    const newLimits = {};
+    newLimits.queries = this.currentLimit.queries + 1;
+    newLimits.seconds = this.currentLimit.seconds;
+    this.setLimit(newLimits.queries, newLimits.seconds);
+  }
+
+  setLimit(queries, seconds) {
     if (seconds <= 0) return false;
     if (queries <= 0) return false;
 
     const now = +new Date() / 1000;
 
-    if (this.limits.length > 1) {
-      if (now - this.limits[0].ts < DELAY_AFTER_ERROR) { // Don't add limits more often than once 10s
+    if (this.currentLimit) {
+      if (now - this.currentLimit.ts < DELAY_AFTER_ERROR) { // Don't add limits more often than once 10s
         return false;
       }
+      this.currentLimit = { queries, seconds, ts: now };
+    } else {
+      this.currentLimit = { queries, seconds, ts: 0 }; // Because of DELAY_AFTER_ERROR in handleQueue
     }
-
-    this.limits.push({
-      queries, seconds, ts: now
-    });
-    this.limits.sort((a, b) => {
-      if (a.seconds === b.seconds) {
-        return a.queries - b.queries;
-      }
-
-      return a.seconds - b.seconds;
-    });
 
     return true;
   }
@@ -55,13 +76,13 @@ export class QuotaLimiter {
       return;
     }
     const now = +new Date() / 1000;
-    const lastTs = this.getLastTs();
+    const lastTs = this.currentLimit.ts;
 
     if (now - lastTs < DELAY_AFTER_ERROR) { // Limit added within last 10s
       return;
     }
 
-    let maxLimiterSeconds = this.limits.length > 0 ? this.limits[this.limits.length - 1].seconds : 0;
+    let maxLimiterSeconds = this.currentLimit ? this.currentLimit.seconds : 0;
     this.removeOlderThan(now - maxLimiterSeconds);
 
     let availableQuota = this.calculateAvailableQuota(now);
@@ -83,20 +104,8 @@ export class QuotaLimiter {
           this.running--;
         })
         .catch(async (err) => {
-          if (err.isQuotaError && this.limits.length > 0) {
-            const smallestLimit = this.limits[0];
-            const newLimits = {};
-            if (smallestLimit.seconds > 1) {
-              newLimits.queries = Math.floor(smallestLimit.queries / 2);
-              newLimits.seconds = Math.floor(smallestLimit.seconds / 2);
-            } else {
-              newLimits.queries = Math.floor(smallestLimit.queries / 2);
-              newLimits.seconds = 1;
-            }
-
-            if (this.addLimit(newLimits.queries, newLimits.seconds)) {
-              console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
-            }
+          if (err.isQuotaError && this.currentLimit) {
+            this.slowdown();
           }
 
           this.running--;
@@ -113,12 +122,11 @@ export class QuotaLimiter {
   calculateAvailableQuota(now) {
     let availableQuota = CONCURRENCY;
 
-    for (const limit of this.limits) {
-      const quotaUsed = this.jobs.filter(job => !!job.ts && (now - job.ts) < limit.seconds).length;
+    const limit = this.currentLimit;
+    const quotaUsed = this.jobs.filter(job => !!job.ts && (now - job.ts) < limit.seconds).length;
 
-      if (availableQuota > limit.queries - quotaUsed) {
-        availableQuota = limit.queries - quotaUsed;
-      }
+    if (availableQuota > limit.queries - quotaUsed) {
+      availableQuota = limit.queries - quotaUsed;
     }
 
     return availableQuota;
@@ -126,19 +134,5 @@ export class QuotaLimiter {
 
   setSaveHandler(handler) {
     this.saveHandler = handler;
-  }
-
-  getLastTs() {
-    let retVal = 0;
-    if (this.limits.length === 1) {
-      return 0;
-    }
-
-    for (const limit of this.limits) {
-      if (retVal < limit.ts) {
-        retVal = limit.ts;
-      }
-    }
-    return retVal;
   }
 }

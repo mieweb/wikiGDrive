@@ -23,8 +23,7 @@ export class GoogleApiPlugin extends BasePlugin {
 
   async onConfigLoaded() {
     const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs);
-    // quotaLimiter.addLimit(950, 100);
-    quotaLimiter.addLimit(95, 10);
+    quotaLimiter.setInitialLimit(95, 10); // 950, 100 doesn't work as expected
     quotaLimiter.setSaveHandler((jobs) => {
       const str = JSON.stringify(jobs);
       if (this.oldSave === str) {
