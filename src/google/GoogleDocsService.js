@@ -20,6 +20,8 @@ export class GoogleDocsService {
 
       try {
         const res = await docs.documents.get({ documentId: file.id });
+        console.log('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
+
         const readable = new Readable();
 
         let stream = readable

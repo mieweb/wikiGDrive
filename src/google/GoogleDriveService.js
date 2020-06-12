@@ -324,6 +324,7 @@ export class GoogleDriveService {
           includeItemsFromAllDrives: true,
           supportsAllDrives: true
         }, { responseType: 'stream' });
+        console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
 
         let stream = res.data
           .on('end', () => {})

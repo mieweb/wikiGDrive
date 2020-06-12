@@ -14,26 +14,21 @@ export class QuotaLimiter {
         this.saveHandler(this.jobs.filter(job => !!job.ts));
       }
     }, 500);
-    setInterval(() => {
-      this.speedup();
-    }, 5000);
   }
 
   setInitialLimit(queries, seconds) {
     this.initialLimit = { queries, seconds };
     this.setLimit(queries, seconds);
+
+    setInterval(() => {
+      this.speedup();
+    }, seconds * 1000);
   }
 
   slowdown() {
     const newLimits = {};
-    if (this.currentLimit.seconds > 1) {
-      newLimits.queries = Math.floor(this.currentLimit.queries / 2);
-      newLimits.seconds = Math.floor(this.currentLimit.seconds / 2);
-    } else {
-      newLimits.queries = Math.floor(this.currentLimit.queries / 2);
-      newLimits.seconds = 1;
-    }
-
+    newLimits.queries = Math.floor(this.currentLimit.queries / 2);
+    newLimits.seconds = this.currentLimit.seconds;
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
       console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
     }
@@ -43,7 +38,9 @@ export class QuotaLimiter {
     const newLimits = {};
     newLimits.queries = this.currentLimit.queries + 1;
     newLimits.seconds = this.currentLimit.seconds;
-    this.setLimit(newLimits.queries, newLimits.seconds);
+    if (this.setLimit(newLimits.queries, newLimits.seconds)) {
+      console.log('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+    }
   }
 
   setLimit(queries, seconds) {
@@ -53,7 +50,7 @@ export class QuotaLimiter {
     const now = +new Date() / 1000;
 
     if (this.currentLimit) {
-      if (now - this.currentLimit.ts < DELAY_AFTER_ERROR) { // Don't add limits more often than once 10s
+      if (now - this.currentLimit.ts < seconds) { // Don't add limits more often than once 10s
         return false;
       }
       this.currentLimit = { queries, seconds, ts: now };

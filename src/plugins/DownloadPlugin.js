@@ -48,7 +48,7 @@ export class DownloadPlugin extends BasePlugin {
       throw err;
     }
 
-    await this.filesStructure.markClean([ file ]);
+    await this.filesStructure.  markClean([ file ]);
   }
 
   async downloadDiagram(file, targetPath) {
@@ -94,7 +94,6 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   async downloadDocument(file, targetPath) {
-    console.log('Downloading document: ' + file.id + '.gdoc [' + file.localPath + ']');
     await this.ensureDir(targetPath);
 
     const htmlPath = path.join(this.config_dir, 'files', file.id + '.html');
@@ -102,7 +101,7 @@ export class DownloadPlugin extends BasePlugin {
 
     try {
       const destHtml = new StringWritable();
-      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html' }, destHtml);
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
       fs.writeFileSync(htmlPath, destHtml.getString());
 
       const destJson = new StringWritable();
