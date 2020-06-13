@@ -13,6 +13,7 @@ import {GoogleListFixer} from '../html/GoogleListFixer';
 import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
 import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
+import {TransformStatus} from '../storage/TransformStatus';
 
 export class TransformPlugin extends BasePlugin {
   constructor(eventBus) {
@@ -22,6 +23,9 @@ export class TransformPlugin extends BasePlugin {
       this.command = params.command;
       this.dest = params.dest;
       this.config_dir = params.config_dir;
+
+      this.transformStatus = new TransformStatus(this.config_dir);
+      await this.transformStatus.init();
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.link_mode = drive_config['link_mode'];
@@ -47,16 +51,16 @@ export class TransformPlugin extends BasePlugin {
       this.linkTranslator.mode = this.link_mode;
     }
 
-    const files = this.filesStructure.findFiles(item => !item.dirty); // TODO
-
-    await this.createFolderStructure(files);
-
-    console.log('Transforming documents: ' + files.length);
-    await this.transformDocuments(files);
-
+    // await this.createFolderStructure(files);
+    await this.transformDocuments();
     await this.generateMetaFiles();
 
-    this.eventBus.emit('transform:clean');
+    const filesToTransform = await this.getFilesToTransform();
+    if (filesToTransform.length > 0) {
+      this.eventBus.emit('transform:dirty');
+    } else {
+      this.eventBus.emit('transform:clean');
+    }
   }
 
   async transformNavigation(files, navigationFile) {
@@ -64,63 +68,109 @@ export class TransformPlugin extends BasePlugin {
     if (navigationFile) {
       const markDownTransform = new MarkDownTransform('.navigation', this.linkTranslator);
 
-      const gdocPath = path.join(this.config_dir, 'files', navigationFile.id + '.gdoc');
+      try {
+        const gdocPath = path.join(this.config_dir, 'files', navigationFile.id + '.gdoc');
 
-      const stream = fs.createReadStream(gdocPath)
-        .pipe(markDownTransform)
-        .pipe(navigationTransform);
+        const stream = fs.createReadStream(gdocPath)
+          .pipe(markDownTransform)
+          .pipe(navigationTransform);
 
-      await new Promise((resolve, reject) => {
-        stream.on('finish', () => {
-          resolve();
+        await new Promise((resolve, reject) => {
+          stream.on('finish', () => {
+            resolve();
+          });
+          stream.on('error', err => {
+            reject(err);
+          });
         });
-        stream.on('error', err => {
-          reject(err);
-        });
-      });
+      } catch (e) {
+        console.error('Error generating navigation hierarchy');
+      }
+
     }
 
     return navigationTransform;
   }
 
-  async transformDocuments(files) {
-    files = files.filter(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
+  async getFilesToTransform() {
+    const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
+    const transformedFiles = this.transformStatus.findStatuses(() => true);
 
-    const navigationFile = files.find(file => file.name === '.navigation');
-
-    const navigationTransform = await this.transformNavigation(files, navigationFile);
+    const filesToTransform = [];
 
     for (const file of files) {
+      const transformedFile = transformedFiles.find(transformedFile => transformedFile.id === file.id);
+      if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) continue;
+
+      const status = Object.assign({}, file);
+      if (transformedFile) {
+        status.oldLocalPath = transformedFile.localPath;
+      }
+      filesToTransform.push(status);
+    }
+
+    return filesToTransform;
+  }
+
+
+  async transformDocuments() {
+    const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
+    const navigationFile = files.find(file => file.name === '.navigation');
+    const navigationTransform = await this.transformNavigation(files, navigationFile);
+
+    const filesToTransform = await this.getFilesToTransform();
+    console.log('Transforming documents: ' + filesToTransform.length);
+
+    for (const file of filesToTransform) {
+      if (file.oldLocalPath) {
+        const removePath = path.join(this.dest, file.oldLocalPath);
+        if (fs.existsSync(removePath)) fs.unlinkSync(removePath);
+      }
+
       const targetPath = path.join(this.dest, file.localPath);
 
-      const dest = fs.createWriteStream(targetPath);
+      try {
+        const dest = fs.createWriteStream(targetPath);
 
-      const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
-      const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
+        const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
+        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
-      const destHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
-      const googleListFixer = new GoogleListFixer(destHtml);
-      const embedImageFixed = new EmbedImageFixer(destHtml);
-      const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
+        const srcHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
+        const googleListFixer = new GoogleListFixer(srcHtml);
+        const embedImageFixed = new EmbedImageFixer(srcHtml);
+        const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
 
-      const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
+        const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
-      const stream = fs.createReadStream(gdocPath)
-        .pipe(googleListFixer)
-        .pipe(embedImageFixed)
-        .pipe(externalToLocalTransform)
-        .pipe(markDownTransform)
-        .pipe(frontMatterTransform)
-        .pipe(dest);
+        const stream = fs.createReadStream(gdocPath)
+          .pipe(googleListFixer)
+          .pipe(embedImageFixed)
+          .pipe(externalToLocalTransform)
+          .pipe(markDownTransform)
+          .pipe(frontMatterTransform)
+          .pipe(dest);
 
-      await new Promise((resolve, reject) => {
-        stream.on('finish', () => {
-          resolve();
+        await new Promise((resolve, reject) => {
+          stream.on('finish', () => {
+            resolve();
+          });
+          stream.on('error', err => {
+            reject(err);
+          });
         });
-        stream.on('error', err => {
-          reject(err);
+
+        await this.transformStatus.addStatus(file.id, {
+          id: file.id,
+          modifiedTime: file.modifiedTime,
+          localPath: file.localPath
         });
-      });
+
+      } catch (e) {
+        console.error('Error transforming: ' + file.id + '.html [' + file.localPath + ']');
+        await this.filesStructure.markDirty([ file ]);
+        await this.transformStatus.removeStatus(file.id);
+      }
+
     }
   }
 

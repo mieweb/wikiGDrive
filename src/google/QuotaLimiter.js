@@ -8,6 +8,7 @@ export class QuotaLimiter {
   constructor(initialJobs = []) {
     this.jobs = [].concat((initialJobs || []));
     this.running = 0;
+    this.counter = 0;
     setInterval(() => {
       this.handleQueue();
       if (this.saveHandler) {
@@ -35,11 +36,16 @@ export class QuotaLimiter {
   }
 
   speedup() {
+    if (this.oldCounter === this.counter) {
+      return;
+    }
+
     const newLimits = {};
     newLimits.queries = this.currentLimit.queries + 1;
     newLimits.seconds = this.currentLimit.seconds;
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
       console.log('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+      this.oldCounter = this.counter;
     }
   }
 
@@ -96,6 +102,7 @@ export class QuotaLimiter {
       this.running++;
       process.nextTick(() => {
 
+      this.counter++;
       notStartedJob.func()
         .then(() => {
           this.running--;

@@ -101,8 +101,10 @@ export class MainService {
 
       case 'pull':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
+        this.eventBus.on('transform:dirty', () => {
+          this.eventBus.emit('download:retry');
+        });
         await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean', 'git:done' ]);
-
         break;
       case 'watch':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
