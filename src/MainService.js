@@ -53,8 +53,9 @@ export class MainService {
   }
 
   async emitThanAwait(event, params, awaitEvents) {
+    const promises = awaitEvents.map(eventName => new Promise(resolve => this.eventBus.on(eventName, resolve)));
     this.eventBus.emit(event, params);
-    await Promise.all(awaitEvents.map(eventName => new Promise(resolve => this.eventBus.on(eventName, resolve))));
+    await Promise.all(promises);
   }
 
   async start() {

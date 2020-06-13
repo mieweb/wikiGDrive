@@ -60,12 +60,12 @@ export class WatchChangesPlugin extends BasePlugin {
         if (changedFiles.length > 0) {
           console.log(changedFiles.length + ' files modified');
           await this.filesStructure.merge(changedFiles);
+          this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
           console.log('Pulled latest changes');
         } else {
-          console.log('No changes detected. Sleeping for 10 seconds.');
+          console.log('No changes detected. Sleeping for 10 seconds.' + this.startTrackToken);
         }
 
-        this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
       } catch (e) {
         console.error(e);
       }

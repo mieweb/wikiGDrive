@@ -12,9 +12,29 @@ export class GitPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
+    this.gitUpdateMinutesDelay = 60;
+
     eventBus.on('main:init', async (params) => {
       this.dest = params.dest;
       this.config_dir = params.config_dir;
+
+      if (params.git_update_delay) {
+        if (typeof params.git_update_delay === 'string') {
+          if (params.git_update_delay.endsWith('m')) {
+            params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1));
+          } else
+          if (params.git_update_delay.endsWith('m')) {
+            params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1)) * 60;
+          }
+        }
+
+        if (params.git_update_delay > 0) {
+          this.gitUpdateMinutesDelay = params.git_update_delay;
+        }
+      }
+
+      fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
+      await this.createHookExamples();
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -23,6 +43,20 @@ export class GitPlugin extends BasePlugin {
       await this.processGit();
       eventBus.emit('git:done');
     });
+  }
+
+  async createHookExamples() {
+    fs.writeFileSync(path.join(this.config_dir, 'hooks', 'md_new.example'), `#!/bin/sh
+
+git add $@
+git commit -m "Autocommit new files" $@
+`);
+
+    fs.writeFileSync(path.join(this.config_dir, 'hooks', 'md_update.example'), `#!/bin/sh
+
+git add $@
+git commit -m "Autocommit updated files" $@
+`);
   }
 
   async processGit() {
@@ -34,10 +68,24 @@ export class GitPlugin extends BasePlugin {
       // console.log('status', status);
 
       const not_added = documents.filter(doc => status.not_added.indexOf(doc.localPath) > -1);
-
       if (not_added.length > 0) {
-        await this.fireHook('doc_new', not_added.map(file => file.localPath));
+        await this.fireHook('md_new', not_added.map(file => file.localPath));
       }
+
+      const modified = documents.filter(doc => status.modified.indexOf(doc.localPath) > -1);
+      const now = +new Date();
+      if (modified.length > 0) {
+        const to_update = modified.filter(file => {
+          const fileTs = +new Date(file.modifiedTime);
+          const minutesAgo = (now - fileTs) / 1000 / 60;
+          return minutesAgo > this.gitUpdateMinutesDelay;
+        });
+
+        if (to_update.length > 0) {
+          await this.fireHook('md_update', to_update.map(file => file.localPath));
+        }
+      }
+
     } catch (err) {
       console.error(err.message);
     }

@@ -26,7 +26,6 @@ export class WatchMTimePlugin extends BasePlugin {
       this.lastMTime = lastMTime;
     });
     eventBus.on('main:fetch_watch_token', async () => {
-      console.log('this.watch_mode', this.watch_mode);
       if (this.watch_mode !== 'mtime') {
         return;
       }

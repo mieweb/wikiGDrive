@@ -53,6 +53,11 @@ export class QuotaJwtClient extends JWT {
           }, 'QuotaJwtClient');
         }
       };
+
+      if (opts.url.endsWith('drive/v3/files')) {
+        job.skipCounter = true;
+      }
+
       this.quotaLimiter.addJob(job);
     });
   }

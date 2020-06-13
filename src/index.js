@@ -49,7 +49,7 @@ async function index() {
   params['drive'] = argv['drive'];
   params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wgd');
   params['dest'] = argv['dest'] || process.env.PWD;
-  params['watch_mode'] = argv['watch_mode'] || 'changes';
+  params['watch_mode'] = argv['watch_mode'] || 'mtime';
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
@@ -65,6 +65,7 @@ async function index() {
 
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
+  params['git_update_delay'] = argv['git_update_delay'] || 60;
 
   process.on('unhandledRejection', function(err) {
     console.error('process.on:unhandledRejection', err);

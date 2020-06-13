@@ -59,9 +59,10 @@ wikigdrive pull
 Run continuous documents watch
 
 ```
-wikigdrive watch
+wikigdrive watch --git_update_delay=10
 
 --watch [mtime|changes] - Run program in loop, watch for gdrive changes
+--git_update_delay=x - trigger git update hook after x minutes
 ```
 
 Run server mode for webhooks support (TODO: not implemented yet)
@@ -198,6 +199,11 @@ A website front end is a goal for real-time testing of the viewing experience, b
 - localPath - path to file, generated using md5 sum
 - md5Checksum - md5 sum
 
+#### transform.json is indexed with file id
+
+- localPath - path to transformed markdown file
+- modifiedTime - fetched from google server
+
 ```
 {
     "123123123": {
@@ -206,7 +212,3 @@ A website front end is a goal for real-time testing of the viewing experience, b
     }
 }
 ```
-
-### Plugin sequence
-
-![Plugin sequence](docs/plugin_sequence.svg)

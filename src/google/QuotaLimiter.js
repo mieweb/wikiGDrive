@@ -101,20 +101,21 @@ export class QuotaLimiter {
       notStartedJob.ts = now;
       this.running++;
       process.nextTick(() => {
+        if (!notStartedJob.skipCounter) {
+          this.counter++;
+        }
 
-      this.counter++;
-      notStartedJob.func()
-        .then(() => {
-          this.running--;
-        })
-        .catch(async (err) => {
-          if (err.isQuotaError && this.currentLimit) {
-            this.slowdown();
-          }
+        notStartedJob.func()
+          .then(() => {
+            this.running--;
+          })
+          .catch(async (err) => {
+            if (err.isQuotaError && this.currentLimit) {
+              this.slowdown();
+            }
 
-          this.running--;
-        });
-
+            this.running--;
+          });
       });
     }
   }
