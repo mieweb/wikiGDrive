@@ -2,29 +2,33 @@
 
 import path from 'path';
 import minimist from 'minimist';
-import { SyncService } from './SyncService';
+import { MainService } from './MainService';
 import pkg from '../package.json';
 
 function usage() {
   console.log(
     `version: ${pkg.version}${`
     Usage:
-    $ wikigdrive [shared drive url]
+    $ wikigdrive <command> [<options>]
 
-Options:
-    --config (.wikigdrive)
+Commands: 
+    wikigdrive init
+    --drive [shared drive url]
     --client_id
     --client_secret
-    --dest (current working folder)
-    --watch [mtime|changes] (keep scanning for changes, ie: daemon)
-    --link_mode [mdURLs|dirURLs|uglyURLs]
-    --drive_id
     --service_account=./private_key.json
+    --drive_id
+    --dest (current working folder)
+    --without-folder-structure
+    --link_mode [mdURLs|dirURLs|uglyURLs]
 
-    --config-reset google_auth # removes google_auth object from .wikidgrive file
-    --config-reset fileMap # removes fileMap object from .wikidgrive file
-    --config-reset binaryFiles # removes binaryFiles object from .wikidgrive file
-    --config-reset-all # leaves empty .wikigdrive file
+    wikigdrive pull
+
+    wikigdrive watch
+    --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+
+Options:
+    --config_dir (.wgd)
 
 Examples:
     $ wikigdrive https://google.drive...
@@ -41,10 +45,11 @@ async function index() {
 
   const params = {};
 
-  params['drive'] = argv._[0];
-  params['config'] = argv['config'] || path.join(process.env.PWD, '.wikigdrive');
+  params['command'] = argv._[0];
+  params['drive'] = argv['drive'];
+  params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wgd');
   params['dest'] = argv['dest'] || process.env.PWD;
-  params['watch'] = argv['watch'];
+  params['watch_mode'] = argv['watch_mode'] || 'mtime';
 
   params['client_id'] = argv['client_id'] || process.env.CLIENT_ID;
   params['client_secret'] = argv['client_secret'] || process.env.CLIENT_SECRET;
@@ -60,8 +65,21 @@ async function index() {
 
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
+  params['git_update_delay'] = argv['git_update_delay'] || 60;
 
-  const mainService = new SyncService(params);
+  process.on('unhandledRejection', function(err) {
+    console.error('process.on:unhandledRejection', err);
+    process.exit(1);
+  });
+
+  const mainService = new MainService(params);
+  try {
+    await mainService.init();
+  } catch (err) {
+    usage();
+    console.error(err);
+    process.exit(1);
+  }
   return await mainService.start();
 }
 

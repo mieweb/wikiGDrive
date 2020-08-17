@@ -2,7 +2,7 @@ import {Transform} from 'stream';
 import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
 
-export class EmbedImageFixed extends Transform {
+export class EmbedImageFixer extends Transform {
 
   constructor(content) {
     super();

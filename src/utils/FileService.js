@@ -13,6 +13,13 @@ export class FileService {
     });
   }
 
+  getSize(filePath) {
+    return new Promise((resolve) => {
+      const stats = fs.statSync(filePath);
+      resolve(stats.size);
+    });
+  }
+
   readFile(filePath) {
     return new Promise((resolve, reject) => {
       fs.readFile(filePath, function (err, data) {
@@ -53,6 +60,10 @@ export class FileService {
 
   async move(path1, path2) {
     fs.renameSync(path1, path2);
+  }
+
+  async remove(filePath) {
+    fs.unlinkSync(filePath);
   }
 
 }

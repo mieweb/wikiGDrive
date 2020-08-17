@@ -3,6 +3,7 @@
 import path from 'path';
 import RelateUrl from 'relateurl';
 import {FileService} from './utils/FileService';
+import {FilesStructure} from './storage/FilesStructure';
 
 export class LinkTranslator {
 
@@ -36,7 +37,7 @@ export class LinkTranslator {
       if (url.indexOf(fileId) > -1) {
         url = file.localPath;
 
-        if (file.mimeType === 'application/vnd.google-apps.folder') {
+        if (file.mimeType === FilesStructure.FOLDER_MIME) {
           // url += '/';
         }
 
@@ -72,16 +73,6 @@ export class LinkTranslator {
         if (externalFile) {
           return externalFile.localDocumentPath || externalFile.localPath;
         }
-
-        const localPath = path.join('external_files', md5 + '.png');
-        await fileService.move(tempPath, path.join(this.externalFiles.dest, localPath));
-
-        await this.externalFiles.putFile({
-          localPath: localPath,
-          md5Checksum: md5
-        });
-
-        return localPath;
       }
     }
 

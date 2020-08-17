@@ -37,29 +37,6 @@ export class ConfigService {
     return config.google_auth;
   }
 
-  async loadFileMap() {
-    const config = await this._loadConfig();
-    return config.fileMap;
-  }
-
-  async putFile(id, file) {
-    const config = await this._loadConfig();
-    config.fileMap = config.fileMap || {};
-    config.fileMap[id] = file;
-    await this._saveConfig(config);
-  }
-
-  async loadBinaryFiles() {
-    const config = await this._loadConfig();
-    return config.binaryFiles || {};
-  }
-
-  async putBinaryFile(id, file) {
-    const config = await this._loadConfig();
-    config.binaryFiles = config.binaryFiles || {};
-    config.binaryFiles[id] = file;
-    await this._saveConfig(config);
-  }
 
   async saveGoogleAuth(google_auth) {
     const config = await this._loadConfig();
@@ -67,23 +44,4 @@ export class ConfigService {
     await this._saveConfig(config);
   }
 
-  async resetConfig(section) {
-    if (!section || !section.trim()) {
-      return;
-    }
-
-    if (!await this.fileService.exists(this.filePath)) {
-      throw 'Config file .wikigdrive does not exists';
-    }
-
-    section = section.split('.');
-
-    const config = await this._loadConfig();
-
-    for (const key of section) {
-      delete config[key.trim()];
-    }
-
-    await this._saveConfig(config);
-  }
 }

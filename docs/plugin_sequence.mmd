@@ -1,0 +1,26 @@
+sequenceDiagram
+    MainService ->> ConfigDirPlugin: main:init
+    MainService ->> FilesStructurePlugin: main:init
+    MainService ->> ExternalFilesPlugin: main:init
+    MainService ->> GoogleApiPlugin: main:init
+    MainService ->> ListRootPlugin: main:init
+    MainService ->> TransformPlugin: main:init
+    MainService ->> WatchPlugin: main:init
+
+    ConfigDirPlugin ->> GoogleApiPlugin: drive_config:loaded
+    GoogleApiPlugin ->> ListRootPlugin: google_api:initialized
+    GoogleApiPlugin ->> WatchPlugin: google_api:initialized
+    GoogleApiPlugin ->> DownloadPlugin: google_api:initialized
+    ConfigDirPlugin ->> ListRootPlugin: drive_config:loaded
+    ConfigDirPlugin ->> TransformPlugin: drive_config:loaded
+    ConfigDirPlugin ->> WatchPlugin: drive_config:loaded
+    ConfigDirPlugin ->> DownloadPlugin: drive_config:loaded
+    FilesStructurePlugin ->> ListRootPlugin: files_structure:initialized
+    FilesStructurePlugin ->> WatchPlugin: files_structure:initialized
+
+    ListRootPlugin ->> FilesStructurePlugin: list_root:done
+    FilesStructurePlugin ->> DownloadPlugin: files_structure:changed
+
+    MainService ->> WatchPlugin: main:pre_list_root
+    MainService ->> ListRootPlugin: main:run_list_root
+    MainService ->> WatchPlugin: main:run_watch

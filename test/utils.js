@@ -1,6 +1,13 @@
 import 'colors';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 import * as Diff from 'diff';
+
+export function createTmpDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
+}
 
 export class DummyConfig {
 
