@@ -1,12 +1,12 @@
 import { assert } from 'chai';
 import { FilesStructure } from '../src/storage/FilesStructure';
 import { LinkTranslator } from '../src/LinkTranslator';
-import {DummyConfig} from './utils';
+import {createTmpDir} from './utils';
 
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', async () => {
 
-    const filesStructure = new FilesStructure(new DummyConfig());
+    const filesStructure = new FilesStructure(createTmpDir());
     await filesStructure.init();
 
     const linkTranslator = new LinkTranslator(filesStructure);
@@ -30,7 +30,7 @@ describe('LinkTranslatorTest', () => {
   });
 
   it('test convertExtension', async () => {
-    const filesStructure = new FilesStructure(new DummyConfig());
+    const filesStructure = new FilesStructure(createTmpDir());
     await filesStructure.init();
     const linkTranslator = new LinkTranslator(filesStructure);
 

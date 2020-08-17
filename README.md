@@ -25,16 +25,17 @@ npm i -g @mieweb/wikigdrive
 2. Enable Apis -> add Google Drive API
 3. Enable Apis -> Add Google Docs API
 4. Credentials ->  Create Credentials (OAuth Client ID) -> Other ( see authorization section )
-5. Put credentials into .env or run wikigdrive with --client_id CLIENT_ID --client_secret SECRET
 
 ## Usage and options
 
-```
-wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
+Init workdir with (creates internal .wgd directory):
 
---config /location/of/.wikigdrive - Location of config file
+```
+wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
+
+--service_account=wikigdrive.json
+--config /location/of/.wgd - Location of config file
 --dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
---watch [mtime|changes] - Run program in loop, watch for gdrive changes
 
 --drive_id - An ID of the drive
 
@@ -46,12 +47,28 @@ wikigdrive https://drive.google.com/drive/u/0/folders/FODERID
 --link_mode dirURLs - `/filename/`
 --link_mode uglyURLs - `/filename.html` - see https://gohugo.io/getting-started/configuration/
 
---config-reset [sectionName] - Reset sections of .wikigdrive section. It cleans them at the app start
---config-reset google_auth - Reset `google_auth` section
---config-reset google_auth,fileMap,binaryFiles - Reset `google_auth,fileMap,binaryFiles` sections
---config-reset-all - Reset all sections
-
 --without-folder-structure    Download documents into single, flat folder
+```
+
+Run one time documents pull
+
+```
+wikigdrive pull
+```
+
+Run continuous documents watch
+
+```
+wikigdrive watch --git_update_delay=10
+
+--watch [mtime|changes] - Run program in loop, watch for gdrive changes
+--git_update_delay=x - trigger git update hook after x minutes
+```
+
+Run server mode for webhooks support (TODO: not implemented yet)
+
+```
+wikigdrive server
 ```
 
 ## Example usage with Hugo Generator
@@ -134,36 +151,22 @@ A website front end is a goal for real-time testing of the viewing experience, b
 
 ## Internals
 
-### .wikigdrive structure
+### .wgd dir structure
+
+#### drive.json:
 
 ```
 {
-    "binaryFiles": {
-        "123123123": {
-            "localPath": "external_path/123123123.png",
-            "md5Checksum": "123123123"
-        }
-    },
-    "fileMap": {
-        "123123123": {
-            "id": "123123123",
-            "name": "A title of document",
-            "mimeType": "application/vnd.google-apps.document",
-            "modifiedTime": "2020-02-27T20:20:20.123Z",
-            "desiredLocalPath": "a-title-of-document",
-            "lastAuthor": "John Smith",
-            "localPath": "a-title-of-document"
-        }
-    }
+  "drive": "https://drive.google.com/drive/folders/FOLDER_ID",
+  "drive_id": "",
+  "dest": "/home/user/mieweb/wikigdrive-test",
+  "flat_folder_structure": false,
+  "link_mode": "mdURLs",
+  "service_account": "wikigdrive.json"
 }
 ```
 
-#### binaryFiles map is indexed with md5 sums
-
-- localPath - path to file, generated using md5 sum
-- md5Checksum - md5 sum
-
-#### fileMap is indexed with Google's fileId
+#### files.json is indexed with Google's fileId
 
 - id - Google's fileId
 - name - Title set inside google docs. It is not unique 
@@ -176,3 +179,36 @@ A website front end is a goal for real-time testing of the viewing experience, b
 - conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
 - conflicting - array of fileIds when mimeType = 'conflict'
 - counter - current number of existing conflicts when mimeType = 'conflict'
+
+```
+{
+    "123123123": {
+        "id": "123123123",
+        "name": "A title of document",
+        "mimeType": "application/vnd.google-apps.document",
+        "modifiedTime": "2020-02-27T20:20:20.123Z",
+        "desiredLocalPath": "a-title-of-document",
+        "lastAuthor": "John Smith",
+        "localPath": "a-title-of-document"
+    }
+}
+```
+
+#### binaryFiles.json is indexed with md5 sums: 
+
+- localPath - path to file, generated using md5 sum
+- md5Checksum - md5 sum
+
+#### transform.json is indexed with file id
+
+- localPath - path to transformed markdown file
+- modifiedTime - fetched from google server
+
+```
+{
+    "123123123": {
+        "localPath": "external_path/123123123.png",
+        "md5Checksum": "123123123"
+    }
+}
+```

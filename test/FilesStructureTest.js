@@ -1,11 +1,11 @@
 import { assert } from 'chai';
 import { FilesStructure } from '../src/storage/FilesStructure';
-import {DummyConfig} from './utils';
+import {createTmpDir} from './utils';
 
 describe('FileStructure', () => {
   it('test collisions', async () => {
 
-    const filesStructure = new FilesStructure(new DummyConfig());
+    const filesStructure = new FilesStructure(createTmpDir());
     await filesStructure.init();
 
     const files1 = [{
@@ -48,7 +48,7 @@ describe('FileStructure', () => {
 
   it('test redirects', async () => {
 
-    const filesStructure = new FilesStructure(new DummyConfig());
+    const filesStructure = new FilesStructure(createTmpDir());
     await filesStructure.init();
 
     await filesStructure.merge([{

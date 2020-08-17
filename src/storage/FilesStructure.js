@@ -1,18 +1,31 @@
 'use strict';
 
+import path from 'path';
+import fs from 'fs';
+
+import {FileService} from '../utils/FileService';
+
 function generateUniqId() {
   return Math.random().toString(26).slice(2);
 }
 
 class FilesStructure {
 
-  constructor(configService) {
-    this.configService = configService;
+  constructor(config_dir) {
+    this.config_dir = config_dir;
+    this.fileService = new FileService();
+    this.filePath = path.join(config_dir, 'files.json');
   }
 
   async init() {
-    const fileMap = await this.configService.loadFileMap();
-    this.fileMap = fileMap || {};
+    await this.loadData();
+
+    process.on('SIGINT', () => {
+      this.flushData();
+    });
+    setInterval(() => {
+      this.flushData();
+    }, 500);
   }
 
   getFileMap() {
@@ -56,15 +69,17 @@ class FilesStructure {
 
   async markDirty(files) {
     for (const file of files) {
+      if (file.mimeType === FilesStructure.FOLDER_MIME) continue;
+
       this.fileMap[file.id].dirty = true;
-      await this.configService.putFile(file.id, this.fileMap[file.id]);
+      await this._putFile(file.id, this.fileMap[file.id]);
     }
   }
 
   async markClean(files) {
     for (const file of files) {
       this.fileMap[file.id].dirty = false;
-      await this.configService.putFile(file.id, this.fileMap[file.id]);
+      await this._putFile(file.id, this.fileMap[file.id]);
     }
   }
 
@@ -88,7 +103,7 @@ class FilesStructure {
       }
 
       this.fileMap[redirectFile.id] = redirectFile;
-      await this.configService.putFile(redirectFile.id, redirectFile);
+      await this._putFile(redirectFile.id, redirectFile);
 
       oldFile.desiredLocalPath = file.desiredLocalPath;
     }
@@ -100,9 +115,10 @@ class FilesStructure {
     });
 
     this.fileMap[oldFile.id] = oldFile;
-    await this.configService.putFile(oldFile.id, oldFile);
+    await this._putFile(oldFile.id, oldFile);
 
     await this._checkConflicts(oldFile.desiredLocalPath);
+    this.save_needed = true;
   }
 
   async _checkConflicts(desiredLocalPath) {
@@ -127,7 +143,7 @@ class FilesStructure {
         conflicting: []
       };
       this.fileMap[conflictFile.id] = conflictFile;
-      await this.configService.putFile(conflictFile.id, conflictFile);
+      await this._putFile(conflictFile.id, conflictFile);
     }
 
     const conflicting = [];
@@ -140,21 +156,22 @@ class FilesStructure {
 
       file.localPath = conflictFile.desiredLocalPath.replace('.md', '_' + file.conflictId + '.md');
       this.fileMap[file.id] = file;
-      await this.configService.putFile(file.id, file);
+      await this._putFile(file.id, file);
       conflicting.push(file.id);
     }
 
     conflictFile.conflicting = conflicting;
     this.fileMap[conflictFile.id] = conflictFile;
-    await this.configService.putFile(conflictFile.id, conflictFile);
+    await this._putFile(conflictFile.id, conflictFile);
   }
 
   async _insertFile(fileToInsert) {
     delete fileToInsert.conflictId;
     this.fileMap[fileToInsert.id] = fileToInsert;
-    await this.configService.putFile(fileToInsert.id, fileToInsert);
+    await this._putFile(fileToInsert.id, fileToInsert);
 
     await this._checkConflicts(fileToInsert.desiredLocalPath);
+    this.save_needed = true;
   }
 
   findFile(checker) {
@@ -198,6 +215,30 @@ class FilesStructure {
     }
 
     return maxModifiedTime;
+  }
+
+  async _putFile(id, file) { // Must be atomic (use fs sync functions)
+    this.fileMap[id] = JSON.parse(JSON.stringify(file));
+    this.save_needed = true;
+  }
+
+  async loadData() {
+    try {
+      const content = await this.fileService.readFile(this.filePath);
+      this.fileMap = JSON.parse(content) || {};
+    } catch (error) {
+      this.fileMap = {};
+    }
+  }
+
+  async flushData() {
+    if (!this.save_needed) {
+      return ;
+    }
+
+    const content = JSON.stringify(this.fileMap, null, 2);
+    fs.writeFileSync(this.filePath, content);
+    this.save_needed = false;
   }
 
 }
