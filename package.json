@@ -63,7 +63,7 @@
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.0",
     "relateurl": "^0.2.7",
-    "simple-git": "^2.5.0",
+    "simple-git": "^2.15.0",
     "slugify": "^1.4.0",
     "stream": "^0.0.2",
     "xmldoc": "^1.1.2"
