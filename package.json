@@ -1,6 +1,6 @@
 {
   "name": "@mieweb/wikigdrive",
-  "version": "1.0.8",
+  "version": "1.9.0",
   "description": "Google Drive to MarkDown synchronization",
   "keywords": [
     "GDrive",
@@ -17,7 +17,8 @@
     "test": "mocha-webpack --mode development",
     "lint": "eslint .",
     "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "build:docs": "mmdc -i docs/plugin_sequence.mmd -o docs/plugin_sequence.svg -b '#FFFFFF'"
   },
   "repository": {
     "type": "git",
@@ -54,13 +55,15 @@
   },
   "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "dependencies": {
+    "async": "^3.2.0",
     "buffer": "^5.6.0",
     "cli-progress": "^3.7.0",
     "dotenv": "^8.2.0",
-    "googleapis": "^43.0.0",
+    "googleapis": "^51.0.0",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.0",
     "relateurl": "^0.2.7",
+    "simple-git": "^2.5.0",
     "slugify": "^1.4.0",
     "stream": "^0.0.2",
     "xmldoc": "^1.1.2"
@@ -75,10 +78,13 @@
     "htmlparser2": "^4.1.0",
     "husky": "^4.2.3",
     "jshint": "^2.11.0",
+    "mermaid": "^8.5.0",
+    "mermaid.cli": "^0.5.1",
     "mocha": "^7.1.0",
     "mocha-webpack": "2.0.0-beta.0",
     "raw-loader": "^4.0.0",
-    "webpack": "^4.42.0",
+    "sinon": "^9.0.2",
+    "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
   },
   "husky": {
