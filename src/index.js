@@ -45,6 +45,9 @@ async function index() {
 
   const params = {};
 
+  // PWD is null on Windows, so we can set it here
+  process.env.PWD = process.cwd();
+
   params['command'] = argv._[0];
   params['drive'] = argv['drive'];
   params['config_dir'] = argv['config_dir'] || path.join(process.env.PWD, '.wgd');
@@ -67,7 +70,7 @@ async function index() {
   params['service_account'] = argv['service_account'] || null;
   params['git_update_delay'] = argv['git_update_delay'] || 60;
 
-  process.on('unhandledRejection', function(err) {
+  process.on('unhandledRejection', function (err) {
     console.error('process.on:unhandledRejection', err);
     process.exit(1);
   });
