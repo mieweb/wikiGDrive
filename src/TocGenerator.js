@@ -56,12 +56,12 @@ export class TocGenerator {
       }
 
       if (file.mimeType === FilesStructure.FOLDER_MIME) {
-        writeStream.write(lineStart + ' ' + file.name + '\n');
+        await new Promise(resolve => writeStream.write(lineStart + ' ' + file.name + '\n', resolve));
         await this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
       } else
       if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
         const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, this.localPath);
-        writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n');
+        await new Promise(resolve => writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n', resolve));
       }
     }
   }
@@ -72,11 +72,10 @@ export class TocGenerator {
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
-    writeStream.write(frontMatter);
+    await new Promise(resolve => writeStream.write(frontMatter, resolve));
 
     const fileMapCopy = this.addLevels(fileMap);
     await this.outputDir(fileMapCopy, writeStream, 0, '');
-    writeStream.end();
   }
 
 }
