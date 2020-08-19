@@ -20,7 +20,7 @@ export class MainService {
     this.params = params;
     this.command = this.params.command;
     this.eventBus = new EventEmitter();
-
+    this.eventBus.setMaxListeners(0);
     if (params.debug) {
       this.attachDebug();
     }
