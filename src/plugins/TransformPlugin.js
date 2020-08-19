@@ -130,10 +130,16 @@ export class TransformPlugin extends BasePlugin {
       const targetPath = path.join(this.dest, file.localPath);
 
       try {
+        await this.ensureDir(targetPath);
         const dest = fs.createWriteStream(targetPath);
 
         const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
         const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
+
+        if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.html'))) {
+          await this.filesStructure.markDirty([ file ]);
+          throw new Error('Html version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.html'));
+        }
 
         const srcHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
         const googleListFixer = new GoogleListFixer(srcHtml);
@@ -166,7 +172,7 @@ export class TransformPlugin extends BasePlugin {
         });
 
       } catch (e) {
-        console.error('Error transforming: ' + file.id + '.html [' + file.localPath + ']');
+        console.error('Error transforming ' + file.id + '.html [' + file.localPath + ']: ' + e.message);
         await this.filesStructure.markDirty([ file ]);
         await this.transformStatus.removeStatus(file.id);
       }

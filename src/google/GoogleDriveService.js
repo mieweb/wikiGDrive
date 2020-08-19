@@ -344,7 +344,10 @@ export class GoogleDriveService {
           });
         }
       } catch (err) {
-        reject(new GoogleDriveServiceError('Error export document: ' + file.id, {
+        if (!err.isQuotaError) {
+          console.error(err);
+        }
+        reject(new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
           file, dest, isQuotaError: err.isQuotaError
         }));
         reject(err);

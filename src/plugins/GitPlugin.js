@@ -61,6 +61,10 @@ git commit -m "Autocommit updated files" $@
   async processGit() {
     try {
       const repository = SimpleGit(this.dest);
+      const isRepo = await repository.checkIsRepo();
+      if (!isRepo) {
+        return;
+      }
       const status = await repository.status();
 
       const documents = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
@@ -86,7 +90,7 @@ git commit -m "Autocommit updated files" $@
       }
 
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
     }
   }
 
