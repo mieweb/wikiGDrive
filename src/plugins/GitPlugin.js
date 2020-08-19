@@ -3,10 +3,10 @@
 import path from 'path';
 import fs from 'fs';
 import SimpleGit from 'simple-git/promise';
-import {spawn} from 'child_process';
+import { spawn } from 'child_process';
 
-import {BasePlugin} from './BasePlugin';
-import {FilesStructure} from '../storage/FilesStructure';
+import { BasePlugin } from './BasePlugin';
+import { FilesStructure } from '../storage/FilesStructure';
 
 export class GitPlugin extends BasePlugin {
   constructor(eventBus) {
@@ -22,8 +22,7 @@ export class GitPlugin extends BasePlugin {
         if (typeof params.git_update_delay === 'string') {
           if (params.git_update_delay.endsWith('m')) {
             params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1));
-          } else
-          if (params.git_update_delay.endsWith('m')) {
+          } else if (params.git_update_delay.endsWith('h')) {
             params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1)) * 60;
           }
         }
@@ -62,6 +61,10 @@ git commit -m "Autocommit updated files" $@
   async processGit() {
     try {
       const repository = SimpleGit(this.dest);
+      const isRepo = await repository.checkIsRepo();
+      if (!isRepo) {
+        return;
+      }
       const status = await repository.status();
 
       const documents = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
@@ -87,7 +90,7 @@ git commit -m "Autocommit updated files" $@
       }
 
     } catch (err) {
-      console.error(err.message);
+      console.error(err);
     }
   }
 
@@ -117,5 +120,4 @@ git commit -m "Autocommit updated files" $@
       });
     }
   }
-
 }
