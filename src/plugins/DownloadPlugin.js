@@ -93,8 +93,8 @@ export class DownloadPlugin extends BasePlugin {
     await this.filesStructure.markClean([ file ]);
   }
 
-  async downloadDocument(file, targetPath) {
-    await this.ensureDir(targetPath);
+  async downloadDocument(file) {
+    await this.ensureDir(path.join(this.config_dir, 'files', file.id + '.html'));
 
     const htmlPath = path.join(this.config_dir, 'files', file.id + '.html');
     const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
@@ -107,13 +107,13 @@ export class DownloadPlugin extends BasePlugin {
       const destJson = new StringWritable();
       await this.googleDocsService.download(this.auth, file, destJson);
       fs.writeFileSync(gdocPath, destJson.getString());
+      await this.filesStructure.markClean([ file ]);
     } catch (err) {
       if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
       if (fs.existsSync(gdocPath)) fs.unlinkSync(gdocPath);
+      await this.filesStructure.markDirty([ file ]);
       throw err;
     }
-
-    await this.filesStructure.markClean([ file ]);
   }
 
   async handleDirtyFiles() {
@@ -135,7 +135,7 @@ export class DownloadPlugin extends BasePlugin {
         promises.push(this.downloadDiagram(file, targetPath));
       } else
       if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
-        promises.push(this.downloadDocument(file, targetPath));
+        promises.push(this.downloadDocument(file));
       } else
       if (file.size !== undefined) {
         promises.push(this.downloadAsset(file, targetPath));
