@@ -7,29 +7,21 @@ import { spawn } from 'child_process';
 
 import { BasePlugin } from './BasePlugin';
 import { FilesStructure } from '../storage/FilesStructure';
+import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 
 export class GitPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
 
-    this.gitUpdateMinutesDelay = 60;
+    this.gitUpdateSecondsDelay = 3600;
 
     eventBus.on('main:init', async (params) => {
       this.dest = params.dest;
       this.config_dir = params.config_dir;
 
-      if (params.git_update_delay) {
-        if (typeof params.git_update_delay === 'string') {
-          if (params.git_update_delay.endsWith('m')) {
-            params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1));
-          } else if (params.git_update_delay.endsWith('h')) {
-            params.git_update_delay = parseInt(params.git_update_delay.substr(0, params.git_update_delay.length - 1)) * 60;
-          }
-        }
-
-        if (params.git_update_delay > 0) {
-          this.gitUpdateMinutesDelay = params.git_update_delay;
-        }
+      const seconds = parseSecondsInterval(params.git_update_delay);
+      if (seconds > 0) {
+        this.gitUpdateSecondsDelay = seconds;
       }
 
       fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
@@ -80,8 +72,8 @@ git commit -m "Autocommit updated files" $@
       if (modified.length > 0) {
         const to_update = modified.filter(file => {
           const fileTs = +new Date(file.modifiedTime);
-          const minutesAgo = (now - fileTs) / 1000 / 60;
-          return minutesAgo > this.gitUpdateMinutesDelay;
+          const secondsAgo = (now - fileTs) / 1000;
+          return secondsAgo > this.gitUpdateSecondsDelay;
         });
 
         if (to_update.length > 0) {
