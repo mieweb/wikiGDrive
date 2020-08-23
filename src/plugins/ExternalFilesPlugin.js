@@ -160,4 +160,8 @@ export class ExternalFilesPlugin extends BasePlugin {
     // md5
   }
 
+  async flushData() {
+    return await this.externalFiles.flushData();
+  }
+
 }

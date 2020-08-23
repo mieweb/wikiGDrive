@@ -100,6 +100,11 @@ export class MainService {
         await this.emitThanAwait('main:transform_start', this.params, [ 'transform:clean', 'git:done' ]);
         break;
 
+      case 'clear:transform':
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:transform_clear', this.params, [ 'transform:cleared' ]);
+        break;
+
       case 'pull':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         this.eventBus.on('transform:dirty', () => {

@@ -43,6 +43,9 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('main:transform_start', async () => {
       await this.handleTransform();
     });
+    eventBus.on('main:transform_clear', async () => {
+      await this.handleTransformClear();
+    });
   }
 
   async handleTransform() {
@@ -180,6 +183,21 @@ export class TransformPlugin extends BasePlugin {
     }
   }
 
+  async removeConflicts() {
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
+      }
+    }
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      await this.removeEmptyDir(targetPath);
+    }
+  }
+
   async generateConflicts() {
     const filesMap = this.filesStructure.getFileMap();
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
@@ -201,6 +219,21 @@ export class TransformPlugin extends BasePlugin {
 
       dest.write(md);
       dest.close();
+    }
+  }
+
+  async removeRedirects() {
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
+      }
+    }
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      await this.removeEmptyDir(targetPath);
     }
   }
 
@@ -244,6 +277,22 @@ export class TransformPlugin extends BasePlugin {
     fs.mkdirSync(parts.join(path.sep), { recursive: true });
   }
 
+  async removeEmptyDir(filePath) {
+    const parts = filePath.split(path.sep);
+    if (parts.length < 2) {
+      return;
+    }
+    parts.pop();
+
+    const dirPath = parts.join(path.sep);
+    if (fs.existsSync(dirPath)) { // isempty
+      const isEmpty = fs.readdirSync(dirPath).length === 0;
+      if (isEmpty) {
+        fs.rmdirSync(dirPath);
+      }
+    }
+  }
+
   createFolderStructure(allFiles) {
     let directories = allFiles.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
 
@@ -261,6 +310,45 @@ export class TransformPlugin extends BasePlugin {
       const targetPath = path.join(this.dest, directory.localPath);
       fs.mkdirSync(targetPath, { recursive: true });
     });
+  }
+
+
+  async removeMetaFiles() {
+    await this.removeConflicts();
+    await this.removeRedirects();
+
+    if (fs.existsSync(path.join(this.dest, 'toc.md'))) {
+      fs.unlinkSync(path.join(this.dest, 'toc.md'));
+    }
+  }
+
+  async handleTransformClear() {
+    const transformedFiles = this.transformStatus.findStatuses(() => true);
+
+    transformedFiles.sort((a, b) => {
+      return b.localPath.length - a.localPath.length;
+    });
+
+    for (const file of transformedFiles) {
+      if (file.localPath) {
+        const localPath = path.join(this.dest, file.localPath);
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+          console.log('Cleared: ' + localPath);
+        }
+        await this.removeEmptyDir(localPath);
+      }
+
+      await this.transformStatus.removeStatus(file.id);
+    }
+
+    await this.removeMetaFiles();
+
+    this.eventBus.emit('transform:cleared');
+  }
+
+  async flushData() {
+    await this.transformStatus.flushData();
   }
 
 }
