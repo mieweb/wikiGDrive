@@ -6,8 +6,8 @@ import {ExternalFiles} from '../storage/ExternalFiles';
 import {FilesStructure} from '../storage/FilesStructure';
 import {FileService} from '../utils/FileService';
 
-import path from 'path';
-import async from 'async';
+import * as path from 'path';
+import * as async from 'async';
 
 async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -45,11 +45,17 @@ async function processRecursive(json, func) {
 }
 
 export class ExternalFilesPlugin extends BasePlugin {
+  private externalFiles: ExternalFiles;
+  private filesStructure: FilesStructure;
+  private config_dir: string;
+  private dest: string;
+
   constructor(eventBus) {
     super(eventBus);
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;
+      this.dest = params.dest;
       await this.init(params);
     });
     eventBus.on('files_structure:initialized', async ({ filesStructure }) => {
@@ -65,7 +71,7 @@ export class ExternalFilesPlugin extends BasePlugin {
     });
   }
 
-  async init(params) {
+  private async init(params) {
     this.externalFiles = new ExternalFiles(params.config_dir, new HttpClient(), params.dest);
     await this.externalFiles.init();
     await this.externalFiles.cleanup();
@@ -78,7 +84,7 @@ export class ExternalFilesPlugin extends BasePlugin {
     for (const file of files) {
       const links = await this.extractExternalFiles(file);
       for (const url of links) {
-        await this.externalFiles.addLink(url, { url, md5: null });
+        await this.externalFiles.addLink(url, { url, md5Checksum: null });
       }
     }
 
@@ -141,20 +147,20 @@ export class ExternalFilesPlugin extends BasePlugin {
   }
 
   async downloadFile(url) {
-    const tempPath = await this.externalFiles.downloadTemp(url, path.join(this.externalFiles.dest, 'external_files'));
+    const tempPath = await this.externalFiles.downloadTemp(url, path.join(this.dest, 'external_files'));
     const fileService = new FileService();
-    const md5 = await fileService.md5File(tempPath);
+    const md5Checksum = await fileService.md5File(tempPath);
 
-    if (md5) {
-      const localPath = path.join('external_files', md5 + '.png');
-      await fileService.move(tempPath, path.join(this.externalFiles.dest, localPath));
+    if (md5Checksum) {
+      const localPath = path.join('external_files', md5Checksum + '.png');
+      await fileService.move(tempPath, path.join(this.dest, localPath));
 
       await this.externalFiles.putFile({
         localPath: localPath,
-        md5Checksum: md5
+        md5Checksum: md5Checksum
       });
 
-      await this.externalFiles.addLink(url, { url, md5 });
+      await this.externalFiles.addLink(url, { url, md5Checksum });
     }
 
     // md5

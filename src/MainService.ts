@@ -1,7 +1,7 @@
 /* eslint-disable no-async-promise-executor */
 'use strict';
 
-import EventEmitter from 'events';
+import {EventEmitter} from 'events';
 
 import {ConfigDirPlugin} from './plugins/ConfigDirPlugin';
 import {ListRootPlugin} from './plugins/ListRootPlugin';
@@ -13,11 +13,31 @@ import {FilesStructurePlugin} from './plugins/FilesStructurePlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
 import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
 import {GitPlugin} from './plugins/GitPlugin';
+import {BasePlugin} from './plugins/BasePlugin';
+
+export enum LinkMode {
+  dirURLs = 'dirURLs',
+  mdURLs = 'mdURLs',
+  uglyURLs = 'uglyURLs'
+}
+
+export interface CliParams {
+  config_dir: string;
+  link_mode: LinkMode;
+  dest: string;
+  flat_folder_structure: Boolean;
+  drive_id: string;
+  drive: string;
+  command: string;
+  debug: boolean;
+}
 
 export class MainService {
+  private readonly eventBus: EventEmitter;
+  private readonly command: string;
+  private plugins: BasePlugin[];
 
-  constructor(params) {
-    this.params = params;
+  constructor(private params: CliParams) {
     this.command = this.params.command;
     this.eventBus = new EventEmitter();
     this.eventBus.setMaxListeners(0);
@@ -112,6 +132,7 @@ export class MainService {
         });
         await this.emitThanAwait('main:run_list_root', this.params, [ 'list_root:done', 'download:clean', 'transform:clean', 'git:done' ]);
         break;
+
       case 'watch':
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         await this.emitThanAwait('main:fetch_watch_token', {}, [ 'watch:token_ready' ]);
@@ -126,20 +147,11 @@ export class MainService {
         break;
     }
 
-
     for (const plugin of this.plugins) {
       if (plugin.flushData) {
         await plugin.flushData();
       }
     }
-
-    /*
-    await new Promise(async (resolve, reject) => {
-      setTimeout(reject, 3600 * 1000);
-      await this.configService.flush();
-      resolve();
-    });
-*/
   }
 
 }

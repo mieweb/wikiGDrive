@@ -1,22 +1,25 @@
 'use strict';
 
-import path from 'path';
-import RelateUrl from 'relateurl';
+import * as path from 'path';
+import * as RelateUrl from 'relateurl';
+
 import {FileService} from './utils/FileService';
-import {FilesStructure} from './storage/FilesStructure';
+import {FileMap, FilesStructure} from './storage/FilesStructure';
+import {ExternalFiles} from './storage/ExternalFiles';
+import {LinkMode} from './MainService';
 
 export class LinkTranslator {
+  private readonly fileMap: FileMap;
+  private readonly mode: LinkMode;
 
-  constructor(filesStructure, externalFiles) {
-    this.filesStructure = filesStructure;
+  constructor(private filesStructure: FilesStructure, private externalFiles: ExternalFiles) {
     this.fileMap = filesStructure.getFileMap();
-    this.externalFiles = externalFiles;
 
     /*
      * uglyURLs - https://gohugo.io/getting-started/configuration/
      *
      */
-    this.mode = 'uglyURLs';
+    this.mode = LinkMode.uglyURLs;
   }
 
   async urlToLocalPath(url) {
@@ -59,7 +62,7 @@ export class LinkTranslator {
     }
 
     if (url.startsWith('https:') || url.startsWith('http:')) {
-      const tempPath = await this.externalFiles.downloadTemp(url, path.join(this.externalFiles.dest, 'external_files'));
+      const tempPath = await this.externalFiles.downloadTemp(url, path.join(this.externalFiles.getDest(), 'external_files'));
       const fileService = new FileService();
       const md5 = await fileService.md5File(tempPath);
 
@@ -79,7 +82,7 @@ export class LinkTranslator {
     return url;
   }
 
-  convertExtension(localPath, mode) {
+  convertExtension(localPath: string, mode?: LinkMode) {
     if (!mode) mode = this.mode;
     const lastSlash = localPath.lastIndexOf('/');
 
@@ -95,15 +98,15 @@ export class LinkTranslator {
       case 'md':
 
         switch (mode) {
-        case 'uglyURLs':
+        case LinkMode.uglyURLs:
           parts[parts.length - 1] = 'html';
           break;
 
-        case 'dirURLs':
+        case LinkMode.dirURLs:
           parts.pop();
           break;
 
-        case 'mdURLs':
+        case LinkMode.mdURLs:
         default:
           parts[parts.length - 1] = 'md';
           break;
@@ -137,7 +140,7 @@ export class LinkTranslator {
     const host = '//example.com/';
     return this.convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
       output: RelateUrl.PATH_RELATIVE
-    })), 'dirURLs');
+    })), LinkMode.dirURLs);
   }
 
 }

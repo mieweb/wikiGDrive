@@ -21,7 +21,6 @@ export class TransformPlugin extends BasePlugin {
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
-      this.dest = params.dest;
       this.config_dir = params.config_dir;
 
       this.transformStatus = new TransformStatus(this.config_dir);
@@ -29,6 +28,7 @@ export class TransformPlugin extends BasePlugin {
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.link_mode = drive_config['link_mode'];
+      this.dest = drive_config.dest;
       this.flat_folder_structure = drive_config.flat_folder_structure;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {

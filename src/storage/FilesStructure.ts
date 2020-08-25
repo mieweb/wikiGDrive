@@ -1,7 +1,7 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {FileService} from '../utils/FileService';
 
@@ -9,10 +9,43 @@ function generateUniqId() {
   return Math.random().toString(26).slice(2);
 }
 
-class FilesStructure {
+type DateISO = string;
+type FileId = string;
 
-  constructor(config_dir) {
-    this.config_dir = config_dir;
+interface File {
+  id: FileId;
+  name: string;
+  desiredLocalPath: string;
+  localPath: string;
+
+  mimeType: string;
+
+  dirty?: boolean;
+  modifiedTime?: DateISO;
+
+  counter?: number;
+  conflictId?: FileId;
+  redirectTo?: FileId;
+  conflicting?: FileId[];
+}
+
+export interface FileMap {
+  [id: string]: File;
+}
+
+class FilesStructure {
+  private fileService: FileService;
+  private readonly filePath: string;
+  private save_needed: boolean = false;
+
+  static FOLDER_MIME: string;
+  static DOCUMENT_MIME: string;
+  static DRAWING_MIME: string;
+  static CONFLICT_MIME: string;
+  static REDIRECT_MIME: string;
+  private fileMap: FileMap;
+
+  constructor(private config_dir: string) {
     this.fileService = new FileService();
     this.filePath = path.join(config_dir, 'files.json');
   }
@@ -88,7 +121,7 @@ class FilesStructure {
 
     if (oldFile.desiredLocalPath !== file.desiredLocalPath) {
 
-      const redirectFile = {
+      const redirectFile: File = {
         id: generateUniqId(),
         name: oldFile.name,
         mimeType: FilesStructure.REDIRECT_MIME,

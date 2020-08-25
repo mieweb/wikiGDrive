@@ -99,7 +99,8 @@ npm i -g @mieweb/wikigdrive
 5. Sync GDrive
 
 ```
-wikigdrive https://drive.google.com.pathtothefolder --dest ./content
+wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --dest ./content
+wikigdrive pull
 ```
 
 6. Generate HTML

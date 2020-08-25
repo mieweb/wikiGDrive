@@ -1,10 +1,12 @@
 /* eslint-disable no-async-promise-executor */
 'use strict';
 
-import readline from 'readline';
-import fs from 'fs';
+import * as readline from 'readline';
+import * as fs from 'fs';
 
 import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
+import {ConfigService} from "../storage/ConfigService";
+import {QuotaLimiter} from "./QuotaLimiter";
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -16,9 +18,7 @@ const SCOPES = [
 
 export class GoogleAuthService {
 
-  constructor(configService, quotaLimiter) {
-    this.configService = configService;
-    this.quotaLimiter = quotaLimiter;
+  constructor(private configService: ConfigService, private quotaLimiter: QuotaLimiter) {
   }
 
   async authorizeServiceAccount(account_json_file_name) {
