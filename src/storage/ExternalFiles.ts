@@ -11,22 +11,22 @@ function createTempName(tmpdir) {
   return path.join(tmpdir, filename);
 }
 
-interface BinaryFileEntry {
+export interface BinaryFileEntry {
   localPath: string;
   localDocumentPath?: string;
   md5Checksum: string;
 }
 
-interface BinaryFilesMap {
+export interface BinaryFilesMap {
   [id: string]: BinaryFileEntry;
 }
 
-interface LinkEntry {
+export interface LinkEntry {
   url: string;
   md5Checksum: string;
 }
 
-interface LinksMap {
+export interface LinksMap {
   [id: string]: LinkEntry;
 }
 

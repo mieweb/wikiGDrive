@@ -42,6 +42,11 @@ function jsonToErrorMessage(json) {
 }
 
 export async function handleGoogleError(err, reject, context) {
+  if (parseInt(err.code) === 429) { // Too many requests
+    err.isQuotaError = true;
+    reject(err); // TODO rate error
+    return;
+  }
   if (parseInt(err.code) === 403) { // Retry
     if (err.isQuotaError) { // Already decoded
       reject(err);

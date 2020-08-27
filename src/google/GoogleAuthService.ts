@@ -1,4 +1,3 @@
-/* eslint-disable no-async-promise-executor */
 'use strict';
 
 import * as readline from 'readline';

@@ -10,7 +10,7 @@ import {LinkMode} from './MainService';
 
 export class LinkTranslator {
   private readonly fileMap: FileMap;
-  private readonly mode: LinkMode;
+  private mode: LinkMode;
 
   constructor(private filesStructure: FilesStructure, private externalFiles: ExternalFiles) {
     this.fileMap = filesStructure.getFileMap();
@@ -20,6 +20,10 @@ export class LinkTranslator {
      *
      */
     this.mode = LinkMode.uglyURLs;
+  }
+
+  setMode(mode = this.mode) {
+    this.mode = mode;
   }
 
   async urlToLocalPath(url) {

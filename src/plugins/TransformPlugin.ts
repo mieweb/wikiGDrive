@@ -1,7 +1,7 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {BasePlugin} from './BasePlugin';
 import {FilesStructure} from '../storage/FilesStructure';
@@ -14,19 +14,33 @@ import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
 import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 import {TransformStatus} from '../storage/TransformStatus';
+import {CliParams, LinkMode} from "../MainService";
+import {DriveConfig} from './ConfigDirPlugin';
+import {ExternalFiles} from '../storage/ExternalFiles';
+import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
 
 export class TransformPlugin extends BasePlugin {
+  private command: string;
+  private config_dir: string;
+  private transformStatus: TransformStatus;
+  private link_mode: LinkMode;
+  private dest: string;
+  private flat_folder_structure: boolean;
+  private filesStructure: FilesStructure;
+  private externalFiles: ExternalFiles;
+  private linkTranslator: LinkTranslator;
+
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
 
       this.transformStatus = new TransformStatus(this.config_dir);
       await this.transformStatus.init();
     });
-    eventBus.on('drive_config:loaded', async (drive_config) => {
+    eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
       this.link_mode = drive_config['link_mode'];
       this.dest = drive_config.dest;
       this.flat_folder_structure = drive_config.flat_folder_structure;
@@ -51,7 +65,7 @@ export class TransformPlugin extends BasePlugin {
   async handleTransform() {
     this.linkTranslator = new LinkTranslator(this.filesStructure, this.externalFiles);
     if (this.link_mode) {
-      this.linkTranslator.mode = this.link_mode;
+      this.linkTranslator.setMode(this.link_mode);
     }
 
     // await this.createFolderStructure(files);
@@ -148,6 +162,7 @@ export class TransformPlugin extends BasePlugin {
         const googleListFixer = new GoogleListFixer(srcHtml);
         const embedImageFixed = new EmbedImageFixer(srcHtml);
         const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
+        const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
@@ -157,6 +172,7 @@ export class TransformPlugin extends BasePlugin {
           .pipe(externalToLocalTransform)
           .pipe(markDownTransform)
           .pipe(frontMatterTransform)
+          .pipe(clearShortCodesTransform)
           .pipe(dest);
 
         await new Promise((resolve, reject) => {

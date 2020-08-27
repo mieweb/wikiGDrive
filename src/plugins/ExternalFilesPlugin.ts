@@ -124,12 +124,15 @@ export class ExternalFilesPlugin extends BasePlugin {
 
     const concurrency = 4;
 
-    const q = async.queue(async (task) => {
+    const q = async.queue(async (task, callback) => {
       switch (task.type) {
         case 'download':
           await this.downloadFile(task.url);
           break;
+        default:
+          console.error('Unknown task type: ' + task.type)
       }
+      callback();
     }, concurrency);
 
     q.error(function(err, task) {
@@ -144,6 +147,7 @@ export class ExternalFilesPlugin extends BasePlugin {
     }
 
     await q.drain();
+    console.log('Downloading external files finished');
   }
 
   async downloadFile(url) {

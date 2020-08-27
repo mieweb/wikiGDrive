@@ -12,7 +12,7 @@ function generateUniqId() {
 type DateISO = string;
 type FileId = string;
 
-interface File {
+export interface File {
   id: FileId;
   name: string;
   desiredLocalPath: string;
@@ -27,6 +27,8 @@ interface File {
   conflictId?: FileId;
   redirectTo?: FileId;
   conflicting?: FileId[];
+
+  lastAuthor?: string;
 }
 
 export interface FileMap {
@@ -103,16 +105,18 @@ class FilesStructure {
   async markDirty(files) {
     for (const file of files) {
       if (file.mimeType === FilesStructure.FOLDER_MIME) continue;
-
-      this.fileMap[file.id].dirty = true;
-      await this._putFile(file.id, this.fileMap[file.id]);
+      await this._putFile(file.id, Object.assign({}, this.fileMap[file.id], {
+        dirty: true
+      }));
     }
   }
 
   async markClean(files) {
     for (const file of files) {
       this.fileMap[file.id].dirty = false;
-      await this._putFile(file.id, this.fileMap[file.id]);
+      await this._putFile(file.id, Object.assign({}, this.fileMap[file.id], {
+        dirty: false
+      }));
     }
   }
 

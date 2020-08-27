@@ -5,7 +5,9 @@ import * as fs from 'fs';
 import {FileService} from '../utils/FileService';
 
 interface TransformedEntry {
-
+  id: string;
+  localPath: string;
+  modifiedTime: string;
 }
 
 interface TransformedMap {
