@@ -145,6 +145,11 @@ export class MainService {
 
         await new Promise(() => {});
         break;
+
+      default:
+        await this.emitThanAwait('main:init', this.params, [ 'drive_config:loaded', 'files_structure:initialized' ]);
+        console.error('Unknown command: ' + this.command);
+        break;
     }
 
     for (const plugin of this.plugins) {
