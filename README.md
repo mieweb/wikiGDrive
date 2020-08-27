@@ -144,10 +144,21 @@ npm i -g @mieweb/wikigdrive
 5. Sync GDrive
 
 ```
-wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --dest ./source
+wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --dest ./source --link_mode uglyURLs
 wikigdrive pull
 ```
 
+6. Generate HTML
+
+```
+hexo generate
+```
+
+or start server for development:
+
+```
+hexo serve
+```
 
 ## Authorization
 
