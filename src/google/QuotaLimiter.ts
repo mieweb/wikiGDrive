@@ -3,12 +3,31 @@
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;
 
+interface QuotaJob {
+  ts?: number;
+  done: boolean;
+  func: Function
+  skipCounter?: boolean;
+}
+
+interface QuotaLimit {
+  seconds: number;
+  queries: number;
+  ts: number;
+}
+
 export class QuotaLimiter {
+  private jobs: QuotaJob[];
+  private running: number = 0;
+  private counter: number = 0;
+  private initialLimit: QuotaLimit;
+  private currentLimit: QuotaLimit;
+
+  private oldCounter: number;
+  private saveHandler: Function;
 
   constructor(initialJobs = []) {
     this.jobs = [].concat((initialJobs || []));
-    this.running = 0;
-    this.counter = 0;
     setInterval(() => {
       this.handleQueue();
       if (this.saveHandler) {
@@ -18,7 +37,7 @@ export class QuotaLimiter {
   }
 
   setInitialLimit(queries, seconds) {
-    this.initialLimit = { queries, seconds };
+    this.initialLimit = { queries, seconds, ts: 0 };
     this.setLimit(queries, seconds);
 
     setInterval(() => {
@@ -27,9 +46,11 @@ export class QuotaLimiter {
   }
 
   slowdown() {
-    const newLimits = {};
-    newLimits.queries = Math.floor(this.currentLimit.queries / 2);
-    newLimits.seconds = this.currentLimit.seconds;
+    const newLimits: QuotaLimit = {
+      queries: Math.floor(this.currentLimit.queries / 2),
+      seconds: this.currentLimit.seconds,
+      ts: 0
+    };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
       console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
     }
@@ -40,9 +61,11 @@ export class QuotaLimiter {
       return;
     }
 
-    const newLimits = {};
-    newLimits.queries = this.currentLimit.queries + 1;
-    newLimits.seconds = this.currentLimit.seconds;
+    const newLimits: QuotaLimit = {
+      queries: this.currentLimit.queries + 1,
+      seconds: this.currentLimit.seconds,
+      ts: 0
+    };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
       console.log('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
       this.oldCounter = this.counter;
@@ -137,7 +160,7 @@ export class QuotaLimiter {
     return availableQuota;
   }
 
-  setSaveHandler(handler) {
+  setSaveHandler(handler: Function) {
     this.saveHandler = handler;
   }
 }

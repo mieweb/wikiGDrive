@@ -1,12 +1,12 @@
 'use strict';
 
 import fetch from 'node-fetch';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import {retryAsync} from './retryAsync';
 
 export class HttpClient {
 
-  downloadUrl(url, writeStream) {
+  downloadUrl(url: string, writeStream) {
     return retryAsync(10, (resolve, reject) => {
       fetch(url)
         .then(res => {
@@ -25,7 +25,7 @@ export class HttpClient {
     });
   }
 
-  async md5Url(url) {
+  async md5Url(url): Promise<string> {
     const hash = crypto.createHash('md5');
     hash.setEncoding('hex');
     await this.downloadUrl(url, hash);

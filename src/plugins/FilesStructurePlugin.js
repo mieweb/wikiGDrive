@@ -70,4 +70,8 @@ export class FilesStructurePlugin extends BasePlugin {
     }
   }
 
+  async flushData() {
+    return await this.filesStructure.flushData();
+  }
+
 }

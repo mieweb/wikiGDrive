@@ -4,10 +4,13 @@ import {BasePlugin} from './BasePlugin';
 import {QuotaLimiter} from '../google/QuotaLimiter';
 import {GoogleAuthService} from '../google/GoogleAuthService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
+import {ConfigService} from '../storage/ConfigService';
 
 export class GoogleApiPlugin extends BasePlugin {
   constructor(eventBus) {
     super(eventBus);
+
+    this.configService = new ConfigService();
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;

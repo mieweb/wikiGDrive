@@ -1,7 +1,7 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {BasePlugin} from './BasePlugin';
 import {FilesStructure} from '../storage/FilesStructure';
@@ -14,21 +14,35 @@ import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
 import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 import {TransformStatus} from '../storage/TransformStatus';
+import {CliParams, LinkMode} from "../MainService";
+import {DriveConfig} from './ConfigDirPlugin';
+import {ExternalFiles} from '../storage/ExternalFiles';
+import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
 
 export class TransformPlugin extends BasePlugin {
+  private command: string;
+  private config_dir: string;
+  private transformStatus: TransformStatus;
+  private link_mode: LinkMode;
+  private dest: string;
+  private flat_folder_structure: boolean;
+  private filesStructure: FilesStructure;
+  private externalFiles: ExternalFiles;
+  private linkTranslator: LinkTranslator;
+
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
-      this.dest = params.dest;
       this.config_dir = params.config_dir;
 
       this.transformStatus = new TransformStatus(this.config_dir);
       await this.transformStatus.init();
     });
-    eventBus.on('drive_config:loaded', async (drive_config) => {
+    eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
       this.link_mode = drive_config['link_mode'];
+      this.dest = drive_config.dest;
       this.flat_folder_structure = drive_config.flat_folder_structure;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
@@ -43,12 +57,15 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('main:transform_start', async () => {
       await this.handleTransform();
     });
+    eventBus.on('main:transform_clear', async () => {
+      await this.handleTransformClear();
+    });
   }
 
   async handleTransform() {
     this.linkTranslator = new LinkTranslator(this.filesStructure, this.externalFiles);
     if (this.link_mode) {
-      this.linkTranslator.mode = this.link_mode;
+      this.linkTranslator.setMode(this.link_mode);
     }
 
     // await this.createFolderStructure(files);
@@ -145,6 +162,7 @@ export class TransformPlugin extends BasePlugin {
         const googleListFixer = new GoogleListFixer(srcHtml);
         const embedImageFixed = new EmbedImageFixer(srcHtml);
         const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
+        const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
@@ -154,6 +172,7 @@ export class TransformPlugin extends BasePlugin {
           .pipe(externalToLocalTransform)
           .pipe(markDownTransform)
           .pipe(frontMatterTransform)
+          .pipe(clearShortCodesTransform)
           .pipe(dest);
 
         await new Promise((resolve, reject) => {
@@ -180,6 +199,21 @@ export class TransformPlugin extends BasePlugin {
     }
   }
 
+  async removeConflicts() {
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
+      }
+    }
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      await this.removeEmptyDir(targetPath);
+    }
+  }
+
   async generateConflicts() {
     const filesMap = this.filesStructure.getFileMap();
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
@@ -201,6 +235,21 @@ export class TransformPlugin extends BasePlugin {
 
       dest.write(md);
       dest.close();
+    }
+  }
+
+  async removeRedirects() {
+    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      if (fs.existsSync(targetPath)) {
+        fs.unlinkSync(targetPath);
+      }
+    }
+    for (const file of files) {
+      const targetPath = path.join(this.dest, file.localPath);
+      await this.removeEmptyDir(targetPath);
     }
   }
 
@@ -244,6 +293,22 @@ export class TransformPlugin extends BasePlugin {
     fs.mkdirSync(parts.join(path.sep), { recursive: true });
   }
 
+  async removeEmptyDir(filePath) {
+    const parts = filePath.split(path.sep);
+    if (parts.length < 2) {
+      return;
+    }
+    parts.pop();
+
+    const dirPath = parts.join(path.sep);
+    if (fs.existsSync(dirPath)) { // isempty
+      const isEmpty = fs.readdirSync(dirPath).length === 0;
+      if (isEmpty) {
+        fs.rmdirSync(dirPath);
+      }
+    }
+  }
+
   createFolderStructure(allFiles) {
     let directories = allFiles.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
 
@@ -261,6 +326,45 @@ export class TransformPlugin extends BasePlugin {
       const targetPath = path.join(this.dest, directory.localPath);
       fs.mkdirSync(targetPath, { recursive: true });
     });
+  }
+
+
+  async removeMetaFiles() {
+    await this.removeConflicts();
+    await this.removeRedirects();
+
+    if (fs.existsSync(path.join(this.dest, 'toc.md'))) {
+      fs.unlinkSync(path.join(this.dest, 'toc.md'));
+    }
+  }
+
+  async handleTransformClear() {
+    const transformedFiles = this.transformStatus.findStatuses(() => true);
+
+    transformedFiles.sort((a, b) => {
+      return b.localPath.length - a.localPath.length;
+    });
+
+    for (const file of transformedFiles) {
+      if (file.localPath) {
+        const localPath = path.join(this.dest, file.localPath);
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+          console.log('Cleared: ' + localPath);
+        }
+        await this.removeEmptyDir(localPath);
+      }
+
+      await this.transformStatus.removeStatus(file.id);
+    }
+
+    await this.removeMetaFiles();
+
+    this.eventBus.emit('transform:cleared');
+  }
+
+  async flushData() {
+    await this.transformStatus.flushData();
   }
 
 }
