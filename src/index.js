@@ -59,11 +59,7 @@ async function index() {
 
   params['link_mode'] = argv['link_mode'] || 'mdURLs';
 
-  params['config-reset'] = argv['config-reset'] || '';
-  if (argv['config-reset-all']) {
-    params['config-reset'] = 'google_auth,fileMap,binaryFiles';
-  }
-  params['flat-folder-structure'] = !!argv['without-folder-structure'];
+  params['flat_folder_structure'] = !!argv['without-folder-structure'];
   params['debug'] = !!argv['debug'];
 
   params['drive_id'] = argv['drive_id'] || '';

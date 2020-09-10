@@ -1,15 +1,24 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import {BasePlugin} from './BasePlugin';
 import {FilesStructure} from '../storage/FilesStructure';
 import {FileService} from '../utils/FileService';
 import {StringWritable} from '../utils/StringWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
+import {GoogleDriveService} from '../google/GoogleDriveService';
+import {ExternalFiles} from "../storage/ExternalFiles";
 
 export class DownloadPlugin extends BasePlugin {
+  private googleDocsService: GoogleDocsService;
+  private config_dir: string;
+  private filesStructure: FilesStructure;
+  private auth: any;
+  private googleDriveService: GoogleDriveService;
+  private externalFiles: ExternalFiles;
+
   constructor(eventBus) {
     super(eventBus);
 
@@ -20,6 +29,9 @@ export class DownloadPlugin extends BasePlugin {
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
+    });
+    eventBus.on('external_files:initialized', ({ externalFiles }) => {
+      this.externalFiles = externalFiles;
     });
     eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -36,7 +48,7 @@ export class DownloadPlugin extends BasePlugin {
     });
   }
 
-  async downloadAsset(file, targetPath) {
+  private async downloadAsset(file, targetPath) {
     console.log('Downloading asset: ' + file.localPath);
     await this.ensureDir(targetPath);
 
@@ -51,7 +63,7 @@ export class DownloadPlugin extends BasePlugin {
     await this.filesStructure.  markClean([ file ]);
   }
 
-  async downloadDiagram(file, targetPath) {
+  private async downloadDiagram(file, targetPath) {
     console.log('Downloading diagram: ' + file.localPath);
     await this.ensureDir(targetPath);
 
@@ -93,7 +105,7 @@ export class DownloadPlugin extends BasePlugin {
     await this.filesStructure.markClean([ file ]);
   }
 
-  async downloadDocument(file) {
+  private async downloadDocument(file) {
     await this.ensureDir(path.join(this.config_dir, 'files', file.id + '.html'));
 
     const htmlPath = path.join(this.config_dir, 'files', file.id + '.html');
@@ -101,11 +113,12 @@ export class DownloadPlugin extends BasePlugin {
 
     try {
       const destHtml = new StringWritable();
-      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
-      fs.writeFileSync(htmlPath, destHtml.getString());
-
       const destJson = new StringWritable();
+
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
       await this.googleDocsService.download(this.auth, file, destJson);
+
+      fs.writeFileSync(htmlPath, destHtml.getString());
       fs.writeFileSync(gdocPath, destJson.getString());
       await this.filesStructure.markClean([ file ]);
     } catch (err) {
@@ -116,7 +129,7 @@ export class DownloadPlugin extends BasePlugin {
     }
   }
 
-  async handleDirtyFiles() {
+  private async handleDirtyFiles() {
     if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
       fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
     }
@@ -143,7 +156,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     try {
-      await Promise.all(promises);
+      await Promise.allSettled(promises);
     } catch (ignore) { /* eslint-disable-line no-empty */
     }
 
@@ -158,7 +171,7 @@ export class DownloadPlugin extends BasePlugin {
     }
   }
 
-  async ensureDir(filePath) {
+  private async ensureDir(filePath) {
     const parts = filePath.split(path.sep);
     if (parts.length < 2) {
       return;

@@ -2,7 +2,7 @@
 
 import slugify from 'slugify';
 import {google} from 'googleapis';
-import {FilesStructure} from '../storage/FilesStructure';
+import {File, FilesStructure} from '../storage/FilesStructure';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -32,7 +32,12 @@ function removeDuplicates(files) {
 }
 
 export class GoogleDriveServiceError extends Error {
-  constructor(msg, params) {
+  private file: any;
+  private dest: any;
+  private folderId: string;
+  private isQuotaError: boolean;
+
+  constructor(msg, params?) {
     super(msg);
     if (params) {
       this.file = params.file;
@@ -44,6 +49,8 @@ export class GoogleDriveServiceError extends Error {
 }
 
 export class GoogleDriveService {
+  private flat_folder_structure: boolean;
+
   constructor(flat_folder_structure) {
     this.flat_folder_structure = flat_folder_structure;
   }
@@ -102,7 +109,7 @@ export class GoogleDriveService {
     return files;
   }
 
-   async _listFilesRecursive(auth, context, modifiedTime, parentDirName) {
+   async _listFilesRecursive(auth, context, modifiedTime, parentDirName?) {
     console.log('Listening folder:', parentDirName || '/');
     let files = await this._listFiles(auth, context, modifiedTime);
 
@@ -177,7 +184,8 @@ export class GoogleDriveService {
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
         includeCorpusRemovals: true,
-        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))'
+        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
+        drives: undefined
       };
 
       if (driveId) {
@@ -189,11 +197,13 @@ export class GoogleDriveService {
 
         const files = res.data.changes
           .map(change => change.file)
-          .map((file) => {
+          .map((apiFile) => {
+            const file = <File>apiFile;
+
             file.desiredLocalPath = getDesiredPath(file.name);
-            if (file.lastModifyingUser) {
-              file.lastAuthor = file.lastModifyingUser.displayName;
-              delete file.lastModifyingUser;
+            if (apiFile.lastModifyingUser) {
+              file.lastAuthor = apiFile.lastModifyingUser.displayName;
+              delete apiFile.lastModifyingUser;
             }
 
             if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
@@ -224,7 +234,7 @@ export class GoogleDriveService {
     });
   }
 
-  async _listFiles(auth, context, modifiedTime, nextPageToken) {
+  async _listFiles(auth, context, modifiedTime, nextPageToken?) {
     const drive = google.drive({ version: 'v3', auth });
 
     let query = '\'' + context.folderId + '\' in parents and trashed = false';
@@ -241,7 +251,8 @@ export class GoogleDriveService {
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,
-      orderBy: 'modifiedTime desc'
+      orderBy: 'modifiedTime desc',
+      driveId: undefined
     };
 
     if (context.driveId) {
@@ -254,11 +265,13 @@ export class GoogleDriveService {
         const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
         return res.data.files.concat(nextFiles);
       } else {
-        for (const file of res.data.files) {
+        for (const apiFile of res.data.files) {
+          const file = <File>apiFile;
+
           file.desiredLocalPath = getDesiredPath(file.name);
-          if (file.lastModifyingUser) {
-            file.lastAuthor = file.lastModifyingUser.displayName;
-            delete file.lastModifyingUser;
+          if (apiFile.lastModifyingUser) {
+            file.lastAuthor = apiFile.lastModifyingUser.displayName;
+            delete apiFile.lastModifyingUser;
           }
 
           if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
@@ -285,47 +298,46 @@ export class GoogleDriveService {
     }
   }
 
-  download(auth, file, dest) {
+  async download(auth, file, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
-    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
-      try {
-        const res = await drive.files.get({
-          fileId: file.id,
-          alt: 'media',
-          includeItemsFromAllDrives: true,
-          supportsAllDrives: true
-        }, { responseType: 'stream' });
+    try {
+      const res = <any>await drive.files.get({
+        fileId: file.id,
+        alt: 'media',
+        // includeItemsFromAllDrives: true,
+        supportsAllDrives: true
+      }, { responseType: 'stream' });
 
+      return new Promise((resolve, reject) => {
         res.data
-          .on('end', () => {
-            resolve();
-          })
-          .on('error', err => {
-            reject(err);
-          })
-          .pipe(dest);
-      } catch (err) {
-        reject(new GoogleDriveServiceError('Error download file: ' + file.id, {
-          file, dest, isQuotaError: err.isQuotaError
-        }));
-      }
-    });
+            .on('end', () => {
+              resolve();
+            })
+            .on('error', err => {
+              reject(err);
+            })
+            .pipe(dest);
+      });
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+        file, dest, isQuotaError: err.isQuotaError
+      });
+    }
   }
 
-  exportDocument(auth, file, dest) {
+  async exportDocument(auth, file, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
-    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
-      try {
-        const res = await drive.files.export({
-          fileId: file.id,
-          mimeType: file.mimeType,
-          includeItemsFromAllDrives: true,
-          supportsAllDrives: true
-        }, { responseType: 'stream' });
-        console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
+    try {
+      const res = <any>await drive.files.export({
+        fileId: file.id,
+        mimeType: file.mimeType,
+        // includeItemsFromAllDrives: true,
+        // supportsAllDrives: true
+      }, { responseType: 'stream' });
 
+      await new Promise((resolve, reject) => {
         let stream = res.data
           .on('end', () => {})
           .on('error', err => {
@@ -335,24 +347,24 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
+            console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
+            console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
             resolve();
           });
         }
-      } catch (err) {
-        if (!err.isQuotaError) {
-          console.error(err);
-        }
-        reject(new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
-          file, dest, isQuotaError: err.isQuotaError
-        }));
-        reject(err);
+      });
+    } catch (err) {
+      if (!err.isQuotaError) {
+        console.error(err);
       }
-
-    });
+      throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
+        file, dest, isQuotaError: err.isQuotaError
+      });
+    }
   }
 }

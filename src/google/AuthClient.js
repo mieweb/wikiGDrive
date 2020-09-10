@@ -5,8 +5,8 @@ import {JWT} from 'google-auth-library';
 import {handleGoogleError} from './error';
 
 export class QuotaAuthClient extends google.auth.OAuth2 {
-  constructor(options) {
-    super(options);
+  constructor(client_id, client_secret, redirect_uri) {
+    super(client_id, client_secret, redirect_uri);
   }
 
   setQuotaLimiter(quotaLimiter) {

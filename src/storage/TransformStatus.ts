@@ -1,14 +1,26 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 import {FileService} from '../utils/FileService';
 
+interface TransformedEntry {
+  id: string;
+  localPath: string;
+  modifiedTime: string;
+}
+
+interface TransformedMap {
+  [id: string]: TransformedEntry;
+}
+
 export class TransformStatus {
+  private fileService: FileService;
+  private readonly transformPath: string;
+  private save_needed: Boolean = false;
+  private transformed: TransformedMap;
 
-  constructor(config_dir) {
-    this.config_dir = config_dir;
-
+  constructor(private config_dir: string) {
     this.fileService = new FileService();
     this.transformPath = path.join(config_dir, 'transform.json');
   }
@@ -36,7 +48,7 @@ export class TransformStatus {
     }
   }
 
-  findStatus(checker) {
+  findStatus(checker): TransformedEntry {
     for (let id in this.transformed) {
       const status = this.transformed[id];
       if (checker(status)) {
@@ -45,7 +57,7 @@ export class TransformStatus {
     }
   }
 
-  findStatuses(checker) {
+  findStatuses(checker): TransformedEntry[] {
     const retVal = [];
     for (let id in this.transformed) {
       const status = this.transformed[id];
@@ -56,7 +68,7 @@ export class TransformStatus {
     return retVal;
   }
 
-  async _loadJson(filePath) {
+  private async _loadJson(filePath) {
     try {
       const content = await this.fileService.readFile(filePath);
       return JSON.parse(content);
@@ -65,7 +77,7 @@ export class TransformStatus {
     }
   }
 
-  async loadData() {
+  private async loadData() {
     this.transformed = await this._loadJson(this.transformPath) || {};
   }
 

@@ -1,4 +1,6 @@
 import {Transform} from 'stream';
+import {FileMap, FilesStructure} from "./storage/FilesStructure";
+import {ExternalFiles, LinkEntry} from "./storage/ExternalFiles";
 
 async function processRecursive(json, func) {
   if (Array.isArray(json)) {
@@ -36,14 +38,13 @@ async function convertImageLink(document, url) {
 }
 
 export class ExternalToLocalTransform extends Transform {
+  private fileMap: FileMap;
+  private json: string;
 
-  constructor(filesStructure, externalFiles) {
+  constructor(private filesStructure: FilesStructure, private externalFiles: ExternalFiles) {
     super();
 
-    this.filesStructure = filesStructure;
-    this.externalFiles = externalFiles;
     this.fileMap = this.filesStructure.getFileMap();
-
     this.json = '';
   }
 
@@ -74,14 +75,14 @@ export class ExternalToLocalTransform extends Transform {
         }
 
         if (url.startsWith('https:') || url.startsWith('http:')) {
-          const link = this.externalFiles.findLink(link => link.url === url);
-          if (link && link.md5) {
+          const link: LinkEntry = this.externalFiles.findLink(link => link.url === url);
+          if (link && link.md5Checksum) {
 
-            const file = this.filesStructure.findFile(file => file.md5Checksum === link.md5);
+            const file = this.filesStructure.findFile(file => file.md5Checksum === link.md5Checksum);
             if (file) {
               url = file.localPath;
             } else {
-              const externalFile = this.externalFiles.findFile(file => file.md5Checksum === link.md5);
+              const externalFile = this.externalFiles.findFile(file => file.md5Checksum === link.md5Checksum);
               if (externalFile) {
                 url = externalFile.localDocumentPath || externalFile.localPath;
               }

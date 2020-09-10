@@ -1,22 +1,44 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as crypto from 'crypto';
 import {FileService} from '../utils/FileService';
+import {HttpClient} from "../utils/HttpClient";
 
 function createTempName(tmpdir) {
   const filename = 'temp_' + crypto.randomBytes(4).readUInt32LE(0) + '_ext';
   return path.join(tmpdir, filename);
 }
 
+export interface BinaryFileEntry {
+  localPath: string;
+  localDocumentPath?: string;
+  md5Checksum: string;
+}
+
+export interface BinaryFilesMap {
+  [id: string]: BinaryFileEntry;
+}
+
+export interface LinkEntry {
+  url: string;
+  md5Checksum: string;
+}
+
+export interface LinksMap {
+  [id: string]: LinkEntry;
+}
+
 export class ExternalFiles {
+  private fileService: FileService;
+  private readonly linksPath: string;
+  private readonly filePath: string;
+  private save_needed: boolean = false;
+  private binaryFiles: BinaryFilesMap;
+  private links: LinksMap;
 
-  constructor(config_dir, httpClient, dest) {
-    this.config_dir = config_dir;
-    this.httpClient = httpClient;
-    this.dest = dest;
-
+  constructor(private config_dir: string, private httpClient: HttpClient, private dest: string) {
     this.fileService = new FileService();
     this.linksPath = path.join(config_dir, 'links.json');
     this.filePath = path.join(config_dir, 'external_files.json');
@@ -34,17 +56,17 @@ export class ExternalFiles {
     }, 500);
   }
 
-  async putFile(file) {
+  async putFile(file: BinaryFileEntry) {
     this.binaryFiles[file.md5Checksum] = file;
     this.save_needed = true;
   }
 
-  async addLink(url, link) {
+  async addLink(url: string, link: LinkEntry) {
     if (!url.startsWith('http:') && !url.startsWith('https:')) {
       return;
     }
 
-    if (!link.md5 && url in this.links) {
+    if (!link.md5Checksum && url in this.links) {
       return;
     }
 
@@ -53,11 +75,11 @@ export class ExternalFiles {
     this.save_needed = true;
   }
 
-  async getMd5(url) {
+  async getMd5(url: string): Promise<string> {
     return await this.httpClient.md5Url(url);
   }
 
-  async downloadTemp(url, dir) {
+  async downloadTemp(url: string, dir: string): Promise<string> {
     const targetPath = createTempName(dir);
     const writeStream = fs.createWriteStream(targetPath);
 
@@ -83,7 +105,7 @@ export class ExternalFiles {
     }
   }
 
-  findFile(checker) {
+  findFile(checker): BinaryFileEntry {
     for (let fileId in this.binaryFiles) {
       const file = this.binaryFiles[fileId];
       if (checker(file)) {
@@ -92,7 +114,7 @@ export class ExternalFiles {
     }
   }
 
-  findFiles(checker) {
+  findFiles(checker): BinaryFileEntry[] {
     const retVal = [];
     for (let fileId in this.binaryFiles) {
       const file = this.binaryFiles[fileId];
@@ -103,7 +125,7 @@ export class ExternalFiles {
     return retVal;
   }
 
-  findLink(checker) {
+  findLink(checker): LinkEntry {
     for (let id in this.links) {
       const link = this.links[id];
       if (checker(link)) {
@@ -112,7 +134,7 @@ export class ExternalFiles {
     }
   }
 
-  findLinks(checker) {
+  findLinks(checker): LinkEntry[] {
     const retVal = [];
     for (let id in this.links) {
       const link = this.links[id];
@@ -147,4 +169,7 @@ export class ExternalFiles {
     this.save_needed = false;
   }
 
+  getDest() {
+    return this.dest;
+  }
 }

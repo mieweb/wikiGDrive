@@ -1,11 +1,11 @@
 'use strict';
 
-import fs from 'fs';
-import crypto from 'crypto';
+import * as fs from 'fs';
+import * as crypto from 'crypto';
 
 export class FileService {
 
-  exists(filePath) {
+  exists(filePath: string): Promise<boolean> {
     return new Promise((resolve) => {
       fs.exists(filePath, (exists) => {
         resolve(exists);
@@ -13,14 +13,14 @@ export class FileService {
     });
   }
 
-  getSize(filePath) {
+  getSize(filePath: string): Promise<number> {
     return new Promise((resolve) => {
       const stats = fs.statSync(filePath);
       resolve(stats.size);
     });
   }
 
-  readFile(filePath) {
+  readFile(filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
       fs.readFile(filePath, function (err, data) {
         if (err) return reject(err);
@@ -30,7 +30,7 @@ export class FileService {
     });
   }
 
-  writeFile(filePath, content) {
+  writeFile(filePath: string, content: string) {
     return new Promise((resolve, reject) => {
       fs.writeFile(filePath, content, function (err) {
         if (err) return reject(err);
@@ -39,7 +39,7 @@ export class FileService {
     });
   }
 
-  md5File(filePath) {
+  md5File(filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('md5');
       hash.setEncoding('hex');
@@ -58,7 +58,7 @@ export class FileService {
     });
   }
 
-  async move(path1, path2) {
+  async move(path1: string, path2: string) {
     fs.renameSync(path1, path2);
   }
 
