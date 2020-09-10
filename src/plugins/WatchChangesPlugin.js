@@ -42,6 +42,7 @@ export class WatchChangesPlugin extends BasePlugin {
 
   async watch() {
     console.log('Watching changes');
+    const rootFolderId = this.googleDriveService.urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
       try {
@@ -50,6 +51,9 @@ export class WatchChangesPlugin extends BasePlugin {
         const changedFiles = result.files.filter(file => {
           let retVal = false;
           file.parents.forEach((parentId) => {
+            if (parentId === rootFolderId) {
+              retVal = true;
+            }
             if (this.filesStructure.containsFile(parentId)) {
               retVal = true;
             }
@@ -63,7 +67,7 @@ export class WatchChangesPlugin extends BasePlugin {
           this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
           console.log('Pulled latest changes');
         } else {
-          console.log('No changes detected. Sleeping for 10 seconds.' + this.startTrackToken);
+          console.log('No changes detected. Sleeping for 10 seconds.');
         }
 
       } catch (e) {

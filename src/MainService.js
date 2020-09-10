@@ -111,11 +111,10 @@ export class MainService {
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         await this.emitThanAwait('main:fetch_watch_token', {}, [ 'watch:token_ready' ]);
 
-        this.eventBus.emit('main:run_list_root');
-
         this.eventBus.on('list_root:done', () => {
           this.eventBus.emit('main:run_watch');
         });
+        this.eventBus.emit('main:run_list_root');
 
         await new Promise(() => {});
         break;
