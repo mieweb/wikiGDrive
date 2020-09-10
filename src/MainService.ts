@@ -28,7 +28,8 @@ export interface CliParams {
   drive_id: string;
   drive: string;
   command: string;
-  debug: boolean;
+  watch_mode: string;
+  debug: string[];
 }
 
 export class MainService {
@@ -40,7 +41,7 @@ export class MainService {
     this.command = this.params.command;
     this.eventBus = new EventEmitter();
     this.eventBus.setMaxListeners(0);
-    if (params.debug) {
+    if (params.debug.indexOf('main') > -1) {
       this.attachDebug();
     }
   }
@@ -136,6 +137,9 @@ export class MainService {
         await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized', 'files_structure:initialized' ]);
         await this.emitThanAwait('main:fetch_watch_token', {}, [ 'watch:token_ready' ]);
 
+        this.eventBus.on('transform:dirty', () => {
+          this.eventBus.emit('download:retry');
+        });
         this.eventBus.on('list_root:done', () => {
           this.eventBus.emit('main:run_watch');
         });

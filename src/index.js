@@ -60,11 +60,12 @@ async function index() {
   params['link_mode'] = argv['link_mode'] || 'mdURLs';
 
   params['flat_folder_structure'] = !!argv['without-folder-structure'];
-  params['debug'] = !!argv['debug'];
+  params['debug'] = (argv['debug'] || '').split(',').map(str => str.toLocaleString().trim());
 
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
   params['git_update_delay'] = argv['git_update_delay'] || 60;
+
 
   process.on('unhandledRejection', function (err) {
     console.error('process.on:unhandledRejection', err);
