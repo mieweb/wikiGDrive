@@ -8,6 +8,7 @@ import {FileService} from '../utils/FileService';
 
 import * as path from 'path';
 import * as async from 'async';
+import {DriveConfig} from "./ConfigDirPlugin";
 
 async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -55,8 +56,10 @@ export class ExternalFilesPlugin extends BasePlugin {
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;
-      this.dest = params.dest;
       await this.init(params);
+    });
+    eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
+      this.dest = drive_config.dest;
     });
     eventBus.on('files_structure:initialized', async ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -114,7 +117,7 @@ export class ExternalFilesPlugin extends BasePlugin {
   }
 
   async download() {
-    const linksToDownload = await this.externalFiles.findLinks(link => !link.md5);
+    const linksToDownload = await this.externalFiles.findLinks(link => !link.md5Checksum);
 
     if (linksToDownload.length > 0) {
       console.log('Downloading external files (' + linksToDownload.length + ')');

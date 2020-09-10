@@ -16,7 +16,6 @@ export class GitPlugin extends BasePlugin {
     this.gitUpdateSecondsDelay = 3600;
 
     eventBus.on('main:init', async (params) => {
-      this.dest = params.dest;
       this.config_dir = params.config_dir;
 
       const seconds = parseSecondsInterval(params.git_update_delay);
@@ -26,6 +25,9 @@ export class GitPlugin extends BasePlugin {
 
       fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
       await this.createHookExamples();
+    });
+    eventBus.on('drive_config:loaded', async (drive_config) => {
+      this.dest = drive_config.dest;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
