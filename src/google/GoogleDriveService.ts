@@ -14,6 +14,15 @@ export function getDesiredPath(name) {
   return name;
 }
 
+export interface ApiFile extends File {
+  parents: string[];
+}
+
+export interface Changes {
+  token: string;
+  files: ApiFile[];
+}
+
 function removeDuplicates(files) {
   const retVal = [];
 
@@ -169,69 +178,75 @@ export class GoogleDriveService {
     return removeDuplicates(retVal);
   }
 
-  async getStartTrackToken(auth) {
+  async getStartTrackToken(auth, driveId) {
     const drive = google.drive({ version: 'v3', auth });
-    const res = await drive.changes.getStartPageToken({});
+
+    const params = {
+      supportsAllDrives: true,
+      driveId: undefined
+    }
+
+    if (driveId) {
+      params.driveId = driveId;
+    }
+
+    const res = await drive.changes.getStartPageToken(params);
     return res.data.startPageToken;
   }
 
-  watchChanges(auth, pageToken, driveId) {
-    return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
-      const drive = google.drive({ version: 'v3', auth });
+  async watchChanges(auth, pageToken, driveId): Promise<Changes> {
+    const drive = google.drive({ version: 'v3', auth });
 
-      const params = {
-        pageToken: pageToken,
-        supportsAllDrives: true,
-        includeItemsFromAllDrives: true,
-        includeCorpusRemovals: true,
-        fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
-        drives: undefined
-      };
+    const params = {
+      pageToken: pageToken,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
+      driveId: undefined
+    };
 
-      if (driveId) {
-        params.drives = [ driveId ];
-      }
+    if (driveId) {
+      params.driveId = driveId;
+    }
 
-      try {
-        const res = await drive.changes.list(params);
+    try {
+      const res = await drive.changes.list(params);
 
-        const files = res.data.changes
-          .map(change => change.file)
-          .map((apiFile) => {
-            const file = <File>apiFile;
+      const files = res.data.changes
+        .map(change => change.file)
+        .map(apiFile => {
+          const file = <ApiFile>apiFile;
+          file.desiredLocalPath = getDesiredPath(file.name);
+          if (apiFile.lastModifyingUser) {
+            file.lastAuthor = apiFile.lastModifyingUser.displayName;
+            delete apiFile.lastModifyingUser;
+          }
 
-            file.desiredLocalPath = getDesiredPath(file.name);
-            if (apiFile.lastModifyingUser) {
-              file.lastAuthor = apiFile.lastModifyingUser.displayName;
-              delete apiFile.lastModifyingUser;
-            }
+          if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
+            file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
+          }
 
-            if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-              file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-            }
+          switch (file.mimeType) {
+            case 'application/vnd.google-apps.drawing':
+              file.desiredLocalPath += '.svg';
+              break;
+            case 'application/vnd.google-apps.document':
+              file.desiredLocalPath += '.md';
+              break;
+          }
 
-            switch (file.mimeType) {
-              case 'application/vnd.google-apps.drawing':
-                file.desiredLocalPath += '.svg';
-                break;
-              case 'application/vnd.google-apps.document':
-                file.desiredLocalPath += '.md';
-                break;
-            }
-
-            return file;
-          });
-
-        resolve({
-          token: res.data.newStartPageToken,
-          files: files
+          return file;
         });
-      } catch (err) {
-        reject(new GoogleDriveServiceError('Error watching changes', {
-          isQuotaError: err.isQuotaError
-        }));
-      }
-    });
+
+      return {
+        token: res.data.newStartPageToken,
+        files: files
+      };
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error watching changes', {
+        isQuotaError: err.isQuotaError
+      });
+    }
   }
 
   async _listFiles(auth, context, modifiedTime, nextPageToken?) {
@@ -243,7 +258,7 @@ export class GoogleDriveService {
     }
 
     const listParams = {
-      corpora: 'allDrives',
+      corpora: context.driveId ? 'drive' : 'allDrives',
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,

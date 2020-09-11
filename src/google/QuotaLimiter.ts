@@ -60,6 +60,9 @@ export class QuotaLimiter {
     if (this.oldCounter === this.counter) {
       return;
     }
+    if (this.jobs.length < 8) { // Don't speed up trivial queue
+      return;
+    }
 
     const newLimits: QuotaLimit = {
       queries: this.currentLimit.queries + 1,

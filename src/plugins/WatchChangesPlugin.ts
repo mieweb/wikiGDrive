@@ -1,18 +1,35 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
+import {CliParams} from "../MainService";
+import {DriveConfig} from "./ConfigDirPlugin";
+import {FilesStructure} from "../storage/FilesStructure";
+import {GoogleDriveService} from "../google/GoogleDriveService";
 
 export class WatchChangesPlugin extends BasePlugin {
+  private command: string;
+  private drive_id: string;
+  private watch_mode: string;
+  private debug: string[];
+  private drive_config: DriveConfig;
+  private filesStructure: FilesStructure;
+  private auth: any;
+  private googleDriveService: GoogleDriveService;
+  private context: any;
+  private lastMTime: string;
+  private startTrackToken: string;
+
   constructor(eventBus) {
     super(eventBus);
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
-      this.drive_id = params.drive_id;
       this.watch_mode = params.watch_mode;
+      this.debug = params.debug;
     });
-    eventBus.on('drive_config:loaded', (drive_config) => {
+    eventBus.on('drive_config:loaded', (drive_config: DriveConfig) => {
       this.drive_config = drive_config;
+      this.drive_id = drive_config.drive_id;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -29,7 +46,7 @@ export class WatchChangesPlugin extends BasePlugin {
       if (this.watch_mode !== 'changes') {
         return;
       }
-      this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
+      this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth, this.drive_id);
       eventBus.emit('watch:token_ready');
     });
     eventBus.on('main:run_watch', async () => {
@@ -42,6 +59,7 @@ export class WatchChangesPlugin extends BasePlugin {
 
   async watch() {
     console.log('Watching changes');
+    const rootFolderId = this.googleDriveService.urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
       try {
@@ -50,6 +68,9 @@ export class WatchChangesPlugin extends BasePlugin {
         const changedFiles = result.files.filter(file => {
           let retVal = false;
           file.parents.forEach((parentId) => {
+            if (parentId === rootFolderId) {
+              retVal = true;
+            }
             if (this.filesStructure.containsFile(parentId)) {
               retVal = true;
             }
@@ -58,12 +79,18 @@ export class WatchChangesPlugin extends BasePlugin {
         });
 
         if (changedFiles.length > 0) {
-          console.log(changedFiles.length + ' files modified');
+          console.log(changedFiles.length + ' files changed');
           await this.filesStructure.merge(changedFiles);
           this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
           console.log('Pulled latest changes');
+          this.eventBus.emit('files_structure:dirty');
         } else {
-          console.log('No changes detected. Sleeping for 10 seconds.' + this.startTrackToken);
+          if (this.debug.indexOf('watch') > -1) {
+            if (result.files.length > 0) {
+              console.log('Files outside folder:', result.files);
+            }
+          }
+          console.log('No changes detected. Sleeping for 10 seconds.');
         }
 
       } catch (e) {

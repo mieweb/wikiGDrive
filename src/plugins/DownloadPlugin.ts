@@ -10,6 +10,7 @@ import {StringWritable} from '../utils/StringWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ExternalFiles} from "../storage/ExternalFiles";
+import {CliParams} from "../MainService";
 
 export class DownloadPlugin extends BasePlugin {
   private googleDocsService: GoogleDocsService;
@@ -18,14 +19,16 @@ export class DownloadPlugin extends BasePlugin {
   private auth: any;
   private googleDriveService: GoogleDriveService;
   private externalFiles: ExternalFiles;
+  private debug: string[];
 
   constructor(eventBus) {
     super(eventBus);
 
     this.googleDocsService = new GoogleDocsService();
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:init', async (params: CliParams) => {
       this.config_dir = params.config_dir;
+      this.debug = params.debug;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -144,6 +147,9 @@ export class DownloadPlugin extends BasePlugin {
     for (const file of dirtyFiles) {
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
+      if (file.mimeType === FilesStructure.REDIRECT_MIME) {
+        promises.push(this.filesStructure.markClean([ file ]));
+      } else
       if (file.mimeType === FilesStructure.DRAWING_MIME) {
         promises.push(this.downloadDiagram(file, targetPath));
       } else
@@ -162,6 +168,9 @@ export class DownloadPlugin extends BasePlugin {
 
     const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
     if (dirtyFilesAfter.length > 0) {
+      if (this.debug.indexOf('download') > -1) {
+        console.log('dirtyFilesAfter', dirtyFilesAfter);
+      }
       console.log('Download retry required');
       process.nextTick(() => {
         this.eventBus.emit('download:retry');
