@@ -117,7 +117,7 @@ export class ExternalFilesPlugin extends BasePlugin {
   }
 
   async download() {
-    const linksToDownload = await this.externalFiles.findLinks(link => !link.md5);
+    const linksToDownload = await this.externalFiles.findLinks(link => !link.md5Checksum);
 
     if (linksToDownload.length > 0) {
       console.log('Downloading external files (' + linksToDownload.length + ')');
