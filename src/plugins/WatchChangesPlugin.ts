@@ -24,12 +24,12 @@ export class WatchChangesPlugin extends BasePlugin {
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
-      this.drive_id = params.drive_id;
       this.watch_mode = params.watch_mode;
       this.debug = params.debug;
     });
     eventBus.on('drive_config:loaded', (drive_config: DriveConfig) => {
       this.drive_config = drive_config;
+      this.drive_id = drive_config.drive_id;
     });
     eventBus.on('files_structure:initialized', ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -46,7 +46,7 @@ export class WatchChangesPlugin extends BasePlugin {
       if (this.watch_mode !== 'changes') {
         return;
       }
-      this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth);
+      this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth, this.drive_id);
       eventBus.emit('watch:token_ready');
     });
     eventBus.on('main:run_watch', async () => {

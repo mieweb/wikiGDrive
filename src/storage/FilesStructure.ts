@@ -111,9 +111,12 @@ class FilesStructure {
     }
   }
 
-  async markClean(files) {
+  async markClean(files: File[]) {
     for (const file of files) {
       this.fileMap[file.id].dirty = false;
+      if (file.modifiedTime) {
+        this.fileMap[file.id].modifiedTime = file.modifiedTime;
+      }
       await this._putFile(file.id, Object.assign({}, this.fileMap[file.id], {
         dirty: false
       }));

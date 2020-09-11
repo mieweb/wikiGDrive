@@ -3,7 +3,6 @@
 import slugify from 'slugify';
 import {google} from 'googleapis';
 import {File, FilesStructure} from '../storage/FilesStructure';
-import {GoogleDocsServiceError} from "./GoogleDocsService";
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -179,9 +178,19 @@ export class GoogleDriveService {
     return removeDuplicates(retVal);
   }
 
-  async getStartTrackToken(auth) {
+  async getStartTrackToken(auth, driveId) {
     const drive = google.drive({ version: 'v3', auth });
-    const res = await drive.changes.getStartPageToken({});
+
+    const params = {
+      supportsAllDrives: true,
+      driveId: undefined
+    }
+
+    if (driveId) {
+      params.driveId = driveId;
+    }
+
+    const res = await drive.changes.getStartPageToken(params);
     return res.data.startPageToken;
   }
 
@@ -192,13 +201,12 @@ export class GoogleDriveService {
       pageToken: pageToken,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
-      includeCorpusRemovals: true,
       fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
-      drives: undefined
+      driveId: undefined
     };
 
     if (driveId) {
-      params.drives = [ driveId ];
+      params.driveId = driveId;
     }
 
     try {
@@ -250,7 +258,7 @@ export class GoogleDriveService {
     }
 
     const listParams = {
-      corpora: 'allDrives',
+      corpora: context.driveId ? 'drive' : 'allDrives',
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,
