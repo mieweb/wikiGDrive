@@ -187,7 +187,9 @@ export class DownloadPlugin extends BasePlugin {
     }
     parts.pop();
 
-    fs.mkdirSync(parts.join(path.sep), { recursive: true });
+    if (!fs.existsSync(parts.join(path.sep))) {
+      fs.mkdirSync(parts.join(path.sep), { recursive: true });
+    }
   }
 
 }

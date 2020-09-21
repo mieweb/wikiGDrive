@@ -23,7 +23,9 @@ export class GitPlugin extends BasePlugin {
         this.gitUpdateSecondsDelay = seconds;
       }
 
-      fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
+      if (!fs.existsSync(path.join(params.config_dir, 'hooks'))) {
+        fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
+      }
       await this.createHookExamples();
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {

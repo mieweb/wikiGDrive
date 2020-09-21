@@ -290,7 +290,9 @@ export class TransformPlugin extends BasePlugin {
     }
     parts.pop();
 
-    fs.mkdirSync(parts.join(path.sep), { recursive: true });
+    if (!fs.existsSync(parts.join(path.sep))) {
+      fs.mkdirSync(parts.join(path.sep), { recursive: true });
+    }
   }
 
   async removeEmptyDir(filePath) {
@@ -324,7 +326,9 @@ export class TransformPlugin extends BasePlugin {
 
     directories.forEach(directory => {
       const targetPath = path.join(this.dest, directory.localPath);
-      fs.mkdirSync(targetPath, { recursive: true });
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
     });
   }
 

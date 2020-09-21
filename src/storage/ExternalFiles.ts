@@ -45,7 +45,9 @@ export class ExternalFiles {
   }
 
   async init() {
-    fs.mkdirSync(path.join(this.dest, 'external_files'), { recursive: true });
+    if (!fs.existsSync(path.join(this.dest, 'external_files'))) {
+      fs.mkdirSync(path.join(this.dest, 'external_files'), { recursive: true });
+    }
     await this.loadData();
 
     process.on('SIGINT', () => {
