@@ -166,16 +166,20 @@ export class TransformPlugin extends BasePlugin {
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
-        const stream = fs.createReadStream(gdocPath)
-          .pipe(googleListFixer)
-          .pipe(embedImageFixed)
-          .pipe(externalToLocalTransform)
-          .pipe(markDownTransform)
-          .pipe(frontMatterTransform)
-          .pipe(clearShortCodesTransform)
-          .pipe(dest);
-
         await new Promise((resolve, reject) => {
+          dest.on('error', err => {
+            reject(err);
+          });
+
+          const stream = fs.createReadStream(gdocPath)
+              .pipe(googleListFixer)
+              .pipe(embedImageFixed)
+              .pipe(externalToLocalTransform)
+              .pipe(markDownTransform)
+              .pipe(frontMatterTransform)
+              .pipe(clearShortCodesTransform)
+              .pipe(dest);
+
           stream.on('finish', () => {
             resolve();
           });

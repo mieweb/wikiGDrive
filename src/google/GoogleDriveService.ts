@@ -382,4 +382,38 @@ export class GoogleDriveService {
       });
     }
   }
+
+  async listDrives(auth, nextPageToken?) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    const listParams = {
+      pageSize: 100,
+      pageToken: nextPageToken
+    }
+
+    try {
+      const res = await drive.drives.list(listParams);
+      const drives = res.data.drives.map(drive => {
+        return {
+          id: drive.id,
+          name: drive.name,
+          kind: drive.kind
+        }
+      });
+
+      if (res.data.nextPageToken) {
+        const nextDrives = await this.listDrives(auth, res.data.nextPageToken);
+        return drives.concat(nextDrives);
+      } else {
+        return drives;
+      }
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error listening drives', {
+        isQuotaError: err.isQuotaError,
+        message: err.message
+      });
+    }
+
+  }
+
 }

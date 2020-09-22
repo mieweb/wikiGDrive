@@ -27,6 +27,8 @@ Commands:
     wikigdrive watch
     --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
 
+    wikigdrive drives
+
 Options:
     --config_dir (.wgd)
 

@@ -50,6 +50,12 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
 --without-folder-structure    Download documents into single, flat folder
 ```
 
+List available drive ids
+
+```
+wikigdrive drives
+```
+
 Run one time documents pull
 
 ```
