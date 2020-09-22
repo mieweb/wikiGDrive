@@ -65,7 +65,7 @@ export class WatchChangesPlugin extends BasePlugin {
       try {
         const result = await this.googleDriveService.watchChanges(this.auth, this.startTrackToken, this.drive_id);
 
-        const changedFiles = result.files.filter(file => {
+        const apiFiles = result.files.filter(file => {
           let retVal = false;
           file.parents.forEach((parentId) => {
             if (parentId === rootFolderId) {
@@ -76,6 +76,13 @@ export class WatchChangesPlugin extends BasePlugin {
             }
           });
           return retVal;
+        });
+
+        const changedFiles = apiFiles.map(file => {
+          if (file.parentId === rootFolderId) {
+            file.parentId = undefined;
+          }
+          return file;
         });
 
         if (changedFiles.length > 0) {
