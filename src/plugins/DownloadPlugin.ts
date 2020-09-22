@@ -147,6 +147,9 @@ export class DownloadPlugin extends BasePlugin {
     for (const file of dirtyFiles) {
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
+      if (file.mimeType === FilesStructure.CONFLICT_MIME) {
+        promises.push(this.filesStructure.markClean([ file ]));
+      } else
       if (file.mimeType === FilesStructure.REDIRECT_MIME) {
         promises.push(this.filesStructure.markClean([ file ]));
       } else

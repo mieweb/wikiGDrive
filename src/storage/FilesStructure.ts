@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import {FileService} from '../utils/FileService';
+import {LocalPathGenerator} from "./LocalPathGenerator";
 
 function generateUniqId() {
   return Math.random().toString(26).slice(2);
@@ -14,6 +15,7 @@ type FileId = string;
 
 export interface File {
   id: FileId;
+  parentId?: FileId;
   name: string;
   desiredLocalPath: string;
   localPath: string;
@@ -47,7 +49,7 @@ class FilesStructure {
   static REDIRECT_MIME: string;
   private fileMap: FileMap;
 
-  constructor(private config_dir: string) {
+  constructor(private config_dir: string, private flat_folder_structure: boolean = false) {
     this.fileService = new FileService();
     this.filePath = path.join(config_dir, 'files.json');
   }
@@ -75,6 +77,9 @@ class FilesStructure {
         mergedFiles.push(item);
       }
     }
+
+    const localPathGenerator = new LocalPathGenerator(this, this.flat_folder_structure);
+    changedFiles = localPathGenerator.generateDesiredPaths(changedFiles);
 
     for (const file of changedFiles) {
       const oldEntry = this.fileMap[file.id];
@@ -280,7 +285,6 @@ class FilesStructure {
     fs.writeFileSync(this.filePath, content);
     this.save_needed = false;
   }
-
 }
 
 FilesStructure.FOLDER_MIME = 'application/vnd.google-apps.folder';

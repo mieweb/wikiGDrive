@@ -1,29 +1,34 @@
 'use strict';
 
-import path from 'path';
+import * as path from 'path';
 
 import {BasePlugin} from './BasePlugin';
 import {FilesStructure} from '../storage/FilesStructure';
 import {FileService} from '../utils/FileService';
+import {DriveConfig} from './ConfigDirPlugin';
 
 export class FilesStructurePlugin extends BasePlugin {
+  private flat_folder_structure: boolean;
+  private config_dir: any;
+  private filesStructure: FilesStructure;
   constructor(eventBus) {
     super(eventBus);
 
     eventBus.on('main:init', async (params) => {
-      this.params = params;
       this.config_dir = params.config_dir;
-      await this.init(params);
+    });
+    eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
+      this.flat_folder_structure = drive_config.flat_folder_structure;
+      await this.init();
     });
     eventBus.on('list_root:done', async () => {
-      // this.eventBus.emit('files_structure:dirty');
       await this.scanFileSystem();
       this.eventBus.emit('files_structure:dirty');
     });
   }
 
-  async init(params) {
-    const filesStructure = new FilesStructure(params.config_dir);
+  async init() {
+    const filesStructure = new FilesStructure(this.config_dir, this.flat_folder_structure);
     this.filesStructure = filesStructure;
     await filesStructure.init();
     await this.cleanupDir();
