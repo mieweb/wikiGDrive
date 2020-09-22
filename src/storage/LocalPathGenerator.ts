@@ -31,6 +31,10 @@ export class LocalPathGenerator {
             for (const changedFile of changedFiles) {
                 if (!changedFile.desiredLocalPath) {
                     changedFile.desiredLocalPath = this.generateDesiredPath(changedFile, changedFiles);
+                    if (!changedFile.desiredLocalPath) {
+                        continue;
+                    }
+
                     if (changedFile.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
                         changedFile.desiredLocalPath = changedFile.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
                     }
