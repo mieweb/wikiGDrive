@@ -56,10 +56,10 @@ export class ExternalFilesPlugin extends BasePlugin {
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;
-      await this.init(params);
     });
     eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
       this.dest = drive_config.dest;
+      await this.init();
     });
     eventBus.on('files_structure:initialized', async ({ filesStructure }) => {
       this.filesStructure = filesStructure;
@@ -74,8 +74,8 @@ export class ExternalFilesPlugin extends BasePlugin {
     });
   }
 
-  private async init(params) {
-    this.externalFiles = new ExternalFiles(params.config_dir, new HttpClient(), params.dest);
+  private async init() {
+    this.externalFiles = new ExternalFiles(this.config_dir, new HttpClient(), this.dest);
     await this.externalFiles.init();
     await this.externalFiles.cleanup();
     this.eventBus.emit('external_files:initialized', { externalFiles: this.externalFiles });

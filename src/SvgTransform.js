@@ -2,7 +2,7 @@
 
 import { Transform } from 'stream';
 import xmldoc from 'xmldoc';
-import { GoogleDriveService } from './google/GoogleDriveService';
+import {urlToFolderId} from './google/GoogleDriveService';
 
 export class SvgTransform extends Transform {
 
@@ -42,10 +42,8 @@ export class SvgTransform extends Transform {
       findLinkInChild(child);
     });
 
-    const googleDriveService = new GoogleDriveService();
-
     for (let url in urlToRelativePath) {
-      const id = googleDriveService.urlToFolderId(url);
+      const id = urlToFolderId(url);
 
       if (id) {
         const localPath = await this.linkTranslator.urlToDestUrl(id);

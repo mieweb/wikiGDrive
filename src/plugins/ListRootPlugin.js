@@ -1,6 +1,7 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
+import {urlToFolderId} from '../google/GoogleDriveService';
 
 export class ListRootPlugin extends BasePlugin {
   constructor(eventBus) {
@@ -26,9 +27,9 @@ export class ListRootPlugin extends BasePlugin {
   }
 
   async start() {
-    const folderId = this.googleDriveService.urlToFolderId(this.drive_config['drive']);
+    const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
-    const context = { folderId: folderId };
+    const context = { folderId: rootFolderId };
     if (this.drive_id) {
       context.driveId = this.drive_id;
     }
@@ -36,7 +37,14 @@ export class ListRootPlugin extends BasePlugin {
     let lastMTime = this.filesStructure.getMaxModifiedTime();
 
     try {
-      const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+      const apiFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+      const changedFiles = apiFiles.map(file => {
+        if (file.parentId === rootFolderId) {
+          file.parentId = undefined;
+        }
+        return file;
+      });
+
       await this.filesStructure.merge(changedFiles);
     } catch (e) {
       this.eventBus.emit('panic', {
