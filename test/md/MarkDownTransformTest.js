@@ -10,7 +10,6 @@ describe('MarkDownTransformTest', () => {
     const html = '<strong>test </strong>abc';
     const markdown = MarkDownTransform.convertHtmlSimpleTags(html);
 
-    console.log(markdown);
     assert.equal('**test** abc', markdown);
 
     return Promise.resolve();
