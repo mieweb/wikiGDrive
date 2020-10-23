@@ -7,11 +7,13 @@ export class GoogleDocsServiceError extends Error {
   private file: any;
   private dest: any;
   private isQuotaError: boolean;
+  private origError: Error;
 
-  constructor(msg, { file, dest, isQuotaError }) {
+  constructor(msg, { origError, file, dest, isQuotaError }) {
     super(msg);
     this.file = file;
     this.dest = dest;
+    this.origError = origError;
     this.isQuotaError = isQuotaError;
   }
 }
@@ -55,7 +57,7 @@ export class GoogleDocsService {
       if (!err.isQuotaError) {
         console.error(err);
       }
-      throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, dest, isQuotaError: err.isQuotaError });
+      throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, origError: err, dest, isQuotaError: err.isQuotaError });
     }
   }
 
