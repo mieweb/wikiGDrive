@@ -95,22 +95,22 @@ export class MarkDownTransform extends Transform {
   }
 
   async convertImageLink(url) {
-    // if (this.document.inlineObjects[url]) {
-    //   const inlineObject = this.document.inlineObjects[url];
-    //
-    //   const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-    //   if (embeddedObject.imageProperties) {
-    //     if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-    //       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-    //     } else {
-    //       url = '';
-    //     }
-    //   }
-    // }
-    //
-    // if (!url) {
-    //   return '';
-    // }
+    if (this.document.inlineObjects[url]) {
+      const inlineObject = this.document.inlineObjects[url];
+
+      const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
+      if (embeddedObject.imageProperties) {
+        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+        } else {
+          url = '';
+        }
+      }
+    }
+
+    if (!url) {
+      return '';
+    }
 
     // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
     // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
@@ -160,10 +160,17 @@ export class MarkDownTransform extends Transform {
               cellNo += tableCell.tableCellStyle.columnSpan - 1;
             }
           }
-          textElements.push('    <td' + tableParams + '>\n');
+
           const text = await this.elementsToText(tableCell.content, listCounters);
-          textElements.push(text.trim());  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
-          textElements.push('    </td>\n');
+          const trimmedText = text.trim();
+          if (trimmedText.indexOf('\n') >= 0) {
+            textElements.push('    <td' + tableParams + '>\n');
+            textElements.push(trimmedText + '\n');  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
+            textElements.push('    </td>\n');
+          } else {
+            textElements.push('    <td' + tableParams + '>' + trimmedText + '</td>\n');
+          }
+
         }
 
         textElements.push('  </tr>\n');

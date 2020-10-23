@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import {Readable, Writable} from 'stream';
 
-import { MarkDownTransform } from '../../src/MarkDownTransform';
+import { MarkDownTransform } from '../../src/markdown/MarkDownTransform';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
@@ -114,7 +114,7 @@ async function transform(doc) {
     async imageUrlToLocalPath(url) {
       return url;
     },
-    convertToRelativeMarkDownPath(basePath, localPath) {
+    convertToRelativeMarkDownPath(localPath) {
       return localPath;
     },
     urlToDestUrl(url) {
