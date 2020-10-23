@@ -6,6 +6,16 @@ import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
 
+  it('test strong tags', async () => {
+    const html = '<strong>test </strong>abc';
+    const markdown = MarkDownTransform.convertHtmlSimpleTags(html);
+
+    console.log(markdown);
+    assert.equal('**test** abc', markdown);
+
+    return Promise.resolve();
+  });
+
   it('test ./block-macro.md.markdown', async () => {
 
     const doc = require('./block-macro.md.json');
