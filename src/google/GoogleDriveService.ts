@@ -212,7 +212,7 @@ export class GoogleDriveService {
         });
 
       return {
-        token: res.data.newStartPageToken,
+        token: res.data.nextPageToken || res.data.newStartPageToken,
         files: files
       };
     } catch (err) {
