@@ -48,6 +48,7 @@ class FilesStructure {
   static CONFLICT_MIME: string;
   static REDIRECT_MIME: string;
   static SPREADSHEET_MIME: string;
+  static FORM_MIME: string;
   private fileMap: FileMap;
 
   constructor(private config_dir: string, private flat_folder_structure: boolean = false) {
@@ -291,7 +292,6 @@ class FilesStructure {
 FilesStructure.FOLDER_MIME = 'application/vnd.google-apps.folder';
 FilesStructure.DOCUMENT_MIME = 'application/vnd.google-apps.document';
 FilesStructure.DRAWING_MIME = 'application/vnd.google-apps.drawing';
-FilesStructure.SPREADSHEET_MIME = 'application/vnd.google-apps.spreadsheet';
 
 FilesStructure.CONFLICT_MIME = 'conflict';
 FilesStructure.REDIRECT_MIME = 'redirect';
