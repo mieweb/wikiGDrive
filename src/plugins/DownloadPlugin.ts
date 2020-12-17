@@ -132,6 +132,30 @@ export class DownloadPlugin extends BasePlugin {
     }
   }
 
+  private async downloadSpreadsheet(file) {
+    await this.ensureDir(path.join(this.config_dir, 'files', file.id + '.html'));
+
+    const xslxPath = path.join(this.config_dir, 'files', file.id + '.xslx');
+    const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
+
+    try {
+      const destXlsx = new StringWritable();
+      const destJson = new StringWritable();
+
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', localPath: file.localPath }, destXlsx);
+      await this.googleDocsService.download(this.auth, file, destJson);
+
+      fs.writeFileSync(xslxPath, destXlsx.getString());
+      fs.writeFileSync(gdocPath, destJson.getString());
+      await this.filesStructure.markClean([ file ]);
+    } catch (err) {
+      if (fs.existsSync(xslxPath)) fs.unlinkSync(xslxPath);
+      if (fs.existsSync(gdocPath)) fs.unlinkSync(gdocPath);
+      await this.filesStructure.markDirty([ file ]);
+      throw err;
+    }
+  }
+
   private async handleDirtyFiles() {
     if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
       fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
@@ -159,7 +183,12 @@ export class DownloadPlugin extends BasePlugin {
       if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
         promises.push(this.downloadDocument(file));
       } else
+      if (file.mimeType === FilesStructure.SPREADSHEET_MIME) {
+        promises.push(this.downloadSpreadsheet(file));
+      } else
       if (file.size !== undefined) {
+        promises.push(this.downloadAsset(file, targetPath));
+      } else {
         promises.push(this.downloadAsset(file, targetPath));
       }
     }
