@@ -18,6 +18,7 @@ import {CliParams, LinkMode} from "../MainService";
 import {DriveConfig} from './ConfigDirPlugin';
 import {ExternalFiles} from '../storage/ExternalFiles';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
+import {SvgTransform} from '../SvgTransform';
 
 export class TransformPlugin extends BasePlugin {
   private command: string;
@@ -69,6 +70,7 @@ export class TransformPlugin extends BasePlugin {
     }
 
     // await this.createFolderStructure(files);
+    await this.transformDiagrams();
     await this.transformDocuments();
     await this.generateMetaFiles();
 
@@ -109,8 +111,8 @@ export class TransformPlugin extends BasePlugin {
     return navigationTransform;
   }
 
-  async getFilesToTransform() {
-    const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
+  async getFilesToTransform(mimeType = FilesStructure.DOCUMENT_MIME) {
+    const files = this.filesStructure.findFiles(file => !file.dirty && (mimeType === file.mimeType));
     const transformedFiles = this.transformStatus.findStatuses(() => true);
 
     const filesToTransform = [];
@@ -129,6 +131,57 @@ export class TransformPlugin extends BasePlugin {
     return filesToTransform;
   }
 
+  async transformDiagrams() {
+    const filesToTransform = await this.getFilesToTransform(FilesStructure.DRAWING_MIME);
+    console.log('Transforming diagrams: ' + filesToTransform.length);
+
+    for (const file of filesToTransform) {
+      if (file.oldLocalPath) {
+        const removePath = path.join(this.dest, file.oldLocalPath);
+        if (fs.existsSync(removePath)) fs.unlinkSync(removePath);
+      }
+
+      const targetPath = path.join(this.dest, file.localPath);
+
+      try {
+        await this.ensureDir(targetPath);
+        const dest = fs.createWriteStream(targetPath);
+
+        const svgTransform = new SvgTransform(file.localPath, this.linkTranslator);
+
+        const gdocPath = path.join(this.config_dir, 'files', file.id + '.svg');
+
+        await new Promise((resolve, reject) => {
+          dest.on('error', err => {
+            reject(err);
+          });
+
+          const stream = fs.createReadStream(gdocPath)
+              .pipe(svgTransform)
+              .pipe(dest);
+
+          stream.on('finish', () => {
+            resolve();
+          });
+          stream.on('error', err => {
+            reject(err);
+          });
+        });
+
+        await this.transformStatus.addStatus(file.id, {
+          id: file.id,
+          modifiedTime: file.modifiedTime,
+          localPath: file.localPath
+        });
+
+      } catch (e) {
+        console.error('Error transforming ' + file.id + '.svg [' + file.localPath + ']: ' + e.message);
+        await this.filesStructure.markDirty([ file ]);
+        await this.transformStatus.removeStatus(file.id);
+      }
+
+    }
+  }
 
   async transformDocuments() {
     const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);

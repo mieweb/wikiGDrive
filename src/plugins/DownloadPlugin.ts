@@ -70,10 +70,8 @@ export class DownloadPlugin extends BasePlugin {
     console.log('Downloading diagram: ' + file.localPath);
     await this.ensureDir(targetPath);
 
-    // const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
-
     try {
-      const writeStream = fs.createWriteStream(targetPath);
+      const writeStream = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.svg'));
       await this.googleDriveService.exportDocument(
         this.auth,
         Object.assign({}, file, { mimeType: 'image/svg+xml' }),
@@ -85,7 +83,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     try {
-      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         this.auth,
@@ -98,7 +96,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     const fileService = new FileService();
-    const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
+    const md5Checksum = await fileService.md5File(targetPath.replace(/.gdoc$/, '.png'));
 
     await this.externalFiles.putFile({
       localPath: file.localPath.replace(/.svg$/, '.png'),

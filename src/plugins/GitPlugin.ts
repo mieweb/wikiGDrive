@@ -1,8 +1,8 @@
 'use strict';
 
-import path from 'path';
-import fs from 'fs';
-import SimpleGit from 'simple-git/promise';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as SimpleGit from 'simple-git/promise';
 import { spawn } from 'child_process';
 
 import { BasePlugin } from './BasePlugin';
@@ -10,6 +10,11 @@ import { FilesStructure } from '../storage/FilesStructure';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 
 export class GitPlugin extends BasePlugin {
+  private gitUpdateSecondsDelay: number;
+  private config_dir: any;
+  private dest: string;
+  private filesStructure: FilesStructure;
+
   constructor(eventBus) {
     super(eventBus);
 

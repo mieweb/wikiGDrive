@@ -2,6 +2,7 @@
 
 import slugify from 'slugify';
 import { Transform } from 'stream';
+import {LinkTranslator} from '../LinkTranslator';
 
 export const PREFIX_LEVEL = '    ';
 
@@ -48,7 +49,21 @@ function wrapWith(wrapper, text, wrapper2) {
   return text;
 }
 
+interface ProcessParagraphResult {
+  listParagraph: boolean,
+  codeParagraph: boolean,
+  headerParagraph: boolean,
+  text: string
+}
+
 export class MarkDownTransform extends Transform {
+  private readonly localPath: string;
+  private linkTranslator: LinkTranslator;
+  private json: string;
+  private document: any;
+  private styles: {};
+  private headings: {};
+  private lists: any;
 
   constructor(localPath, linkTranslator) {
     super();
@@ -133,17 +148,25 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(element, listCounters) {
+  async processParagraph(element, listCounters): Promise<ProcessParagraphResult> {
     if (element.tableOfContents) {
       const tableOfContentsText = await this.processTos(element.tableOfContents.content);
       return {
+        listParagraph: false,
+        codeParagraph: false,
+        headerParagraph: false,
         text: tableOfContentsText
       };
     }
 
     const textElements = [];
 
-    const result = {};
+    const result: ProcessParagraphResult = {
+      listParagraph: false,
+      codeParagraph: false,
+      headerParagraph: false,
+      text: ''
+    };
 
     if (element.table) {
       textElements.push('<table>\n');

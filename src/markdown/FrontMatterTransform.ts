@@ -1,8 +1,13 @@
 'use strict';
 
 import { Transform } from 'stream';
+import { LinkTranslator } from '../LinkTranslator';
 
 export class FrontMatterTransform extends Transform {
+  private readonly navigationHierarchy: any;
+  private file: any;
+  private linkTranslator: LinkTranslator;
+  private data: string;
 
   constructor(file, linkTranslator, navigationHierarchy) {
     super();

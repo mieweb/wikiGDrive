@@ -1,8 +1,12 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
+import {GoogleDriveService} from '../google/GoogleDriveService';
 
 export class ListDrivesPlugin extends BasePlugin {
+  private auth: any;
+  private googleDriveService: GoogleDriveService;
+  
   constructor(eventBus) {
     super(eventBus);
 
