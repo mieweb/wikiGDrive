@@ -220,7 +220,9 @@ export class MarkDownTransform extends Transform {
             textElements.push(element);
           } else
             if (element.inlineObjectElement) {
-              const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+              const localPath = await this.linkTranslator.imageUrlToLocalPath(element.inlineObjectElement.inlineObjectId);
+              const imageLink = await this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+              // const imageLink = await this.convertImageLink(localPath);
               if (imageLink) {
                 if (imageLink.endsWith('.svg')) {
                   textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +

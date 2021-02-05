@@ -19,6 +19,7 @@ import {DriveConfig} from './ConfigDirPlugin';
 import {ExternalFiles} from '../storage/ExternalFiles';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
 import {SvgTransform} from '../SvgTransform';
+import {UnZipper} from '../utils/UnZipper';
 
 export class TransformPlugin extends BasePlugin {
   private command: string;
@@ -30,6 +31,7 @@ export class TransformPlugin extends BasePlugin {
   private filesStructure: FilesStructure;
   private externalFiles: ExternalFiles;
   private linkTranslator: LinkTranslator;
+  private force: boolean;
 
   constructor(eventBus) {
     super(eventBus);
@@ -37,6 +39,7 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
+      this.force = !!params.force;
 
       this.transformStatus = new TransformStatus(this.config_dir);
       await this.transformStatus.init();
@@ -206,14 +209,16 @@ export class TransformPlugin extends BasePlugin {
         const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
         const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
-        if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.html'))) {
+        if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.zip'))) {
           await this.filesStructure.markDirty([ file ]);
-          throw new Error('Html version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.html'));
+          throw new Error('Zip version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.zip'));
         }
 
-        const srcHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
-        const googleListFixer = new GoogleListFixer(srcHtml);
-        const embedImageFixed = new EmbedImageFixer(srcHtml);
+        const unZipper = new UnZipper(this.externalFiles);
+        await unZipper.load(path.join(this.config_dir, 'files', file.id + '.zip'));
+
+        const googleListFixer = new GoogleListFixer(unZipper.getHtml());
+        const embedImageFixer = new EmbedImageFixer(unZipper.getHtml(), unZipper.getImages());
         const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
         const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
@@ -226,7 +231,7 @@ export class TransformPlugin extends BasePlugin {
 
           const stream = fs.createReadStream(gdocPath)
               .pipe(googleListFixer)
-              .pipe(embedImageFixed)
+              .pipe(embedImageFixer)
               .pipe(externalToLocalTransform)
               .pipe(markDownTransform)
               .pipe(frontMatterTransform)

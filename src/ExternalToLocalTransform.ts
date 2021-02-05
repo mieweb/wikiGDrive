@@ -64,6 +64,13 @@ export class ExternalToLocalTransform extends Transform {
     await processRecursive(document.body.content, async (json) => {
       if (json.inlineObjectElement) {
         let url = await convertImageLink(document, json.inlineObjectElement.inlineObjectId);
+        if (url.endsWith('.md5')) {
+          const md5Checksum = url.replace('.md5', '');
+          const externalFile = this.externalFiles.findFile(file => file.md5Checksum === md5Checksum);
+          if (externalFile) {
+            url = externalFile.localDocumentPath || externalFile.localPath;
+          }
+        }
 
         for (let fileId in this.fileMap) {
           const file = this.fileMap[fileId];
