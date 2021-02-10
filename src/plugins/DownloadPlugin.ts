@@ -132,6 +132,21 @@ export class DownloadPlugin extends BasePlugin {
     }
   }
 
+  private async exportBinary(file, mimeType, ext) {
+    const extPath = path.join(this.config_dir, 'files', file.id + '.' + ext);
+
+    await this.ensureDir(extPath);
+
+    try {
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType, localPath: file.localPath }, fs.createWriteStream(extPath));
+      await this.filesStructure.markClean([ file ]);
+    } catch (err) {
+      if (fs.existsSync(extPath)) fs.unlinkSync(extPath);
+      await this.filesStructure.markDirty([ file ]);
+      throw err;
+    }
+  }
+
   private async handleDirtyFiles() {
     if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
       fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
@@ -143,6 +158,76 @@ export class DownloadPlugin extends BasePlugin {
     if (dirtyFiles.length > 0) {
       console.log('Downloading modified files (' + dirtyFiles.length + ')');
     }
+
+    const exportFormats = [
+      {
+        "source": "application/vnd.google-apps.document",
+        "targets": [
+          "application/rtf",
+          "application/vnd.oasis.opendocument.text",
+          "text/html",
+          "application/pdf",
+          "application/epub+zip",
+          "application/zip",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "text/plain"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.spreadsheet",
+        "targets": [
+          "application/x-vnd.oasis.opendocument.spreadsheet",
+          "text/tab-separated-values",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "text/csv",
+          "application/zip",
+          "application/vnd.oasis.opendocument.spreadsheet"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.jam",
+        "targets": [
+          "application/pdf"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.script",
+        "targets": [
+          "application/vnd.google-apps.script+json"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.presentation",
+        "targets": [
+          "application/vnd.oasis.opendocument.presentation",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "text/plain"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.form",
+        "targets": [
+          "application/zip"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.drawing",
+        "targets": [
+          "image/svg+xml",
+          "image/png",
+          "application/pdf",
+          "image/jpeg"
+        ]
+      },
+      {
+        "source": "application/vnd.google-apps.site",
+        "targets": [
+          "text/plain"
+        ]
+      }
+    ];
 
     for (const file of dirtyFiles) {
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
@@ -159,7 +244,20 @@ export class DownloadPlugin extends BasePlugin {
       if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
         promises.push(this.downloadDocument(file));
       } else
+      if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
+        promises.push(this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'));
+        promises.push(this.exportBinary(file, 'text/csv', 'csv'));
+      } else
+      if (file.mimeType === 'application/vnd.google-apps.presentation') {
+        promises.push(this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'));
+        promises.push(this.exportBinary(file, 'application/pdf', 'pdf'));
+      } else
+      if (file.mimeType === 'application/vnd.google-apps.form') {
+        promises.push(this.exportBinary(file, 'application/zip', 'zip'));
+      } else
       if (file.size !== undefined) {
+        promises.push(this.downloadAsset(file, targetPath));
+      } else {
         promises.push(this.downloadAsset(file, targetPath));
       }
     }
