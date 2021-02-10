@@ -19,9 +19,7 @@
 
 ## Overview
 
-Develop a node.js script that will use the Google Drive API  ([https://developers.google.com/drive/api/v3/quickstart/nodejs](test.md)) 
-
-
+Develop a node.js script that will use the Google Drive API  ([https://developers.google.com/drive/api/v3/quickstart/nodejs](https://developers.google.com/drive/api/v3/quickstart/nodejs))
 
 With a "Shared Drive" as the key:
 
@@ -43,7 +41,7 @@ The script should scan for changes in the drive and then refresh the local conve
 
 
 
-![](test.md)
+![](https://lh5.googleusercontent.com/LCU8gGjdjtQy_Z63Zn1GDRjNnKYygrrGMpXokYelyqYlvub6jYTeCwAh6A_G4WOpUu9TbSzzaH_XGJe-09IA3lDelvY4cSuOLN_AdpNOjauCiFXC-yFQ9bTzk9NlnS9khcFW1FtklezWVJrowQ)
 
 
 
@@ -53,21 +51,14 @@ The node.js script should refresh the "Local Filesystem" with changes from the G
 
 ## Links
 
-* Project [https://github.com/mieweb/wikiGDrive](test.md) 
-
-* Google [Shared Drive Example](test.md)
-
-* Upwork [posting](test.md) 
-
-* Example system: [http://wikigrive.gitgis.com/toc.html](test.md) 
-
-
+* Project [https://github.com/mieweb/wikiGDrive](https://github.com/mieweb/wikiGDrive)
+* Google [Shared Drive Example](https://drive.google.com/drive/u/0/folders/0AB1bEyFsoJ9pUk9PVA)
+* Upwork [posting](https://www.upwork.com/jobs/~01f8c39128e36f1bf0)
+* Example system: [http://wikigrive.gitgis.com/toc.html](http://wikigrive.gitgis.com/toc.html)
 
 ## Contacts
 
-* Doug Horner ([example@example.com](test.md)) phone: 123-123-123
-
-
+* Doug Horner ([example@example.com](mailto:example@example.com)) phone: 123-123-123
 
 ## Requirements
 
@@ -252,7 +243,8 @@ The table of contents is a layout of the documents and their position in the dri
 
 ### Index
 
-The index is a listing of all of the defined terms and their references in the documents.  The processing may be passed to another tool to construct the index. Examples: [kramdown](test.md), [Asciidoctor](test.md)
+The index is a listing of all of the defined terms and their references in the documents.  The processing may be passed to another tool to construct the index. Examples: [kramdown](https://meta.stackexchange.com/questions/72395/is-it-possible-to-have-definition-lists-in-markdown), [Asciidoctor](https://asciidoctor.org/docs/user-manual/)
+
 
 ## FAQ
 
@@ -266,7 +258,7 @@ The index is a listing of all of the defined terms and their references in the d
 
 * Why not just use google docs?
 
-    * Would love it if it were possible, but the drive does not offer the ability to publish pages in a clean way. The URLs are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has [disambiguation](test.md) pages), a reader could be redirected to the proper content. Google doesn't, so this project is an attempt to fill that gap. 
+    * Would love it if it were possible, but the drive does not offer the ability to publish pages in a clean way. The URLs are not SEO friendly. Would love it if there was a driveId map where every document could be given a friendly name (aka its title on the drive). Then (like Wikipedia has [disambiguation](https://en.wikipedia.org/wiki/Wikipedia:Disambiguation) pages), a reader could be redirected to the proper content. Google doesn't, so this project is an attempt to fill that gap.
 
     * Also, Google does not have a good blame system for contributions to a document. Hopefully, this is fixed someday but in the meantime, GitHub on markdown can *help* fill the void. 
 
@@ -276,7 +268,7 @@ The index is a listing of all of the defined terms and their references in the d
 
 * What about mismatches in Docs vs Markdown
 
-    * There are features of Google Docs that are not going to be supported. Like coloring text, page breaks, headers, comments, etc. These features are not core to our goals for clean [WYSIYYM](test.md). 
+    * There are features of Google Docs that are not going to be supported. Like coloring text, page breaks, headers, comments, etc. These features are not core to our goals for clean [WYSIYYM](https://en.wikipedia.org/wiki/WYSIWYM).
 
     * Keeping a WYSIWYM style insures a good mobile experience to view and edit. 
 
