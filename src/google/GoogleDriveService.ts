@@ -25,19 +25,31 @@ function removeDuplicates(files) {
   return retVal;
 }
 
+interface GoogleDriveServiceErrorParams {
+  origError: Error;
+  isQuotaError: boolean;
+
+  file?: string;
+  dest?: string;
+  folderId?: string;
+}
+
 export class GoogleDriveServiceError extends Error {
   private file: any;
   private dest: any;
   private folderId: string;
   private isQuotaError: boolean;
+  private origError: Error;
 
-  constructor(msg, params?) {
+  constructor(msg, params?: GoogleDriveServiceErrorParams) {
     super(msg);
     if (params) {
+      this.origError = params.origError;
+      this.isQuotaError = params.isQuotaError;
+
       this.file = params.file;
       this.dest = params.dest;
       this.folderId = params.folderId;
-      this.isQuotaError = params.isQuotaError;
     }
   }
 }
@@ -172,7 +184,7 @@ export class GoogleDriveService {
       pageToken: pageToken,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
-      fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks))',
+      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks))',
       driveId: undefined
     };
 
@@ -200,11 +212,12 @@ export class GoogleDriveService {
         });
 
       return {
-        token: res.data.newStartPageToken,
+        token: res.data.nextPageToken || res.data.newStartPageToken,
         files: files
       };
     } catch (err) {
       throw new GoogleDriveServiceError('Error watching changes', {
+        origError: err,
         isQuotaError: err.isQuotaError
       });
     }
@@ -254,6 +267,7 @@ export class GoogleDriveService {
       }
     } catch (err) {
       throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
+        origError: err,
         folderId: context.folderId,
         isQuotaError: err.isQuotaError
       });
@@ -283,6 +297,7 @@ export class GoogleDriveService {
       });
     } catch (err) {
       throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+        origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });
     }
@@ -325,6 +340,7 @@ export class GoogleDriveService {
         console.error(err);
       }
       throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
+        origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });
     }
@@ -356,8 +372,8 @@ export class GoogleDriveService {
       }
     } catch (err) {
       throw new GoogleDriveServiceError('Error listening drives', {
+        origError: err,
         isQuotaError: err.isQuotaError,
-        message: err.message
       });
     }
 

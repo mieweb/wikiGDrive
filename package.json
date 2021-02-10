@@ -14,7 +14,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha-webpack --mode development",
+    "test": "mochapack --mode development test/**/*.js",
     "lint": "eslint .",
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
@@ -91,7 +91,7 @@
     "mermaid": "^8.8.0",
     "mermaid.cli": "^0.5.1",
     "mocha": "^7.2.0",
-    "mocha-webpack": "2.0.0-beta.0",
+    "mochapack": "^2.0.6",
     "raw-loader": "^4.0.1",
     "sinon": "^9.0.3",
     "ts-loader": "^8.0.3",

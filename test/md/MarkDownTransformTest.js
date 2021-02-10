@@ -1,10 +1,19 @@
 import { assert } from 'chai';
 import {Readable, Writable} from 'stream';
 
-import { MarkDownTransform } from '../../src/MarkDownTransform';
+import { MarkDownTransform } from '../../src/markdown/MarkDownTransform';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
+
+  it('test strong tags', async () => {
+    const html = '<strong>test </strong>abc';
+    const markdown = MarkDownTransform.convertHtmlSimpleTags(html);
+
+    assert.equal('**test** abc', markdown);
+
+    return Promise.resolve();
+  });
 
   it('test ./block-macro.md.markdown', async () => {
 
@@ -114,7 +123,7 @@ async function transform(doc) {
     async imageUrlToLocalPath(url) {
       return url;
     },
-    convertToRelativeMarkDownPath(basePath, localPath) {
+    convertToRelativeMarkDownPath(localPath) {
       return localPath;
     },
     urlToDestUrl(url) {
