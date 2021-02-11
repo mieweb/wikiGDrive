@@ -65,7 +65,7 @@
     "node-fetch": "^2.6.1",
     "relateurl": "^0.2.7",
     "simple-git": "^2.20.1",
-    "slugify": "^1.4.5",
+    "slugify": "^1.4.6",
     "source-map-support": "^0.5.19",
     "stream": "^0.0.2",
     "xmldoc": "^1.1.2"
