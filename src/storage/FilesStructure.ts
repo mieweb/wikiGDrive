@@ -47,6 +47,8 @@ class FilesStructure {
   static DRAWING_MIME: string;
   static CONFLICT_MIME: string;
   static REDIRECT_MIME: string;
+  static SPREADSHEET_MIME: string;
+  static FORM_MIME: string;
   private fileMap: FileMap;
 
   constructor(private config_dir: string, private flat_folder_structure: boolean = false) {

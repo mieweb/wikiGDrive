@@ -184,7 +184,7 @@ export class GoogleDriveService {
       pageToken: pageToken,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
-      fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
+      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks))',
       driveId: undefined
     };
 
@@ -212,7 +212,7 @@ export class GoogleDriveService {
         });
 
       return {
-        token: res.data.newStartPageToken,
+        token: res.data.nextPageToken || res.data.newStartPageToken,
         files: files
       };
     } catch (err) {
@@ -236,7 +236,7 @@ export class GoogleDriveService {
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks)',
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,

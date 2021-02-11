@@ -3,11 +3,16 @@ import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
 
 export class EmbedImageFixer extends Transform {
+  private readonly content: string;
+  private images: any;
+  private json: string;
+  private document: any;
 
-  constructor(content) {
+  constructor(content, images) {
     super();
 
     this.content = content;
+    this.images = images;
     this.json = '';
   }
 
@@ -27,7 +32,7 @@ export class EmbedImageFixer extends Transform {
         if (error) {
           reject(error);
         } else {
-          resolve(dom[0].children);
+          resolve(dom[0]['children']);
         }
       });
       const parser = new Parser(handler, {
@@ -53,13 +58,17 @@ export class EmbedImageFixer extends Transform {
     return images;
   }
 
-  fixEmbedImages(content, images, currentNo) {
-    if (!currentNo) {
-      currentNo = 0;
-    }
-
-    function fixUrl(src) {
+  fixEmbedImages(content, images, currentNo = 0) {
+    const fixUrl = (src) => {
       if (!src) return src;
+
+      if (this.images[src]) {
+        return this.images[src] + '.md5';
+      }
+
+      if (!src.startsWith('http')) {
+        return src;
+      }
 
       src = src.replace(/&amp;/g, '&');
 
@@ -81,10 +90,17 @@ export class EmbedImageFixer extends Transform {
 
         if (this.document.inlineObjects[id]) {
           const embeddedObject = this.document.inlineObjects[id].inlineObjectProperties.embeddedObject;
+          const src = fixUrl(images[currentNo].attribs['src']);
 
+          if (embeddedObject.imageProperties && embeddedObject.imageProperties.contentUri && embeddedObject.imageProperties.contentUri.indexOf('googleusercontent') > -1) {
+            if (src && src.endsWith('.md5')) {
+              // const md5 = src.replace('.md5', '');
+              embeddedObject.imageProperties = {
+                contentUri: src
+              };
+            }
+          } else
           if (!embeddedObject.imageProperties) {
-            const src = fixUrl(images[currentNo].attribs['src']);
-
             if (src) {
               embeddedObject.imageProperties = {
                 contentUri: src

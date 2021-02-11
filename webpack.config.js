@@ -3,6 +3,7 @@ const fs = require('fs');
 
 module.exports = {
   target: 'node',
+  devtool: 'source-map',
   module: {
     rules: [
       {

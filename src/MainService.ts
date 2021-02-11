@@ -31,6 +31,7 @@ export interface CliParams {
   command: string;
   watch_mode: string;
   debug: string[];
+  force: boolean;
 }
 
 export class MainService {
