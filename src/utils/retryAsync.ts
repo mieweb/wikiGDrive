@@ -1,6 +1,6 @@
 const DELAY = 1000;
 
-export async function retryAsync(retryCount, asyncFunc) {
+export async function retryAsync(retryCount: number, asyncFunc) {
   return new Promise((resolve, reject) => {
 
     const handleError = (err) => {

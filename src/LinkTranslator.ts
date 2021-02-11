@@ -56,6 +56,8 @@ export class LinkTranslator {
   }
 
   async imageUrlToLocalPath(url) {
+    return url;
+    console.log('imageUrlToLocalPath', url);
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
 

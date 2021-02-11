@@ -1,18 +1,7 @@
 'use strict';
 
-import slugify from 'slugify';
 import {google} from 'googleapis';
 import {File, FilesStructure} from '../storage/FilesStructure';
-
-const MAX_FILENAME_LENGTH = 100;
-
-export function getDesiredPath(name) {
-  name = name.replace(/[&]+/g, ' and ');
-  name = name.replace(/[/:()]+/g, ' ');
-  name = name.trim();
-  name = slugify(name, { replacement: '-', lower: true });
-  return name;
-}
 
 export interface ApiFile extends File {
   parents: string[];
@@ -26,10 +15,6 @@ export interface Changes {
 function removeDuplicates(files) {
   const retVal = [];
 
-  files.sort((a, b) => {
-    return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
-  });
-
   for (const file of files) {
     if (retVal.find(entry => entry.id === file.id)) {
       continue;
@@ -40,72 +25,82 @@ function removeDuplicates(files) {
   return retVal;
 }
 
+interface GoogleDriveServiceErrorParams {
+  origError: Error;
+  isQuotaError: boolean;
+
+  file?: string;
+  dest?: string;
+  folderId?: string;
+}
+
 export class GoogleDriveServiceError extends Error {
   private file: any;
   private dest: any;
   private folderId: string;
   private isQuotaError: boolean;
+  private origError: Error;
 
-  constructor(msg, params?) {
+  constructor(msg, params?: GoogleDriveServiceErrorParams) {
     super(msg);
     if (params) {
+      this.origError = params.origError;
+      this.isQuotaError = params.isQuotaError;
+
       this.file = params.file;
       this.dest = params.dest;
       this.folderId = params.folderId;
-      this.isQuotaError = params.isQuotaError;
     }
   }
 }
 
-export class GoogleDriveService {
-  private flat_folder_structure: boolean;
-
-  constructor(flat_folder_structure) {
-    this.flat_folder_structure = flat_folder_structure;
+export function urlToFolderId(url) {
+  if (url.match(/drive\.google\.com\/drive.*folders\//)) {
+    let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
+    if (id.indexOf('/') > 0) {
+      id = id.substr(0, id.indexOf('/'));
+    }
+    if (id.indexOf('?') > 0) {
+      id = id.substr(0, id.indexOf('?'));
+    }
+    if (id.indexOf('&') > 0) {
+      id = id.substr(0, id.indexOf('&'));
+    }
+    return id;
   }
 
-  urlToFolderId(url) {
-    if (url.match(/drive\.google\.com\/drive.*folders\//)) {
-      let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
-      if (id.indexOf('/') > 0) {
-        id = id.substr(0, id.indexOf('/'));
-      }
-      if (id.indexOf('?') > 0) {
-        id = id.substr(0, id.indexOf('?'));
-      }
-      if (id.indexOf('&') > 0) {
-        id = id.substr(0, id.indexOf('&'));
-      }
-      return id;
-    }
+  if (url.indexOf('https://drive.google.com/open?id%3D') > -1) {
+    url = url.replace('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
+  }
 
-    if (url.indexOf('https://drive.google.com/open?id%3D') > -1) {
-      url = url.replace('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
+  if (url.indexOf('https://drive.google.com/open?id=') > -1) {
+    let id = url.substr(url.indexOf('https://drive.google.com/open?id=') + 'https://drive.google.com/open?id='.length);
+    if (id.indexOf('&') > 0) {
+      id = id.substr(0, id.indexOf('&'));
     }
+    return id;
+  }
 
-    if (url.indexOf('https://drive.google.com/open?id=') > -1) {
-      let id = url.substr(url.indexOf('https://drive.google.com/open?id=') + 'https://drive.google.com/open?id='.length);
-      if (id.indexOf('&') > 0) {
-        id = id.substr(0, id.indexOf('&'));
-      }
-      return id;
+  if (url.indexOf('docs.google.com/document/d/') > 0) {
+    let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
+    if (id.indexOf('/') > 0) {
+      id = id.substr(0, id.indexOf('/'));
     }
-
-    if (url.indexOf('docs.google.com/document/d/') > 0) {
-      let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
-      if (id.indexOf('/') > 0) {
-        id = id.substr(0, id.indexOf('/'));
-      }
-      if (id.indexOf('?') > 0) {
-        id = id.substr(0, id.indexOf('?'));
-      }
-      if (id.indexOf('&') > 0) {
-        id = id.substr(0, id.indexOf('&'));
-      }
-      return id;
+    if (id.indexOf('?') > 0) {
+      id = id.substr(0, id.indexOf('?'));
     }
+    if (id.indexOf('&') > 0) {
+      id = id.substr(0, id.indexOf('&'));
+    }
+    return id;
+  }
 
-    return false;
+  return false;
+}
+
+
+export class GoogleDriveService {
+  constructor() {
   }
 
   async listRootRecursive(auth, context, modifiedTime) {
@@ -118,20 +113,9 @@ export class GoogleDriveService {
     return files;
   }
 
-   async _listFilesRecursive(auth, context, modifiedTime, parentDirName?) {
-    console.log('Listening folder:', parentDirName || '/');
-    let files = await this._listFiles(auth, context, modifiedTime);
-
-    if (parentDirName && !this.flat_folder_structure) {
-      files.forEach(file => {
-        const slugifiedParent = parentDirName
-          .split('/')
-          .map(part => getDesiredPath(part))
-          .join('/');
-
-        file.desiredLocalPath = slugifiedParent + '/' + file.desiredLocalPath;
-      });
-    }
+  async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
+    console.log('Listening folder:', remotePath.join('/') || '/');
+    let files: File[] = await this._listFiles(auth, context, modifiedTime);
 
     const retVal = [];
 
@@ -143,13 +127,12 @@ export class GoogleDriveService {
 
       const promises = [];
 
-      for (let fileNo = 0; fileNo < files.length; fileNo++) {
-
-        const file = files[fileNo];
+      for (const file of files) {
+        file.parentId = context.folderId;
         if (file.mimeType !== FilesStructure.FOLDER_MIME) continue;
 
-        const newParentDirName = parentDirName ? (parentDirName + '/' + getDesiredPath(file.name)) : getDesiredPath(file.name);
-        const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime, newParentDirName);
+        const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime,
+            remotePath.concat(file.name));
         promises.push(promise);
 
         promise.catch(() => {
@@ -201,7 +184,7 @@ export class GoogleDriveService {
       pageToken: pageToken,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
-      fields: 'newStartPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version))',
+      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks))',
       driveId: undefined
     };
 
@@ -216,34 +199,25 @@ export class GoogleDriveService {
         .map(change => change.file)
         .map(apiFile => {
           const file = <ApiFile>apiFile;
-          file.desiredLocalPath = getDesiredPath(file.name);
+          if (apiFile.parents && apiFile.parents.length > 0) {
+            file.parentId = apiFile.parents[0];
+          }
+
           if (apiFile.lastModifyingUser) {
             file.lastAuthor = apiFile.lastModifyingUser.displayName;
             delete apiFile.lastModifyingUser;
-          }
-
-          if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-            file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-          }
-
-          switch (file.mimeType) {
-            case 'application/vnd.google-apps.drawing':
-              file.desiredLocalPath += '.svg';
-              break;
-            case 'application/vnd.google-apps.document':
-              file.desiredLocalPath += '.md';
-              break;
           }
 
           return file;
         });
 
       return {
-        token: res.data.newStartPageToken,
+        token: res.data.nextPageToken || res.data.newStartPageToken,
         files: files
       };
     } catch (err) {
       throw new GoogleDriveServiceError('Error watching changes', {
+        origError: err,
         isQuotaError: err.isQuotaError
       });
     }
@@ -262,7 +236,7 @@ export class GoogleDriveService {
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks)',
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,
@@ -283,23 +257,9 @@ export class GoogleDriveService {
         for (const apiFile of res.data.files) {
           const file = <File>apiFile;
 
-          file.desiredLocalPath = getDesiredPath(file.name);
           if (apiFile.lastModifyingUser) {
             file.lastAuthor = apiFile.lastModifyingUser.displayName;
             delete apiFile.lastModifyingUser;
-          }
-
-          if (file.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-            file.desiredLocalPath = file.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-          }
-
-          switch (file.mimeType) {
-            case 'application/vnd.google-apps.drawing':
-              file.desiredLocalPath += '.svg';
-              break;
-            case 'application/vnd.google-apps.document':
-              file.desiredLocalPath += '.md';
-              break;
           }
         }
 
@@ -307,6 +267,7 @@ export class GoogleDriveService {
       }
     } catch (err) {
       throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
+        origError: err,
         folderId: context.folderId,
         isQuotaError: err.isQuotaError
       });
@@ -336,6 +297,7 @@ export class GoogleDriveService {
       });
     } catch (err) {
       throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+        origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });
     }
@@ -378,8 +340,43 @@ export class GoogleDriveService {
         console.error(err);
       }
       throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
+        origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });
     }
   }
+
+  async listDrives(auth, nextPageToken?) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    const listParams = {
+      pageSize: 100,
+      pageToken: nextPageToken
+    }
+
+    try {
+      const res = await drive.drives.list(listParams);
+      const drives = res.data.drives.map(drive => {
+        return {
+          id: drive.id,
+          name: drive.name,
+          kind: drive.kind
+        }
+      });
+
+      if (res.data.nextPageToken) {
+        const nextDrives = await this.listDrives(auth, res.data.nextPageToken);
+        return drives.concat(nextDrives);
+      } else {
+        return drives;
+      }
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error listening drives', {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+
+  }
+
 }

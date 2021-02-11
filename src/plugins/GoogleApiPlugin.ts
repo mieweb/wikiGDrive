@@ -5,21 +5,30 @@ import {QuotaLimiter} from '../google/QuotaLimiter';
 import {GoogleAuthService} from '../google/GoogleAuthService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ConfigService} from '../storage/ConfigService';
+import {DriveConfig} from './ConfigDirPlugin';
 
 export class GoogleApiPlugin extends BasePlugin {
+  private command: string;
+  private config_dir: string;
+  private initial_quota_jobs: any;
+  private drive_config: DriveConfig;
+  private configService: ConfigService;
+  private oldSave: string;
+
   constructor(eventBus) {
     super(eventBus);
 
-    this.configService = new ConfigService();
-
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
+      this.config_dir = params.config_dir;
     });
     eventBus.on('quota_jobs:loaded', async (quota_jobs) => {
       this.initial_quota_jobs = quota_jobs;
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.drive_config = drive_config;
+      this.configService = new ConfigService(this.config_dir);
+      await this.configService.init();
       await this.onConfigLoaded();
     });
   }
@@ -37,12 +46,13 @@ export class GoogleApiPlugin extends BasePlugin {
     });
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
-    const googleDriveService = new GoogleDriveService(this.drive_config.flat_folder_structure);
+    const googleDriveService = new GoogleDriveService();
 
     switch (this.command) {
       case 'pull':
       case 'watch':
       case 'download':
+      case 'drives':
         if (this.drive_config.service_account) {
           const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
           this.eventBus.emit('google_api:initialized', {

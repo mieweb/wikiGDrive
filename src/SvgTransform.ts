@@ -1,13 +1,18 @@
 'use strict';
 
+import { XmlDocument } from 'xmldoc';
 import { Transform } from 'stream';
-import xmldoc from 'xmldoc';
-import { GoogleDriveService } from './google/GoogleDriveService';
+import { urlToFolderId } from './google/GoogleDriveService';
+import { LinkTranslator } from './LinkTranslator';
 
 export class SvgTransform extends Transform {
+  private linkTranslator: LinkTranslator;
+  private readonly localPath: string;
+  private content: string;
 
-  constructor(linkTranslator, localPath) {
+  constructor(localPath, linkTranslator) {
     super();
+
     this.linkTranslator = linkTranslator;
     this.localPath = localPath;
     this.content = '';
@@ -24,7 +29,7 @@ export class SvgTransform extends Transform {
   }
 
   async _flush(callback) {
-    const document = new xmldoc.XmlDocument(this.content);
+    const document = new XmlDocument(this.content);
 
     const urlToRelativePath = {};
 
@@ -42,10 +47,8 @@ export class SvgTransform extends Transform {
       findLinkInChild(child);
     });
 
-    const googleDriveService = new GoogleDriveService();
-
     for (let url in urlToRelativePath) {
-      const id = googleDriveService.urlToFolderId(url);
+      const id = urlToFolderId(url);
 
       if (id) {
         const localPath = await this.linkTranslator.urlToDestUrl(id);

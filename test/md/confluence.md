@@ -54,26 +54,24 @@ confluence2google <path to space> <path to google shared drive>
 ## Links and Possible Approaches
 
 1. Use REST API
-    1. [Confluence Cloud REST API](test.md)
-    2. [Confluence Server REST API](test.md)
-    3. [https://confluence.example.com/rest/api/space/DOCS/content](test.md)
-    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TEST/content](test.md) 
+    1. [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
+    2. [Confluence Server REST API](https://docs.atlassian.com/ConfluenceServer/rest/7.0.3/)
+    3. [https://confluence.example.com/rest/api/space/DOCS/content](https://confluence.example.com/rest/api/space/DOCS/content)
+    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TEST/content](https://confluence.example.com/rest/api/space/TEST/content)
 2. Use export file
-    5. [Confluence Export](test.md) makes a zipped file with [XML Format](test.md)
-    6. [Example HTML zip file](test.md) 
-    7. [Example XML zip file](test.md)
+    5. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) makes a zipped file with [XML Format](https://confluence.atlassian.com/jirakb/xml-format-for-import-export-files-695108230.html)
+    6. [Example HTML zip file](https://drive.google.com/open?id=abc)
+    7. [Example XML zip file](https://drive.google.com/open?id=abc)
 3. Use HTML
-    8. [Confluence Export](test.md) that makes an HTML file
+    8. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
 
 ## Examples
 
-Simple - [https://confluence.example.com/display/DOCS/Sample](test.md)
+Simple - [https://confluence.example.com/display/DOCS/Sample](https://confluence.example.com/display/DOCS/Sample)
 
-	API Call: [https://confluence.example.com/rest/api/content/123](test.md)
+	API Call: [https://confluence.example.com/rest/api/content/123](https://confluence.example.com/rest/api/content/123)
 
-Complex - [https://confluence.example.com/pages/viewpage.action?pageId=789](test.md)
+Complex - [https://confluence.example.com/pages/viewpage.action?pageId=789](https://confluence.example.com/pages/viewpage.action?pageId=789)
 
-	API Call: [https://confluence.example.com/rest/api/content/456](test.md)
-
-
+	API Call: [https://confluence.example.com/rest/api/content/456](https://confluence.example.com/rest/api/content/456)
 

@@ -67,32 +67,30 @@ describe('FileStructure', () => {
 
     let fileMap = filesStructure.getFileMap();
 
-    assert.equal(Object.keys(fileMap).length, 2);
+    assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
 
     //////////////////////////////
 
     await filesStructure.merge([{
         'id': 'id1',
-        'name': 'Example 1',
+        'name': 'Example 1 renamed',
         'mimeType': 'application/vnd.google-apps.document',
-        'desiredLocalPath': 'container/example-1.md',
       },
       {
         'id': 'id2',
-        'name': 'Example 2',
+        'name': 'Example 2 renamed',
         'mimeType': 'application/vnd.google-apps.document',
-        'desiredLocalPath': 'container/example-2.md',
       }
     ]);
 
     fileMap = filesStructure.getFileMap();
 
-    assert.equal(Object.keys(fileMap).length, 4);
+    assert.equal(Object.keys(fileMap).length, 4, 'Wrong number of redirects');
 
-    let folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'folder/example-1.md');
-    let folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'folder/example-2.md');
-    let containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'container/example-1.md');
-    let containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'container/example-2.md');
+    let folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1.md');
+    let folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2.md');
+    let containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
+    let containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
 
     assert.isNotEmpty(folderExample1);
     assert.isNotEmpty(folderExample2);
@@ -100,53 +98,51 @@ describe('FileStructure', () => {
     assert.isNotEmpty(containerExample2);
 
     assert.equal(folderExample1.mimeType, FilesStructure.REDIRECT_MIME, 'Incorrect mime folderExample1');
-    assert.equal(folderExample1.localPath, 'folder/example-1.md');
+    assert.equal(folderExample1.localPath, 'example-1.md');
     assert.equal(folderExample1.redirectTo, containerExample1.id);
 
     assert.equal(folderExample2.mimeType, FilesStructure.REDIRECT_MIME, 'Incorrect mime folderExample2');
-    assert.equal(folderExample2.localPath, 'folder/example-2.md');
+    assert.equal(folderExample2.localPath, 'example-2.md');
     assert.equal(folderExample2.redirectTo, containerExample2.id);
 
     assert.equal(containerExample1.mimeType, FilesStructure.DOCUMENT_MIME, 'Incorrect mime containerExample1');
-    assert.equal(containerExample1.localPath, 'container/example-1.md');
+    assert.equal(containerExample1.localPath, 'example-1-renamed.md');
 
     assert.equal(containerExample2.mimeType, FilesStructure.DOCUMENT_MIME, 'Incorrect mime containerExample2');
-    assert.equal(containerExample2.localPath, 'container/example-2.md');
+    assert.equal(containerExample2.localPath, 'example-2-renamed.md');
 
     //////////////////////////////
 
     await filesStructure.merge([{
         'id': 'id1',
-        'name': 'Sample 1',
-        'mimeType': 'application/vnd.google-apps.document',
-        'desiredLocalPath': 'container/sample-1.md',
+        'name': 'Sample 1 renamed',
+        'mimeType': 'application/vnd.google-apps.document'
       },
       {
         'id': 'id2',
-        'name': 'Example 2',
-        'mimeType': 'application/vnd.google-apps.document',
-        'desiredLocalPath': 'container/example-2.md',
+        'name': 'Example 2 renamed',
+        'mimeType': 'application/vnd.google-apps.document'
       }
     ]);
 
     fileMap = filesStructure.getFileMap();
     assert.equal(Object.keys(fileMap).length, 5);
 
-    folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'folder/example-1.md');
-    folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'folder/example-2.md');
-    containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'container/example-1.md');
-    containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'container/example-2.md');
-    let containerSample1 = filesStructure.findFile(file => file.desiredLocalPath === 'container/sample-1.md');
+    folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1.md');
+    folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2.md');
+    containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
+    containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
+    let containerSample1 = filesStructure.findFile(file => file.desiredLocalPath === 'sample-1-renamed.md');
 
     assert.equal(folderExample1.mimeType, FilesStructure.REDIRECT_MIME);
-    assert.equal(folderExample1.localPath, 'folder/example-1.md');
+    assert.equal(folderExample1.localPath, 'example-1.md');
     assert.equal(folderExample1.redirectTo, containerSample1.id);
 
     assert.equal(containerExample1.mimeType, FilesStructure.REDIRECT_MIME);
-    assert.equal(containerExample1.localPath, 'container/example-1.md');
+    assert.equal(containerExample1.localPath, 'example-1-renamed.md');
     assert.equal(containerExample1.redirectTo, containerSample1.id);
 
     assert.equal(containerSample1.mimeType, FilesStructure.DOCUMENT_MIME);
-    assert.equal(containerSample1.localPath, 'container/sample-1.md');
+    assert.equal(containerSample1.localPath, 'sample-1-renamed.md');
   });
 });

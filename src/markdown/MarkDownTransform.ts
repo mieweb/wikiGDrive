@@ -2,6 +2,7 @@
 
 import slugify from 'slugify';
 import { Transform } from 'stream';
+import {LinkTranslator} from '../LinkTranslator';
 
 export const PREFIX_LEVEL = '    ';
 
@@ -48,7 +49,21 @@ function wrapWith(wrapper, text, wrapper2) {
   return text;
 }
 
+interface ProcessParagraphResult {
+  listParagraph: boolean,
+  codeParagraph: boolean,
+  headerParagraph: boolean,
+  text: string
+}
+
 export class MarkDownTransform extends Transform {
+  private readonly localPath: string;
+  private linkTranslator: LinkTranslator;
+  private json: string;
+  private document: any;
+  private styles: {};
+  private headings: {};
+  private lists: any;
 
   constructor(localPath, linkTranslator) {
     super();
@@ -95,22 +110,22 @@ export class MarkDownTransform extends Transform {
   }
 
   async convertImageLink(url) {
-    // if (this.document.inlineObjects[url]) {
-    //   const inlineObject = this.document.inlineObjects[url];
-    //
-    //   const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-    //   if (embeddedObject.imageProperties) {
-    //     if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-    //       url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-    //     } else {
-    //       url = '';
-    //     }
-    //   }
-    // }
-    //
-    // if (!url) {
-    //   return '';
-    // }
+    if (this.document.inlineObjects[url]) {
+      const inlineObject = this.document.inlineObjects[url];
+
+      const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
+      if (embeddedObject.imageProperties) {
+        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
+          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
+        } else {
+          url = '';
+        }
+      }
+    }
+
+    if (!url) {
+      return '';
+    }
 
     // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
     // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
@@ -133,17 +148,25 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(element, listCounters) {
+  async processParagraph(element, listCounters): Promise<ProcessParagraphResult> {
     if (element.tableOfContents) {
       const tableOfContentsText = await this.processTos(element.tableOfContents.content);
       return {
+        listParagraph: false,
+        codeParagraph: false,
+        headerParagraph: false,
         text: tableOfContentsText
       };
     }
 
     const textElements = [];
 
-    const result = {};
+    const result: ProcessParagraphResult = {
+      listParagraph: false,
+      codeParagraph: false,
+      headerParagraph: false,
+      text: ''
+    };
 
     if (element.table) {
       textElements.push('<table>\n');
@@ -160,10 +183,17 @@ export class MarkDownTransform extends Transform {
               cellNo += tableCell.tableCellStyle.columnSpan - 1;
             }
           }
-          textElements.push('    <td' + tableParams + '>\n');
+
           const text = await this.elementsToText(tableCell.content, listCounters);
-          textElements.push(text.trim());  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
-          textElements.push('    </td>\n');
+          const trimmedText = text.trim();
+          if (trimmedText.indexOf('\n') >= 0) {
+            textElements.push('    <td' + tableParams + '>\n');
+            textElements.push(trimmedText + '\n');  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
+            textElements.push('    </td>\n');
+          } else {
+            textElements.push('    <td' + tableParams + '>' + trimmedText + '</td>\n');
+          }
+
         }
 
         textElements.push('  </tr>\n');
@@ -198,6 +228,10 @@ export class MarkDownTransform extends Transform {
           } else
             if (element.inlineObjectElement) {
               const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+              // const localPath = await this.linkTranslator.imageUrlToLocalPath(element.inlineObjectElement.inlineObjectId);
+              // const imageLink = localPath;
+              // const imageLink = await this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+              // const imageLink = await this.convertImageLink(localPath);
               if (imageLink) {
                 if (imageLink.endsWith('.svg')) {
                   textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
@@ -512,56 +546,6 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  fixBlockMacros(text) {
-    const lines = text.split('\n').map(line => {
-      let idxStart;
-      let idxEnd = 0;
-
-      while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
-        idxEnd = line.indexOf(' %}}', idxStart);
-        if (idxEnd > -1) {
-          const parts = [line.substr(0, idxStart),
-          line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-          line.substr(idxEnd + ' %}}'.length)
-          ];
-
-          if (parts[1].startsWith('{{% /')) {
-            line = parts[0] + parts[1] + '\n' + parts[2];
-            idxEnd++;
-          } else {
-            const idxOfClosing = line.indexOf(parts[1].replace('{{% ', '{{% /'), idxEnd);
-
-            if (idxOfClosing > -1) {
-              const parts = [line.substr(0, idxStart),
-              line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-              line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
-              line.substr(idxOfClosing)
-              ];
-
-              parts[2] = parts[2].replace(/<strong><em>/g, '**_');
-              parts[2] = parts[2].replace(/<\/em><\/strong>/g, '_**');
-              parts[2] = parts[2].replace(/<strong>/g, '**');
-              parts[2] = parts[2].replace(/<\/strong>/g, '**');
-              parts[2] = parts[2].replace(/<em>/g, '*');
-              parts[2] = parts[2].replace(/<\/em>/g, '*');
-
-              line = parts[0] + '\n\n' + parts[1] + parts[2] + parts[3];
-              idxEnd += 2;
-            }
-          }
-        } else {
-          break;
-        }
-
-
-      }
-
-      return line;
-    });
-
-    return lines.join('\n');
-  }
-
   processMacros(text) {
     const blocks = text.split('```');
 
@@ -618,6 +602,59 @@ export class MarkDownTransform extends Transform {
       .replace(/’/g, '\'')
       .replace(/“/g, '"')
       .replace(/”/g, '"');
+  }
+
+  static convertHtmlSimpleTags(pOut) {
+    pOut = pOut.replace(/<strong><em>/g, '**_');
+    pOut = pOut.replace(/([\s]*)<\/em><\/strong>/g, '_**$1');
+    pOut = pOut.replace(/<strong>/g, '**');
+    pOut = pOut.replace(/([\s]*)<\/strong>/g, '**$1');
+    pOut = pOut.replace(/<em>/g, '*');
+    pOut = pOut.replace(/([\s]*)<\/em>/g, '*$1');
+    return pOut;
+  }
+
+  fixBlockMacros(text) {
+    const lines = text.split('\n').map(line => {
+      let idxStart;
+      let idxEnd = 0;
+
+      while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
+        idxEnd = line.indexOf(' %}}', idxStart);
+        if (idxEnd > -1) {
+          const parts = [line.substr(0, idxStart),
+          line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+          line.substr(idxEnd + ' %}}'.length)
+          ];
+
+          if (parts[1].startsWith('{{% /')) {
+            line = parts[0] + parts[1] + '\n' + parts[2];
+            idxEnd++;
+          } else {
+            const idxOfClosing = line.indexOf(parts[1].replace('{{% ', '{{% /'), idxEnd);
+
+            if (idxOfClosing > -1) {
+              const parts = [line.substr(0, idxStart),
+              line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+              line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
+              line.substr(idxOfClosing)
+              ];
+
+              parts[2] = MarkDownTransform.convertHtmlSimpleTags(parts[2]);
+
+              line = parts[0] + '\n\n' + parts[1] + parts[2] + parts[3];
+              idxEnd += 2;
+            }
+          }
+        } else {
+          break;
+        }
+      }
+
+      return line;
+    });
+
+    return lines.join('\n');
   }
 
 }

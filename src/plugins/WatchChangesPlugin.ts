@@ -4,7 +4,7 @@ import {BasePlugin} from './BasePlugin';
 import {CliParams} from "../MainService";
 import {DriveConfig} from "./ConfigDirPlugin";
 import {FilesStructure} from "../storage/FilesStructure";
-import {GoogleDriveService} from "../google/GoogleDriveService";
+import {GoogleDriveService, urlToFolderId} from "../google/GoogleDriveService";
 
 export class WatchChangesPlugin extends BasePlugin {
   private command: string;
@@ -59,13 +59,13 @@ export class WatchChangesPlugin extends BasePlugin {
 
   async watch() {
     console.log('Watching changes');
-    const rootFolderId = this.googleDriveService.urlToFolderId(this.drive_config['drive']);
+    const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
       try {
         const result = await this.googleDriveService.watchChanges(this.auth, this.startTrackToken, this.drive_id);
 
-        const changedFiles = result.files.filter(file => {
+        const apiFiles = result.files.filter(file => {
           let retVal = false;
           file.parents.forEach((parentId) => {
             if (parentId === rootFolderId) {
@@ -76,6 +76,13 @@ export class WatchChangesPlugin extends BasePlugin {
             }
           });
           return retVal;
+        });
+
+        const changedFiles = apiFiles.map(file => {
+          if (file.parentId === rootFolderId) {
+            file.parentId = undefined;
+          }
+          return file;
         });
 
         if (changedFiles.length > 0) {

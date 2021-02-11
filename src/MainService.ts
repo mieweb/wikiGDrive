@@ -12,6 +12,7 @@ import {FilesStructurePlugin} from './plugins/FilesStructurePlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
 import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
 import {GitPlugin} from './plugins/GitPlugin';
+import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
 import {BasePlugin} from './plugins/BasePlugin';
 
 export enum LinkMode {
@@ -30,6 +31,7 @@ export interface CliParams {
   command: string;
   watch_mode: string;
   debug: string[];
+  force: boolean;
 }
 
 export class MainService {
@@ -70,6 +72,7 @@ export class MainService {
     this.plugins.push(new DownloadPlugin(this.eventBus));
     this.plugins.push(new TransformPlugin(this.eventBus));
     this.plugins.push(new GitPlugin(this.eventBus));
+    this.plugins.push(new ListDrivesPlugin(this.eventBus));
   }
 
   async emitThanAwait(event, params, awaitEvents) {
@@ -146,6 +149,17 @@ export class MainService {
         this.eventBus.emit('main:run_list_root');
 
         await new Promise(() => {});
+        break;
+
+      case 'drives':
+        await this.emitThanAwait('main:init', this.params, [ 'google_api:initialized' ]);
+
+        this.eventBus.on('list_drives:done', (drives) => {
+          console.log('Available drives:');
+          console.table(drives);
+        });
+
+        await this.emitThanAwait('main:run_list_drives', this.params, [ 'list_drives:done' ]);
         break;
 
       default:

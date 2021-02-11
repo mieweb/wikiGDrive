@@ -71,5 +71,4 @@ When a section is open for editing, a Next button appears at the bottom. Click t
 
 ## Related Pages
 
-* [System Anatomy](test.md)
-
+* [System Anatomy](https://docs.google.com/document/d/18GsYTHwhKmZ1xxRbrRVf7RPrHHXjGrwWHTgd0s5s3_A)

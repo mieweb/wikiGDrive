@@ -3,12 +3,13 @@
 import { Transform } from 'stream';
 
 export class ClearShortCodesTransform extends Transform {
+  private readonly active: boolean;
+  private data: string;
 
   constructor(active) {
     super();
 
-    this.active = active;
-
+    this.active = !!active;
     this.data = '';
   }
 
