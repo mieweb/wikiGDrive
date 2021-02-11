@@ -1,6 +1,7 @@
 'use strict';
 
 import path from 'path';
+import fs from 'fs';
 import minimist from 'minimist';
 import { MainService } from './MainService';
 import pkg from '../package.json';
@@ -26,6 +27,8 @@ Commands:
 
     wikigdrive watch
     --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+
+    wikigdrive drives
 
 Options:
     --config_dir (.wgd)
@@ -59,20 +62,36 @@ async function index() {
 
   params['link_mode'] = argv['link_mode'] || 'mdURLs';
 
-  params['config-reset'] = argv['config-reset'] || '';
-  if (argv['config-reset-all']) {
-    params['config-reset'] = 'google_auth,fileMap,binaryFiles';
-  }
-  params['flat-folder-structure'] = !!argv['without-folder-structure'];
-  params['debug'] = !!argv['debug'];
+  params['flat_folder_structure'] = !!argv['without-folder-structure'];
+  params['debug'] = (argv['debug'] || '').split(',').map(str => str.toLocaleString().trim());
 
   params['drive_id'] = argv['drive_id'] || '';
   params['service_account'] = argv['service_account'] || null;
   params['git_update_delay'] = argv['git_update_delay'] || 60;
+  params['force'] = !!argv['force'];
 
-  process.on('unhandledRejection', function (err) {
-    console.error('process.on:unhandledRejection', err);
-    process.exit(1);
+  process
+    .on('unhandledRejection', (reason, p) => {
+      console.error(reason, 'Unhandled Rejection at Promise', p);
+      process.exit(1);
+    })
+    .on('uncaughtException', err => {
+      console.error('Uncaught Exception thrown', err);
+      process.exit(1);
+    });
+
+  require('source-map-support').install({
+    environment: 'node',
+    overrideRetrieveSourceMap: true,
+    retrieveSourceMap: function(source) {
+      if (fs.existsSync(source + '.map')) {
+        return {
+          url: 'main.js',
+          map: fs.readFileSync(source + '.map', 'utf8')
+        };
+      }
+      return null;
+    }
   });
 
   const mainService = new MainService(params);

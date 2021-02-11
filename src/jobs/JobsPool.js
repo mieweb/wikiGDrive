@@ -1,4 +1,3 @@
-/* eslint-disable no-async-promise-executor */
 'use strict';
 
 import EventEmitter from 'events';
@@ -35,7 +34,7 @@ export class JobsPool extends EventEmitter {
         // console.log('aaaa', this.size, this.capacity, this.queue.size());
         // this.size++;
 
-        promises.push(new Promise(async (resolve, reject) => {
+        promises.push(new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
           try {
             await job.execute();
             resolve();

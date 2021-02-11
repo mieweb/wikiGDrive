@@ -50,6 +50,12 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
 --without-folder-structure    Download documents into single, flat folder
 ```
 
+List available drive ids
+
+```
+wikigdrive drives
+```
+
 Run one time documents pull
 
 ```
@@ -99,13 +105,65 @@ npm i -g @mieweb/wikigdrive
 5. Sync GDrive
 
 ```
-wikigdrive https://drive.google.com.pathtothefolder --dest ./content
+wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --dest ./content --link_mode uglyURLs
+wikigdrive pull
 ```
+
+Note that by default you need to use `uglyURLs` with Hugo. https://gohugo.io/content-management/urls/#ugly-urls
 
 6. Generate HTML
 
 ```
 hugo
+```
+
+or start server for development:
+
+```
+hugo server
+```
+
+## Example usage with Hexo Generator
+
+1. Install hexo https://hexo.io/docs/index.html
+
+```
+npm i -g hexo-cli
+```
+
+2. Create a New Site
+
+```
+hexo init quickstart
+```
+
+3. Add a Theme
+
+By default, hexo installs `landscape` theme. If you need another one check: https://hexo.io/docs/themes
+
+4. Install wikigdrive
+
+```
+npm i -g @mieweb/wikigdrive
+```
+
+5. Sync GDrive
+
+```
+wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --dest ./source --link_mode uglyURLs
+wikigdrive pull
+```
+
+6. Generate HTML
+
+```
+hexo generate
+```
+
+or start server for development:
+
+```
+hexo serve
 ```
 
 ## Authorization
