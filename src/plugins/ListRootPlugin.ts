@@ -1,15 +1,26 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
-import {urlToFolderId} from '../google/GoogleDriveService';
+import {GoogleDriveService, urlToFolderId} from '../google/GoogleDriveService';
+import {DriveConfig} from './ConfigDirPlugin';
+import {FilesStructure} from '../storage/FilesStructure';
 
 export class ListRootPlugin extends BasePlugin {
+  private command: string;
+  private drive_id: string;
+  private force: boolean;
+  private drive_config: DriveConfig;
+  private filesStructure: FilesStructure;
+  private googleDriveService: GoogleDriveService;
+  private auth: any;
+
   constructor(eventBus) {
     super(eventBus);
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
+      this.force = !!params.force;
     });
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
@@ -29,12 +40,15 @@ export class ListRootPlugin extends BasePlugin {
   async start() {
     const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
-    const context = { folderId: rootFolderId };
+    const context = {
+      folderId: rootFolderId,
+      driveId: undefined
+    };
     if (this.drive_id) {
       context.driveId = this.drive_id;
     }
 
-    let lastMTime = this.filesStructure.getMaxModifiedTime();
+    const lastMTime = this.force ? null : this.filesStructure.getMaxModifiedTime();
 
     try {
       const apiFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);

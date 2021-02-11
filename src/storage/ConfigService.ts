@@ -1,7 +1,8 @@
 'use strict';
 
 import { FileService } from '../utils/FileService';
-import * as fs from "fs";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface Credentials {
 
@@ -20,9 +21,11 @@ export class ConfigService {
   private save_needed: Boolean = false;
   private fileService: FileService;
   private config: Config;
+  private readonly authPath: string;
 
-  constructor(private filePath: string) {
+  constructor(private config_dir: string) {
     this.fileService = new FileService();
+    this.authPath = path.join(config_dir, 'google_auth.json');
   }
 
   async init() {
@@ -46,17 +49,12 @@ export class ConfigService {
   }
 
   async loadData() {
-    this.config = await this._loadJson(this.filePath) || {};
-  }
-
-  async loadCredentials(): Promise<Credentials> {
-    return this.config.credentials;
+    this.config = await this._loadJson(this.authPath) || {};
   }
 
   async loadGoogleAuth(): Promise<GoogleAuth> {
     return this.config.google_auth;
   }
-
 
   async saveGoogleAuth(google_auth: GoogleAuth) {
     this.config.google_auth = google_auth;
@@ -68,7 +66,7 @@ export class ConfigService {
       return ;
     }
 
-    fs.writeFileSync(this.filePath,  JSON.stringify(this.config, null, 2));
+    fs.writeFileSync(this.authPath, JSON.stringify(this.config, null, 2));
 
     this.save_needed = false;
   }

@@ -7,6 +7,7 @@ import {BasePlugin} from './BasePlugin';
 import {FilesStructure} from '../storage/FilesStructure';
 import {FileService} from '../utils/FileService';
 import {StringWritable} from '../utils/StringWritable';
+import {BufferWritable} from '../utils/BufferWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ExternalFiles} from "../storage/ExternalFiles";
@@ -70,10 +71,8 @@ export class DownloadPlugin extends BasePlugin {
     console.log('Downloading diagram: ' + file.localPath);
     await this.ensureDir(targetPath);
 
-    // const svgTransform = new SvgTransform(this.linkTranslator, file.localPath);
-
     try {
-      const writeStream = fs.createWriteStream(targetPath);
+      const writeStream = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.svg'));
       await this.googleDriveService.exportDocument(
         this.auth,
         Object.assign({}, file, { mimeType: 'image/svg+xml' }),
@@ -85,7 +84,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     try {
-      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.svg$/, '.png'));
+      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.png'));
 
       await this.googleDriveService.exportDocument(
         this.auth,
@@ -98,7 +97,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     const fileService = new FileService();
-    const md5Checksum = await fileService.md5File(targetPath.replace(/.svg$/, '.png'));
+    const md5Checksum = await fileService.md5File(targetPath.replace(/.gdoc$/, '.png'));
 
     await this.externalFiles.putFile({
       localPath: file.localPath.replace(/.svg$/, '.png'),
@@ -109,23 +108,25 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async downloadDocument(file) {
-    await this.ensureDir(path.join(this.config_dir, 'files', file.id + '.html'));
+    await this.ensureDir(path.join(this.config_dir, 'files', file.id + '.zip'));
 
-    const htmlPath = path.join(this.config_dir, 'files', file.id + '.html');
+    const zipPath = path.join(this.config_dir, 'files', file.id + '.zip');
     const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
     try {
+      const destZip = new BufferWritable();
       const destHtml = new StringWritable();
       const destJson = new StringWritable();
 
+      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', localPath: file.localPath }, destZip);
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
       await this.googleDocsService.download(this.auth, file, destJson);
 
-      fs.writeFileSync(htmlPath, destHtml.getString());
+      fs.writeFileSync(zipPath, destZip.getBuffer())
       fs.writeFileSync(gdocPath, destJson.getString());
       await this.filesStructure.markClean([ file ]);
     } catch (err) {
-      if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
+      if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
       if (fs.existsSync(gdocPath)) fs.unlinkSync(gdocPath);
       await this.filesStructure.markDirty([ file ]);
       throw err;

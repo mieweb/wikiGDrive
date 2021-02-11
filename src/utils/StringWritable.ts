@@ -3,6 +3,7 @@
 import {Writable} from 'stream';
 
 export class StringWritable extends Writable {
+  private content: string;
 
   constructor() {
     super();

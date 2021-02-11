@@ -18,6 +18,8 @@ import {CliParams, LinkMode} from "../MainService";
 import {DriveConfig} from './ConfigDirPlugin';
 import {ExternalFiles} from '../storage/ExternalFiles';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
+import {SvgTransform} from '../SvgTransform';
+import {UnZipper} from '../utils/UnZipper';
 
 export class TransformPlugin extends BasePlugin {
   private command: string;
@@ -29,6 +31,7 @@ export class TransformPlugin extends BasePlugin {
   private filesStructure: FilesStructure;
   private externalFiles: ExternalFiles;
   private linkTranslator: LinkTranslator;
+  private force: boolean;
 
   constructor(eventBus) {
     super(eventBus);
@@ -36,6 +39,7 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
+      this.force = !!params.force;
 
       this.transformStatus = new TransformStatus(this.config_dir);
       await this.transformStatus.init();
@@ -69,6 +73,7 @@ export class TransformPlugin extends BasePlugin {
     }
 
     // await this.createFolderStructure(files);
+    await this.transformDiagrams();
     await this.transformDocuments();
     await this.generateMetaFiles();
 
@@ -109,8 +114,8 @@ export class TransformPlugin extends BasePlugin {
     return navigationTransform;
   }
 
-  async getFilesToTransform() {
-    const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
+  async getFilesToTransform(mimeType = FilesStructure.DOCUMENT_MIME) {
+    const files = this.filesStructure.findFiles(file => !file.dirty && (mimeType === file.mimeType));
     const transformedFiles = this.transformStatus.findStatuses(() => true);
 
     const filesToTransform = [];
@@ -129,6 +134,57 @@ export class TransformPlugin extends BasePlugin {
     return filesToTransform;
   }
 
+  async transformDiagrams() {
+    const filesToTransform = await this.getFilesToTransform(FilesStructure.DRAWING_MIME);
+    console.log('Transforming diagrams: ' + filesToTransform.length);
+
+    for (const file of filesToTransform) {
+      if (file.oldLocalPath) {
+        const removePath = path.join(this.dest, file.oldLocalPath);
+        if (fs.existsSync(removePath)) fs.unlinkSync(removePath);
+      }
+
+      const targetPath = path.join(this.dest, file.localPath);
+
+      try {
+        await this.ensureDir(targetPath);
+        const dest = fs.createWriteStream(targetPath);
+
+        const svgTransform = new SvgTransform(file.localPath, this.linkTranslator);
+
+        const gdocPath = path.join(this.config_dir, 'files', file.id + '.svg');
+
+        await new Promise((resolve, reject) => {
+          dest.on('error', err => {
+            reject(err);
+          });
+
+          const stream = fs.createReadStream(gdocPath)
+              .pipe(svgTransform)
+              .pipe(dest);
+
+          stream.on('finish', () => {
+            resolve();
+          });
+          stream.on('error', err => {
+            reject(err);
+          });
+        });
+
+        await this.transformStatus.addStatus(file.id, {
+          id: file.id,
+          modifiedTime: file.modifiedTime,
+          localPath: file.localPath
+        });
+
+      } catch (e) {
+        console.error('Error transforming ' + file.id + '.svg [' + file.localPath + ']: ' + e.message);
+        await this.filesStructure.markDirty([ file ]);
+        await this.transformStatus.removeStatus(file.id);
+      }
+
+    }
+  }
 
   async transformDocuments() {
     const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
@@ -153,14 +209,16 @@ export class TransformPlugin extends BasePlugin {
         const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
         const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
 
-        if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.html'))) {
+        if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.zip'))) {
           await this.filesStructure.markDirty([ file ]);
-          throw new Error('Html version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.html'));
+          throw new Error('Zip version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.zip'));
         }
 
-        const srcHtml = fs.readFileSync(path.join(this.config_dir, 'files', file.id + '.html')).toString();
-        const googleListFixer = new GoogleListFixer(srcHtml);
-        const embedImageFixed = new EmbedImageFixer(srcHtml);
+        const unZipper = new UnZipper(this.externalFiles);
+        await unZipper.load(path.join(this.config_dir, 'files', file.id + '.zip'));
+
+        const googleListFixer = new GoogleListFixer(unZipper.getHtml());
+        const embedImageFixer = new EmbedImageFixer(unZipper.getHtml(), unZipper.getImages());
         const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
         const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
@@ -173,7 +231,7 @@ export class TransformPlugin extends BasePlugin {
 
           const stream = fs.createReadStream(gdocPath)
               .pipe(googleListFixer)
-              .pipe(embedImageFixed)
+              .pipe(embedImageFixer)
               .pipe(externalToLocalTransform)
               .pipe(markDownTransform)
               .pipe(frontMatterTransform)

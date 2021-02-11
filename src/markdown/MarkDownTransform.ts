@@ -2,6 +2,7 @@
 
 import slugify from 'slugify';
 import { Transform } from 'stream';
+import {LinkTranslator} from '../LinkTranslator';
 
 export const PREFIX_LEVEL = '    ';
 
@@ -48,7 +49,21 @@ function wrapWith(wrapper, text, wrapper2) {
   return text;
 }
 
+interface ProcessParagraphResult {
+  listParagraph: boolean,
+  codeParagraph: boolean,
+  headerParagraph: boolean,
+  text: string
+}
+
 export class MarkDownTransform extends Transform {
+  private readonly localPath: string;
+  private linkTranslator: LinkTranslator;
+  private json: string;
+  private document: any;
+  private styles: {};
+  private headings: {};
+  private lists: any;
 
   constructor(localPath, linkTranslator) {
     super();
@@ -133,14 +148,190 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  static convertHtmlSimpleTags(pOut) {
-    pOut = pOut.replace(/<strong><em>/g, '**_');
-    pOut = pOut.replace(/([\s]*)<\/em><\/strong>/g, '_**$1');
-    pOut = pOut.replace(/<strong>/g, '**');
-    pOut = pOut.replace(/([\s]*)<\/strong>/g, '**$1');
-    pOut = pOut.replace(/<em>/g, '*');
-    pOut = pOut.replace(/([\s]*)<\/em>/g, '*$1');
-    return pOut;
+  async processParagraph(element, listCounters): Promise<ProcessParagraphResult> {
+    if (element.tableOfContents) {
+      const tableOfContentsText = await this.processTos(element.tableOfContents.content);
+      return {
+        listParagraph: false,
+        codeParagraph: false,
+        headerParagraph: false,
+        text: tableOfContentsText
+      };
+    }
+
+    const textElements = [];
+
+    const result: ProcessParagraphResult = {
+      listParagraph: false,
+      codeParagraph: false,
+      headerParagraph: false,
+      text: ''
+    };
+
+    if (element.table) {
+      textElements.push('<table>\n');
+
+      for (const tableRow of element.table.tableRows) {
+        textElements.push('  <tr>\n');
+
+        for (let cellNo = 0; cellNo < tableRow.tableCells.length; cellNo++) {
+          const tableCell = tableRow.tableCells[cellNo];
+          let tableParams = '';
+          if (tableCell && tableCell.tableCellStyle) {
+            if (tableCell.tableCellStyle.columnSpan > 1) {
+              tableParams += ' colspan="' + tableCell.tableCellStyle.columnSpan + '"';
+              cellNo += tableCell.tableCellStyle.columnSpan - 1;
+            }
+          }
+
+          const text = await this.elementsToText(tableCell.content, listCounters);
+          const trimmedText = text.trim();
+          if (trimmedText.indexOf('\n') >= 0) {
+            textElements.push('    <td' + tableParams + '>\n');
+            textElements.push(trimmedText + '\n');  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
+            textElements.push('    </td>\n');
+          } else {
+            textElements.push('    <td' + tableParams + '>' + trimmedText + '</td>\n');
+          }
+
+        }
+
+        textElements.push('  </tr>\n');
+      }
+
+      textElements.push('</table>\n');
+
+    } else
+      if (element.paragraph) {
+
+        const paragraph = element.paragraph;
+
+        if (paragraph.paragraphStyle.namedStyleType) {
+          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
+            textElements.push('```\n');
+            result.codeParagraph = true;
+          }
+        }
+
+        let paragraphTxt = '';
+
+        for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
+          const element = paragraph.elements[elementNo];
+
+          if (element.textRun) {
+            let txt = element.textRun.content;
+            paragraphTxt += txt;
+
+            element.paragraphStyle = paragraph.paragraphStyle;
+            textElements.push(element);
+          } else
+            if (element.inlineObjectElement) {
+              const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
+              // const localPath = await this.linkTranslator.imageUrlToLocalPath(element.inlineObjectElement.inlineObjectId);
+              // const imageLink = localPath;
+              // const imageLink = await this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
+              // const imageLink = await this.convertImageLink(localPath);
+              if (imageLink) {
+                if (imageLink.endsWith('.svg')) {
+                  textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
+                    '<img src="' + imageLink + '" />' +
+                    '</object>');
+                } else {
+                  textElements.push('![](' + (imageLink) + ')');
+                }
+              }
+            }
+        }
+
+        if (paragraph.paragraphStyle.headingId) {
+          this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
+        }
+
+        if (paragraph.paragraphStyle.namedStyleType) {
+          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
+          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
+            textElements.push('```\n');
+          }
+        }
+
+      } else
+        if (element.sectionBreak) {
+          return null;
+        } else {
+          console.log('Unknown element', element);
+        }
+
+    if (textElements.length === 0) {
+      // Isn't result empty now?
+      return result;
+    }
+
+    const prefix = this.findPrefix(element, listCounters);
+
+    let pOut = '';
+    const processed = [];
+    for (let i = 0; i < textElements.length; i++) {
+      processed.push(await this.processTextElement(textElements[i]));
+    }
+    pOut = processed.join('');
+
+    // replace Unicode quotation marks
+    pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+    pOut = fixBold(pOut);
+
+    if (prefix.match(/^#+ /)) {
+      if (pOut.startsWith('<strong>') && pOut.trim().endsWith('</strong>')) {
+        pOut = pOut.substr('<strong>'.length);
+        pOut = pOut.substr(0, pOut.lastIndexOf('</strong>'));
+      }
+    }
+
+    if (prefix.trim() === '*') {
+      const parts = pOut.split('**');
+
+      if (parts.length > 1) {
+        pOut = '';
+        parts.forEach((part, idx) => {
+          pOut += part;
+          if (idx % 2) {
+            pOut += '</strong>';
+          } else {
+            pOut += '<strong>';
+          }
+        });
+
+        if (parts.length % 2) {
+          pOut += '</strong>';
+        }
+
+        while (pOut.indexOf('<strong></strong>') > -1) {
+          pOut = pOut.replace('<strong></strong>', '');
+        }
+      }
+    }
+
+    if (!prefix) {
+      pOut = pOut.replace(/<strong><em>/g, '**_');
+      pOut = pOut.replace(/<\/em><\/strong>/g, '_**');
+      pOut = pOut.replace(/<strong>/g, '**');
+      pOut = pOut.replace(/<\/strong>/g, '**');
+      pOut = pOut.replace(/<em>/g, '*');
+      pOut = pOut.replace(/<\/em>/g, '*');
+    }
+
+    if (prefix && !prefix.trim().startsWith('#')) {
+      pOut = pOut.replace(/\n$/, '');
+      result.listParagraph = true;
+    } else
+      if (prefix && prefix.trim().startsWith('#')) {
+        pOut = pOut.replace(/\n$/, '');
+        result.headerParagraph = true;
+      }
+
+    result.text = prefix + pOut;
+
+    return result;
   }
 
   // Add correct prefix to list items.
@@ -355,175 +546,6 @@ export class MarkDownTransform extends Transform {
     return text;
   }
 
-  async processParagraph(element, listCounters) {
-    if (element.tableOfContents) {
-      const tableOfContentsText = await this.processTos(element.tableOfContents.content);
-      return {
-        text: tableOfContentsText
-      };
-    }
-
-    const textElements = [];
-
-    const result = {};
-
-    if (element.table) {
-      textElements.push('<table>\n');
-
-      for (const tableRow of element.table.tableRows) {
-        textElements.push('  <tr>\n');
-
-        for (let cellNo = 0; cellNo < tableRow.tableCells.length; cellNo++) {
-          const tableCell = tableRow.tableCells[cellNo];
-          let tableParams = '';
-          if (tableCell && tableCell.tableCellStyle) {
-            if (tableCell.tableCellStyle.columnSpan > 1) {
-              tableParams += ' colspan="' + tableCell.tableCellStyle.columnSpan + '"';
-              cellNo += tableCell.tableCellStyle.columnSpan - 1;
-            }
-          }
-
-          const text = await this.elementsToText(tableCell.content, listCounters);
-          const trimmedText = text.trim();
-          if (trimmedText.indexOf('\n') >= 0) {
-            textElements.push('    <td' + tableParams + '>\n');
-            textElements.push(trimmedText + '\n');  // remove trailing and leading whitespace since markdown does not like it. https://github.com/mieweb/wikiGDrive/issues/65
-            textElements.push('    </td>\n');
-          } else {
-            textElements.push('    <td' + tableParams + '>' + trimmedText + '</td>\n');
-          }
-
-        }
-
-        textElements.push('  </tr>\n');
-      }
-
-      textElements.push('</table>\n');
-
-    } else
-      if (element.paragraph) {
-
-        const paragraph = element.paragraph;
-
-        if (paragraph.paragraphStyle.namedStyleType) {
-          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
-            textElements.push('```\n');
-            result.codeParagraph = true;
-          }
-        }
-
-        let paragraphTxt = '';
-
-        for (let elementNo = 0; elementNo < paragraph.elements.length; elementNo++) {
-          const element = paragraph.elements[elementNo];
-
-          if (element.textRun) {
-            let txt = element.textRun.content;
-            paragraphTxt += txt;
-
-            element.paragraphStyle = paragraph.paragraphStyle;
-            textElements.push(element);
-          } else
-            if (element.inlineObjectElement) {
-              const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
-              if (imageLink) {
-                if (imageLink.endsWith('.svg')) {
-                  textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
-                    '<img src="' + imageLink + '" />' +
-                    '</object>');
-                } else {
-                  textElements.push('![](' + (imageLink) + ')');
-                }
-              }
-            }
-        }
-
-        if (paragraph.paragraphStyle.headingId) {
-          this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
-        }
-
-        if (paragraph.paragraphStyle.namedStyleType) {
-          const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
-          if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
-            textElements.push('```\n');
-          }
-        }
-
-      } else
-        if (element.sectionBreak) {
-          return null;
-        } else {
-          console.log('Unknown element', element);
-        }
-
-    if (textElements.length === 0) {
-      // Isn't result empty now?
-      return result;
-    }
-
-    const prefix = this.findPrefix(element, listCounters);
-
-    let pOut = '';
-    const processed = [];
-    for (let i = 0; i < textElements.length; i++) {
-      processed.push(await this.processTextElement(textElements[i]));
-    }
-    pOut = processed.join('');
-
-    // replace Unicode quotation marks
-    pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
-    pOut = fixBold(pOut);
-
-    if (prefix.match(/^#+ /)) {
-      if (pOut.startsWith('<strong>') && pOut.trim().endsWith('</strong>')) {
-        pOut = pOut.substr('<strong>'.length);
-        pOut = pOut.substr(0, pOut.lastIndexOf('</strong>'));
-      }
-    }
-
-    if (prefix.trim() === '*') {
-      const parts = pOut.split('**');
-
-      if (parts.length > 1) {
-        pOut = '';
-        parts.forEach((part, idx) => {
-          pOut += part;
-          if (idx % 2) {
-            pOut += '</strong>';
-          } else {
-            pOut += '<strong>';
-          }
-        });
-
-        if (parts.length % 2) {
-          pOut += '</strong>';
-        }
-
-        while (pOut.indexOf('<strong></strong>') > -1) {
-          pOut = pOut.replace('<strong></strong>', '');
-        }
-      }
-    }
-
-    if (!prefix) {
-      pOut = MarkDownTransform.convertHtmlSimpleTags(pOut);
-    }
-
-    if (prefix && !prefix.trim().startsWith('#')) {
-      pOut = pOut.replace(/\n$/, '');
-      result.listParagraph = true;
-    } else
-      if (prefix && prefix.trim().startsWith('#')) {
-        pOut = pOut.replace(/\n$/, '');
-        result.headerParagraph = true;
-      }
-
-    result.text = prefix + pOut;
-
-    return result;
-  }
-
   processMacros(text) {
     const blocks = text.split('```');
 
@@ -582,6 +604,16 @@ export class MarkDownTransform extends Transform {
       .replace(/”/g, '"');
   }
 
+  static convertHtmlSimpleTags(pOut) {
+    pOut = pOut.replace(/<strong><em>/g, '**_');
+    pOut = pOut.replace(/([\s]*)<\/em><\/strong>/g, '_**$1');
+    pOut = pOut.replace(/<strong>/g, '**');
+    pOut = pOut.replace(/([\s]*)<\/strong>/g, '**$1');
+    pOut = pOut.replace(/<em>/g, '*');
+    pOut = pOut.replace(/([\s]*)<\/em>/g, '*$1');
+    return pOut;
+  }
+
   fixBlockMacros(text) {
     const lines = text.split('\n').map(line => {
       let idxStart;
@@ -617,8 +649,6 @@ export class MarkDownTransform extends Transform {
         } else {
           break;
         }
-
-
       }
 
       return line;
