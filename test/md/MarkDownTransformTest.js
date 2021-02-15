@@ -16,7 +16,6 @@ describe('MarkDownTransformTest', () => {
 
     return Promise.resolve();
   });
-/*
 
   it('test strong tags', async () => {
     const html = '<strong>test </strong>abc';
@@ -126,7 +125,6 @@ describe('MarkDownTransformTest', () => {
 
     return Promise.resolve();
   });
-*/
 
 });
 

@@ -639,7 +639,6 @@ export class MarkDownTransform extends Transform {
       let idxEnd = 0;
 
       while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
-        console.log('ssss');
         idxEnd = line.indexOf(' %}}', idxStart);
         if (idxEnd > -1) {
           const parts = [
