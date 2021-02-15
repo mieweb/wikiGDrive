@@ -6,6 +6,18 @@ import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
 
+  it('test ./raw-html.md.markdown', async () => {
+
+    const doc = require('./raw-html.md.json');
+    const testMarkdown = require('!!raw-loader!./raw-html.md').default;
+
+    const markdown = await transform(doc);
+    assert.ok(compareTexts(testMarkdown, markdown));
+
+    return Promise.resolve();
+  });
+/*
+
   it('test strong tags', async () => {
     const html = '<strong>test </strong>abc';
     const markdown = MarkDownTransform.convertHtmlSimpleTags(html);
@@ -114,6 +126,7 @@ describe('MarkDownTransformTest', () => {
 
     return Promise.resolve();
   });
+*/
 
 });
 
