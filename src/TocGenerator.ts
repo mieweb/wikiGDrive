@@ -1,9 +1,12 @@
 'use strict';
 
-import path from 'path';
+import * as path from 'path';
 import { FilesStructure } from './storage/FilesStructure';
+import {LinkTranslator} from './LinkTranslator';
 
 export class TocGenerator {
+  private readonly localPath: string;
+  private linkTranslator: LinkTranslator;
 
   constructor(localPath, linkTranslator) {
     this.localPath = localPath;
@@ -13,7 +16,7 @@ export class TocGenerator {
   addLevels(fileMap) {
     const copy = {};
 
-    for (let id in fileMap) {
+    for (const id in fileMap) {
       copy[id] = fileMap[id];
       copy[id].level = copy[id].localPath.split(path.sep).length - 1;
     }
@@ -36,7 +39,7 @@ export class TocGenerator {
 
   getDir(fileMap, level, prefix) {
     const arr = [];
-    for (let id in fileMap) {
+    for (const id in fileMap) {
       const file = fileMap[id];
       if (file.localPath.startsWith(prefix) && file.level === level) {
         arr.push(file);

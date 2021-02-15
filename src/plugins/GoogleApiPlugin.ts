@@ -29,6 +29,7 @@ export class GoogleApiPlugin extends BasePlugin {
       this.drive_config = drive_config;
       this.configService = new ConfigService(this.config_dir);
       await this.configService.init();
+      eventBus.emit('configService:initialized', this.configService);
       await this.onConfigLoaded();
     });
   }
