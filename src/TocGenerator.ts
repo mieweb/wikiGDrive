@@ -13,12 +13,12 @@ export class TocGenerator {
     this.linkTranslator = linkTranslator;
   }
 
-  addLevels(fileMap) {
+  addLevels(files) {
     const copy = {};
 
-    for (const id in fileMap) {
-      copy[id] = fileMap[id];
-      copy[id].level = copy[id].localPath.split(path.sep).length - 1;
+    for (const file of files) {
+      file.level = file.localPath.split(path.sep).length - 1;
+      copy[file.id] = file;
     }
 
     return copy;
@@ -70,14 +70,15 @@ export class TocGenerator {
   }
 
   async generate(filesStructure, writeStream) {
-    const fileMap = filesStructure.getFileMap();
+    const files = filesStructure.findFiles(item => !!item)
+        .filter(file => !file.trashed && !!file.localPath);
     let frontMatter = '---\n';
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
     await new Promise(resolve => writeStream.write(frontMatter, resolve));
 
-    const fileMapCopy = this.addLevels(fileMap);
+    const fileMapCopy = this.addLevels(files);
     await this.outputDir(fileMapCopy, writeStream, 0, '');
   }
 

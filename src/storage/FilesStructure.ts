@@ -80,6 +80,12 @@ class FilesStructure {
       }
     }
 
+    for (const file of changedFiles) {
+      if (file.trashed) {
+        await this._updateFile(file);
+      }
+    }
+
     const localPathGenerator = new LocalPathGenerator(this, this.flat_folder_structure);
     changedFiles = localPathGenerator.generateDesiredPaths(changedFiles);
 
@@ -155,8 +161,8 @@ class FilesStructure {
       oldFile.desiredLocalPath = file.desiredLocalPath;
     }
 
-    ['name', 'modifiedTime', 'lastAuthor', 'version'].forEach(key => {
-      if (file[key]) {
+    ['name', 'modifiedTime', 'lastAuthor', 'version', 'trashed'].forEach(key => {
+      if (key in file) {
         oldFile[key] = file[key];
       }
     });
@@ -169,7 +175,7 @@ class FilesStructure {
   }
 
   async _checkConflicts(desiredLocalPath) {
-    const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== FilesStructure.CONFLICT_MIME);
+    const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== FilesStructure.CONFLICT_MIME && !file.trashed);
 
     if (files.length < 2) {
       files.forEach(file => {
@@ -178,7 +184,7 @@ class FilesStructure {
       return;
     }
 
-    let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === FilesStructure.CONFLICT_MIME);
+    let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === FilesStructure.CONFLICT_MIME && !file.trashed);
     if (!conflictFile) {
       conflictFile = {
         id: generateUniqId(),
