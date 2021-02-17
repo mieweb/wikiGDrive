@@ -154,7 +154,7 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     const promises = [];
-    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
 
     if (dirtyFiles.length > 0) {
       console.log('Downloading modified files (' + dirtyFiles.length + ')');
@@ -231,6 +231,10 @@ export class DownloadPlugin extends BasePlugin {
     ];
 
     for (const file of dirtyFiles) {
+      if (file.trashed) {
+        continue;
+      }
+
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       if (file.mimeType === FilesStructure.CONFLICT_MIME) {
@@ -264,11 +268,21 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     try {
-      await Promise.allSettled(promises);
+      const settled = await Promise.allSettled(promises);
+      const errors = <any[]>settled.filter(item => item.status === 'rejected');
+
+      for (const error of errors) {
+        const file = error?.reason?.file;
+        if ('404' === String(error?.reason?.origError?.code) && file) {
+          console.log('File not found, trashed:', file.id);
+          file.trashed = true;
+          await this.filesStructure.merge([ file ]);
+        }
+      }
     } catch (ignore) { /* eslint-disable-line no-empty */
     }
 
-    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     if (dirtyFilesAfter.length > 0) {
       if (this.debug.indexOf('download') > -1) {
         console.log('dirtyFilesAfter', dirtyFilesAfter);
