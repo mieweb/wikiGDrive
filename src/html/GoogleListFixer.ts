@@ -1,8 +1,12 @@
 import {Transform} from 'stream';
 import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
+import {NodeWithChildren} from 'domhandler/lib/node';
 
 export class GoogleListFixer extends Transform {
+  private readonly content: string;
+  private json: string;
+  private document: any;
 
   constructor(content) {
     super();
@@ -23,7 +27,7 @@ export class GoogleListFixer extends Transform {
 
   async createDom(html) {
     return new Promise((resolve, reject) => {
-      const handler = new DomHandler(function(error, dom) {
+      const handler = new DomHandler(function(error, dom: NodeWithChildren[]) {
         if (error) {
           reject(error);
         } else {

@@ -1,21 +1,24 @@
 'use strict';
 
-import path from 'path';
+import * as path from 'path';
 import { FilesStructure } from './storage/FilesStructure';
+import {LinkTranslator} from './LinkTranslator';
 
 export class TocGenerator {
+  private readonly localPath: string;
+  private linkTranslator: LinkTranslator;
 
   constructor(localPath, linkTranslator) {
     this.localPath = localPath;
     this.linkTranslator = linkTranslator;
   }
 
-  addLevels(fileMap) {
+  addLevels(files) {
     const copy = {};
 
-    for (let id in fileMap) {
-      copy[id] = fileMap[id];
-      copy[id].level = copy[id].localPath.split(path.sep).length - 1;
+    for (const file of files) {
+      file.level = file.localPath.split(path.sep).length - 1;
+      copy[file.id] = file;
     }
 
     return copy;
@@ -36,7 +39,7 @@ export class TocGenerator {
 
   getDir(fileMap, level, prefix) {
     const arr = [];
-    for (let id in fileMap) {
+    for (const id in fileMap) {
       const file = fileMap[id];
       if (file.localPath.startsWith(prefix) && file.level === level) {
         arr.push(file);
@@ -67,14 +70,15 @@ export class TocGenerator {
   }
 
   async generate(filesStructure, writeStream) {
-    const fileMap = filesStructure.getFileMap();
+    const files = filesStructure.findFiles(item => !!item)
+        .filter(file => !file.trashed && !!file.localPath);
     let frontMatter = '---\n';
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
     await new Promise(resolve => writeStream.write(frontMatter, resolve));
 
-    const fileMapCopy = this.addLevels(fileMap);
+    const fileMapCopy = this.addLevels(files);
     await this.outputDir(fileMapCopy, writeStream, 0, '');
   }
 

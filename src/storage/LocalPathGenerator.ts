@@ -93,6 +93,8 @@ export class LocalPathGenerator {
 
                     return slugifiedParent + '/' + getDesiredPath(changedFile.name);
                 }
+            } else {
+                return 'external_docs/' + changedFile.parentId + '/' + getDesiredPath(changedFile.name);
             }
         }
 

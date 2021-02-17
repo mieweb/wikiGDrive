@@ -184,7 +184,7 @@ export class GoogleDriveService {
       pageToken: pageToken,
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
-      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks))',
+      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed))',
       driveId: undefined
     };
 
@@ -196,6 +196,7 @@ export class GoogleDriveService {
       const res = await drive.changes.list(params);
 
       const files = res.data.changes
+        .filter(change => !!change.file)
         .map(change => change.file)
         .map(apiFile => {
           const file = <ApiFile>apiFile;
@@ -236,7 +237,7 @@ export class GoogleDriveService {
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed)',
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,
@@ -336,7 +337,7 @@ export class GoogleDriveService {
         }
       });
     } catch (err) {
-      if (!err.isQuotaError) {
+      if (!err.isQuotaError && err?.code != 404) {
         console.error(err);
       }
       throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {

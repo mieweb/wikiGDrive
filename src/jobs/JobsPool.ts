@@ -1,10 +1,14 @@
 'use strict';
 
-import EventEmitter from 'events';
+import {EventEmitter} from 'events';
+import {JobsQueue} from './JobsQueue';
 
 export class JobsPool extends EventEmitter {
+  private size: number;
+  private readonly capacity: number;
+  private queue: any;
 
-  constructor(capacity, queue) {
+  constructor(capacity, queue: JobsQueue) {
     super();
     this.size = 0;
     this.capacity = capacity;

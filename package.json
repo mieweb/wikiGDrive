@@ -12,7 +12,7 @@
   "bin": {
     "wikigdrive": "./dist/main.js"
   },
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "test": "mochapack --mode development test/**/*.js",
     "lint": "eslint .",
@@ -63,6 +63,7 @@
     "jszip": "^3.5.0",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
+    "open": "^7.3.1",
     "relateurl": "^0.2.7",
     "simple-git": "^2.20.1",
     "slugify": "^1.4.6",

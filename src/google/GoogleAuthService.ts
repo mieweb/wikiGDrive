@@ -2,6 +2,7 @@
 
 import * as readline from 'readline';
 import * as fs from 'fs';
+import * as open from 'open';
 
 import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {ConfigService} from "../storage/ConfigService";
@@ -63,20 +64,34 @@ export class GoogleAuthService {
     }
   }
 
-  getAccessToken(oAuth2Client) {
-    return new Promise((resolve) => {
+  async getAccessToken(oAuth2Client) {
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES
+    });
 
-      const authUrl = oAuth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: SCOPES
-      });
-      console.log('Authorize this app by visiting this url:', authUrl);
+    const child = await open(authUrl, { wait: true });
+    child.stdout.on('data', (data) => {
+      console.log(`Received chunk ${data}`);
+    });
+    child.stderr.on('data', (data) => {
+      console.log(`Received err ${data}`);
+    });
+    child.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
+    child.on('message', (m) => {
+      console.log('PARENT got message:', m);
+    });
 
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-      });
+    console.log('Authorize this app by visiting this url:', authUrl);
 
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    return new Promise(async (resolve) => {
       rl.question('Enter the code from that page here: ', (code) => {
         rl.close();
         oAuth2Client.getToken(code, async (err, credentials) => {

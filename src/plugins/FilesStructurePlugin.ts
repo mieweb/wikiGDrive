@@ -51,7 +51,7 @@ export class FilesStructurePlugin extends BasePlugin {
 
   async status() {
     const allFiles = this.filesStructure.findFiles(item => !!item);
-    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     console.log('Files status:');
     console.table({
       'All files': allFiles.length,
