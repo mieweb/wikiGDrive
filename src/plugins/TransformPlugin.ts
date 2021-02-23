@@ -123,7 +123,12 @@ export class TransformPlugin extends BasePlugin {
 
     for (const file of files) {
       const transformedFile = transformedFiles.find(transformedFile => transformedFile.id === file.id);
-      if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) continue;
+      if (transformedFile) {
+        if (!fs.existsSync(path.join(this.externalFiles.getDest(), transformedFile.localPath))) {
+        } else if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) {
+          continue;
+        }
+      }
 
       const status = Object.assign({}, file);
       if (transformedFile) {
