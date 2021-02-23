@@ -249,7 +249,6 @@ class FilesStructure {
 
   containsFile(fileId) {
     return !!this.fileMap[fileId];
-
   }
 
   getMaxModifiedTime() {
