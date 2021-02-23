@@ -8,6 +8,12 @@ Google Drive to MarkDown synchronization
 [![Project Dependencies](https://david-dm.org/mieweb/wikiGDrive.svg)](https://david-dm.org/mieweb/wikiGDrive)
 [![devDependencies Status](https://david-dm.org/mieweb/wikiGDrive/dev-status.svg)](https://david-dm.org/mieweb/wikiGDrive?type=dev)
 
+## Building from source
+See [Node setup on the system](#Node-setup-on-the-system) for prereq.
+```
+npm install
+npm run build
+```
 
 ## Install from NPM
 
@@ -269,4 +275,17 @@ A website front end is a goal for real-time testing of the viewing experience, b
         "md5Checksum": "123123123"
     }
 }
+```
+
+# Node setup on the system
+
+## using OS
+```
+curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -
+sudo apt install nodejs
+```
+## If you wish to support multiple versions, add n
+```
+sudo npm install -g n
+sudo n 12.18.3
 ```
