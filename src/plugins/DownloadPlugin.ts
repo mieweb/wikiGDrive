@@ -115,11 +115,9 @@ export class DownloadPlugin extends BasePlugin {
 
     try {
       const destZip = new BufferWritable();
-      const destHtml = new StringWritable();
       const destJson = new StringWritable();
 
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', localPath: file.localPath }, destZip);
-      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
       await this.googleDocsService.download(this.auth, file, destJson);
 
       fs.writeFileSync(zipPath, destZip.getBuffer())
@@ -157,7 +155,11 @@ export class DownloadPlugin extends BasePlugin {
     const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
 
     if (dirtyFiles.length > 0) {
-      console.log('Downloading modified files (' + dirtyFiles.length + ')');
+      if (dirtyFiles.length < 20) {
+        console.log('Downloading modified files:', dirtyFiles.map(file => file.id));
+      } else {
+        console.log('Downloading modified files (' + dirtyFiles.length + ')');
+      }
     }
 
     const exportFormats = [
@@ -231,12 +233,12 @@ export class DownloadPlugin extends BasePlugin {
     ];
 
     for (const file of dirtyFiles) {
-      if (file.trashed) {
-        continue;
-      }
 
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
+      if (file.trashed) {
+        promises.push(this.filesStructure.markClean([ file ]));
+      } else
       if (file.mimeType === FilesStructure.CONFLICT_MIME) {
         promises.push(this.filesStructure.markClean([ file ]));
       } else

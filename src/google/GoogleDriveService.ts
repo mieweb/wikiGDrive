@@ -325,13 +325,13 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
+            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.html [' + file.localPath + ']');
+            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
             resolve();
           });
         }
