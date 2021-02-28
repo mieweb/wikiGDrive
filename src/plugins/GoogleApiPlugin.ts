@@ -15,8 +15,8 @@ export class GoogleApiPlugin extends BasePlugin {
   private configService: ConfigService;
   private oldSave: string;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
@@ -47,7 +47,7 @@ export class GoogleApiPlugin extends BasePlugin {
     });
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
-    const googleDriveService = new GoogleDriveService();
+    const googleDriveService = new GoogleDriveService(this.logger);
 
     switch (this.command) {
       case 'pull':

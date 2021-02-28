@@ -11,8 +11,9 @@ export class FilesStructurePlugin extends BasePlugin {
   private flat_folder_structure: boolean;
   private config_dir: any;
   private filesStructure: FilesStructure;
-  constructor(eventBus) {
-    super(eventBus);
+
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;

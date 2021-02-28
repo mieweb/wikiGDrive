@@ -19,8 +19,8 @@ export class WatchChangesPlugin extends BasePlugin {
   private lastMTime: string;
   private startTrackToken: string;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
@@ -58,7 +58,7 @@ export class WatchChangesPlugin extends BasePlugin {
   }
 
   async watch() {
-    console.log('Watching changes');
+    this.logger.info('Watching changes');
     const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
@@ -88,25 +88,25 @@ export class WatchChangesPlugin extends BasePlugin {
         });
 
         if (changedFiles.length === 0 && externalDocs.length === 0) {
-          console.log('No changes detected. Sleeping for 10 seconds.');
+          this.logger.info('No changes detected. Sleeping for 10 seconds.');
         }
 
         if (changedFiles.length > 0) {
-          console.log(changedFiles.length + ' files changed');
+          this.logger.info(changedFiles.length + ' files changed');
           await this.filesStructure.merge(changedFiles);
         }
 
         if (externalDocs.length > 0) {
-          console.log('Files outside folder:', externalDocs.length);
+          this.logger.info('Files outside folder: ' + externalDocs.length);
           await this.filesStructure.merge(externalDocs);
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
-        console.log('Pulled latest changes');
+        this.logger.info('Pulled latest changes');
         this.eventBus.emit('files_structure:dirty');
 
       } catch (e) {
-        console.error(e);
+        this.logger.error(e);
       }
     }, 10000));
   }

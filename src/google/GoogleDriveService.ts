@@ -2,6 +2,7 @@
 
 import {google} from 'googleapis';
 import {File, FilesStructure} from '../storage/FilesStructure';
+import {Logger} from 'winston';
 
 export interface ApiFile extends File {
   parents: string[];
@@ -100,7 +101,7 @@ export function urlToFolderId(url) {
 
 
 export class GoogleDriveService {
-  constructor() {
+  constructor(private logger: Logger) {
   }
 
   async listRootRecursive(auth, context, modifiedTime) {
@@ -114,7 +115,7 @@ export class GoogleDriveService {
   }
 
   async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
-    console.log('Listening folder:', remotePath.join('/') || '/');
+    this.logger.info('Listening folder:', { remotePath: remotePath.join('/') || '/' });
     let files: File[] = await this._listFiles(auth, context, modifiedTime);
 
     const retVal = [];
@@ -325,20 +326,20 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
             resolve();
           });
         }
       });
     } catch (err) {
       if (!err.isQuotaError && err?.code != 404) {
-        console.error(err);
+        this.logger.error(err);
       }
       throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
         origError: err,

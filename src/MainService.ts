@@ -1,6 +1,7 @@
 'use strict';
 
 import {EventEmitter} from 'events';
+import * as winston from 'winston';
 
 import {ConfigDirPlugin} from './plugins/ConfigDirPlugin';
 import {ListRootPlugin} from './plugins/ListRootPlugin';
@@ -14,6 +15,8 @@ import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
 import {GitPlugin} from './plugins/GitPlugin';
 import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
 import {BasePlugin} from './plugins/BasePlugin';
+import * as path from 'path';
+import 'winston-daily-rotate-file';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -43,6 +46,7 @@ export class MainService {
   public readonly eventBus: EventEmitter;
   private readonly command: string;
   private plugins: BasePlugin[];
+  private logger: winston.Logger;
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
@@ -51,6 +55,22 @@ export class MainService {
     if (params.debug.indexOf('main') > -1) {
       this.attachDebug();
     }
+
+    this.logger = winston.createLogger({
+      level: 'info',
+      format: winston.format.json(),
+      defaultMeta: {},
+      transports: [
+        //
+        // - Write all logs with level `error` and below to `error.log`
+        // - Write all logs with level `info` and below to `combined.log`
+        //
+      ],
+    });
+
+    this.logger.add(new winston.transports.Console({
+      format: winston.format.simple(),
+    }));
   }
 
   attachDebug() {
@@ -67,17 +87,17 @@ export class MainService {
 
   async init() {
     this.plugins = [];
-    this.plugins.push(new ConfigDirPlugin(this.eventBus));
-    this.plugins.push(new FilesStructurePlugin(this.eventBus));
-    this.plugins.push(new ExternalFilesPlugin(this.eventBus));
-    this.plugins.push(new GoogleApiPlugin(this.eventBus));
-    this.plugins.push(new WatchMTimePlugin(this.eventBus));
-    this.plugins.push(new WatchChangesPlugin(this.eventBus));
-    this.plugins.push(new ListRootPlugin(this.eventBus));
-    this.plugins.push(new DownloadPlugin(this.eventBus));
-    this.plugins.push(new TransformPlugin(this.eventBus));
-    this.plugins.push(new GitPlugin(this.eventBus));
-    this.plugins.push(new ListDrivesPlugin(this.eventBus));
+    this.plugins.push(new ConfigDirPlugin(this.eventBus, this.logger));
+    this.plugins.push(new FilesStructurePlugin(this.eventBus, this.logger));
+    this.plugins.push(new ExternalFilesPlugin(this.eventBus, this.logger));
+    this.plugins.push(new GoogleApiPlugin(this.eventBus, this.logger));
+    this.plugins.push(new WatchMTimePlugin(this.eventBus, this.logger));
+    this.plugins.push(new WatchChangesPlugin(this.eventBus, this.logger));
+    this.plugins.push(new ListRootPlugin(this.eventBus, this.logger));
+    this.plugins.push(new DownloadPlugin(this.eventBus, this.logger));
+    this.plugins.push(new TransformPlugin(this.eventBus, this.logger));
+    this.plugins.push(new GitPlugin(this.eventBus, this.logger));
+    this.plugins.push(new ListDrivesPlugin(this.eventBus, this.logger));
   }
 
   async emitThanAwait(event, params, awaitEvents) {
@@ -87,7 +107,35 @@ export class MainService {
   }
 
   async start() {
+    this.eventBus.on('drive_config:loaded', async (drive_config) => {
+      const logsDir = path.join(this.params.config_dir, 'logs');
+      this.logger.add(new winston.transports.DailyRotateFile({
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d',
+        dirname: logsDir,
+        filename: '%DATE%-error.log',
+        level: 'error'
+      }));
+      this.logger.add(new winston.transports.DailyRotateFile({
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d',
+        dirname: logsDir,
+        filename: '%DATE%-combined.log'
+      }));
+
+      if (process.env.NODE_ENV === 'production') {
+        for (const transport of this.logger.transports) {
+          if (transport instanceof winston.transports.Console) {
+            this.logger.remove(transport);
+          }
+        }
+      }
+    });
+
     this.eventBus.on('panic', (error) => {
+      this.logger.error(error.message);
       console.error(error.message);
       process.exit(1);
     });

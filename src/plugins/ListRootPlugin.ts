@@ -14,8 +14,8 @@ export class ListRootPlugin extends BasePlugin {
   private googleDriveService: GoogleDriveService;
   private auth: any;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;

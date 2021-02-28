@@ -33,8 +33,8 @@ export class TransformPlugin extends BasePlugin {
   private linkTranslator: LinkTranslator;
   private force: boolean;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;

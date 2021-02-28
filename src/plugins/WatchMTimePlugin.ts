@@ -17,8 +17,8 @@ export class WatchMTimePlugin extends BasePlugin {
   private context: any;
   private lastMTime: string;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;

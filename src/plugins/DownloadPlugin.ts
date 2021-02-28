@@ -22,8 +22,8 @@ export class DownloadPlugin extends BasePlugin {
   private externalFiles: ExternalFiles;
   private debug: string[];
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     this.googleDocsService = new GoogleDocsService();
 
@@ -155,11 +155,7 @@ export class DownloadPlugin extends BasePlugin {
     const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
 
     if (dirtyFiles.length > 0) {
-      if (dirtyFiles.length < 20) {
-        console.log('Downloading modified files:', dirtyFiles.map(file => file.id));
-      } else {
-        console.log('Downloading modified files (' + dirtyFiles.length + ')');
-      }
+      this.logger.info('Downloading modified files (' + dirtyFiles.length + ')');
     }
 
     const exportFormats = [

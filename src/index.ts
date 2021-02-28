@@ -54,7 +54,7 @@ async function index() {
     drive: argv['drive'],
     config_dir: argv['config_dir'] || path.join(process.env.PWD, '.wgd'),
     dest: argv['dest'] || process.env.PWD,
-    watch_mode: argv['watch_mode'] || 'mtime',
+    watch_mode: argv['watch_mode'] || 'changes',
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,

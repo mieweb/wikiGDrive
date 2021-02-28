@@ -69,6 +69,8 @@
     "slugify": "^1.4.5",
     "source-map-support": "^0.5.19",
     "stream": "^0.0.2",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.0",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {

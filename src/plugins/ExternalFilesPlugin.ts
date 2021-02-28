@@ -51,8 +51,8 @@ export class ExternalFilesPlugin extends BasePlugin {
   private config_dir: string;
   private dest: string;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;

@@ -27,8 +27,8 @@ export class ConfigDirPlugin extends BasePlugin {
   private config_dir: string;
   private params: CliParams;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger);
 
     this.fileService = new FileService();
     // this.filePath = filePath;
@@ -49,7 +49,7 @@ export class ConfigDirPlugin extends BasePlugin {
   async initConfigDir(params: CliParams) {
     if (fs.existsSync(this.config_dir)) {
       if (fs.lstatSync(this.config_dir).isDirectory()) {
-        throw 'WikiGDrive already initialized.';
+        throw '.wgd already exists - WikiGDrive already initialized.';
       } else {
         throw '.wgd is not a directory';
       }
