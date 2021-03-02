@@ -1,6 +1,6 @@
 import {Readable} from 'stream';
 
-async function handleReadable(obj) {
+async function handleReadable(obj):Promise<string> {
   if (obj instanceof Readable) {
     const chunks = [];
     for await (const chunk of obj) {

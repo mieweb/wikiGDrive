@@ -76,6 +76,7 @@ export class TransformPlugin extends BasePlugin {
     await this.transformDiagrams();
     await this.transformDocuments();
     await this.generateMetaFiles();
+    await this.deleteTrashed();
 
     const filesToTransform = await this.getFilesToTransform();
     if (filesToTransform.length > 0) {
@@ -122,7 +123,12 @@ export class TransformPlugin extends BasePlugin {
 
     for (const file of files) {
       const transformedFile = transformedFiles.find(transformedFile => transformedFile.id === file.id);
-      if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) continue;
+      if (transformedFile) {
+        if (!fs.existsSync(path.join(this.externalFiles.getDest(), transformedFile.localPath))) {
+        } else if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) {
+          continue;
+        }
+      }
 
       const status = Object.assign({}, file);
       if (transformedFile) {
@@ -184,6 +190,22 @@ export class TransformPlugin extends BasePlugin {
       }
 
     }
+  }
+
+  async deleteTrashed() {
+    const files = this.filesStructure.findFiles(file => file.trashed);
+
+    let removed = [];
+
+    for (const file of files) {
+      const removePath = path.join(this.dest, file.localPath);
+      if (fs.existsSync(removePath)) {
+        fs.unlinkSync(removePath);
+        removed.push(file.id);
+      }
+    }
+
+    console.log('Removed trashed:', removed);
   }
 
   async transformDocuments() {
@@ -320,13 +342,39 @@ export class TransformPlugin extends BasePlugin {
     const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
 
     for (const file of files) {
+      if (!file.localPath) {
+        continue;
+      }
+
       const targetPath = path.join(this.dest, file.localPath);
       await this.ensureDir(targetPath);
       const dest = fs.createWriteStream(targetPath);
 
       const newFile = filesMap[file.redirectTo];
 
-      let md = '';
+      if (newFile['trashed']) {
+        continue;
+      }
+
+      let frontMatter = '---\n';
+      frontMatter += 'title: "' + file.name + '"\n';
+      frontMatter += 'date: ' + file.modifiedTime + '\n';
+      const htmlPath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, '');
+      if (htmlPath) {
+        frontMatter += 'url: "' + htmlPath + '"\n';
+      }
+      if (file.lastAuthor) {
+        frontMatter += 'author: ' + file.lastAuthor + '\n';
+      }
+      if (file.version) {
+        frontMatter += 'version: ' + file.version + '\n';
+      }
+      frontMatter += 'id: ' + file.id + '\n';
+      frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
+
+      frontMatter += '---\n';
+
+      let md = frontMatter;
       md += 'Renamed to: ';
       const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(newFile.localPath, file.localPath);
       md += '[' + newFile.name + '](' + relativePath + ')\n';

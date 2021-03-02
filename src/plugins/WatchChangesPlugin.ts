@@ -78,6 +78,8 @@ export class WatchChangesPlugin extends BasePlugin {
           return retVal;
         });
 
+        const externalDocs = result.files.filter(file => !apiFiles.find(apiFile => apiFile.id === file.id));
+
         const changedFiles = apiFiles.map(file => {
           if (file.parentId === rootFolderId) {
             file.parentId = undefined;
@@ -85,20 +87,23 @@ export class WatchChangesPlugin extends BasePlugin {
           return file;
         });
 
+        if (changedFiles.length === 0 && externalDocs.length === 0) {
+          console.log('No changes detected. Sleeping for 10 seconds.');
+        }
+
         if (changedFiles.length > 0) {
           console.log(changedFiles.length + ' files changed');
           await this.filesStructure.merge(changedFiles);
-          this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
-          console.log('Pulled latest changes');
-          this.eventBus.emit('files_structure:dirty');
-        } else {
-          if (this.debug.indexOf('watch') > -1) {
-            if (result.files.length > 0) {
-              console.log('Files outside folder:', result.files);
-            }
-          }
-          console.log('No changes detected. Sleeping for 10 seconds.');
         }
+
+        if (externalDocs.length > 0) {
+          console.log('Files outside folder:', externalDocs.length);
+          await this.filesStructure.merge(externalDocs);
+        }
+
+        this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
+        console.log('Pulled latest changes');
+        this.eventBus.emit('files_structure:dirty');
 
       } catch (e) {
         console.error(e);

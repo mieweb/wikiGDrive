@@ -1,8 +1,12 @@
 'use strict';
 
-import EventEmitter from 'events';
+import {EventEmitter} from 'events';
 
 class Job {
+  private readonly starter: any;
+  public readonly promise: Promise<unknown>;
+  private resolve: (value?: unknown) => void;
+  private reject: (reason?: any) => void;
 
   constructor(starter) {
     this.starter = starter;
@@ -24,6 +28,7 @@ class Job {
 }
 
 export class JobsQueue extends EventEmitter {
+  private jobs: any[];
 
   constructor() {
     super();

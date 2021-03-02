@@ -32,10 +32,15 @@ export interface CliParams {
   watch_mode: string;
   debug: string[];
   force: boolean;
+
+  client_id?: string;
+  client_secret?: string;
+  service_account?: string;
+  git_update_delay: number;
 }
 
 export class MainService {
-  private readonly eventBus: EventEmitter;
+  public readonly eventBus: EventEmitter;
   private readonly command: string;
   private plugins: BasePlugin[];
 
