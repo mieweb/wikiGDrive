@@ -51,7 +51,7 @@ export class FilesStructurePlugin extends BasePlugin {
 
   async status() {
     const allFiles = this.filesStructure.findFiles(item => !!item);
-    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     console.log('Files status:');
     console.table({
       'All files': allFiles.length,
@@ -64,6 +64,9 @@ export class FilesStructurePlugin extends BasePlugin {
     const fileService = new FileService();
 
     for (const file of files) {
+      if ([ FilesStructure.DOCUMENT_MIME, FilesStructure.DRAWING_MIME].indexOf(file.mimeType) === -1) {
+        continue;
+      }
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       if (!await fileService.exists(targetPath)) {

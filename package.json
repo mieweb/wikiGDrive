@@ -12,7 +12,7 @@
   "bin": {
     "wikigdrive": "./dist/main.js"
   },
-  "main": "src/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "test": "mochapack --mode development test/**/*.js",
     "lint": "eslint .",
@@ -57,15 +57,16 @@
   "dependencies": {
     "async": "^3.2.0",
     "buffer": "^5.7.1",
-    "cli-progress": "^3.8.2",
+    "cli-progress": "^3.9.0",
     "dotenv": "^8.2.0",
     "googleapis": "^59.0.0",
     "jszip": "^3.5.0",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
+    "open": "^7.3.1",
     "relateurl": "^0.2.7",
     "simple-git": "^2.20.1",
-    "slugify": "^1.4.5",
+    "slugify": "^1.4.6",
     "source-map-support": "^0.5.19",
     "stream": "^0.0.2",
     "xmldoc": "^1.1.2"

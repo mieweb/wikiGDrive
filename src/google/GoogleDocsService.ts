@@ -31,7 +31,7 @@ export class GoogleDocsService {
         let stream = readable
             .on('end', () => {})
             .on('error', err => {
-              console.error(err);
+              console.error('Download stream error', err);
               reject(err);
             });
 
@@ -55,7 +55,7 @@ export class GoogleDocsService {
 
     } catch (err) {
       if (!err.isQuotaError) {
-        console.error(err);
+        console.error('Download error', err);
       }
       throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, origError: err, dest, isQuotaError: err.isQuotaError });
     }

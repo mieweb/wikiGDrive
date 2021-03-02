@@ -64,6 +64,7 @@ export class MarkDownTransform extends Transform {
   private styles: {};
   private headings: {};
   private lists: any;
+  private inRawHtml: boolean = false;
 
   constructor(localPath, linkTranslator) {
     super();
@@ -278,6 +279,12 @@ export class MarkDownTransform extends Transform {
 
     // replace Unicode quotation marks
     pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+
+    if (this.inRawHtml) {
+      result.text = prefix + pOut;
+      return result;
+    }
+
     pOut = fixBold(pOut);
 
     if (prefix.match(/^#+ /)) {
@@ -323,11 +330,10 @@ export class MarkDownTransform extends Transform {
     if (prefix && !prefix.trim().startsWith('#')) {
       pOut = pOut.replace(/\n$/, '');
       result.listParagraph = true;
-    } else
-      if (prefix && prefix.trim().startsWith('#')) {
-        pOut = pOut.replace(/\n$/, '');
-        result.headerParagraph = true;
-      }
+    } else if (prefix && prefix.trim().startsWith('#')) {
+      pOut = pOut.replace(/\n$/, '');
+      result.headerParagraph = true;
+    }
 
     result.text = prefix + pOut;
 
@@ -419,6 +425,19 @@ export class MarkDownTransform extends Transform {
     if (pOut === '\n' && element.textRun.textStyle.italic) {
       return '';
     }
+
+    if (pOut.indexOf('{{rawhtml}}') > -1) {
+      this.inRawHtml = true;
+      return pOut;
+    }
+    if (pOut.indexOf('{{/rawhtml}}') > -1) {
+      this.inRawHtml = false;
+      return pOut;
+    }
+    if (this.inRawHtml) {
+      return pOut;
+    }
+
     if (pOut.substr(0, 3) === '{{%' && element.textRun.textStyle.italic) {
       return pOut;
     }
@@ -622,9 +641,10 @@ export class MarkDownTransform extends Transform {
       while ((idxStart = line.indexOf('{{% ', idxEnd)) > -1) {
         idxEnd = line.indexOf(' %}}', idxStart);
         if (idxEnd > -1) {
-          const parts = [line.substr(0, idxStart),
-          line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-          line.substr(idxEnd + ' %}}'.length)
+          const parts = [
+            line.substr(0, idxStart),
+            line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+            line.substr(idxEnd + ' %}}'.length)
           ];
 
           if (parts[1].startsWith('{{% /')) {
@@ -634,10 +654,11 @@ export class MarkDownTransform extends Transform {
             const idxOfClosing = line.indexOf(parts[1].replace('{{% ', '{{% /'), idxEnd);
 
             if (idxOfClosing > -1) {
-              const parts = [line.substr(0, idxStart),
-              line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-              line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
-              line.substr(idxOfClosing)
+              const parts = [
+                line.substr(0, idxStart),
+                line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
+                line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
+                line.substr(idxOfClosing)
               ];
 
               parts[2] = MarkDownTransform.convertHtmlSimpleTags(parts[2]);

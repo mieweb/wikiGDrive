@@ -115,11 +115,9 @@ export class DownloadPlugin extends BasePlugin {
 
     try {
       const destZip = new BufferWritable();
-      const destHtml = new StringWritable();
       const destJson = new StringWritable();
 
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', localPath: file.localPath }, destZip);
-      await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'text/html', localPath: file.localPath }, destHtml);
       await this.googleDocsService.download(this.auth, file, destJson);
 
       fs.writeFileSync(zipPath, destZip.getBuffer())
@@ -154,10 +152,14 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     const promises = [];
-    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
 
     if (dirtyFiles.length > 0) {
-      console.log('Downloading modified files (' + dirtyFiles.length + ')');
+      if (dirtyFiles.length < 20) {
+        console.log('Downloading modified files:', dirtyFiles.map(file => file.id));
+      } else {
+        console.log('Downloading modified files (' + dirtyFiles.length + ')');
+      }
     }
 
     const exportFormats = [
@@ -231,8 +233,12 @@ export class DownloadPlugin extends BasePlugin {
     ];
 
     for (const file of dirtyFiles) {
+
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
+      if (file.trashed) {
+        promises.push(this.filesStructure.markClean([ file ]));
+      } else
       if (file.mimeType === FilesStructure.CONFLICT_MIME) {
         promises.push(this.filesStructure.markClean([ file ]));
       } else
@@ -264,11 +270,21 @@ export class DownloadPlugin extends BasePlugin {
     }
 
     try {
-      await Promise.allSettled(promises);
+      const settled = await Promise.allSettled(promises);
+      const errors = <any[]>settled.filter(item => item.status === 'rejected');
+
+      for (const error of errors) {
+        const file = error?.reason?.file;
+        if ('404' === String(error?.reason?.origError?.code) && file) {
+          console.log('File not found, trashed:', file.id);
+          file.trashed = true;
+          await this.filesStructure.merge([ file ]);
+        }
+      }
     } catch (ignore) { /* eslint-disable-line no-empty */
     }
 
-    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty);
+    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     if (dirtyFilesAfter.length > 0) {
       if (this.debug.indexOf('download') > -1) {
         console.log('dirtyFilesAfter', dirtyFilesAfter);
