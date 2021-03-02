@@ -87,9 +87,9 @@ export class WatchChangesPlugin extends BasePlugin {
           return file;
         });
 
-        if (changedFiles.length === 0 && externalDocs.length === 0) {
-          console.log('No changes detected. Sleeping for 10 seconds.');
-        }
+//        if (changedFiles.length === 0 && externalDocs.length === 0) {
+//  This should only print in a very verbose option passed on commandline?          console.log('No changes detected. Sleeping for 10 seconds.');
+//        }
 
         if (changedFiles.length > 0) {
           console.log(changedFiles.length + ' files changed');
@@ -102,7 +102,7 @@ export class WatchChangesPlugin extends BasePlugin {
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
-        console.log('Pulled latest changes');
+//  This should only print in a very verbose option passed on commandline?      console.log('Pulled latest changes');
         this.eventBus.emit('files_structure:dirty');
 
       } catch (e) {
