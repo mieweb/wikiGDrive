@@ -60,7 +60,7 @@
     "cli-progress": "^3.9.0",
     "dotenv": "^8.2.0",
     "googleapis": "^59.0.0",
-    "jszip": "^3.5.0",
+    "jszip": "^3.6.0",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
     "open": "^7.3.1",
