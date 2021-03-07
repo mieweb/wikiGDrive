@@ -15,7 +15,7 @@ export class ListRootPlugin extends BasePlugin {
   private auth: any;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
@@ -61,13 +61,11 @@ export class ListRootPlugin extends BasePlugin {
 
       await this.filesStructure.merge(changedFiles);
     } catch (e) {
-      this.eventBus.emit('panic', {
-        message: e.message
-      });
+      this.eventBus.emit('panic', e);
       return;
     }
 
-    console.log('Listening Google Drive done');
+    this.logger.info('Listening Google Drive done');
 
     this.eventBus.emit('list_root:done', {
       context,

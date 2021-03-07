@@ -80,6 +80,11 @@ async function index() {
     .on('unhandledRejection', async (reason: any, p) => {
       // if (reason'invalid_grant')
       console.error(reason, 'Unhandled Rejection at Promise', p);
+
+      if (reason.origError) {
+        reason = reason.origError;
+      }
+
       if (reason?.response?.data?.error === 'invalid_grant') {
         console.log('configService', configService);
         if (configService) {
@@ -122,7 +127,6 @@ require('dotenv').config();
 
 index()
   .then(() => {
-    console.log('Finished');
     process.exit(0);
   })
   .catch((err) => {

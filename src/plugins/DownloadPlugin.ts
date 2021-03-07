@@ -22,8 +22,21 @@ export class DownloadPlugin extends BasePlugin {
   private externalFiles: ExternalFiles;
   private debug: string[];
 
+  private progress: {
+    failed: number;
+    completed: number;
+    total: number;
+  };
+  private handlingFiles: boolean = false;
+
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
+
+    this.progress = {
+      failed: 0,
+      completed: 0,
+      total: 0
+    }
 
     this.googleDocsService = new GoogleDocsService();
 
@@ -53,7 +66,7 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async downloadAsset(file, targetPath) {
-    console.log('Downloading asset: ' + file.localPath);
+    this.logger.info('Downloading asset: ' + file.localPath);
     await this.ensureDir(targetPath);
 
     try {
@@ -68,7 +81,7 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async downloadDiagram(file, targetPath) {
-    console.log('Downloading diagram: ' + file.localPath);
+    this.logger.info('Downloading diagram: ' + file.localPath);
     await this.ensureDir(targetPath);
 
     try {
@@ -147,6 +160,11 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async handleDirtyFiles() {
+    if (this.handlingFiles) {
+      return;
+    }
+    this.handlingFiles = true;
+
     if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
       fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
     }
@@ -228,6 +246,12 @@ export class DownloadPlugin extends BasePlugin {
       }
     ];
 
+    this.progress.failed = 0;
+    this.progress.completed = 0;
+    this.progress.total = 0;
+
+    this.eventBus.emit('download:progress', this.progress);
+
     for (const file of dirtyFiles) {
 
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
@@ -263,16 +287,29 @@ export class DownloadPlugin extends BasePlugin {
       } else {
         promises.push(this.downloadAsset(file, targetPath));
       }
+
+      this.progress.total = promises.length;
+      this.eventBus.emit('download:progress', this.progress);
     }
 
     try {
-      const settled = await Promise.allSettled(promises);
+      const settled = await Promise.allSettled(promises.map(promise => {
+        promise
+          .then(() => {
+            this.progress.completed++;
+            this.eventBus.emit('download:progress', this.progress);
+          })
+          .catch(() => {
+            this.progress.failed++;
+            this.eventBus.emit('download:progress', this.progress);
+          });
+      }));
       const errors = <any[]>settled.filter(item => item.status === 'rejected');
 
       for (const error of errors) {
         const file = error?.reason?.file;
         if ('404' === String(error?.reason?.origError?.code) && file) {
-          console.log('File not found, trashed:', file.id);
+          this.logger.info('File not found, trashed: ' + file.id);
           file.trashed = true;
           await this.filesStructure.merge([ file ]);
         }
@@ -283,15 +320,18 @@ export class DownloadPlugin extends BasePlugin {
     const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     if (dirtyFilesAfter.length > 0) {
       if (this.debug.indexOf('download') > -1) {
-        console.log('dirtyFilesAfter', dirtyFilesAfter);
+        this.logger.info('dirtyFilesAfter', dirtyFilesAfter);
       }
-      console.log('Download retry required');
+      this.logger.info('Download retry required');
+      this.eventBus.emit('download:failed', this.progress);
       process.nextTick(() => {
         this.eventBus.emit('download:retry');
       });
     } else {
+      this.eventBus.emit('download:done', this.progress);
       this.eventBus.emit('download:clean');
     }
+    this.handlingFiles = false;
   }
 
   private async ensureDir(filePath) {

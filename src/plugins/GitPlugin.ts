@@ -16,7 +16,7 @@ export class GitPlugin extends BasePlugin {
   private filesStructure: FilesStructure;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     this.gitUpdateSecondsDelay = 3600;
 

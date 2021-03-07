@@ -16,7 +16,7 @@ export class GoogleApiPlugin extends BasePlugin {
   private oldSave: string;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     eventBus.on('main:init', async (params) => {
       this.command = params.command;
@@ -35,7 +35,7 @@ export class GoogleApiPlugin extends BasePlugin {
   }
 
   async onConfigLoaded() {
-    const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs);
+    const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs, this.eventBus, this.logger);
     quotaLimiter.setInitialLimit(95, 10); // 950, 100 doesn't work as expected
     quotaLimiter.setSaveHandler((jobs) => {
       const str = JSON.stringify(jobs);
@@ -47,7 +47,7 @@ export class GoogleApiPlugin extends BasePlugin {
     });
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
-    const googleDriveService = new GoogleDriveService(this.logger);
+    const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
 
     switch (this.command) {
       case 'pull':

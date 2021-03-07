@@ -17,6 +17,7 @@ import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
 import {BasePlugin} from './plugins/BasePlugin';
 import * as path from 'path';
 import 'winston-daily-rotate-file';
+import {ProgressPlugin} from './progress/ProgressPlugin';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -42,6 +43,7 @@ export interface CliParams {
   git_update_delay: number;
 }
 
+
 export class MainService {
   public readonly eventBus: EventEmitter;
   private readonly command: string;
@@ -58,7 +60,9 @@ export class MainService {
 
     this.logger = winston.createLogger({
       level: 'info',
-      format: winston.format.json(),
+      format: winston.format.combine(
+        winston.format.json()
+      ),
       defaultMeta: {},
       transports: [
         //
@@ -87,6 +91,7 @@ export class MainService {
 
   async init() {
     this.plugins = [];
+    this.plugins.push(new ProgressPlugin(this.eventBus, this.logger));
     this.plugins.push(new ConfigDirPlugin(this.eventBus, this.logger));
     this.plugins.push(new FilesStructurePlugin(this.eventBus, this.logger));
     this.plugins.push(new ExternalFilesPlugin(this.eventBus, this.logger));
@@ -125,25 +130,35 @@ export class MainService {
         filename: '%DATE%-combined.log'
       }));
 
-      if (process.env.NODE_ENV === 'production') {
-        for (const transport of this.logger.transports) {
-          if (transport instanceof winston.transports.Console) {
-            this.logger.remove(transport);
-          }
+      for (const transport of this.logger.transports) {
+        if (transport instanceof winston.transports.Console) {
+          this.logger.remove(transport);
         }
       }
     });
 
     this.eventBus.on('panic', (error) => {
-      this.logger.error(error.message);
+      throw error;
+/*
+      if (error.stack) {
+        this.logger.error(error.stack);
+      } else {
+        this.logger.error(error.message);
+      }
+      if (error.origError) {
+        this.logger.error(error.origError);
+      }
+
       console.error(error.message);
       process.exit(1);
+*/
     });
 
     process.on('SIGINT', () => {
+      console.log('SIGINT');
       setTimeout(() => {
         process.exit();
-      }, 1000);
+      }, 500);
     });
 
     switch (this.command) {
@@ -226,6 +241,8 @@ export class MainService {
         await plugin.flushData();
       }
     }
+
+    this.eventBus.emit('main:done');
   }
 
 }

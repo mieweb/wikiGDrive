@@ -13,7 +13,7 @@ export class FilesStructurePlugin extends BasePlugin {
   private filesStructure: FilesStructure;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     eventBus.on('main:init', async (params) => {
       this.config_dir = params.config_dir;
@@ -65,10 +65,19 @@ export class FilesStructurePlugin extends BasePlugin {
     const fileService = new FileService();
 
     for (const file of files) {
-      if ([ FilesStructure.DOCUMENT_MIME, FilesStructure.DRAWING_MIME].indexOf(file.mimeType) === -1) {
+      let targetPath;
+      switch (file.mimeType) {
+        case FilesStructure.DOCUMENT_MIME:
+          targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
+          break;
+        case FilesStructure.DRAWING_MIME:
+          targetPath = path.join(this.config_dir, 'files', file.id + '.svg');
+          break;
+      }
+
+      if (!targetPath) {
         continue;
       }
-      const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
       if (!await fileService.exists(targetPath)) {
         await this.filesStructure.markDirty([file]);

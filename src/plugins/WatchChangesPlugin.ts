@@ -20,7 +20,7 @@ export class WatchChangesPlugin extends BasePlugin {
   private startTrackToken: string;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;

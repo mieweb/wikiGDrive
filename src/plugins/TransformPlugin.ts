@@ -33,8 +33,19 @@ export class TransformPlugin extends BasePlugin {
   private linkTranslator: LinkTranslator;
   private force: boolean;
 
+  private progressDocs: {
+    failed: number;
+    completed: number;
+    total: number;
+  };
+  private progressDiags: {
+    failed: number;
+    completed: number;
+    total: number;
+  };
+
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     eventBus.on('main:init', async (params: CliParams) => {
       this.command = params.command;
@@ -107,9 +118,8 @@ export class TransformPlugin extends BasePlugin {
           });
         });
       } catch (e) {
-        console.error('Error generating navigation hierarchy');
+        this.logger.error('Error generating navigation hierarchy');
       }
-
     }
 
     return navigationTransform;
@@ -142,7 +152,15 @@ export class TransformPlugin extends BasePlugin {
 
   async transformDiagrams() {
     const filesToTransform = await this.getFilesToTransform(FilesStructure.DRAWING_MIME);
-    console.log('Transforming diagrams: ' + filesToTransform.length);
+    this.logger.info('Transforming diagrams: ' + filesToTransform.length);
+
+    this.progressDiags = {
+      failed: 0,
+      completed: 0,
+      total: filesToTransform.length
+    };
+
+    this.eventBus.emit('transform:diagrams:progress', this.progressDiags);
 
     for (const file of filesToTransform) {
       if (file.oldLocalPath) {
@@ -183,12 +201,23 @@ export class TransformPlugin extends BasePlugin {
           localPath: file.localPath
         });
 
+        this.progressDiags.completed++;
+        this.eventBus.emit('transform:diagrams:progress', this.progressDiags);
       } catch (e) {
-        console.error('Error transforming ' + file.id + '.svg [' + file.localPath + ']: ' + e.message);
+        this.logger.error('Error transforming ' + file.id + '.svg [' + file.localPath + ']: ' + e.message);
         await this.filesStructure.markDirty([ file ]);
         await this.transformStatus.removeStatus(file.id);
+
+        this.progressDiags.failed++;
+        this.eventBus.emit('transform:diagrams:progress', this.progressDiags);
       }
 
+    }
+
+    if (this.progressDiags.failed === 0) {
+      this.eventBus.emit('transform:diagrams:done', this.progressDiags);
+    } else {
+      this.eventBus.emit('transform:diagrams:failed', this.progressDiags);
     }
   }
 
@@ -205,7 +234,7 @@ export class TransformPlugin extends BasePlugin {
       }
     }
 
-    console.log('Removed trashed:', removed);
+    this.logger.info('Removed trashed:' + JSON.stringify(removed));
   }
 
   async transformDocuments() {
@@ -214,7 +243,15 @@ export class TransformPlugin extends BasePlugin {
     const navigationTransform = await this.transformNavigation(files, navigationFile);
 
     const filesToTransform = await this.getFilesToTransform();
-    console.log('Transforming documents: ' + filesToTransform.length);
+    this.logger.info('Transforming documents: ' + filesToTransform.length);
+
+    this.progressDocs = {
+      failed: 0,
+      completed: 0,
+      total: filesToTransform.length
+    };
+
+    this.eventBus.emit('transform:documents:progress', this.progressDocs);
 
     for (const file of filesToTransform) {
       if (file.oldLocalPath) {
@@ -274,12 +311,22 @@ export class TransformPlugin extends BasePlugin {
           localPath: file.localPath
         });
 
+        this.progressDocs.completed++;
+        this.eventBus.emit('transform:documents:progress', this.progressDocs);
       } catch (e) {
-        console.error('Error transforming ' + file.id + '.html [' + file.localPath + ']: ' + e.message);
+        this.progressDocs.failed++;
+        this.eventBus.emit('transform:documents:progress', this.progressDocs);
+        this.logger.error('Error transforming ' + file.id + '.html [' + file.localPath + ']: ' + e.message);
         await this.filesStructure.markDirty([ file ]);
         await this.transformStatus.removeStatus(file.id);
       }
 
+    }
+
+    if (this.progressDocs.failed === 0) {
+      this.eventBus.emit('transform:documents:done', this.progressDocs);
+    } else {
+      this.eventBus.emit('transform:documents:failed', this.progressDocs);
     }
   }
 
@@ -464,7 +511,7 @@ export class TransformPlugin extends BasePlugin {
         const localPath = path.join(this.dest, file.localPath);
         if (fs.existsSync(localPath)) {
           fs.unlinkSync(localPath);
-          console.log('Cleared: ' + localPath);
+          this.logger.info('Cleared: ' + localPath);
         }
         await this.removeEmptyDir(localPath);
       }

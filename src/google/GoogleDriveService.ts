@@ -101,15 +101,32 @@ export function urlToFolderId(url) {
 
 
 export class GoogleDriveService {
-  constructor(private logger: Logger) {
+  private progress: {
+    completed: number,
+    total: number,
+  };
+
+  constructor(private eventBus, private logger: Logger) {
+    this.progress = {
+      completed: 0,
+      total: 0
+    }
   }
 
   async listRootRecursive(auth, context, modifiedTime) {
+    this.progress.completed = 0;
+    this.progress.total = 1;
+
+    this.eventBus.emit('listen:progress', this.progress);
+
     const files = await this._listFilesRecursive(auth, context, modifiedTime);
 
     if (!modifiedTime && files.length === 0) {
+      this.eventBus.emit('listen:failed', this.progress);
       throw new GoogleDriveServiceError('Empty result for root directory check you auth data or add files');
     }
+
+    this.eventBus.emit('listen:done', this.progress);
 
     return files;
   }
@@ -117,6 +134,10 @@ export class GoogleDriveService {
   async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
     this.logger.info('Listening folder:', { remotePath: remotePath.join('/') || '/' });
     let files: File[] = await this._listFiles(auth, context, modifiedTime);
+    this.progress.completed++;
+    this.progress.total += files.filter(file => file.mimeType === FilesStructure.FOLDER_MIME).length;
+
+    this.eventBus.emit('listen:progress', this.progress);
 
     const retVal = [];
 
@@ -308,13 +329,15 @@ export class GoogleDriveService {
   async exportDocument(auth, file, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
+    const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';
+
     try {
       const res = <any>await drive.files.export({
         fileId: file.id,
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
-      }, { responseType: 'stream' });
+      }, { responseType: 'stream' })
 
       await new Promise((resolve, reject) => {
         let stream = res.data
@@ -326,13 +349,13 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
             resolve();
           });
         }

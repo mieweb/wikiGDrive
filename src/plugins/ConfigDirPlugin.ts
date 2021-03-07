@@ -28,7 +28,7 @@ export class ConfigDirPlugin extends BasePlugin {
   private params: CliParams;
 
   constructor(eventBus, logger) {
-    super(eventBus, logger);
+    super(eventBus, logger.child({ filename: __filename }));
 
     this.fileService = new FileService();
     // this.filePath = filePath;
