@@ -20,6 +20,7 @@ import {ExternalFiles} from '../storage/ExternalFiles';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
 import {SvgTransform} from '../SvgTransform';
 import {UnZipper} from '../utils/UnZipper';
+import {StringWritable} from '../utils/StringWritable';
 
 export class TransformPlugin extends BasePlugin {
   private command: string;
@@ -32,6 +33,7 @@ export class TransformPlugin extends BasePlugin {
   private externalFiles: ExternalFiles;
   private linkTranslator: LinkTranslator;
   private force: boolean;
+  private oldTocString: string;
 
   constructor(eventBus) {
     super(eventBus);
@@ -388,9 +390,15 @@ export class TransformPlugin extends BasePlugin {
     await this.generateConflicts();
     await this.generateRedirects();
     const tocGenerator = new TocGenerator('toc.md', this.linkTranslator);
-    const writeStream = fs.createWriteStream(path.join(this.dest, 'toc.md'));
+    const writeStream = new StringWritable();
     await tocGenerator.generate(this.filesStructure, writeStream);
-    writeStream.end();
+
+    const tocString = writeStream.getString();
+
+    if (this.oldTocString !== tocString) {
+      fs.writeFileSync(path.join(this.dest, 'toc.md'), tocString);
+      this.oldTocString = tocString;
+    }
   }
 
   async ensureDir(filePath) {
