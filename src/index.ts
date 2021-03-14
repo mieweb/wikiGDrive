@@ -1,3 +1,4 @@
+#!/bin/env ts-node-transpile-only
 'use strict';
 
 import * as path from 'path';
@@ -49,10 +50,14 @@ async function index() {
   // PWD is null on Windows, so we can set it here
   process.env.PWD = process.cwd();
 
+  const default_wgd_dir = (argv['dest'] && fs.existsSync(path.join(argv['dest'], '.wgd')))
+    ? path.join(argv['dest'], '.wgd')
+    : path.join(process.env.PWD, '.wgd');
+
   const params: CliParams = {
     command: argv._[0],
     drive: argv['drive'],
-    config_dir: argv['config_dir'] || path.join(process.env.PWD, '.wgd'),
+    config_dir: argv['config_dir'] || default_wgd_dir,
     dest: argv['dest'] || process.env.PWD,
     watch_mode: argv['watch_mode'] || 'changes',
 
@@ -74,7 +79,7 @@ async function index() {
   let configService;
   mainService.eventBus.on('configService:initialized', (configServiceParam) => {
     configService = configServiceParam;
-  })
+  });
 
   process
     .on('unhandledRejection', async (reason: any, p) => {
@@ -98,20 +103,6 @@ async function index() {
       console.error('Uncaught Exception thrown', err);
       process.exit(1);
     });
-
-  require('source-map-support').install({
-    environment: 'node',
-    overrideRetrieveSourceMap: true,
-    retrieveSourceMap: function(source) {
-      if (fs.existsSync(source + '.map')) {
-        return {
-          url: 'main.js',
-          map: fs.readFileSync(source + '.map', 'utf8')
-        };
-      }
-      return null;
-    }
-  });
 
   try {
     await mainService.init();

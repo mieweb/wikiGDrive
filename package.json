@@ -10,13 +10,14 @@
     "Wiki"
   ],
   "bin": {
-    "wikigdrive": "./dist/main.js"
+    "wikigdrive": "./dist/main.js",
+    "wikigdrive-ts": "./src/index.ts"
   },
   "main": "src/index.ts",
   "scripts": {
     "test": "mochapack --mode development test/**/*.js",
     "lint": "eslint .",
-    "dev": "webpack --mode development --watch",
+    "dev": "webpack --mode development  --watch",
     "build": "webpack --mode production",
     "build:docs": "mmdc -i docs/plugin_sequence.mmd -o docs/plugin_sequence.svg -b '#FFFFFF'"
   },
@@ -69,7 +70,6 @@
     "relateurl": "^0.2.7",
     "simple-git": "^2.31.0",
     "slugify": "^1.4.6",
-    "source-map-support": "^0.5.19",
     "stream": "^0.0.2",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.0",
@@ -85,6 +85,7 @@
     "@types/xmldoc": "^1.1.5",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
+    "caniuse-lite": "^1.0.30001199",
     "chai": "^4.2.0",
     "colors": "^1.4.0",
     "diff": "^4.0.2",
@@ -100,6 +101,7 @@
     "raw-loader": "^4.0.1",
     "sinon": "^9.0.3",
     "ts-loader": "^8.0.3",
+    "ts-node": "^9.1.1",
     "typescript": "^4.0.2",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"

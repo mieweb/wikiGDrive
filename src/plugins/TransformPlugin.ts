@@ -266,7 +266,7 @@ export class TransformPlugin extends BasePlugin {
         const dest = fs.createWriteStream(targetPath);
 
         const markDownTransform = new MarkDownTransform(file.localPath, this.linkTranslator);
-        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.hierarchy);
+        const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.getHierarchy());
 
         if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.zip'))) {
           await this.filesStructure.markDirty([ file ]);
