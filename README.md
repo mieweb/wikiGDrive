@@ -24,7 +24,7 @@ To get proper sourcemap support we suggest using ts-node for running.
 2. Install ts-node: `npm install -g ts-node`
 3. Now you can run it with: `ndb node -r ts-node/register ./src/index.ts ...`
 3. Or you can run it with: `ndb node -r ts-node/register/transpile-only ./src/index.ts --dest $DIR pull`
-4. Or without the debugger just by `ts-node-transpile-only --project ./src/index.ts pull --dest $DIR pull`
+4. Or without the debugger just by `ts-node-transpile-only --project ./src/index.ts --dest $DIR pull`
 
 ## Install from NPM
 

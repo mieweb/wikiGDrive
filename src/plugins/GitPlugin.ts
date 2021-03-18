@@ -6,21 +6,21 @@ import * as SimpleGit from 'simple-git/promise';
 import { spawn } from 'child_process';
 
 import { BasePlugin } from './BasePlugin';
-import { FilesStructure } from '../storage/FilesStructure';
+import { GoogleFiles } from '../storage/GoogleFiles';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 
 export class GitPlugin extends BasePlugin {
   private gitUpdateSecondsDelay: number;
   private config_dir: any;
   private dest: string;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
     this.gitUpdateSecondsDelay = 3600;
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:run', async (params) => {
       this.config_dir = params.config_dir;
 
       const seconds = parseSecondsInterval(params.git_update_delay);
@@ -36,10 +36,10 @@ export class GitPlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.dest = drive_config.dest;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
-    eventBus.on('transform:clean', async () => {
+    eventBus.on('transform:done', async () => {
       await this.processGit();
       eventBus.emit('git:done');
     });
@@ -68,7 +68,7 @@ git commit -m "Autocommit updated files" $@
       }
       const status = await repository.status();
 
-      const documents = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.DOCUMENT_MIME);
+      const documents = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.DOCUMENT_MIME);
       // console.log('status', status);
 
       const not_added = documents.filter(doc => status.not_added.indexOf(doc.localPath) > -1);

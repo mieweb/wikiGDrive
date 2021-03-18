@@ -18,7 +18,7 @@ export class GoogleApiPlugin extends BasePlugin {
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:run', async (params) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
     });
@@ -54,15 +54,16 @@ export class GoogleApiPlugin extends BasePlugin {
       case 'watch':
       case 'download':
       case 'drives':
+      case 'sync':
         if (this.drive_config.service_account) {
           const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
-          this.eventBus.emit('google_api:initialized', {
+          this.eventBus.emit('google_api:done', {
             auth,
             googleDriveService
           });
         } else {
           const auth = await googleAuthService.authorize(this.drive_config.client_id, this.drive_config.client_secret);
-          this.eventBus.emit('google_api:initialized', {
+          this.eventBus.emit('google_api:done', {
             auth,
             googleDriveService
           });

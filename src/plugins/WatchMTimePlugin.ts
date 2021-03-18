@@ -3,7 +3,7 @@
 import {BasePlugin} from './BasePlugin';
 import {CliParams} from "../MainService";
 import {DriveConfig} from "./ConfigDirPlugin";
-import {FilesStructure} from "../storage/FilesStructure";
+import {GoogleFiles} from "../storage/GoogleFiles";
 import {GoogleDriveService} from "../google/GoogleDriveService";
 
 export class WatchMTimePlugin extends BasePlugin {
@@ -11,7 +11,7 @@ export class WatchMTimePlugin extends BasePlugin {
   private drive_id: string;
   private watch_mode: string;
   private drive_config: DriveConfig;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private auth: any;
   private googleDriveService: GoogleDriveService;
   private context: any;
@@ -20,7 +20,7 @@ export class WatchMTimePlugin extends BasePlugin {
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params: CliParams) => {
+    eventBus.on('main:run', async (params: CliParams) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
       this.watch_mode = params.watch_mode;
@@ -28,10 +28,10 @@ export class WatchMTimePlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', (drive_config: DriveConfig) => {
       this.drive_config = drive_config;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
@@ -39,13 +39,7 @@ export class WatchMTimePlugin extends BasePlugin {
       this.context = context;
       this.lastMTime = lastMTime;
     });
-    eventBus.on('main:fetch_watch_token', async () => {
-      if (this.watch_mode !== 'mtime') {
-        return;
-      }
-      eventBus.emit('watch:token_ready');
-    });
-    eventBus.on('main:run_watch', async () => {
+    eventBus.on('watch:run', async () => {
       if (this.watch_mode !== 'mtime') {
         return;
       }
@@ -58,12 +52,12 @@ export class WatchMTimePlugin extends BasePlugin {
 
     while (true) { // eslint-disable-line no-constant-condition
       try {
-        lastMTime = this.filesStructure.getMaxModifiedTime();
+        lastMTime = this.googleFiles.getMaxModifiedTime();
         const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
         if (changedFiles.length > 0) {
           console.log(changedFiles.length + ' files modified');
-          await this.filesStructure.merge(changedFiles);
-          this.eventBus.emit('files_structure:dirty');
+          await this.googleFiles.merge(changedFiles);
+          this.eventBus.emit('google_files:dirty');
         } else {
           console.log('No files modified. Sleeping for 10 seconds.');
         }

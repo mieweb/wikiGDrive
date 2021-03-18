@@ -3,8 +3,9 @@
 import {BasePlugin} from './BasePlugin';
 import {CliParams} from "../MainService";
 import {DriveConfig} from "./ConfigDirPlugin";
-import {FilesStructure} from "../storage/FilesStructure";
-import {GoogleDriveService, urlToFolderId} from "../google/GoogleDriveService";
+import {GoogleFiles} from "../storage/GoogleFiles";
+import {GoogleDriveService} from "../google/GoogleDriveService";
+import {urlToFolderId} from '../utils/idParsers';
 
 export class WatchChangesPlugin extends BasePlugin {
   private command: string;
@@ -12,17 +13,15 @@ export class WatchChangesPlugin extends BasePlugin {
   private watch_mode: string;
   private debug: string[];
   private drive_config: DriveConfig;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private auth: any;
   private googleDriveService: GoogleDriveService;
-  private context: any;
-  private lastMTime: string;
   private startTrackToken: string;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params: CliParams) => {
+    eventBus.on('main:run', async (params: CliParams) => {
       this.command = params.command;
       this.watch_mode = params.watch_mode;
       this.debug = params.debug;
@@ -31,25 +30,21 @@ export class WatchChangesPlugin extends BasePlugin {
       this.drive_config = drive_config;
       this.drive_id = drive_config.drive_id;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('list_root:done', ({ context, lastMTime }) => {
-      this.context = context;
-      this.lastMTime = lastMTime;
-    });
-    eventBus.on('main:fetch_watch_token', async () => {
+    eventBus.on('watch_changes:fetch_token', async () => {
       if (this.watch_mode !== 'changes') {
         return;
       }
       this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth, this.drive_id);
-      eventBus.emit('watch:token_ready');
+      eventBus.emit('watch_changes:token_ready');
     });
-    eventBus.on('main:run_watch', async () => {
+    eventBus.on('watch:run', async () => {
       if (this.watch_mode !== 'changes') {
         return;
       }
@@ -71,7 +66,7 @@ export class WatchChangesPlugin extends BasePlugin {
             if (parentId === rootFolderId) {
               retVal = true;
             }
-            if (this.filesStructure.containsFile(parentId)) {
+            if (this.googleFiles.containsFile(parentId)) {
               retVal = true;
             }
           });
@@ -93,17 +88,17 @@ export class WatchChangesPlugin extends BasePlugin {
 
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files changed');
-          await this.filesStructure.merge(changedFiles);
+          await this.googleFiles.merge(changedFiles);
         }
 
         if (externalDocs.length > 0) {
           this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.filesStructure.merge(externalDocs);
+          await this.googleFiles.merge(externalDocs);
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
         this.logger.info('Pulled latest changes');
-        this.eventBus.emit('files_structure:dirty');
+        this.eventBus.emit('google_files:dirty');
 
       } catch (e) {
         this.logger.error(e);

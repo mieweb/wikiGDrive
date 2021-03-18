@@ -3,11 +3,11 @@
 import {BasePlugin} from './BasePlugin';
 import {HttpClient} from '../utils/HttpClient';
 import {ExternalFiles} from '../storage/ExternalFiles';
-import {FilesStructure} from '../storage/FilesStructure';
+import {GoogleFiles} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 
 import * as path from 'path';
-import * as async from 'async';
+import {queue} from 'async';
 import {DriveConfig} from "./ConfigDirPlugin";
 
 async function convertImageLink(document, url) {
@@ -47,42 +47,49 @@ async function processRecursive(json, func) {
 
 export class ExternalFilesPlugin extends BasePlugin {
   private externalFiles: ExternalFiles;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private config_dir: string;
   private dest: string;
+
+  private progress: {
+    failed: number;
+    completed: number;
+    total: number;
+  };
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params) => {
+    this.progress = {
+      failed: 0,
+      completed: 0,
+      total: 0
+    }
+
+    eventBus.on('main:run', async (params) => {
       this.config_dir = params.config_dir;
     });
     eventBus.on('drive_config:loaded', async (drive_config: DriveConfig) => {
       this.dest = drive_config.dest;
       await this.init();
     });
-    eventBus.on('files_structure:initialized', async ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', async ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
-    eventBus.on('download:clean', async () => {
+    eventBus.on('external:run', async () => {
       await this.process();
-      this.eventBus.emit('external:done');
-    });
-    eventBus.on('external:process', async () => {
-      await this.process();
-      this.eventBus.emit('external:done');
     });
   }
 
   private async init() {
-    this.externalFiles = new ExternalFiles(this.config_dir, new HttpClient(), this.dest);
+    this.externalFiles = new ExternalFiles(this.logger, this.config_dir, new HttpClient(), this.dest);
     await this.externalFiles.init();
     await this.externalFiles.cleanup();
     this.eventBus.emit('external_files:initialized', { externalFiles: this.externalFiles });
   }
 
   async process() {
-    const files = this.filesStructure.findFiles(item => !item.dirty && FilesStructure.DOCUMENT_MIME === item.mimeType);
+    const files = this.googleFiles.findFiles(item => !item.dirty && GoogleFiles.DOCUMENT_MIME === item.mimeType);
 
     for (const file of files) {
       const links = await this.extractExternalFiles(file);
@@ -119,29 +126,42 @@ export class ExternalFilesPlugin extends BasePlugin {
   async download() {
     const linksToDownload = await this.externalFiles.findLinks(link => !link.md5Checksum);
 
+    this.progress.failed = 0;
+    this.progress.completed = 0;
+    this.progress.total = linksToDownload.length;
+
     if (linksToDownload.length > 0) {
-      console.log('Downloading external files (' + linksToDownload.length + ')');
+      this.logger.info('Downloading external files (' + linksToDownload.length + ')');
     } else {
+      this.eventBus.emit('external:done', this.progress);
       return;
     }
 
-    const concurrency = 4;
+    this.eventBus.emit('external:progress', this.progress);
 
-    const q = async.queue(async (task, callback) => {
+    const CONCURRENCY = 8;
+
+    const q = queue<any>(async (task, callback) => {
       switch (task.type) {
         case 'download':
           await this.downloadFile(task.url);
+          this.progress.completed++;
+          this.eventBus.emit('external:progress', this.progress);
           break;
         default:
-          console.error('Unknown task type: ' + task.type)
+          this.logger.error('Unknown task type: ' + task.type)
       }
       callback();
-    }, concurrency);
+    }, CONCURRENCY);
 
-    q.error(function(err, task) {
+    q.error((err, task) => {
       task.retry = (task.retry || 0) + 1;
       if (task.retry < 5) {
+        this.progress.total++;
         q.push(task);
+      } else {
+        this.progress.failed++;
+        this.eventBus.emit('external:progress', this.progress);
       }
     });
 
@@ -150,7 +170,8 @@ export class ExternalFilesPlugin extends BasePlugin {
     }
 
     await q.drain();
-    console.log('Downloading external files finished');
+    this.logger.info('Downloading external files finished');
+    this.eventBus.emit('external:done', this.progress);
   }
 
   async downloadFile(url) {

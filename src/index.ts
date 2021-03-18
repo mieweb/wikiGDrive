@@ -1,4 +1,3 @@
-#!/bin/env ts-node-transpile-only
 'use strict';
 
 import * as path from 'path';
@@ -10,39 +9,46 @@ const pkg = require('../package.json');
 function usage() {
   console.log(
     `version: ${pkg.version}${`
-    Usage:
-    $ wikigdrive <command> [<options>]
+Usage:
+    $ wikigdrive <command> [args] [<options>]
 
-Commands: 
+Main commands:
+
     wikigdrive init
-    --drive [shared drive url]
-    --client_id
-    --client_secret
-    --service_account=./private_key.json
-    --drive_id
-    --dest (current working folder)
-    --without-folder-structure
-    --link_mode [mdURLs|dirURLs|uglyURLs]
+        --drive [shared drive url]
+        --client_id
+        --client_secret
+        --service_account=./private_key.json
+        --drive_id
+        --dest (current working folder)
+        --link_mode [mdURLs|dirURLs|uglyURLs]
+        --without-folder-structure
 
     wikigdrive pull
 
-    wikigdrive watch
-    --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+    wikigdrive watch --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+
+Other commands:
 
     wikigdrive drives
+    wikigdrive sync
+    wikigdrive download
+    wikigdrive transform
 
 Options:
     --config_dir (.wgd)
+    --disable-progress
+    --dest (current working folder)
 
 Examples:
-    $ wikigdrive https://google.drive...
+    $ wikigdrive init --drive https://google.drive...
     `}`);
 }
 
 async function index() {
   const argv = minimist(process.argv.slice(2));
 
-  if (argv._.length !== 1 || argv.h || argv.help) {
+  if (argv._.length < 1 || argv.h || argv.help) {
     usage();
     process.exit(1);
   }
@@ -56,6 +62,7 @@ async function index() {
 
   const params: CliParams = {
     command: argv._[0],
+    args: argv._.slice(1),
     drive: argv['drive'],
     config_dir: argv['config_dir'] || default_wgd_dir,
     dest: argv['dest'] || process.env.PWD,
@@ -72,7 +79,8 @@ async function index() {
     drive_id: argv['drive_id'] || '',
     service_account: argv['service_account'] || null,
     git_update_delay: argv['git_update_delay'] || 60,
-    force: !!argv['force']
+    force: !!argv['force'],
+    disable_progress: !!argv['disable-progress']
   };
   
   const mainService = new MainService(params);

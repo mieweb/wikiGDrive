@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as RelateUrl from 'relateurl';
 
 import {FileService} from './utils/FileService';
-import {FileMap, FilesStructure} from './storage/FilesStructure';
+import {FileMap, GoogleFiles} from './storage/GoogleFiles';
 import {ExternalFiles} from './storage/ExternalFiles';
 import {LinkMode} from './MainService';
 
@@ -12,8 +12,8 @@ export class LinkTranslator {
   private readonly fileMap: FileMap;
   private mode: LinkMode;
 
-  constructor(private filesStructure: FilesStructure, private externalFiles: ExternalFiles) {
-    this.fileMap = filesStructure.getFileMap();
+  constructor(private googleFiles: GoogleFiles, private externalFiles: ExternalFiles) {
+    this.fileMap = googleFiles.getFileMap();
 
     /*
      * uglyURLs - https://gohugo.io/getting-started/configuration/
@@ -44,7 +44,7 @@ export class LinkTranslator {
       if (url.indexOf(fileId) > -1) {
         url = file.localPath;
 
-        if (file.mimeType === FilesStructure.FOLDER_MIME) {
+        if (file.mimeType === GoogleFiles.FOLDER_MIME) {
           // url += '/';
         }
 
@@ -57,7 +57,6 @@ export class LinkTranslator {
 
   async imageUrlToLocalPath(url) {
     return url;
-    console.log('imageUrlToLocalPath', url);
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
 
@@ -73,7 +72,7 @@ export class LinkTranslator {
       const md5 = await fileService.md5File(tempPath);
 
       if (md5) {
-        const file = this.filesStructure.findFile(file => file.md5Checksum === md5);
+        const file = this.googleFiles.findFile(file => file.md5Checksum === md5);
         if (file) {
           return file.localPath;
         }

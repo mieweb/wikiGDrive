@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import {BasePlugin} from './BasePlugin';
-import {FilesStructure} from '../storage/FilesStructure';
+import {GoogleFiles} from '../storage/GoogleFiles';
 import {TocGenerator} from '../TocGenerator';
 import {LinkTranslator} from '../LinkTranslator';
 import {MarkDownTransform} from '../markdown/MarkDownTransform';
@@ -28,7 +28,7 @@ export class TransformPlugin extends BasePlugin {
   private link_mode: LinkMode;
   private dest: string;
   private flat_folder_structure: boolean;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private externalFiles: ExternalFiles;
   private linkTranslator: LinkTranslator;
   private force: boolean;
@@ -47,7 +47,7 @@ export class TransformPlugin extends BasePlugin {
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params: CliParams) => {
+    eventBus.on('main:run', async (params: CliParams) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
       this.force = !!params.force;
@@ -60,25 +60,22 @@ export class TransformPlugin extends BasePlugin {
       this.dest = drive_config.dest;
       this.flat_folder_structure = drive_config.flat_folder_structure;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
     eventBus.on('external_files:initialized', ({ externalFiles }) => {
       this.externalFiles = externalFiles;
     });
-    eventBus.on('external:done', async () => {
+    eventBus.on('transform:run', async () => {
       await this.handleTransform();
     });
-    eventBus.on('main:transform_start', async () => {
-      await this.handleTransform();
-    });
-    eventBus.on('main:transform_clear', async () => {
+    eventBus.on('transform:clear', async () => {
       await this.handleTransformClear();
     });
   }
 
   async handleTransform() {
-    this.linkTranslator = new LinkTranslator(this.filesStructure, this.externalFiles);
+    this.linkTranslator = new LinkTranslator(this.googleFiles, this.externalFiles);
     if (this.link_mode) {
       this.linkTranslator.setMode(this.link_mode);
     }
@@ -93,7 +90,7 @@ export class TransformPlugin extends BasePlugin {
     if (filesToTransform.length > 0) {
       this.eventBus.emit('transform:dirty');
     } else {
-      this.eventBus.emit('transform:clean');
+      this.eventBus.emit('transform:done');
     }
   }
 
@@ -125,8 +122,8 @@ export class TransformPlugin extends BasePlugin {
     return navigationTransform;
   }
 
-  async getFilesToTransform(mimeType = FilesStructure.DOCUMENT_MIME) {
-    const files = this.filesStructure.findFiles(file => !file.dirty && (mimeType === file.mimeType));
+  async getFilesToTransform(mimeType = GoogleFiles.DOCUMENT_MIME) {
+    const files = this.googleFiles.findFiles(file => !file.dirty && (mimeType === file.mimeType));
     const transformedFiles = this.transformStatus.findStatuses(() => true);
 
     const filesToTransform = [];
@@ -151,7 +148,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async transformDiagrams() {
-    const filesToTransform = await this.getFilesToTransform(FilesStructure.DRAWING_MIME);
+    const filesToTransform = await this.getFilesToTransform(GoogleFiles.DRAWING_MIME);
     this.logger.info('Transforming diagrams: ' + filesToTransform.length);
 
     this.progressDiags = {
@@ -205,7 +202,7 @@ export class TransformPlugin extends BasePlugin {
         this.eventBus.emit('transform:diagrams:progress', this.progressDiags);
       } catch (e) {
         this.logger.error('Error transforming ' + file.id + '.svg [' + file.localPath + ']: ' + e.message);
-        await this.filesStructure.markDirty([ file ]);
+        await this.googleFiles.markDirty([ file ]);
         await this.transformStatus.removeStatus(file.id);
 
         this.progressDiags.failed++;
@@ -222,7 +219,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async deleteTrashed() {
-    const files = this.filesStructure.findFiles(file => file.trashed);
+    const files = this.googleFiles.findFiles(file => file.trashed);
 
     let removed = [];
 
@@ -238,7 +235,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async transformDocuments() {
-    const files = this.filesStructure.findFiles(file => !file.dirty && file.mimeType === FilesStructure.DOCUMENT_MIME);
+    const files = this.googleFiles.findFiles(file => !file.dirty && file.mimeType === GoogleFiles.DOCUMENT_MIME);
     const navigationFile = files.find(file => file.name === '.navigation');
     const navigationTransform = await this.transformNavigation(files, navigationFile);
 
@@ -269,7 +266,7 @@ export class TransformPlugin extends BasePlugin {
         const frontMatterTransform = new FrontMatterTransform(file, this.linkTranslator, navigationTransform.getHierarchy());
 
         if (!fs.existsSync(path.join(this.config_dir, 'files', file.id + '.zip'))) {
-          await this.filesStructure.markDirty([ file ]);
+          await this.googleFiles.markDirty([ file ]);
           throw new Error('Zip version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.zip'));
         }
 
@@ -278,7 +275,7 @@ export class TransformPlugin extends BasePlugin {
 
         const googleListFixer = new GoogleListFixer(unZipper.getHtml());
         const embedImageFixer = new EmbedImageFixer(unZipper.getHtml(), unZipper.getImages());
-        const externalToLocalTransform = new ExternalToLocalTransform(this.filesStructure, this.externalFiles);
+        const externalToLocalTransform = new ExternalToLocalTransform(this.googleFiles, this.externalFiles);
         const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
@@ -317,7 +314,7 @@ export class TransformPlugin extends BasePlugin {
         this.progressDocs.failed++;
         this.eventBus.emit('transform:documents:progress', this.progressDocs);
         this.logger.error('Error transforming ' + file.id + '.html [' + file.localPath + ']: ' + e.message);
-        await this.filesStructure.markDirty([ file ]);
+        await this.googleFiles.markDirty([ file ]);
         await this.transformStatus.removeStatus(file.id);
       }
 
@@ -331,7 +328,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async removeConflicts() {
-    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+    const files = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.CONFLICT_MIME);
 
     for (const file of files) {
       const targetPath = path.join(this.dest, file.localPath);
@@ -346,8 +343,8 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async generateConflicts() {
-    const filesMap = this.filesStructure.getFileMap();
-    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+    const filesMap = this.googleFiles.getFileMap();
+    const files = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.CONFLICT_MIME);
 
     for (const file of files) {
       const targetPath = path.join(this.dest, file.localPath);
@@ -370,7 +367,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async removeRedirects() {
-    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+    const files = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.REDIRECT_MIME);
 
     for (const file of files) {
       const targetPath = path.join(this.dest, file.localPath);
@@ -385,8 +382,8 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async generateRedirects() {
-    const filesMap = this.filesStructure.getFileMap();
-    const files = this.filesStructure.findFiles(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+    const filesMap = this.googleFiles.getFileMap();
+    const files = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.REDIRECT_MIME);
 
     for (const file of files) {
       if (!file.localPath) {
@@ -436,7 +433,7 @@ export class TransformPlugin extends BasePlugin {
     await this.generateRedirects();
     const tocGenerator = new TocGenerator('toc.md', this.linkTranslator);
     const writeStream = fs.createWriteStream(path.join(this.dest, 'toc.md'));
-    await tocGenerator.generate(this.filesStructure, writeStream);
+    await tocGenerator.generate(this.googleFiles, writeStream);
     writeStream.end();
   }
 
@@ -469,11 +466,11 @@ export class TransformPlugin extends BasePlugin {
   }
 
   createFolderStructure(allFiles) {
-    let directories = allFiles.filter(file => file.mimeType === FilesStructure.FOLDER_MIME);
+    let directories = allFiles.filter(file => file.mimeType === GoogleFiles.FOLDER_MIME);
 
     if (this.flat_folder_structure) {
       directories = directories.filter(dir => {
-        return !!allFiles.find(file => file.mimeType !== FilesStructure.FOLDER_MIME && file.desiredLocalPath.startsWith(dir.desiredLocalPath));
+        return !!allFiles.find(file => file.mimeType !== GoogleFiles.FOLDER_MIME && file.desiredLocalPath.startsWith(dir.desiredLocalPath));
       });
     }
 

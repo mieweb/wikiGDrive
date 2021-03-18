@@ -33,7 +33,7 @@ export class ConfigDirPlugin extends BasePlugin {
     this.fileService = new FileService();
     // this.filePath = filePath;
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:run', async (params) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
       this.params = params;

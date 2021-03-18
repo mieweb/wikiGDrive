@@ -125,7 +125,7 @@ export class ProgressPlugin extends BasePlugin {
 
     this.renderer.render();
 
-    eventBus.once('main:init', async () => {
+    eventBus.once('main:run', async () => {
       this.tasks.push(new ProgressTask({
         title: 'Wikigdrive initialized',
         pending: false,
@@ -151,6 +151,7 @@ export class ProgressPlugin extends BasePlugin {
 
     this.addPluginProgressTask('listen', 'Listening');
     this.addPluginProgressTask('download', 'Downloading');
+    this.addPluginProgressTask('external', 'Downloading external');
     this.addPluginProgressTask('transform:documents', 'Transforming documents');
     this.addPluginProgressTask('transform:diagrams', 'Transforming diagrams');
   }
