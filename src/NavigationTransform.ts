@@ -1,7 +1,7 @@
 'use strict';
 
 import { Transform } from 'stream';
-import { PREFIX_LEVEL } from './markdown/MarkDownTransform';
+import { PREFIX_LEVEL } from './markdown/JsonToMarkdown';
 
 export class NavigationTransform extends Transform {
   private link_mode: any;
