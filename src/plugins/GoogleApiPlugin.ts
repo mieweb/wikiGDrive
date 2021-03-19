@@ -15,10 +15,10 @@ export class GoogleApiPlugin extends BasePlugin {
   private configService: ConfigService;
   private oldSave: string;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:run', async (params) => {
       this.command = params.command;
       this.config_dir = params.config_dir;
     });
@@ -35,7 +35,7 @@ export class GoogleApiPlugin extends BasePlugin {
   }
 
   async onConfigLoaded() {
-    const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs);
+    const quotaLimiter = new QuotaLimiter(this.initial_quota_jobs, this.eventBus, this.logger);
     quotaLimiter.setInitialLimit(95, 10); // 950, 100 doesn't work as expected
     quotaLimiter.setSaveHandler((jobs) => {
       const str = JSON.stringify(jobs);
@@ -47,22 +47,23 @@ export class GoogleApiPlugin extends BasePlugin {
     });
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
-    const googleDriveService = new GoogleDriveService();
+    const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
 
     switch (this.command) {
       case 'pull':
       case 'watch':
       case 'download':
       case 'drives':
+      case 'sync':
         if (this.drive_config.service_account) {
           const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
-          this.eventBus.emit('google_api:initialized', {
+          this.eventBus.emit('google_api:done', {
             auth,
             googleDriveService
           });
         } else {
           const auth = await googleAuthService.authorize(this.drive_config.client_id, this.drive_config.client_secret);
-          this.eventBus.emit('google_api:initialized', {
+          this.eventBus.emit('google_api:done', {
             auth,
             googleDriveService
           });

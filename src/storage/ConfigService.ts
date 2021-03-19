@@ -30,10 +30,6 @@ export class ConfigService {
 
   async init() {
     await this.loadData();
-
-    process.on('SIGINT', () => {
-      this.flushData();
-    });
     setInterval(() => {
       this.flushData();
     }, 500);

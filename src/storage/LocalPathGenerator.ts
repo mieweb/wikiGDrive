@@ -1,5 +1,5 @@
 import slugify from "slugify";
-import {File, FilesStructure} from "./FilesStructure";
+import {GoogleFile, GoogleFiles} from "./GoogleFiles";
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -13,10 +13,10 @@ export function getDesiredPath(name) {
 
 export class LocalPathGenerator {
 
-    constructor(private filesStructure: FilesStructure, private flat_folder_structure: boolean) {
+    constructor(private googleFiles: GoogleFiles, private flat_folder_structure: boolean) {
     }
 
-    generateDesiredPaths(changedFiles: File[]) {
+    generateDesiredPaths(changedFiles: GoogleFile[]) {
         changedFiles = changedFiles.map(changedFile => {
             const clone = JSON.parse(JSON.stringify(changedFile));
             clone.desiredLocalPath = null;
@@ -61,7 +61,7 @@ export class LocalPathGenerator {
         return retVal;
     }
 
-    generateDesiredPath(changedFile: File, changedFiles: File[]) {
+    generateDesiredPath(changedFile: GoogleFile, changedFiles: GoogleFile[]) {
         if (this.flat_folder_structure) {
             return getDesiredPath(changedFile.name);
         }
@@ -82,7 +82,7 @@ export class LocalPathGenerator {
                 return slugifiedParent + '/' + getDesiredPath(changedFile.name);
             }
         } else {
-            const parent = this.filesStructure.findFile(file => file.id === changedFile.parentId)
+            const parent = this.googleFiles.findFile(file => file.id === changedFile.parentId)
             if (parent) {
                 const parentDirName = parent.desiredLocalPath;
                 if (parentDirName) {

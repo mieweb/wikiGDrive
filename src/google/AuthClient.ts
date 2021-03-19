@@ -1,7 +1,6 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {JWT} from 'google-auth-library';
 import {handleGoogleError} from './error';
 import {QuotaLimiter} from './QuotaLimiter';
 import {GaxiosOptions, GaxiosResponse} from 'gaxios';
@@ -35,7 +34,7 @@ export class QuotaAuthClient extends google.auth.OAuth2 {
   }
 }
 
-export class QuotaJwtClient extends JWT {
+export class QuotaJwtClient extends google.auth.JWT {
   private quotaLimiter: QuotaLimiter;
 
   constructor(optionsOrEmail?: string, keyFile?: string, key?: string, scopes?: string | string[], subject?: string, keyId?: string) {
