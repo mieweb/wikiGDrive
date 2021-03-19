@@ -25,8 +25,12 @@ export class QuotaLimiter {
 
   private oldCounter: number;
   private saveHandler: Function;
+  private eventBus: any;
+  private logger: any;
 
-  constructor(initialJobs = []) {
+  constructor(initialJobs = [], eventBus, logger) {
+    this.eventBus = eventBus;
+    this.logger = logger;
     this.jobs = [].concat((initialJobs || []));
     setInterval(() => {
       this.handleQueue();
@@ -52,7 +56,7 @@ export class QuotaLimiter {
       ts: 0
     };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
-      console.log('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+      this.logger.info('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
     }
   }
 
@@ -70,7 +74,7 @@ export class QuotaLimiter {
       ts: 0
     };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
-      console.log('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+      this.logger.info('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
       this.oldCounter = this.counter;
     }
   }
@@ -89,6 +93,8 @@ export class QuotaLimiter {
     } else {
       this.currentLimit = { queries, seconds, ts: 0 }; // Because of DELAY_AFTER_ERROR in handleQueue
     }
+
+    this.eventBus.emit('quota:limit', this.currentLimit);
 
     return true;
   }

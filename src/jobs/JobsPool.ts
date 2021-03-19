@@ -15,7 +15,6 @@ export class JobsPool extends EventEmitter {
     this.queue = queue;
 
     queue.on('update', () => {
-      // console.log('uuuuu');
       // this.tryExecute();
     });
 
@@ -35,9 +34,6 @@ export class JobsPool extends EventEmitter {
     for (let i = 0; i < jobsToTake; i++) {
       const job = this.queue.popJob();
       if (job) {
-        // console.log('aaaa', this.size, this.capacity, this.queue.size());
-        // this.size++;
-
         promises.push(new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
           try {
             await job.execute();

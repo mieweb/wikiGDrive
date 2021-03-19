@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from 'path';
-import { FilesStructure } from './storage/FilesStructure';
+import { GoogleFiles } from './storage/GoogleFiles';
 import {LinkTranslator} from './LinkTranslator';
 
 export class TocGenerator {
@@ -26,10 +26,10 @@ export class TocGenerator {
 
   sortLevel(files) {
     return files.sort((file1, file2) => {
-      if ((file1.mimeType === FilesStructure.FOLDER_MIME) && (file2.mimeType !== FilesStructure.FOLDER_MIME)) {
+      if ((file1.mimeType === GoogleFiles.FOLDER_MIME) && (file2.mimeType !== GoogleFiles.FOLDER_MIME)) {
         return -1;
       }
-      if ((file1.mimeType !== FilesStructure.FOLDER_MIME) && (file2.mimeType === FilesStructure.FOLDER_MIME)) {
+      if ((file1.mimeType !== GoogleFiles.FOLDER_MIME) && (file2.mimeType === GoogleFiles.FOLDER_MIME)) {
         return 1;
       }
 
@@ -58,19 +58,19 @@ export class TocGenerator {
         lineStart = ' ' + lineStart;
       }
 
-      if (file.mimeType === FilesStructure.FOLDER_MIME) {
+      if (file.mimeType === GoogleFiles.FOLDER_MIME) {
         await new Promise(resolve => writeStream.write(lineStart + ' ' + file.name + '\n', resolve));
         await this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
       } else
-      if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
+      if (file.mimeType === GoogleFiles.DOCUMENT_MIME) {
         const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, this.localPath);
         await new Promise(resolve => writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n', resolve));
       }
     }
   }
 
-  async generate(filesStructure, writeStream) {
-    const files = filesStructure.findFiles(item => !!item)
+  async generate(googleFiles, writeStream) {
+    const files = googleFiles.findFiles(item => !!item)
         .filter(file => !file.trashed && !!file.localPath);
     let frontMatter = '---\n';
     frontMatter += 'type: page\n';

@@ -1,7 +1,8 @@
-import { assert } from 'chai';
+import {assert} from 'chai';
 import {Readable, Writable} from 'stream';
 
-import { MarkDownTransform } from '../../src/markdown/MarkDownTransform';
+import {MarkDownTransform} from '../../src/markdown/MarkDownTransform';
+import {JsonToMarkdown} from '../../src/markdown/JsonToMarkdown';
 import {compareTexts} from '../utils';
 
 describe('MarkDownTransformTest', () => {
@@ -19,7 +20,7 @@ describe('MarkDownTransformTest', () => {
 
   it('test strong tags', async () => {
     const html = '<strong>test </strong>abc';
-    const markdown = MarkDownTransform.convertHtmlSimpleTags(html);
+    const markdown = JsonToMarkdown.convertHtmlSimpleTags(html);
 
     assert.equal('**test** abc', markdown);
 
