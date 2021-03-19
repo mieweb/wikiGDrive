@@ -2,9 +2,10 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
+import {queue} from 'async';
 
 import {BasePlugin} from './BasePlugin';
-import {FilesStructure} from '../storage/FilesStructure';
+import {GoogleFile, GoogleFiles} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 import {StringWritable} from '../utils/StringWritable';
 import {BufferWritable} from '../utils/BufferWritable';
@@ -16,35 +17,51 @@ import {CliParams} from "../MainService";
 export class DownloadPlugin extends BasePlugin {
   private googleDocsService: GoogleDocsService;
   private config_dir: string;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private auth: any;
   private googleDriveService: GoogleDriveService;
   private externalFiles: ExternalFiles;
   private debug: string[];
 
-  constructor(eventBus) {
-    super(eventBus);
+  private progress: {
+    failed: number;
+    completed: number;
+    total: number;
+  };
+  private handlingFiles: boolean = false;
+  private googleFileIds: string[];
 
-    this.googleDocsService = new GoogleDocsService();
+  constructor(eventBus, logger) {
+    super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params: CliParams) => {
+    this.googleFileIds = [];
+
+    this.progress = {
+      failed: 0,
+      completed: 0,
+      total: 0
+    }
+
+    this.googleDocsService = new GoogleDocsService(this.logger);
+
+    eventBus.on('main:set_google_file_ids_filter', (googleFileIds) => {
+      this.googleFileIds = googleFileIds;
+    });
+    eventBus.on('main:run', async (params: CliParams) => {
       this.config_dir = params.config_dir;
       this.debug = params.debug;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
     eventBus.on('external_files:initialized', ({ externalFiles }) => {
       this.externalFiles = externalFiles;
     });
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('files_structure:dirty', async () => {
-      await this.handleDirtyFiles();
-    });
-    eventBus.on('download:process', async () => {
+    eventBus.on('download:run', async () => {
       await this.handleDirtyFiles();
     });
     eventBus.on('download:retry', async () => {
@@ -53,7 +70,7 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async downloadAsset(file, targetPath) {
-    console.log('Downloading asset: ' + file.localPath);
+    this.logger.info('Downloading asset: ' + file.localPath);
     await this.ensureDir(targetPath);
 
     try {
@@ -64,35 +81,36 @@ export class DownloadPlugin extends BasePlugin {
       throw err;
     }
 
-    await this.filesStructure.  markClean([ file ]);
+    await this.googleFiles.markClean([ file ]);
   }
 
   private async downloadDiagram(file, targetPath) {
-    console.log('Downloading diagram: ' + file.localPath);
-    await this.ensureDir(targetPath);
+    const targetPathSvg = targetPath.replace(/.gdoc$/, '.svg');
+    const targetPathPng = targetPath.replace(/.gdoc$/, '.png');
+    this.logger.info('Downloading diagram: ' + file.localPath);
+    await this.ensureDir(targetPathSvg);
 
     try {
-      const writeStream = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.svg'));
+      const writeStream = fs.createWriteStream(targetPathSvg);
       await this.googleDriveService.exportDocument(
         this.auth,
         Object.assign({}, file, { mimeType: 'image/svg+xml' }),
         writeStream);
-      // [svgTransform, writeStream]);
     } catch (err) {
-      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
+      if (fs.existsSync(targetPathSvg)) fs.unlinkSync(targetPathSvg);
       throw err;
     }
 
     try {
-      const writeStreamPng = fs.createWriteStream(targetPath.replace(/.gdoc$/, '.png'));
+      const writeStreamPng = fs.createWriteStream(targetPathPng);
 
       await this.googleDriveService.exportDocument(
         this.auth,
         Object.assign({}, file, { mimeType: 'image/png' }),
         writeStreamPng);
     } catch (err) {
-      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
-      if (fs.existsSync(targetPath.replace(/.svg$/, '.png'))) fs.unlinkSync(targetPath.replace(/.svg$/, '.png'));
+      if (fs.existsSync(targetPathSvg)) fs.unlinkSync(targetPathSvg);
+      if (fs.existsSync(targetPathPng)) fs.unlinkSync(targetPathPng);
       throw err;
     }
 
@@ -104,7 +122,10 @@ export class DownloadPlugin extends BasePlugin {
       localDocumentPath: file.localPath,
       md5Checksum: md5Checksum
     });
-    await this.filesStructure.markClean([ file ]);
+
+    await this.googleFiles.markClean([ file ]);
+
+    return file;
   }
 
   private async downloadDocument(file) {
@@ -122,11 +143,13 @@ export class DownloadPlugin extends BasePlugin {
 
       fs.writeFileSync(zipPath, destZip.getBuffer())
       fs.writeFileSync(gdocPath, destJson.getString());
-      await this.filesStructure.markClean([ file ]);
+      await this.googleFiles.markClean([ file ]);
+
+      return file;
     } catch (err) {
       if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
       if (fs.existsSync(gdocPath)) fs.unlinkSync(gdocPath);
-      await this.filesStructure.markDirty([ file ]);
+      await this.googleFiles.markDirty([ file ]);
       throw err;
     }
   }
@@ -138,163 +161,125 @@ export class DownloadPlugin extends BasePlugin {
 
     try {
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType, localPath: file.localPath }, fs.createWriteStream(extPath));
-      await this.filesStructure.markClean([ file ]);
+      await this.googleFiles.markClean([ file ]);
     } catch (err) {
       if (fs.existsSync(extPath)) fs.unlinkSync(extPath);
-      await this.filesStructure.markDirty([ file ]);
+      await this.googleFiles.markDirty([ file ]);
       throw err;
     }
   }
 
   private async handleDirtyFiles() {
+    if (this.handlingFiles) {
+      return;
+    }
+    this.handlingFiles = true;
+
     if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
       fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
     }
 
-    const promises = [];
-    const dirtyFiles = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
+    const dirtyFiles: GoogleFile[] = this.googleFileIds.length > 0 ?
+      this.googleFiles.findFiles(item => this.googleFileIds.indexOf(item.id) > -1) :
+      this.googleFiles.findFiles(item => !!item.dirty && !item.trashed);
 
     if (dirtyFiles.length > 0) {
-      if (dirtyFiles.length < 20) {
-        console.log('Downloading modified files:', dirtyFiles.map(file => file.id));
-      } else {
-        console.log('Downloading modified files (' + dirtyFiles.length + ')');
-      }
+      const debugInfo = JSON.stringify(dirtyFiles.slice(0, 10).map(item => item.id))
+        .replace(']', (dirtyFiles.length > 10 ? ', ...' + (dirtyFiles.length - 10) + ' more]' : ']'));
+
+      this.logger.info('Downloading modified files: ' + debugInfo);
     }
 
-    const exportFormats = [
-      {
-        "source": "application/vnd.google-apps.document",
-        "targets": [
-          "application/rtf",
-          "application/vnd.oasis.opendocument.text",
-          "text/html",
-          "application/pdf",
-          "application/epub+zip",
-          "application/zip",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "text/plain"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.spreadsheet",
-        "targets": [
-          "application/x-vnd.oasis.opendocument.spreadsheet",
-          "text/tab-separated-values",
-          "application/pdf",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "text/csv",
-          "application/zip",
-          "application/vnd.oasis.opendocument.spreadsheet"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.jam",
-        "targets": [
-          "application/pdf"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.script",
-        "targets": [
-          "application/vnd.google-apps.script+json"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.presentation",
-        "targets": [
-          "application/vnd.oasis.opendocument.presentation",
-          "application/pdf",
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          "text/plain"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.form",
-        "targets": [
-          "application/zip"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.drawing",
-        "targets": [
-          "image/svg+xml",
-          "image/png",
-          "application/pdf",
-          "image/jpeg"
-        ]
-      },
-      {
-        "source": "application/vnd.google-apps.site",
-        "targets": [
-          "text/plain"
-        ]
-      }
-    ];
+    this.progress.failed = 0;
+    this.progress.completed = 0;
+    this.progress.total = dirtyFiles.length;
+    this.eventBus.emit('download:progress', this.progress);
 
-    for (const file of dirtyFiles) {
+    const ids = dirtyFiles.map(item => item.id);
 
+    const CONCURRENCY = 32;
+
+    const q = queue<GoogleFile>(async (file, callback) => {
       const targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
-      if (file.trashed) {
-        promises.push(this.filesStructure.markClean([ file ]));
+      // if (file.trashed) {
+      //   this.googleFiles.markClean([ file ]));
+      // } else
+      if (file.mimeType === GoogleFiles.CONFLICT_MIME) {
+        await this.googleFiles.markClean([ file ]);
       } else
-      if (file.mimeType === FilesStructure.CONFLICT_MIME) {
-        promises.push(this.filesStructure.markClean([ file ]));
+      if (file.mimeType === GoogleFiles.REDIRECT_MIME) {
+        await this.googleFiles.markClean([ file ]);
       } else
-      if (file.mimeType === FilesStructure.REDIRECT_MIME) {
-        promises.push(this.filesStructure.markClean([ file ]));
+      if (file.mimeType === GoogleFiles.DRAWING_MIME) {
+        await this.downloadDiagram(file, targetPath);
       } else
-      if (file.mimeType === FilesStructure.DRAWING_MIME) {
-        promises.push(this.downloadDiagram(file, targetPath));
-      } else
-      if (file.mimeType === FilesStructure.DOCUMENT_MIME) {
-        promises.push(this.downloadDocument(file));
+      if (file.mimeType === GoogleFiles.DOCUMENT_MIME) {
+        await this.downloadDocument(file);
       } else
       if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
-        promises.push(this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'));
-        promises.push(this.exportBinary(file, 'text/csv', 'csv'));
+        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx');
+        await this.exportBinary(file, 'text/csv', 'csv');
       } else
       if (file.mimeType === 'application/vnd.google-apps.presentation') {
-        promises.push(this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'));
-        promises.push(this.exportBinary(file, 'application/pdf', 'pdf'));
+        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx');
+        await this.exportBinary(file, 'application/pdf', 'pdf');
       } else
       if (file.mimeType === 'application/vnd.google-apps.form') {
-        promises.push(this.exportBinary(file, 'application/zip', 'zip'));
+        await this.exportBinary(file, 'application/zip', 'zip');
       } else
       if (file.size !== undefined) {
-        promises.push(this.downloadAsset(file, targetPath));
+        await this.downloadAsset(file, targetPath);
       } else {
-        promises.push(this.downloadAsset(file, targetPath));
+        await this.downloadAsset(file, targetPath);
       }
+
+      this.progress.completed++;
+      this.eventBus.emit('download:progress', this.progress);
+
+      callback();
+    }, CONCURRENCY);
+
+    q.error((err, task) => {
+      this.progress.failed++;
+      this.eventBus.emit('download:progress', this.progress);
+    });
+
+    if (dirtyFiles.length > 0) {
+      for (const file of dirtyFiles) {
+        q.push(file);
+      }
+      await q.drain();
     }
 
-    try {
-      const settled = await Promise.allSettled(promises);
-      const errors = <any[]>settled.filter(item => item.status === 'rejected');
 
-      for (const error of errors) {
+  /*    for (const error of errors) {
         const file = error?.reason?.file;
         if ('404' === String(error?.reason?.origError?.code) && file) {
-          console.log('File not found, trashed:', file.id);
+          this.logger.info('File not found, trashed: ' + file.id);
           file.trashed = true;
-          await this.filesStructure.merge([ file ]);
+          await this.googleFiles.merge([ file ]);
         }
       }
-    } catch (ignore) { /* eslint-disable-line no-empty */
+    } catch (ignore) { /!* eslint-disable-line no-empty *!/
     }
+*/
+    const dirtyFilesAfter = this.googleFiles.findFiles(item => ids.indexOf(item.id) > -1)
+      .filter(item => !!item.dirty);
 
-    const dirtyFilesAfter = this.filesStructure.findFiles(item => !!item.dirty && !item.trashed);
     if (dirtyFilesAfter.length > 0) {
-      if (this.debug.indexOf('download') > -1) {
-        console.log('dirtyFilesAfter', dirtyFilesAfter);
-      }
-      console.log('Download retry required');
+      const debugInfo = JSON.stringify(dirtyFilesAfter.slice(0, 10).map(item => item.id))
+          .replace(']', (dirtyFilesAfter.length > 10 ? ', ...' + (dirtyFilesAfter.length - 10) + ' more]' : ']'));
+
+      this.logger.info('Download retry required: ' + debugInfo);
+      this.eventBus.emit('download:failed', this.progress);
       process.nextTick(() => {
         this.eventBus.emit('download:retry');
       });
     } else {
-      this.eventBus.emit('download:clean');
+      this.logger.info('Download done');
+      this.eventBus.emit('download:done', this.progress);
+      this.handlingFiles = false;
     }
   }
 

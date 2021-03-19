@@ -1,15 +1,15 @@
 import { assert } from 'chai';
-import { FilesStructure } from '../src/storage/FilesStructure';
+import { GoogleFiles } from '../src/storage/GoogleFiles';
 import { LinkTranslator } from '../src/LinkTranslator';
 import {createTmpDir} from './utils';
 
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', async () => {
 
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new GoogleFiles(createTmpDir());
+    await googleFiles.init();
 
-    const linkTranslator = new LinkTranslator(filesStructure);
+    const linkTranslator = new LinkTranslator(googleFiles);
 
     assert.equal(linkTranslator.convertToRelativeSvgPath('example folder', 'resources/Diagram.svg'), '../example folder');
     assert.equal(linkTranslator.convertToRelativeSvgPath('example-folder/example-document.html', 'resources/Diagram.svg'), '../example-folder/example-document.html');
@@ -30,9 +30,9 @@ describe('LinkTranslatorTest', () => {
   });
 
   it('test convertExtension', async () => {
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
-    const linkTranslator = new LinkTranslator(filesStructure);
+    const googleFiles = new GoogleFiles(createTmpDir());
+    await googleFiles.init();
+    const linkTranslator = new LinkTranslator(googleFiles);
 
     linkTranslator.mode = 'uglyURLs';
 

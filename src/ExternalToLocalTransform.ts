@@ -1,5 +1,5 @@
 import {Transform} from 'stream';
-import {FileMap, FilesStructure} from "./storage/FilesStructure";
+import {FileMap, GoogleFiles} from "./storage/GoogleFiles";
 import {ExternalFiles, LinkEntry} from "./storage/ExternalFiles";
 
 async function processRecursive(json, func) {
@@ -41,10 +41,10 @@ export class ExternalToLocalTransform extends Transform {
   private fileMap: FileMap;
   private json: string;
 
-  constructor(private filesStructure: FilesStructure, private externalFiles: ExternalFiles) {
+  constructor(private googleFiles: GoogleFiles, private externalFiles: ExternalFiles) {
     super();
 
-    this.fileMap = this.filesStructure.getFileMap();
+    this.fileMap = this.googleFiles.getFileMap();
     this.json = '';
   }
 
@@ -85,7 +85,7 @@ export class ExternalToLocalTransform extends Transform {
           const link: LinkEntry = this.externalFiles.findLink(link => link.url === url);
           if (link && link.md5Checksum) {
 
-            const file = this.filesStructure.findFile(file => file.md5Checksum === link.md5Checksum);
+            const file = this.googleFiles.findFile(file => file.md5Checksum === link.md5Checksum);
             if (file) {
               url = file.localPath;
             } else {

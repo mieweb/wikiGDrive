@@ -1,9 +1,10 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {File, FilesStructure} from '../storage/FilesStructure';
+import {GoogleFile, GoogleFiles} from '../storage/GoogleFiles';
+import {Logger} from 'winston';
 
-export interface ApiFile extends File {
+export interface ApiFile extends GoogleFile {
   parents: string[];
 }
 
@@ -53,69 +54,44 @@ export class GoogleDriveServiceError extends Error {
     }
   }
 }
-
-export function urlToFolderId(url) {
-  if (url.match(/drive\.google\.com\/drive.*folders\//)) {
-    let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
-    if (id.indexOf('/') > 0) {
-      id = id.substr(0, id.indexOf('/'));
-    }
-    if (id.indexOf('?') > 0) {
-      id = id.substr(0, id.indexOf('?'));
-    }
-    if (id.indexOf('&') > 0) {
-      id = id.substr(0, id.indexOf('&'));
-    }
-    return id;
-  }
-
-  if (url.indexOf('https://drive.google.com/open?id%3D') > -1) {
-    url = url.replace('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
-  }
-
-  if (url.indexOf('https://drive.google.com/open?id=') > -1) {
-    let id = url.substr(url.indexOf('https://drive.google.com/open?id=') + 'https://drive.google.com/open?id='.length);
-    if (id.indexOf('&') > 0) {
-      id = id.substr(0, id.indexOf('&'));
-    }
-    return id;
-  }
-
-  if (url.indexOf('docs.google.com/document/d/') > 0) {
-    let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
-    if (id.indexOf('/') > 0) {
-      id = id.substr(0, id.indexOf('/'));
-    }
-    if (id.indexOf('?') > 0) {
-      id = id.substr(0, id.indexOf('?'));
-    }
-    if (id.indexOf('&') > 0) {
-      id = id.substr(0, id.indexOf('&'));
-    }
-    return id;
-  }
-
-  return false;
-}
-
-
 export class GoogleDriveService {
-  constructor() {
+  private progress: {
+    completed: number,
+    total: number,
+  };
+
+  constructor(private eventBus, private logger: Logger) {
+    this.progress = {
+      completed: 0,
+      total: 0
+    }
   }
 
   async listRootRecursive(auth, context, modifiedTime) {
+    this.progress.completed = 0;
+    this.progress.total = 1;
+
+    this.eventBus.emit('listen:progress', this.progress);
+
     const files = await this._listFilesRecursive(auth, context, modifiedTime);
 
     if (!modifiedTime && files.length === 0) {
+      this.eventBus.emit('listen:failed', this.progress);
       throw new GoogleDriveServiceError('Empty result for root directory check you auth data or add files');
     }
+
+    this.eventBus.emit('listen:done', this.progress);
 
     return files;
   }
 
   async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
-    console.log('Listening folder:', remotePath.join('/') || '/');
-    let files: File[] = await this._listFiles(auth, context, modifiedTime);
+    this.logger.info('Listening folder: ' + (remotePath.join('/') || '/'));
+    let files: GoogleFile[] = await this._listFiles(auth, context, modifiedTime);
+    this.progress.completed++;
+    this.progress.total += files.filter(file => file.mimeType === GoogleFiles.FOLDER_MIME).length;
+
+    this.eventBus.emit('listen:progress', this.progress);
 
     const retVal = [];
 
@@ -129,7 +105,7 @@ export class GoogleDriveService {
 
       for (const file of files) {
         file.parentId = context.folderId;
-        if (file.mimeType !== FilesStructure.FOLDER_MIME) continue;
+        if (file.mimeType !== GoogleFiles.FOLDER_MIME) continue;
 
         const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime,
             remotePath.concat(file.name));
@@ -151,7 +127,7 @@ export class GoogleDriveService {
 
     if (modifiedTime) {
       const filtered = retVal.filter(dir => {
-        const isOldDir = dir.mimeType === FilesStructure.FOLDER_MIME && dir.modifiedTime < modifiedTime;
+        const isOldDir = dir.mimeType === GoogleFiles.FOLDER_MIME && dir.modifiedTime < modifiedTime;
         return !isOldDir;
       });
 
@@ -199,7 +175,7 @@ export class GoogleDriveService {
         .filter(change => !!change.file)
         .map(change => change.file)
         .map(apiFile => {
-          const file = <ApiFile>apiFile;
+          const file = <ApiFile><unknown>apiFile;
           if (apiFile.parents && apiFile.parents.length > 0) {
             file.parentId = apiFile.parents[0];
           }
@@ -229,7 +205,7 @@ export class GoogleDriveService {
 
     let query = '\'' + context.folderId + '\' in parents and trashed = false';
     if (modifiedTime) {
-      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + FilesStructure.FOLDER_MIME + '\' )';
+      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + GoogleFiles.FOLDER_MIME + '\' )';
     }
 
     const listParams = {
@@ -256,7 +232,7 @@ export class GoogleDriveService {
         return res.data.files.concat(nextFiles);
       } else {
         for (const apiFile of res.data.files) {
-          const file = <File>apiFile;
+          const file = <GoogleFile><unknown>apiFile;
 
           if (apiFile.lastModifyingUser) {
             file.lastAuthor = apiFile.lastModifyingUser.displayName;
@@ -307,15 +283,17 @@ export class GoogleDriveService {
   async exportDocument(auth, file, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
+    const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';
+
     try {
       const res = <any>await drive.files.export({
         fileId: file.id,
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
-      }, { responseType: 'stream' });
+      }, { responseType: 'stream' })
 
-      await new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         let stream = res.data
           .on('end', () => {})
           .on('error', err => {
@@ -325,20 +303,20 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
-            resolve();
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
+            resolve(file);
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            console.log('Exported document: ' + file.id + '.zip [' + file.localPath + ']');
-            resolve();
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
+            resolve(file);
           });
         }
       });
     } catch (err) {
       if (!err.isQuotaError && err?.code != 404) {
-        console.error(err);
+        this.logger.error(err);
       }
       throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
         origError: err,

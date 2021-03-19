@@ -1,9 +1,13 @@
 'use strict';
 
 import { Transform } from 'stream';
-import { PREFIX_LEVEL } from './markdown/MarkDownTransform';
+import { PREFIX_LEVEL } from './markdown/JsonToMarkdown';
 
 export class NavigationTransform extends Transform {
+  private link_mode: any;
+  private markdown: string;
+  private hierarchy: {};
+  private files: any;
 
   constructor(files, link_mode) {
     super();
@@ -81,6 +85,10 @@ export class NavigationTransform extends Transform {
     }
 
     callback();
+  }
+
+  getHierarchy() {
+    return this.hierarchy;
   }
 
 }
