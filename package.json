@@ -71,8 +71,8 @@
     "simple-git": "^2.31.0",
     "slugify": "^1.4.6",
     "stream": "^0.0.2",
-    "typescript": "^4.0.2",
     "ts-node": "^9.1.1",
+    "typescript": "^4.0.2",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.0",
     "xmldoc": "^1.1.2"
