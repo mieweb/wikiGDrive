@@ -20,6 +20,8 @@ export class GoogleDocsServiceError extends Error {
 
 export class GoogleDocsService {
 
+  constructor(private logger) {}
+
   async download(auth, file, dest) {
     const docs = google.docs({ version: 'v1', auth });
 
@@ -31,20 +33,20 @@ export class GoogleDocsService {
         let stream = readable
             .on('end', () => {})
             .on('error', err => {
-              console.error('Download stream error', err);
+              this.logger.error('Download stream error', err);
               reject(err);
             });
 
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            console.log('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
+            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            console.log('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
+            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
             resolve();
           });
         }
@@ -55,7 +57,7 @@ export class GoogleDocsService {
 
     } catch (err) {
       if (!err.isQuotaError) {
-        console.error('Download error', err);
+        this.logger.error('Download error', err);
       }
       throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, origError: err, dest, isQuotaError: err.isQuotaError });
     }

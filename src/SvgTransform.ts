@@ -2,8 +2,8 @@
 
 import { XmlDocument } from 'xmldoc';
 import { Transform } from 'stream';
-import { urlToFolderId } from './google/GoogleDriveService';
 import { LinkTranslator } from './LinkTranslator';
+import {urlToFolderId} from './utils/idParsers';
 
 export class SvgTransform extends Transform {
   private linkTranslator: LinkTranslator;

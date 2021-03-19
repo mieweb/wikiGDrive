@@ -37,8 +37,10 @@ export class ExternalFiles {
   private save_needed: boolean = false;
   private binaryFiles: BinaryFilesMap;
   private links: LinksMap;
+  private logger: any;
 
-  constructor(private config_dir: string, private httpClient: HttpClient, private dest: string) {
+  constructor(logger, private config_dir: string, private httpClient: HttpClient, private dest: string) {
+    this.logger = logger.child({ filename: __filename });
     this.fileService = new FileService();
     this.linksPath = path.join(config_dir, 'links.json');
     this.filePath = path.join(config_dir, 'external_files.json');
@@ -49,10 +51,6 @@ export class ExternalFiles {
       fs.mkdirSync(path.join(this.dest, 'external_files'), { recursive: true });
     }
     await this.loadData();
-
-    process.on('SIGINT', () => {
-      this.flushData();
-    });
     setInterval(() => {
       this.flushData();
     }, 500);
@@ -85,7 +83,7 @@ export class ExternalFiles {
     const targetPath = createTempName(dir);
     const writeStream = fs.createWriteStream(targetPath);
 
-    console.log('Downloading file: ' + url + ' -> ' + targetPath);
+    this.logger.info('Downloading file: ' + url + ' -> ' + targetPath);
 
     await this.httpClient.downloadUrl(url, writeStream);
 
