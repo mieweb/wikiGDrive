@@ -1,13 +1,13 @@
 import { assert } from 'chai';
-import { FilesStructure } from '../src/storage/FilesStructure';
+import { GoogleFiles } from '../src/storage/GoogleFiles';
 import {createTmpDir} from './utils';
 
 describe('FileStructure', () => {
 /*
   it('test collisions', async () => {
 
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new googleFiles(createTmpDir());
+    await googleFiles.init();
 
     const files1 = [{
         'id': 'id1',
@@ -23,15 +23,15 @@ describe('FileStructure', () => {
       }
     ];
 
-    await filesStructure.merge(files1);
+    await googleFiles.merge(files1);
 
-    const fileMap = filesStructure.getFileMap();
+    const fileMap = googleFiles.getFileMap();
 
     assert.equal(Object.keys(fileMap).length, 3);
 
-    const conflictFile = filesStructure.findFile(file => file.mimeType === FilesStructure.CONFLICT_MIME);
-    const file1 = filesStructure.findFile(file => file.mimeType !== FilesStructure.CONFLICT_MIME && file.localPath === 'test-file_1.md');
-    const file2 = filesStructure.findFile(file => file.mimeType !== FilesStructure.CONFLICT_MIME && file.localPath === 'test-file_2.md');
+    const conflictFile = googleFiles.findFile(file => file.mimeType === googleFiles.CONFLICT_MIME);
+    const file1 = googleFiles.findFile(file => file.mimeType !== googleFiles.CONFLICT_MIME && file.localPath === 'test-file_1.md');
+    const file2 = googleFiles.findFile(file => file.mimeType !== googleFiles.CONFLICT_MIME && file.localPath === 'test-file_2.md');
 
     assert.notEmpty(conflictFile);
     assert.notEmpty(file1);
@@ -49,10 +49,10 @@ describe('FileStructure', () => {
 
   it('test redirects', async () => {
 
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new googleFiles(createTmpDir());
+    await googleFiles.init();
 
-    await filesStructure.merge([{
+    await googleFiles.merge([{
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': 'application/vnd.google-apps.document',
@@ -66,13 +66,13 @@ describe('FileStructure', () => {
       }
     ]);
 
-    let fileMap = filesStructure.getFileMap();
+    let fileMap = googleFiles.getFileMap();
 
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
 
     //////////////////////////////
 
-    await filesStructure.merge([{
+    await googleFiles.merge([{
         'id': 'id1',
         'name': 'Example 1 renamed',
         'mimeType': 'application/vnd.google-apps.document',
@@ -84,37 +84,37 @@ describe('FileStructure', () => {
       }
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
 
     assert.equal(Object.keys(fileMap).length, 4, 'Wrong number of redirects');
 
-    let folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1.md');
-    let folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2.md');
-    let containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
-    let containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
+    let folderExample1 = googleFiles.findFile(file => file.desiredLocalPath === 'example-1.md');
+    let folderExample2 = googleFiles.findFile(file => file.desiredLocalPath === 'example-2.md');
+    let containerExample1 = googleFiles.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
+    let containerExample2 = googleFiles.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
 
     assert.isNotEmpty(folderExample1);
     assert.isNotEmpty(folderExample2);
     assert.isNotEmpty(containerExample1);
     assert.isNotEmpty(containerExample2);
 
-    assert.equal(folderExample1.mimeType, FilesStructure.REDIRECT_MIME, 'Incorrect mime folderExample1');
+    assert.equal(folderExample1.mimeType, googleFiles.REDIRECT_MIME, 'Incorrect mime folderExample1');
     assert.equal(folderExample1.localPath, 'example-1.md');
     assert.equal(folderExample1.redirectTo, containerExample1.id);
 
-    assert.equal(folderExample2.mimeType, FilesStructure.REDIRECT_MIME, 'Incorrect mime folderExample2');
+    assert.equal(folderExample2.mimeType, googleFiles.REDIRECT_MIME, 'Incorrect mime folderExample2');
     assert.equal(folderExample2.localPath, 'example-2.md');
     assert.equal(folderExample2.redirectTo, containerExample2.id);
 
-    assert.equal(containerExample1.mimeType, FilesStructure.DOCUMENT_MIME, 'Incorrect mime containerExample1');
+    assert.equal(containerExample1.mimeType, googleFiles.DOCUMENT_MIME, 'Incorrect mime containerExample1');
     assert.equal(containerExample1.localPath, 'example-1-renamed.md');
 
-    assert.equal(containerExample2.mimeType, FilesStructure.DOCUMENT_MIME, 'Incorrect mime containerExample2');
+    assert.equal(containerExample2.mimeType, googleFiles.DOCUMENT_MIME, 'Incorrect mime containerExample2');
     assert.equal(containerExample2.localPath, 'example-2-renamed.md');
 
     //////////////////////////////
 
-    await filesStructure.merge([{
+    await googleFiles.merge([{
         'id': 'id1',
         'name': 'Sample 1 renamed',
         'mimeType': 'application/vnd.google-apps.document'
@@ -126,24 +126,24 @@ describe('FileStructure', () => {
       }
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 5);
 
-    folderExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1.md');
-    folderExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2.md');
-    containerExample1 = filesStructure.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
-    containerExample2 = filesStructure.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
-    let containerSample1 = filesStructure.findFile(file => file.desiredLocalPath === 'sample-1-renamed.md');
+    folderExample1 = googleFiles.findFile(file => file.desiredLocalPath === 'example-1.md');
+    folderExample2 = googleFiles.findFile(file => file.desiredLocalPath === 'example-2.md');
+    containerExample1 = googleFiles.findFile(file => file.desiredLocalPath === 'example-1-renamed.md');
+    containerExample2 = googleFiles.findFile(file => file.desiredLocalPath === 'example-2-renamed.md');
+    let containerSample1 = googleFiles.findFile(file => file.desiredLocalPath === 'sample-1-renamed.md');
 
-    assert.equal(folderExample1.mimeType, FilesStructure.REDIRECT_MIME);
+    assert.equal(folderExample1.mimeType, googleFiles.REDIRECT_MIME);
     assert.equal(folderExample1.localPath, 'example-1.md');
     assert.equal(folderExample1.redirectTo, containerSample1.id);
 
-    assert.equal(containerExample1.mimeType, FilesStructure.REDIRECT_MIME);
+    assert.equal(containerExample1.mimeType, googleFiles.REDIRECT_MIME);
     assert.equal(containerExample1.localPath, 'example-1-renamed.md');
     assert.equal(containerExample1.redirectTo, containerSample1.id);
 
-    assert.equal(containerSample1.mimeType, FilesStructure.DOCUMENT_MIME);
+    assert.equal(containerSample1.mimeType, googleFiles.DOCUMENT_MIME);
     assert.equal(containerSample1.localPath, 'sample-1-renamed.md');
   });
 */
@@ -151,135 +151,135 @@ describe('FileStructure', () => {
   it('test rename then trash', async () => {
     let example1, example2, redir;
 
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new GoogleFiles(createTmpDir());
+    await googleFiles.init();
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
     ]);
 
-    let fileMap = filesStructure.getFileMap();
+    let fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
 
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'renamed-example-1.md',
       },
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
     assert.equal(example1.localPath, 'renamed-example-1.md');
 
-    redir = filesStructure.findFile(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+    redir = googleFiles.findFile(file => file.mimeType === GoogleFiles.REDIRECT_MIME);
     assert.equal(redir.localPath, 'example-1.md');
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'trashed': true,
         'id': 'id1'
       },
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
     assert.equal(example1.localPath, 'renamed-example-1.md');
     assert.equal(example1.trashed, true);
 
-    redir = filesStructure.findFile(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+    redir = googleFiles.findFile(file => file.mimeType === GoogleFiles.REDIRECT_MIME);
     assert.equal(redir.localPath, 'example-1.md');
     assert.equal(redir.trashed, true);
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id2',
         'name': 'Example 2',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
     assert.equal(example1.localPath, 'renamed-example-1.md');
     assert.equal(example1.trashed, true);
 
-    example2 = filesStructure.findFile(file => file.id === 'id2');
+    example2 = googleFiles.findFile(file => file.id === 'id2');
     assert.equal(example2.localPath, 'example-1.md');
     assert.equal(example2.trashed, false);
 
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id3',
         'name': 'Example 3',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'renamed-example-1.md',
       },
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 3, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
     assert.equal(example1.localPath, null);
     assert.equal(example1.trashed, true);
 
-    example2 = filesStructure.findFile(file => file.id === 'id2');
+    example2 = googleFiles.findFile(file => file.id === 'id2');
     assert.equal(example2.localPath, 'example-1.md');
     assert.equal(example2.trashed, false);
 
-    example1 = filesStructure.findFile(file => file.id === 'id3');
+    example1 = googleFiles.findFile(file => file.id === 'id3');
     assert.equal(example1.localPath, 'renamed-example-1.md');
     assert.equal(example1.trashed, true);
   });
 
   it('test create then trash', async () => {
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new GoogleFiles(createTmpDir());
+    await googleFiles.init();
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
     ]);
 
-    let fileMap = filesStructure.getFileMap();
+    let fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'trashed': true,
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
     ]);
 
-    fileMap = filesStructure.getFileMap();
+    fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
 
-    const example1 = filesStructure.findFile(file => file.id === 'id1');
-    assert.equal(example1.mimeType, FilesStructure.DOCUMENT_MIME);
+    const example1 = googleFiles.findFile(file => file.id === 'id1');
+    assert.equal(example1.mimeType, GoogleFiles.DOCUMENT_MIME);
     assert.equal(example1.trashed, true);
     assert.equal(example1.localPath, 'example-1.md'); // if no collision then path is present, this way transform will delete generated file
   });
@@ -288,59 +288,59 @@ describe('FileStructure', () => {
   it('test collision then trash', async () => {
     let example1, example2, conflict, redir;
 
-    const filesStructure = new FilesStructure(createTmpDir());
-    await filesStructure.init();
+    const googleFiles = new GoogleFiles(createTmpDir());
+    await googleFiles.init();
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
       {
         'id': 'id2',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       }
     ]);
 
-    let fileMap = filesStructure.getFileMap();
+    let fileMap = googleFiles.getFileMap();
 
     assert.equal(Object.keys(fileMap).length, 3, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
     assert.equal(example1.localPath, 'example-1-2.md');
 
-    example2 = filesStructure.findFile(file => file.id === 'id2');
+    example2 = googleFiles.findFile(file => file.id === 'id2');
     assert.equal(example2.localPath, 'example-1-2.md');
 
-    conflict = filesStructure.findFile(file => file.mimeType === FilesStructure.CONFLICT_MIME);
+    conflict = googleFiles.findFile(file => file.mimeType === GoogleFiles.CONFLICT_MIME);
     assert.equal(conflict.localPath, 'example-1.md');
 
-    await filesStructure.merge([
+    await googleFiles.merge([
       {
         'trashed': true,
         'id': 'id1',
         'name': 'Example 1',
-        'mimeType': FilesStructure.DOCUMENT_MIME,
+        'mimeType': GoogleFiles.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
       },
     ]);
 
     assert.equal(Object.keys(fileMap).length, 3, 'Wrong number of files');
 
-    example1 = filesStructure.findFile(file => file.id === 'id1');
+    example1 = googleFiles.findFile(file => file.id === 'id1');
 
-    assert.equal(example1.mimeType, FilesStructure.DOCUMENT_MIME);
+    assert.equal(example1.mimeType, GoogleFiles.DOCUMENT_MIME);
     assert.equal(example1.trashed, true);
     assert.equal(example1.localPath, null);
 
-    example2 = filesStructure.findFile(file => file.id === 'id2');
-    assert.equal(example2.mimeType, FilesStructure.DOCUMENT_MIME);
+    example2 = googleFiles.findFile(file => file.id === 'id2');
+    assert.equal(example2.mimeType, GoogleFiles.DOCUMENT_MIME);
 
-    redir = filesStructure.findFile(file => file.mimeType === FilesStructure.REDIRECT_MIME);
+    redir = googleFiles.findFile(file => file.mimeType === GoogleFiles.REDIRECT_MIME);
     assert.equal(redir.localPath, 'example-1_2.md');
 
     //////////////////////////////

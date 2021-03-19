@@ -1,23 +1,24 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleDriveService, urlToFolderId} from '../google/GoogleDriveService';
+import {GoogleDriveService} from '../google/GoogleDriveService';
 import {DriveConfig} from './ConfigDirPlugin';
-import {FilesStructure} from '../storage/FilesStructure';
+import {GoogleFiles} from '../storage/GoogleFiles';
+import {urlToFolderId} from '../utils/idParsers';
 
 export class ListRootPlugin extends BasePlugin {
   private command: string;
   private drive_id: string;
   private force: boolean;
   private drive_config: DriveConfig;
-  private filesStructure: FilesStructure;
+  private googleFiles: GoogleFiles;
   private googleDriveService: GoogleDriveService;
   private auth: any;
 
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('main:init', async (params) => {
+    eventBus.on('main:run', async (params) => {
       this.command = params.command;
       this.drive_id = params.drive_id;
       this.force = !!params.force;
@@ -25,14 +26,14 @@ export class ListRootPlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
     });
-    eventBus.on('files_structure:initialized', ({ filesStructure }) => {
-      this.filesStructure = filesStructure;
+    eventBus.on('google_files:initialized', ({ googleFiles }) => {
+      this.googleFiles = googleFiles;
     });
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('main:run_list_root', async () => {
+    eventBus.on('list_root:run', async () => {
       await this.start();
     });
   }
@@ -48,7 +49,7 @@ export class ListRootPlugin extends BasePlugin {
       context.driveId = this.drive_id;
     }
 
-    const lastMTime = this.force ? null : this.filesStructure.getMaxModifiedTime();
+    const lastMTime = this.force ? null : this.googleFiles.getMaxModifiedTime();
 
     try {
       const apiFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
@@ -59,15 +60,13 @@ export class ListRootPlugin extends BasePlugin {
         return file;
       });
 
-      await this.filesStructure.merge(changedFiles);
+      await this.googleFiles.merge(changedFiles);
     } catch (e) {
-      this.eventBus.emit('panic', {
-        message: e.message
-      });
+      this.eventBus.emit('panic', e);
       return;
     }
 
-    console.log('Listening Google Drive done');
+    this.logger.info('Listening Google Drive done');
 
     this.eventBus.emit('list_root:done', {
       context,

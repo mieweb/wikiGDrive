@@ -7,14 +7,14 @@ export class ListDrivesPlugin extends BasePlugin {
   private auth: any;
   private googleDriveService: GoogleDriveService;
   
-  constructor(eventBus) {
-    super(eventBus);
+  constructor(eventBus, logger) {
+    super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('google_api:initialized', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('main:run_list_drives', async () => {
+    eventBus.on('list_drives:run', async () => {
       await this.start();
     });
   }

@@ -6,7 +6,7 @@
       "dom"
     ],
     "module": "commonjs",
-    "target": "ES6",
+    "target": "es2017",
     "sourceMap": true
   },
   "exclude": [
