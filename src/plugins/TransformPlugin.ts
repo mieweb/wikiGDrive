@@ -108,7 +108,7 @@ export class TransformPlugin extends BasePlugin {
           .pipe(markDownTransform)
           .pipe(navigationTransform);
 
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           stream.on('finish', () => {
             resolve();
           });
@@ -177,7 +177,7 @@ export class TransformPlugin extends BasePlugin {
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.svg');
 
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           dest.on('error', err => {
             reject(err);
           });
@@ -282,7 +282,7 @@ export class TransformPlugin extends BasePlugin {
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           dest.on('error', err => {
             reject(err);
           });

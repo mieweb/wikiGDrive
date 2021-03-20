@@ -34,7 +34,7 @@ export class JobsPool extends EventEmitter {
     for (let i = 0; i < jobsToTake; i++) {
       const job = this.queue.popJob();
       if (job) {
-        promises.push(new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
+        promises.push(new Promise<void>(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
           try {
             await job.execute();
             resolve();
