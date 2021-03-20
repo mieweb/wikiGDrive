@@ -86,7 +86,7 @@ export class WatchChangesPlugin extends BasePlugin {
         this.eventBus.emit('watch:event', changedFiles.length);
 
         if (changedFiles.length === 0 && externalDocs.length === 0) {
-          this.logger.info('No changes detected. Sleeping for 10 seconds.');
+          this.logger.debug('No changes detected. Sleeping for 10 seconds.');
         }
 
         if (changedFiles.length > 0) {
@@ -100,7 +100,7 @@ export class WatchChangesPlugin extends BasePlugin {
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
-        this.logger.info('Pulled latest changes');
+        this.logger.debug('Pulled latest changes');
         this.eventBus.emit('google_files:dirty');
 
       } catch (e) {
