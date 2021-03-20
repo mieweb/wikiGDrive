@@ -84,33 +84,6 @@ async function main() {
   };
   
   const mainService = new MainService(params);
-  let configService;
-  mainService.eventBus.on('configService:initialized', (configServiceParam) => {
-    configService = configServiceParam;
-  });
-
-  process
-    .on('unhandledRejection', async (reason: any, p) => {
-      // if (reason'invalid_grant')
-      console.error(reason, 'Unhandled Rejection at Promise', p);
-
-      if (reason.origError) {
-        reason = reason.origError;
-      }
-
-      if (reason?.response?.data?.error === 'invalid_grant') {
-        console.log('configService', configService);
-        if (configService) {
-          await configService.saveGoogleAuth(null);
-          await configService.flushData();
-        }
-      }
-      process.exit(1);
-    })
-    .on('uncaughtException', err => {
-      console.error('Uncaught Exception thrown', err);
-      process.exit(1);
-    });
 
   try {
     await mainService.init();
