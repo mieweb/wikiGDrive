@@ -1,10 +1,10 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
-import {CliParams} from "../MainService";
-import {DriveConfig} from "./ConfigDirPlugin";
-import {GoogleFiles} from "../storage/GoogleFiles";
-import {GoogleDriveService} from "../google/GoogleDriveService";
+import {CliParams} from '../MainService';
+import {DriveConfig} from './ConfigDirPlugin';
+import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleDriveService} from '../google/GoogleDriveService';
 
 export class WatchMTimePlugin extends BasePlugin {
   private command: string;

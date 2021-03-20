@@ -14,16 +14,16 @@ class ProgressTask {
     /** Rollback message of the task, if the rollback finishes */
     rollback?: string;
   };
-  public failed: Boolean = false;
-  public pending: Boolean = true;
-  public completed: Boolean = false;
-  public enabled: Boolean = true;
-  public rolledBack: Boolean = false;
+  public failed = false;
+  public pending = true;
+  public completed = false;
+  public enabled = true;
+  public rolledBack = false;
 
   constructor(private opts) {
     this.subtasks = [];
     this.message = {};
-    for (let k in opts) {
+    for (const k in opts) {
       this[k] = opts[k];
     }
   }
@@ -66,7 +66,7 @@ class ProgressTask {
 }
 
 class RenderHook {
-  private callback: Function;
+  private callback: () => void;
 
   subscribe(callback) {
     this.callback = callback;
@@ -80,13 +80,17 @@ class RenderHook {
   }
 }
 
+interface ParentsMap {
+  [k: string]: string;
+}
+
 export class ProgressPlugin extends BasePlugin {
   private mainResolve: (value?: (PromiseLike<void> | void)) => void;
   private tasks: ProgressTask[];
   private renderer: DefaultRenderer;
   private renderHook: RenderHook;
   private listenTask: ProgressTask;
-  private parentsMap: any = {};
+  private parentsMap: ParentsMap = {};
 
 
   constructor(eventBus, logger) {
@@ -116,11 +120,11 @@ export class ProgressPlugin extends BasePlugin {
 
     this.renderHook = new RenderHook();
     this.renderer = new DefaultRenderer(
-      <any>this.tasks,
+      <any>this.tasks, // eslint-disable-line @typescript-eslint/no-explicit-any
       {
         suffixSkips: false
       },
-      <any>this.renderHook
+      <any>this.renderHook // eslint-disable-line @typescript-eslint/no-explicit-any
     );
 
     this.renderer.render();

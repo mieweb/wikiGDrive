@@ -6,7 +6,7 @@ const DELAY_AFTER_ERROR = 5;
 interface QuotaJob {
   ts?: number;
   done: boolean;
-  func: Function
+  func: () => Promise<void>;
   skipCounter?: boolean;
 }
 
@@ -18,13 +18,13 @@ interface QuotaLimit {
 
 export class QuotaLimiter {
   private jobs: QuotaJob[];
-  private running: number = 0;
-  private counter: number = 0;
+  private running = 0;
+  private counter = 0;
   private initialLimit: QuotaLimit;
   private currentLimit: QuotaLimit;
 
   private oldCounter: number;
-  private saveHandler: Function;
+  private saveHandler: (jobs: QuotaJob[]) => void;
   private eventBus: any;
   private logger: any;
 
@@ -117,7 +117,7 @@ export class QuotaLimiter {
       return;
     }
 
-    let maxLimiterSeconds = this.currentLimit ? this.currentLimit.seconds : 0;
+    const maxLimiterSeconds = this.currentLimit ? this.currentLimit.seconds : 0;
     this.removeOlderThan(now - maxLimiterSeconds);
 
     let availableQuota = this.calculateAvailableQuota(now);
@@ -169,7 +169,7 @@ export class QuotaLimiter {
     return availableQuota;
   }
 
-  setSaveHandler(handler: Function) {
+  setSaveHandler(handler: (jobs: QuotaJob[]) => void) {
     this.saveHandler = handler;
   }
 }

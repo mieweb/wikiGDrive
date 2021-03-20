@@ -13,12 +13,12 @@
     "wikigdrive": "./dist/main.js",
     "wikigdrive-ts": "./src/cli.ts"
   },
-  "main": "src/index.ts",
+  "main": "src/main.ts",
   "scripts": {
     "test": "mochapack --mode development test/**/*.js",
-    "lint": "eslint .",
-    "dev": "webpack --mode development  --watch",
-    "build": "webpack --mode production",
+    "lint": "eslint ./src/**/*.ts",
+    "dev": "webpack --mode development --watch ./src/main",
+    "build": "webpack --mode production ./src/main",
     "build:docs": "mmdc -i docs/plugin_sequence.mmd -o docs/plugin_sequence.svg -b '#FFFFFF'"
   },
   "repository": {
@@ -86,6 +86,8 @@
     "@types/node": "^14.10.1",
     "@types/relateurl": "^0.2.28",
     "@types/xmldoc": "^1.1.5",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "caniuse-lite": "^1.0.30001199",
@@ -109,8 +111,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run lint",
-      "pre-push": "npm run lint && npm run test"
+      "pre-commit": "npm run lint -- --quiet",
+      "pre-push": "npm run lint -- --quiet && npm run test"
     }
   }
 }

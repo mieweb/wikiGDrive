@@ -22,9 +22,9 @@ To get proper sourcemap support we suggest using ts-node for running.
 
 1. Install ndb: `npm install -g ndb`
 2. Install ts-node: `npm install -g ts-node`
-3. Now you can run it with: `ndb node -r ts-node/register ./src/index.ts ...`
-3. Or you can run it with: `ndb node -r ts-node/register/transpile-only ./src/index.ts --dest $DIR pull`
-4. Or without the debugger just by `ts-node-transpile-only --project ./src/index.ts --dest $DIR pull`
+3. Now you can run it with: `ndb node -r ts-node/register ./src/main.ts ...`
+3. Or you can run it with: `ndb node -r ts-node/register/transpile-only ./src/main.ts --dest $DIR pull`
+4. Or without the debugger just by `ts-node-transpile-only --project ./src/main.ts --dest $DIR pull`
 
 ## Install from NPM
 
@@ -142,7 +142,7 @@ hugo server
 
 ## Example usage with Hexo Generator
 
-1. Install hexo https://hexo.io/docs/index.html
+1. Install hexo https://hexo.io/docs/main.html
 
 ```
 npm i -g hexo-cli

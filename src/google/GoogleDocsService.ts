@@ -31,7 +31,6 @@ export class GoogleDocsService {
 
       await new Promise((resolve, reject) => {
         let stream = readable
-            .on('end', () => {})
             .on('error', err => {
               this.logger.error('Download stream error', err);
               reject(err);

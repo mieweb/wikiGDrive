@@ -11,8 +11,8 @@ import {StringWritable} from '../utils/StringWritable';
 import {BufferWritable} from '../utils/BufferWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
-import {ExternalFiles} from "../storage/ExternalFiles";
-import {CliParams} from "../MainService";
+import {ExternalFiles} from '../storage/ExternalFiles';
+import {CliParams} from '../MainService';
 
 export class DownloadPlugin extends BasePlugin {
   private googleDocsService: GoogleDocsService;
@@ -28,7 +28,7 @@ export class DownloadPlugin extends BasePlugin {
     completed: number;
     total: number;
   };
-  private handlingFiles: boolean = false;
+  private handlingFiles = false;
   private googleFileIds: string[];
 
   constructor(eventBus, logger) {
@@ -40,7 +40,7 @@ export class DownloadPlugin extends BasePlugin {
       failed: 0,
       completed: 0,
       total: 0
-    }
+    };
 
     this.googleDocsService = new GoogleDocsService(this.logger);
 
@@ -141,7 +141,7 @@ export class DownloadPlugin extends BasePlugin {
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', localPath: file.localPath }, destZip);
       await this.googleDocsService.download(this.auth, file, destJson);
 
-      fs.writeFileSync(zipPath, destZip.getBuffer())
+      fs.writeFileSync(zipPath, destZip.getBuffer());
       fs.writeFileSync(gdocPath, destJson.getString());
       await this.googleFiles.markClean([ file ]);
 
@@ -240,7 +240,7 @@ export class DownloadPlugin extends BasePlugin {
       callback();
     }, CONCURRENCY);
 
-    q.error((err, task) => {
+    q.error(() => {
       this.progress.failed++;
       this.eventBus.emit('download:progress', this.progress);
     });

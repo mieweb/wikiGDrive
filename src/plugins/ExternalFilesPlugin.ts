@@ -8,7 +8,7 @@ import {FileService} from '../utils/FileService';
 
 import * as path from 'path';
 import {queue} from 'async';
-import {DriveConfig} from "./ConfigDirPlugin";
+import {DriveConfig} from './ConfigDirPlugin';
 
 async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -38,7 +38,7 @@ async function processRecursive(json, func) {
     }
   } else
   if (typeof json === 'object') {
-    for (let k in json) {
+    for (const k in json) {
       await processRecursive(json[k], func);
     }
     await func(json);
@@ -64,7 +64,7 @@ export class ExternalFilesPlugin extends BasePlugin {
       failed: 0,
       completed: 0,
       total: 0
-    }
+    };
 
     eventBus.on('main:run', async (params) => {
       this.config_dir = params.config_dir;
@@ -149,7 +149,7 @@ export class ExternalFilesPlugin extends BasePlugin {
           this.eventBus.emit('external:progress', this.progress);
           break;
         default:
-          this.logger.error('Unknown task type: ' + task.type)
+          this.logger.error('Unknown task type: ' + task.type);
       }
       callback();
     }, CONCURRENCY);

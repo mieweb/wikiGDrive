@@ -53,12 +53,45 @@ interface ProcessParagraphResult {
   text: string
 }
 
+interface DocStyle {
+  fontFamily: string;
+}
+
+interface DocStyles {
+  [k: string]: DocStyle;
+}
+
+interface DocHeadings {
+  [k: string]: string;
+}
+
+interface DocNestingLevel {
+  glyphSymbol: string;
+  glyphType: string;
+}
+
+interface DocNestingLevels {
+  [k: string]: DocNestingLevel;
+}
+
+interface DocListProperties {
+  nestingLevels: DocNestingLevels;
+}
+
+interface DocList {
+  listProperties: DocListProperties;
+}
+
+interface DocLists {
+  [k: string]: DocList;
+}
+
 export class JsonToMarkdown {
 
-  private styles: {};
-  private headings: {};
-  private lists: any;
-  private inRawHtml: boolean = false;
+  private styles: DocStyles;
+  private headings: DocHeadings;
+  private lists: DocLists;
+  private inRawHtml = false;
 
   constructor(private document, private localPath: string, private linkTranslator: LinkTranslator) {
   }
@@ -248,7 +281,7 @@ export class JsonToMarkdown {
       text = text.replace('```\n```\n', '');
     }
 
-    for (let heading in this.headings) {
+    for (const heading in this.headings) {
       while (text.indexOf(heading) > -1) {
         text = text.replace(heading, this.headings[heading]);
       }
@@ -464,8 +497,7 @@ export class JsonToMarkdown {
         const element = paragraph.elements[elementNo];
 
         if (element.textRun) {
-          let txt = element.textRun.content;
-          paragraphTxt += txt;
+          paragraphTxt += element.textRun.content;
 
           element.paragraphStyle = paragraph.paragraphStyle;
           textElements.push(element);
@@ -619,8 +651,8 @@ export class JsonToMarkdown {
         let counter = listCounters[key] || 0;
         if (list) {
 
-          const listNestingLevel = list.listProperties.nestingLevels[nesting];
-          switch (listNestingLevel.glyphSymbol) {
+          const {glyphSymbol, glyphType} = list.listProperties.nestingLevels[nesting];
+          switch (glyphSymbol) {
             case '-':
             case '●':
             case '○':
@@ -632,7 +664,7 @@ export class JsonToMarkdown {
               counter++;
               listCounters[key] = counter;
 
-              switch (listNestingLevel.glyphType) {
+              switch (glyphType) {
                 case 'ALPHA':
                 case 'UPPER_ALPHA':
                   // prefix += String.fromCharCode(64 + counter) + '. '; // Hugo doesn't accept alpha

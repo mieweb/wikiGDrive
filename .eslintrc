@@ -5,15 +5,19 @@
     "es6": true,
     "mocha": true
   },
-  "extends": "eslint:recommended",
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
   },
-  "parserOptions": {
-    "ecmaVersion": 2018
-  },
-  "parser": "babel-eslint",
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
   "rules": {
     "linebreak-style": [
       "error",
@@ -27,6 +31,7 @@
       "error",
       "always"
     ],
+    "@typescript-eslint/explicit-module-boundary-types": "off",
     "no-console": "off"
   }
 }

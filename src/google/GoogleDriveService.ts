@@ -64,7 +64,7 @@ export class GoogleDriveService {
     this.progress = {
       completed: 0,
       total: 0
-    }
+    };
   }
 
   async listRootRecursive(auth, context, modifiedTime) {
@@ -87,7 +87,7 @@ export class GoogleDriveService {
 
   async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
     this.logger.info('Listening folder: ' + (remotePath.join('/') || '/'));
-    let files: GoogleFile[] = await this._listFiles(auth, context, modifiedTime);
+    const files: GoogleFile[] = await this._listFiles(auth, context, modifiedTime);
     this.progress.completed++;
     this.progress.total += files.filter(file => file.mimeType === GoogleFiles.FOLDER_MIME).length;
 
@@ -122,7 +122,7 @@ export class GoogleDriveService {
             retVal.push(...moreFiles);
           }
         })
-        .catch(() => {}); /* eslint-disable-line no-useless-catch */
+        .catch(() => {}); /* eslint-disable-line no-useless-catch, @typescript-eslint/no-empty-function */
     }
 
     if (modifiedTime) {
@@ -143,7 +143,7 @@ export class GoogleDriveService {
     const params = {
       supportsAllDrives: true,
       driveId: undefined
-    }
+    };
 
     if (driveId) {
       params.driveId = driveId;
@@ -291,11 +291,10 @@ export class GoogleDriveService {
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
-      }, { responseType: 'stream' })
+      }, { responseType: 'stream' });
 
       return await new Promise((resolve, reject) => {
         let stream = res.data
-          .on('end', () => {})
           .on('error', err => {
             reject(err);
           });
@@ -331,7 +330,7 @@ export class GoogleDriveService {
     const listParams = {
       pageSize: 100,
       pageToken: nextPageToken
-    }
+    };
 
     try {
       const res = await drive.drives.list(listParams);
@@ -340,7 +339,7 @@ export class GoogleDriveService {
           id: drive.id,
           name: drive.name,
           kind: drive.kind
-        }
+        };
       });
 
       if (res.data.nextPageToken) {

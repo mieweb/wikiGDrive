@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import {FileService} from '../utils/FileService';
-import {LocalPathGenerator} from "./LocalPathGenerator";
+import {LocalPathGenerator} from './LocalPathGenerator';
 
 function generateUniqId() {
   return Math.random().toString(26).slice(2);
@@ -41,7 +41,7 @@ export interface FileMap {
 class GoogleFiles {
   private fileService: FileService;
   private readonly filePath: string;
-  private save_needed: boolean = false;
+  private save_needed = false;
 
   static FOLDER_MIME: string;
   static DOCUMENT_MIME: string;
@@ -88,7 +88,7 @@ class GoogleFiles {
 
     for (const file of changedFiles) {
       const oldEntry = this.fileMap[file.id];
-      let oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
+      const oldDesiredLocalPath = oldEntry ? oldEntry.desiredLocalPath : '';
 
       if (!oldEntry) {
         await this._insertFile(file);
@@ -225,7 +225,7 @@ class GoogleFiles {
   }
 
   findFile(checker) {
-    for (let fileId in this.fileMap) {
+    for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (checker(file)) {
         return file;
@@ -235,7 +235,7 @@ class GoogleFiles {
 
   findFiles(checker) {
     const retVal = [];
-    for (let fileId in this.fileMap) {
+    for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (checker(file)) {
         retVal.push(file);
@@ -251,7 +251,7 @@ class GoogleFiles {
   getMaxModifiedTime() {
     let maxModifiedTime = null;
 
-    for (let fileId in this.fileMap) {
+    for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (!maxModifiedTime) {
         maxModifiedTime = file.modifiedTime;

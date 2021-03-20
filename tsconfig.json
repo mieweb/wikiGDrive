@@ -1,12 +1,9 @@
 {
   "compilerOptions": {
-    "lib": [
-      "es6",
-      "esnext",
-      "dom"
-    ],
+    "lib": ["es6", "esnext", "dom"],
     "module": "commonjs",
-    "target": "es2017",
+    "target": "es5",
+    "resolveJsonModule": true,
     "sourceMap": true
   },
   "exclude": [
