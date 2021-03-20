@@ -19,6 +19,7 @@ class ProgressTask {
   public completed = false;
   public enabled = true;
   public rolledBack = false;
+  public options = {};
 
   constructor(private opts) {
     this.subtasks = [];
@@ -85,13 +86,11 @@ interface ParentsMap {
 }
 
 export class ProgressPlugin extends BasePlugin {
+  private readonly tasks: ProgressTask[];
+  private readonly renderHook: RenderHook;
   private mainResolve: (value?: (PromiseLike<void> | void)) => void;
-  private tasks: ProgressTask[];
   private renderer: DefaultRenderer;
-  private renderHook: RenderHook;
-  private listenTask: ProgressTask;
   private parentsMap: ParentsMap = {};
-
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -149,6 +148,26 @@ export class ProgressPlugin extends BasePlugin {
         this.tasks.push(this['QuotaTask']);
       }
       this['QuotaTask'].title = 'Quota: ' + limit.queries + ' queries / ' + limit.seconds + ' seconds';
+    });
+
+    eventBus.on('watch:event', async (changesCount) => {
+      if (!this['WatchTask']) {
+        this['WatchTask'] = new ProgressTask({
+          title: 'Watching'
+        });
+        this.tasks.push(this['WatchTask']);
+      }
+      if (changesCount > 0) {
+        this['WatchTask'].lastTime = +new Date();
+        this['WatchTask'].changesCount = changesCount;
+      }
+
+      setTimeout(() => {
+        if (this['WatchTask'].changesCount > 0) {
+          const ago = Math.round((+new Date() - this['WatchTask'].lastTime) / 1000);
+          this['WatchTask'].title = 'Watching, last change: ' + this['WatchTask'].changesCount + ' files, ' + ago + ' seconds ago';
+        }
+      }, 1000);
     });
 
     this.parentsMap['transform'] = 'Transforming';

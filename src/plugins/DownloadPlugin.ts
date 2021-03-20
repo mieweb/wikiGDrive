@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import {queue} from 'async';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleFile, GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFile, GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 import {StringWritable} from '../utils/StringWritable';
 import {BufferWritable} from '../utils/BufferWritable';
@@ -205,39 +205,42 @@ export class DownloadPlugin extends BasePlugin {
       // if (file.trashed) {
       //   this.googleFiles.markClean([ file ]));
       // } else
-      if (file.mimeType === GoogleFiles.CONFLICT_MIME) {
-        await this.googleFiles.markClean([ file ]);
-      } else
-      if (file.mimeType === GoogleFiles.REDIRECT_MIME) {
-        await this.googleFiles.markClean([ file ]);
-      } else
-      if (file.mimeType === GoogleFiles.DRAWING_MIME) {
-        await this.downloadDiagram(file, targetPath);
-      } else
-      if (file.mimeType === GoogleFiles.DOCUMENT_MIME) {
-        await this.downloadDocument(file);
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
-        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx');
-        await this.exportBinary(file, 'text/csv', 'csv');
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.presentation') {
-        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx');
-        await this.exportBinary(file, 'application/pdf', 'pdf');
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.form') {
-        await this.exportBinary(file, 'application/zip', 'zip');
-      } else
-      if (file.size !== undefined) {
-        await this.downloadAsset(file, targetPath);
-      } else {
-        await this.downloadAsset(file, targetPath);
+
+      try {
+        if (file.mimeType === MimeTypes.CONFLICT_MIME) {
+          await this.googleFiles.markClean([ file ]);
+        } else
+        if (file.mimeType === MimeTypes.REDIRECT_MIME) {
+          await this.googleFiles.markClean([ file ]);
+        } else
+        if (file.mimeType === MimeTypes.DRAWING_MIME) {
+          await this.downloadDiagram(file, targetPath);
+        } else
+        if (file.mimeType === MimeTypes.DOCUMENT_MIME) {
+          await this.downloadDocument(file);
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
+          await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx');
+          await this.exportBinary(file, 'text/csv', 'csv');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.presentation') {
+          await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx');
+          await this.exportBinary(file, 'application/pdf', 'pdf');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.form') {
+          await this.exportBinary(file, 'application/zip', 'zip');
+        } else
+        if (file.size !== undefined) {
+          await this.downloadAsset(file, targetPath);
+        } else {
+          await this.downloadAsset(file, targetPath);
+        }
+        this.progress.completed++;
+        this.eventBus.emit('download:progress', this.progress);
+        callback();
+      } catch (err) {
+        callback(err);
       }
-
-      this.progress.completed++;
-      this.eventBus.emit('download:progress', this.progress);
-
-      callback();
     }, CONCURRENCY);
 
     q.error(() => {

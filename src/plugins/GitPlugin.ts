@@ -3,10 +3,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as SimpleGit from 'simple-git/promise';
-import { spawn } from 'child_process';
+import {spawn} from 'child_process';
 
-import { BasePlugin } from './BasePlugin';
-import { GoogleFiles } from '../storage/GoogleFiles';
+import {BasePlugin} from './BasePlugin';
+import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 
 export class GitPlugin extends BasePlugin {
@@ -68,7 +68,7 @@ git commit -m "Autocommit updated files" $@
       }
       const status = await repository.status();
 
-      const documents = this.googleFiles.findFiles(file => file.mimeType === GoogleFiles.DOCUMENT_MIME);
+      const documents = this.googleFiles.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
       // console.log('status', status);
 
       const not_added = documents.filter(doc => status.not_added.indexOf(doc.localPath) > -1);

@@ -1,12 +1,12 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleDriveService} from '../google/GoogleDriveService';
+import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
 import {DriveConfig} from './ConfigDirPlugin';
 import {GoogleFiles} from '../storage/GoogleFiles';
 import {urlToFolderId} from '../utils/idParsers';
 
-export class ListRootPlugin extends BasePlugin {
+export class SyncPlugin extends BasePlugin {
   private command: string;
   private drive_id: string;
   private force: boolean;
@@ -14,9 +14,16 @@ export class ListRootPlugin extends BasePlugin {
   private googleFiles: GoogleFiles;
   private googleDriveService: GoogleDriveService;
   private auth: any;
+  private googleFileIds: string[];
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
+
+    this.googleFileIds = [];
+
+    eventBus.on('main:set_google_file_ids_filter', (googleFileIds) => {
+      this.googleFileIds = googleFileIds;
+    });
 
     eventBus.on('main:run', async (params) => {
       this.command = params.command;
@@ -33,7 +40,7 @@ export class ListRootPlugin extends BasePlugin {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('list_root:run', async () => {
+    eventBus.on('sync:run', async () => {
       await this.start();
     });
   }
@@ -41,7 +48,8 @@ export class ListRootPlugin extends BasePlugin {
   async start() {
     const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
-    const context = {
+    const context: ListContext = {
+      fileIds: [],
       folderId: rootFolderId,
       driveId: undefined
     };
@@ -51,24 +59,28 @@ export class ListRootPlugin extends BasePlugin {
 
     const lastMTime = this.force ? null : this.googleFiles.getMaxModifiedTime();
 
-    try {
-      const apiFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
-      const changedFiles = apiFiles.map(file => {
-        if (file.parentId === rootFolderId) {
-          file.parentId = undefined;
-        }
-        return file;
-      });
+    if (this.googleFileIds.length > 0) {
+      console.log(this.googleFileIds); // TODO
+    } else {
+      try {
+        const apiFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+        const changedFiles = apiFiles.map(file => {
+          if (file.parentId === rootFolderId) {
+            file.parentId = undefined;
+          }
+          return file;
+        });
 
-      await this.googleFiles.merge(changedFiles);
-    } catch (e) {
-      this.eventBus.emit('panic', e);
-      return;
+        await this.googleFiles.merge(changedFiles);
+      } catch (e) {
+        this.eventBus.emit('panic', e);
+        return;
+      }
     }
 
     this.logger.info('Listening Google Drive done');
 
-    this.eventBus.emit('list_root:done', {
+    this.eventBus.emit('sync:done', {
       context,
       lastMTime
     });

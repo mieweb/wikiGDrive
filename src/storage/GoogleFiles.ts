@@ -38,18 +38,22 @@ export interface FileMap {
   [id: string]: GoogleFile;
 }
 
-class GoogleFiles {
+export const MimeTypes = {
+  FOLDER_MIME: 'application/vnd.google-apps.folder',
+  DOCUMENT_MIME: 'application/vnd.google-apps.document',
+  DRAWING_MIME: 'application/vnd.google-apps.drawing',
+  SPREADSHEET_MIME: 'application/vnd.google-apps.spreadsheet',
+  FORM_MIME: 'application/vnd.google-apps.form',
+  PRESENTATION_MIME: 'application/vnd.google-apps.presentation',
+  CONFLICT_MIME: 'conflict',
+  REDIRECT_MIME: 'redirect'
+};
+
+export class GoogleFiles {
   private fileService: FileService;
   private readonly filePath: string;
   private save_needed = false;
 
-  static FOLDER_MIME: string;
-  static DOCUMENT_MIME: string;
-  static DRAWING_MIME: string;
-  static CONFLICT_MIME: string;
-  static REDIRECT_MIME: string;
-  static SPREADSHEET_MIME: string;
-  static FORM_MIME: string;
   private fileMap: FileMap;
 
   constructor(private config_dir: string, private flat_folder_structure: boolean = false) {
@@ -114,7 +118,7 @@ class GoogleFiles {
 
   async markDirty(files) {
     for (const file of files) {
-      if (file.mimeType === GoogleFiles.FOLDER_MIME) continue;
+      if (file.mimeType === MimeTypes.FOLDER_MIME) continue;
       await this._putFile(file.id, Object.assign({}, this.fileMap[file.id], {
         dirty: true
       }));
@@ -141,7 +145,7 @@ class GoogleFiles {
       const redirectFile: GoogleFile = {
         id: generateUniqId(),
         name: oldFile.name,
-        mimeType: GoogleFiles.REDIRECT_MIME,
+        mimeType: MimeTypes.REDIRECT_MIME,
         localPath: oldFile.localPath,
         desiredLocalPath: oldFile.desiredLocalPath,
         redirectTo: oldFile.id
@@ -172,7 +176,7 @@ class GoogleFiles {
   }
 
   async _checkConflicts(desiredLocalPath) {
-    const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== GoogleFiles.CONFLICT_MIME && !file.trashed);
+    const files = this.findFiles(file => file.desiredLocalPath === desiredLocalPath && file.mimeType !== MimeTypes.CONFLICT_MIME && !file.trashed);
 
     if (files.length < 2) {
       files.forEach(file => {
@@ -181,12 +185,12 @@ class GoogleFiles {
       return;
     }
 
-    let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === GoogleFiles.CONFLICT_MIME && !file.trashed);
+    let conflictFile = this.findFile(file => file.desiredLocalPath === desiredLocalPath && file.mimeType === MimeTypes.CONFLICT_MIME && !file.trashed);
     if (!conflictFile) {
       conflictFile = {
         id: generateUniqId(),
         name: files[0].name,
-        mimeType: GoogleFiles.CONFLICT_MIME,
+        mimeType: MimeTypes.CONFLICT_MIME,
         localPath: desiredLocalPath,
         desiredLocalPath: desiredLocalPath,
         counter: 0,
@@ -291,11 +295,3 @@ class GoogleFiles {
   }
 }
 
-GoogleFiles.FOLDER_MIME = 'application/vnd.google-apps.folder';
-GoogleFiles.DOCUMENT_MIME = 'application/vnd.google-apps.document';
-GoogleFiles.DRAWING_MIME = 'application/vnd.google-apps.drawing';
-
-GoogleFiles.CONFLICT_MIME = 'conflict';
-GoogleFiles.REDIRECT_MIME = 'redirect';
-
-export { GoogleFiles };
