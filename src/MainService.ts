@@ -4,7 +4,7 @@ import {EventEmitter} from 'events';
 import * as winston from 'winston';
 
 import {ConfigDirPlugin} from './plugins/ConfigDirPlugin';
-import {ListRootPlugin} from './plugins/ListRootPlugin';
+import {SyncPlugin} from './plugins/SyncPlugin';
 import {WatchChangesPlugin} from './plugins/WatchChangesPlugin';
 import {TransformPlugin} from './plugins/TransformPlugin';
 import {GoogleApiPlugin} from './plugins/GoogleApiPlugin';
@@ -20,6 +20,7 @@ import 'winston-daily-rotate-file';
 import {ProgressPlugin} from './progress/ProgressPlugin';
 import {GoogleFiles} from './storage/GoogleFiles';
 import {argsToGoogleFileIds} from './utils/idParsers';
+import {createLogger} from './utils/logger';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -50,11 +51,11 @@ export interface CliParams {
 
 
 export class MainService {
-  public readonly eventBus: EventEmitter;
+  private readonly eventBus: EventEmitter;
   private readonly command: string;
   private plugins: BasePlugin[];
-  private logger: winston.Logger;
-  private disable_progress: Boolean;
+  private readonly logger: winston.Logger;
+  private readonly disable_progress: Boolean;
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
@@ -65,45 +66,7 @@ export class MainService {
       this.attachDebug();
     }
 
-    this.logger = winston.createLogger({
-      level: 'info',
-      format: winston.format.combine(
-        winston.format.json()
-      ),
-      defaultMeta: {},
-      transports: [
-        //
-        // - Write all logs with level `error` and below to `error.log`
-        // - Write all logs with level `info` and below to `combined.log`
-        //
-      ],
-    });
-
-    const myFormat = winston.format.printf((params) => {
-      const { level, message, timestamp } = params;
-      let { filename } = params;
-
-      if (filename) {
-        filename = filename.replace(/^.+\//sg, '');
-      }
-
-      if ('/index.js' === filename) {
-        filename = null;
-      }
-
-      if (filename) {
-        return `${timestamp} [${level}] (${filename}): ${message}`;
-      } else {
-        return `${timestamp} [${level}]: ${message}`;
-      }
-    });
-
-    this.logger.add(new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        myFormat
-      )
-    }));
+    this.logger = createLogger(this.eventBus);
   }
 
   attachDebug() {
@@ -113,7 +76,7 @@ export class MainService {
       eventNames[event] = event;
 
       this.eventBus.on(event, () => {
-        console.debug('OnEvent', event);
+        this.logger.debug('OnEvent', event);
       });
     });
   }
@@ -129,7 +92,7 @@ export class MainService {
     this.plugins.push(new GoogleApiPlugin(this.eventBus, this.logger));
     this.plugins.push(new WatchMTimePlugin(this.eventBus, this.logger));
     this.plugins.push(new WatchChangesPlugin(this.eventBus, this.logger));
-    this.plugins.push(new ListRootPlugin(this.eventBus, this.logger));
+    this.plugins.push(new SyncPlugin(this.eventBus, this.logger));
     this.plugins.push(new DownloadPlugin(this.eventBus, this.logger));
     this.plugins.push(new TransformPlugin(this.eventBus, this.logger));
     this.plugins.push(new GitPlugin(this.eventBus, this.logger));
@@ -198,6 +161,11 @@ export class MainService {
       process.exit();
     });
 
+    let googleFiles: GoogleFiles;
+    this.eventBus.on('google_files:initialized', ({ googleFiles: param }) => {
+      googleFiles = param;
+    });
+
     switch (this.command) {
       case 'init':
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
@@ -215,20 +183,14 @@ export class MainService {
 
       case 'sync':
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'google_files:initialized', 'external_files:initialized' ]);
-        await this.emitThanAwait('list_root:run', {}, [ 'list_root:done' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
+
+        await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         break;
 
       case 'download':
-        let googleFiles2: GoogleFiles;
-
-        this.eventBus.on('google_files:initialized', ({ googleFiles }) => {
-          googleFiles2 = googleFiles;
-        });
-
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'google_files:initialized', 'external_files:initialized' ]);
-
-        const googleFileIds = argsToGoogleFileIds(this.params.args, googleFiles2);
-        this.eventBus.emit('main:set_google_file_ids_filter', googleFileIds);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
 
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
         break;
@@ -254,7 +216,9 @@ export class MainService {
         });
 
         await this.emitThanAwait('main:run', this.params, [ 'google_api:done', 'google_files:initialized' ]);
-        await this.emitThanAwait('list_root:run', {}, [ 'list_root:done' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
+
+        await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
         await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
         await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
@@ -281,7 +245,7 @@ export class MainService {
           await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
         }
 
-        await this.emitThanAwait('list_root:run', {}, ['list_root:done']);
+        await this.emitThanAwait('sync:run', {}, ['sync:done']);
 
         this.eventBus.emit('watch:run');
 
@@ -301,7 +265,7 @@ export class MainService {
 
       default:
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
-        console.error('Unknown command: ' + this.command);
+        this.logger.error('Unknown command: ' + this.command);
         break;
     }
 

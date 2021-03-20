@@ -3,8 +3,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as winston from 'winston';
 import {FileService} from '../utils/FileService';
-import {HttpClient} from "../utils/HttpClient";
+import {HttpClient} from '../utils/HttpClient';
 
 function createTempName(tmpdir) {
   const filename = 'temp_' + crypto.randomBytes(4).readUInt32LE(0) + '_ext';
@@ -34,10 +35,10 @@ export class ExternalFiles {
   private fileService: FileService;
   private readonly linksPath: string;
   private readonly filePath: string;
-  private save_needed: boolean = false;
+  private save_needed = false;
   private binaryFiles: BinaryFilesMap;
   private links: LinksMap;
-  private logger: any;
+  private logger: winston.Logger;
 
   constructor(logger, private config_dir: string, private httpClient: HttpClient, private dest: string) {
     this.logger = logger.child({ filename: __filename });
@@ -106,7 +107,7 @@ export class ExternalFiles {
   }
 
   findFile(checker): BinaryFileEntry {
-    for (let fileId in this.binaryFiles) {
+    for (const fileId in this.binaryFiles) {
       const file = this.binaryFiles[fileId];
       if (checker(file)) {
         return file;
@@ -116,7 +117,7 @@ export class ExternalFiles {
 
   findFiles(checker): BinaryFileEntry[] {
     const retVal = [];
-    for (let fileId in this.binaryFiles) {
+    for (const fileId in this.binaryFiles) {
       const file = this.binaryFiles[fileId];
       if (checker(file)) {
         retVal.push(file);
@@ -126,7 +127,7 @@ export class ExternalFiles {
   }
 
   findLink(checker): LinkEntry {
-    for (let id in this.links) {
+    for (const id in this.links) {
       const link = this.links[id];
       if (checker(link)) {
         return link;
@@ -136,7 +137,7 @@ export class ExternalFiles {
 
   findLinks(checker): LinkEntry[] {
     const retVal = [];
-    for (let id in this.links) {
+    for (const id in this.links) {
       const link = this.links[id];
       if (checker(link)) {
         retVal.push(link);

@@ -5,14 +5,14 @@ import * as fs from 'fs';
 import {queue} from 'async';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleFile, GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFile, GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 import {StringWritable} from '../utils/StringWritable';
 import {BufferWritable} from '../utils/BufferWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
-import {ExternalFiles} from "../storage/ExternalFiles";
-import {CliParams} from "../MainService";
+import {ExternalFiles} from '../storage/ExternalFiles';
+import {CliParams} from '../MainService';
 
 export class DownloadPlugin extends BasePlugin {
   private googleDocsService: GoogleDocsService;
@@ -28,7 +28,7 @@ export class DownloadPlugin extends BasePlugin {
     completed: number;
     total: number;
   };
-  private handlingFiles: boolean = false;
+  private handlingFiles = false;
   private googleFileIds: string[];
 
   constructor(eventBus, logger) {
@@ -40,7 +40,7 @@ export class DownloadPlugin extends BasePlugin {
       failed: 0,
       completed: 0,
       total: 0
-    }
+    };
 
     this.googleDocsService = new GoogleDocsService(this.logger);
 
@@ -141,7 +141,7 @@ export class DownloadPlugin extends BasePlugin {
       await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', localPath: file.localPath }, destZip);
       await this.googleDocsService.download(this.auth, file, destJson);
 
-      fs.writeFileSync(zipPath, destZip.getBuffer())
+      fs.writeFileSync(zipPath, destZip.getBuffer());
       fs.writeFileSync(gdocPath, destJson.getString());
       await this.googleFiles.markClean([ file ]);
 
@@ -205,42 +205,45 @@ export class DownloadPlugin extends BasePlugin {
       // if (file.trashed) {
       //   this.googleFiles.markClean([ file ]));
       // } else
-      if (file.mimeType === GoogleFiles.CONFLICT_MIME) {
-        await this.googleFiles.markClean([ file ]);
-      } else
-      if (file.mimeType === GoogleFiles.REDIRECT_MIME) {
-        await this.googleFiles.markClean([ file ]);
-      } else
-      if (file.mimeType === GoogleFiles.DRAWING_MIME) {
-        await this.downloadDiagram(file, targetPath);
-      } else
-      if (file.mimeType === GoogleFiles.DOCUMENT_MIME) {
-        await this.downloadDocument(file);
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
-        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx');
-        await this.exportBinary(file, 'text/csv', 'csv');
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.presentation') {
-        await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx');
-        await this.exportBinary(file, 'application/pdf', 'pdf');
-      } else
-      if (file.mimeType === 'application/vnd.google-apps.form') {
-        await this.exportBinary(file, 'application/zip', 'zip');
-      } else
-      if (file.size !== undefined) {
-        await this.downloadAsset(file, targetPath);
-      } else {
-        await this.downloadAsset(file, targetPath);
+
+      try {
+        if (file.mimeType === MimeTypes.CONFLICT_MIME) {
+          await this.googleFiles.markClean([ file ]);
+        } else
+        if (file.mimeType === MimeTypes.REDIRECT_MIME) {
+          await this.googleFiles.markClean([ file ]);
+        } else
+        if (file.mimeType === MimeTypes.DRAWING_MIME) {
+          await this.downloadDiagram(file, targetPath);
+        } else
+        if (file.mimeType === MimeTypes.DOCUMENT_MIME) {
+          await this.downloadDocument(file);
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.spreadsheet') {
+          await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx');
+          await this.exportBinary(file, 'text/csv', 'csv');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.presentation') {
+          await this.exportBinary(file, 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx');
+          await this.exportBinary(file, 'application/pdf', 'pdf');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.form') {
+          await this.exportBinary(file, 'application/zip', 'zip');
+        } else
+        if (file.size !== undefined) {
+          await this.downloadAsset(file, targetPath);
+        } else {
+          await this.downloadAsset(file, targetPath);
+        }
+        this.progress.completed++;
+        this.eventBus.emit('download:progress', this.progress);
+        callback();
+      } catch (err) {
+        callback(err);
       }
-
-      this.progress.completed++;
-      this.eventBus.emit('download:progress', this.progress);
-
-      callback();
     }, CONCURRENCY);
 
-    q.error((err, task) => {
+    q.error(() => {
       this.progress.failed++;
       this.eventBus.emit('download:progress', this.progress);
     });

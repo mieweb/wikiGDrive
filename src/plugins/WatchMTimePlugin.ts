@@ -1,10 +1,10 @@
 'use strict';
 
 import {BasePlugin} from './BasePlugin';
-import {CliParams} from "../MainService";
-import {DriveConfig} from "./ConfigDirPlugin";
-import {GoogleFiles} from "../storage/GoogleFiles";
-import {GoogleDriveService} from "../google/GoogleDriveService";
+import {CliParams} from '../MainService';
+import {DriveConfig} from './ConfigDirPlugin';
+import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
 
 export class WatchMTimePlugin extends BasePlugin {
   private command: string;
@@ -14,7 +14,7 @@ export class WatchMTimePlugin extends BasePlugin {
   private googleFiles: GoogleFiles;
   private auth: any;
   private googleDriveService: GoogleDriveService;
-  private context: any;
+  private context: ListContext;
   private lastMTime: string;
 
   constructor(eventBus, logger) {
@@ -35,7 +35,7 @@ export class WatchMTimePlugin extends BasePlugin {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('list_root:done', ({ context, lastMTime }) => {
+    eventBus.on('sync:done', ({ context, lastMTime }) => {
       this.context = context;
       this.lastMTime = lastMTime;
     });
@@ -47,24 +47,26 @@ export class WatchMTimePlugin extends BasePlugin {
     });
   }
 
-  async watch(context, lastMTime) {
-    console.log('Watching changes with mtime');
+  async watch(context: ListContext, lastMTime) {
+    this.eventBus.emit('watch:event');
+    this.logger.info('Watching changes with mtime');
 
     while (true) { // eslint-disable-line no-constant-condition
       try {
         lastMTime = this.googleFiles.getMaxModifiedTime();
         const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
         if (changedFiles.length > 0) {
-          console.log(changedFiles.length + ' files modified');
+          this.logger.info(changedFiles.length + ' files modified');
+          this.eventBus.emit('watch:event', changedFiles.length);
           await this.googleFiles.merge(changedFiles);
           this.eventBus.emit('google_files:dirty');
         } else {
-          console.log('No files modified. Sleeping for 10 seconds.');
+          this.logger.info('No files modified. Sleeping for 10 seconds.');
         }
 
         await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
       } catch (e) {
-        console.error(e);
+        this.logger.error(e);
       }
     }
   }

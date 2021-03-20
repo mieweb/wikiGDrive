@@ -5,9 +5,13 @@ import * as JSZip from 'jszip';
 import * as crypto from 'crypto';
 import {ExternalFiles} from '../storage/ExternalFiles';
 
+interface Images {
+  [k: string]: string;
+}
+
 export class UnZipper {
     private html: string;
-    private readonly images: {};
+    private readonly images: Images;
 
     constructor(private externalFiles: ExternalFiles) {
         this.html = '<html></html>';

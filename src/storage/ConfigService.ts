@@ -4,21 +4,20 @@ import { FileService } from '../utils/FileService';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export interface Credentials {
-
-}
-
 export interface GoogleAuth {
-
+  access_token: string;
+  refresh_token: string;
+  scope: string;
+  token_type: string;
+  expiry_date: number;
 }
 
 export interface Config {
   google_auth: GoogleAuth;
-  credentials: Credentials;
 }
 
 export class ConfigService {
-  private save_needed: Boolean = false;
+  private save_needed = false;
   private fileService: FileService;
   private config: Config;
   private readonly authPath: string;

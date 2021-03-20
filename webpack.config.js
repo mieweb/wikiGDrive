@@ -1,5 +1,5 @@
-const webpack = require('webpack');
-const fs = require('fs');
+const webpack = require('webpack'); // eslint-disable-line @typescript-eslint/no-var-requires
+const fs = require('fs'); // eslint-disable-line @typescript-eslint/no-var-requires
 
 module.exports = {
   target: 'node',

@@ -14,16 +14,17 @@ class ProgressTask {
     /** Rollback message of the task, if the rollback finishes */
     rollback?: string;
   };
-  public failed: Boolean = false;
-  public pending: Boolean = true;
-  public completed: Boolean = false;
-  public enabled: Boolean = true;
-  public rolledBack: Boolean = false;
+  public failed = false;
+  public pending = true;
+  public completed = false;
+  public enabled = true;
+  public rolledBack = false;
+  public options = {};
 
   constructor(private opts) {
     this.subtasks = [];
     this.message = {};
-    for (let k in opts) {
+    for (const k in opts) {
       this[k] = opts[k];
     }
   }
@@ -66,7 +67,7 @@ class ProgressTask {
 }
 
 class RenderHook {
-  private callback: Function;
+  private callback: () => void;
 
   subscribe(callback) {
     this.callback = callback;
@@ -80,14 +81,16 @@ class RenderHook {
   }
 }
 
-export class ProgressPlugin extends BasePlugin {
-  private mainResolve: (value?: (PromiseLike<void> | void)) => void;
-  private tasks: ProgressTask[];
-  private renderer: DefaultRenderer;
-  private renderHook: RenderHook;
-  private listenTask: ProgressTask;
-  private parentsMap: any = {};
+interface ParentsMap {
+  [k: string]: string;
+}
 
+export class ProgressPlugin extends BasePlugin {
+  private readonly tasks: ProgressTask[];
+  private readonly renderHook: RenderHook;
+  private mainResolve: (value?: (PromiseLike<void> | void)) => void;
+  private renderer: DefaultRenderer;
+  private parentsMap: ParentsMap = {};
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -116,11 +119,11 @@ export class ProgressPlugin extends BasePlugin {
 
     this.renderHook = new RenderHook();
     this.renderer = new DefaultRenderer(
-      <any>this.tasks,
+      <any>this.tasks, // eslint-disable-line @typescript-eslint/no-explicit-any
       {
         suffixSkips: false
       },
-      <any>this.renderHook
+      <any>this.renderHook // eslint-disable-line @typescript-eslint/no-explicit-any
     );
 
     this.renderer.render();
@@ -145,6 +148,26 @@ export class ProgressPlugin extends BasePlugin {
         this.tasks.push(this['QuotaTask']);
       }
       this['QuotaTask'].title = 'Quota: ' + limit.queries + ' queries / ' + limit.seconds + ' seconds';
+    });
+
+    eventBus.on('watch:event', async (changesCount) => {
+      if (!this['WatchTask']) {
+        this['WatchTask'] = new ProgressTask({
+          title: 'Watching'
+        });
+        this.tasks.push(this['WatchTask']);
+      }
+      if (changesCount > 0) {
+        this['WatchTask'].lastTime = +new Date();
+        this['WatchTask'].changesCount = changesCount;
+      }
+
+      setTimeout(() => {
+        if (this['WatchTask'].changesCount > 0) {
+          const ago = Math.round((+new Date() - this['WatchTask'].lastTime) / 1000);
+          this['WatchTask'].title = 'Watching, last change: ' + this['WatchTask'].changesCount + ' files, ' + ago + ' seconds ago';
+        }
+      }, 1000);
     });
 
     this.parentsMap['transform'] = 'Transforming';

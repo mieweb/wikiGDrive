@@ -82,7 +82,7 @@ export class EmbedImageFixer extends Transform {
       }
 
       return url.toString();
-    }
+    };
 
     for (const item of content) {
       if (item.inlineObjectElement && item.inlineObjectElement.inlineObjectId) {

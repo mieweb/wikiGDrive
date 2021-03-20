@@ -3,12 +3,12 @@
 import {BasePlugin} from './BasePlugin';
 import {HttpClient} from '../utils/HttpClient';
 import {ExternalFiles} from '../storage/ExternalFiles';
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 
 import * as path from 'path';
 import {queue} from 'async';
-import {DriveConfig} from "./ConfigDirPlugin";
+import {DriveConfig} from './ConfigDirPlugin';
 
 async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -38,7 +38,7 @@ async function processRecursive(json, func) {
     }
   } else
   if (typeof json === 'object') {
-    for (let k in json) {
+    for (const k in json) {
       await processRecursive(json[k], func);
     }
     await func(json);
@@ -51,11 +51,12 @@ export class ExternalFilesPlugin extends BasePlugin {
   private config_dir: string;
   private dest: string;
 
-  private progress: {
+  private readonly progress: {
     failed: number;
     completed: number;
     total: number;
   };
+  private handlingFiles = false;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -64,7 +65,7 @@ export class ExternalFilesPlugin extends BasePlugin {
       failed: 0,
       completed: 0,
       total: 0
-    }
+    };
 
     eventBus.on('main:run', async (params) => {
       this.config_dir = params.config_dir;
@@ -89,7 +90,15 @@ export class ExternalFilesPlugin extends BasePlugin {
   }
 
   async process() {
-    const files = this.googleFiles.findFiles(item => !item.dirty && GoogleFiles.DOCUMENT_MIME === item.mimeType);
+    if (this.handlingFiles) {
+      setTimeout(() => {
+        this.eventBus.emit('external:run');
+      }, 2000);
+      return;
+    }
+    this.handlingFiles = true;
+
+    const files = this.googleFiles.findFiles(item => !item.dirty && MimeTypes.DOCUMENT_MIME === item.mimeType);
 
     for (const file of files) {
       const links = await this.extractExternalFiles(file);
@@ -99,6 +108,8 @@ export class ExternalFilesPlugin extends BasePlugin {
     }
 
     await this.download();
+
+    this.handlingFiles = false;
   }
 
   async extractExternalFiles(file) {
@@ -149,7 +160,7 @@ export class ExternalFilesPlugin extends BasePlugin {
           this.eventBus.emit('external:progress', this.progress);
           break;
         default:
-          this.logger.error('Unknown task type: ' + task.type)
+          this.logger.error('Unknown task type: ' + task.type);
       }
       callback();
     }, CONCURRENCY);

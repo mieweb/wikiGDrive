@@ -17,7 +17,7 @@ interface TransformedMap {
 export class TransformStatus {
   private fileService: FileService;
   private readonly transformPath: string;
-  private save_needed: Boolean = false;
+  private save_needed = false;
   private transformed: TransformedMap;
 
   constructor(private config_dir: string) {
@@ -45,7 +45,7 @@ export class TransformStatus {
   }
 
   findStatus(checker): TransformedEntry {
-    for (let id in this.transformed) {
+    for (const id in this.transformed) {
       const status = this.transformed[id];
       if (checker(status)) {
         return status;
@@ -55,7 +55,7 @@ export class TransformStatus {
 
   findStatuses(checker): TransformedEntry[] {
     const retVal = [];
-    for (let id in this.transformed) {
+    for (const id in this.transformed) {
       const status = this.transformed[id];
       if (checker(status)) {
         retVal.push(status);

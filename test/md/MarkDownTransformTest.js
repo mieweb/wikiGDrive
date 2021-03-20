@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 import {assert} from 'chai';
 import {Readable, Writable} from 'stream';
 

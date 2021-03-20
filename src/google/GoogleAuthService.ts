@@ -5,8 +5,8 @@ import * as fs from 'fs';
 import * as open from 'open';
 
 import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
-import {ConfigService} from "../storage/ConfigService";
-import {QuotaLimiter} from "./QuotaLimiter";
+import {ConfigService} from '../storage/ConfigService';
+import {QuotaLimiter} from './QuotaLimiter';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -91,7 +91,7 @@ export class GoogleAuthService {
       output: process.stdout
     });
 
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       rl.question('Enter the code from that page here: ', (code) => {
         rl.close();
         oAuth2Client.getToken(code, async (err, credentials) => {
