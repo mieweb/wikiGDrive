@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["es6", "esnext", "dom"],
+    "lib": ["es6", "es7", "dom"],
     "module": "commonjs",
-    "target": "es5",
+    "target": "es6",
     "resolveJsonModule": true,
     "sourceMap": true
   },

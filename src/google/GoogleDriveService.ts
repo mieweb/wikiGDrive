@@ -1,7 +1,7 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {GoogleFile, GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFile, MimeTypes} from '../storage/GoogleFiles';
 import {Logger} from 'winston';
 
 export interface ApiFile extends GoogleFile {
@@ -35,6 +35,12 @@ interface GoogleDriveServiceErrorParams {
   folderId?: string;
 }
 
+export interface ListContext {
+  fileIds: string[];
+  driveId?: string;
+  folderId: string;
+}
+
 export class GoogleDriveServiceError extends Error {
   private file: any;
   private dest: any;
@@ -55,7 +61,7 @@ export class GoogleDriveServiceError extends Error {
   }
 }
 export class GoogleDriveService {
-  private progress: {
+  private readonly progress: {
     completed: number,
     total: number,
   };
@@ -67,7 +73,7 @@ export class GoogleDriveService {
     };
   }
 
-  async listRootRecursive(auth, context, modifiedTime) {
+  async listRootRecursive(auth, context: ListContext, modifiedTime) {
     this.progress.completed = 0;
     this.progress.total = 1;
 
@@ -85,11 +91,11 @@ export class GoogleDriveService {
     return files;
   }
 
-  async _listFilesRecursive(auth, context, modifiedTime, remotePath = ['']) {
+  private async _listFilesRecursive(auth, context: ListContext, modifiedTime, remotePath = ['']) {
     this.logger.info('Listening folder: ' + (remotePath.join('/') || '/'));
-    const files: GoogleFile[] = await this._listFiles(auth, context, modifiedTime);
+    const files: GoogleFile[] = await this.listFiles(auth, context, modifiedTime);
     this.progress.completed++;
-    this.progress.total += files.filter(file => file.mimeType === GoogleFiles.FOLDER_MIME).length;
+    this.progress.total += files.filter(file => file.mimeType === MimeTypes.FOLDER_MIME).length;
 
     this.eventBus.emit('listen:progress', this.progress);
 
@@ -105,9 +111,14 @@ export class GoogleDriveService {
 
       for (const file of files) {
         file.parentId = context.folderId;
-        if (file.mimeType !== GoogleFiles.FOLDER_MIME) continue;
+        if (file.mimeType !== MimeTypes.FOLDER_MIME) continue;
 
-        const promise = this._listFilesRecursive(auth, Object.assign({}, context, { folderId: file.id }), modifiedTime,
+        const subContext: ListContext = {
+          folderId: file.id,
+          driveId: context.driveId,
+          fileIds: [].concat(context.fileIds)
+        };
+        const promise = this._listFilesRecursive(auth, subContext, modifiedTime,
             remotePath.concat(file.name));
         promises.push(promise);
 
@@ -127,7 +138,7 @@ export class GoogleDriveService {
 
     if (modifiedTime) {
       const filtered = retVal.filter(dir => {
-        const isOldDir = dir.mimeType === GoogleFiles.FOLDER_MIME && dir.modifiedTime < modifiedTime;
+        const isOldDir = dir.mimeType === MimeTypes.FOLDER_MIME && dir.modifiedTime < modifiedTime;
         return !isOldDir;
       });
 
@@ -161,12 +172,9 @@ export class GoogleDriveService {
       supportsAllDrives: true,
       includeItemsFromAllDrives: true,
       fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed))',
-      driveId: undefined
+      includeRemoved: true,
+      driveId: driveId ? driveId : undefined
     };
-
-    if (driveId) {
-      params.driveId = driveId;
-    }
 
     try {
       const res = await drive.changes.list(params);
@@ -200,12 +208,19 @@ export class GoogleDriveService {
     }
   }
 
-  async _listFiles(auth, context, modifiedTime, nextPageToken?) {
+  async listFiles(auth, context: ListContext, modifiedTime, nextPageToken?) {
     const drive = google.drive({ version: 'v3', auth });
 
-    let query = '\'' + context.folderId + '\' in parents and trashed = false';
+    let query = '';
+
+    if (context.folderId) {
+      query += '\'' + context.folderId + '\' in parents and trashed = false';
+    }
+    if (context.fileIds?.length) {
+      query += '[' + context.fileIds.map(m => '\'' + m + '\'') + '] in id and trashed = false';
+    }
     if (modifiedTime) {
-      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + GoogleFiles.FOLDER_MIME + '\' )';
+      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + MimeTypes.FOLDER_MIME + '\' )';
     }
 
     const listParams = {
@@ -228,7 +243,7 @@ export class GoogleDriveService {
     try {
       const res = await drive.files.list(listParams);
       if (res.data.nextPageToken) {
-        const nextFiles = await this._listFiles(auth, context, modifiedTime, res.data.nextPageToken);
+        const nextFiles = await this.listFiles(auth, context, modifiedTime, res.data.nextPageToken);
         return res.data.files.concat(nextFiles);
       } else {
         for (const apiFile of res.data.files) {

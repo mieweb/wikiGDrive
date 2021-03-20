@@ -54,6 +54,7 @@ export class WatchChangesPlugin extends BasePlugin {
 
   async watch() {
     this.logger.info('Watching changes');
+    this.eventBus.emit('watch:event');
     const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
@@ -81,6 +82,8 @@ export class WatchChangesPlugin extends BasePlugin {
           }
           return file;
         });
+
+        this.eventBus.emit('watch:event', changedFiles.length);
 
         if (changedFiles.length === 0 && externalDocs.length === 0) {
           this.logger.info('No changes detected. Sleeping for 10 seconds.');

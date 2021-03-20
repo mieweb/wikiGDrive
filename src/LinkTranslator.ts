@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as RelateUrl from 'relateurl';
 
 import {FileService} from './utils/FileService';
-import {FileMap, GoogleFiles} from './storage/GoogleFiles';
+import {FileMap, GoogleFiles, MimeTypes} from './storage/GoogleFiles';
 import {ExternalFiles} from './storage/ExternalFiles';
 import {LinkMode} from './MainService';
 
@@ -44,7 +44,7 @@ export class LinkTranslator {
       if (url.indexOf(fileId) > -1) {
         url = file.localPath;
 
-        if (file.mimeType === GoogleFiles.FOLDER_MIME) {
+        if (file.mimeType === MimeTypes.FOLDER_MIME) {
           // url += '/';
         }
 

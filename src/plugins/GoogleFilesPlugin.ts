@@ -3,7 +3,7 @@
 import * as path from 'path';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {FileService} from '../utils/FileService';
 import {DriveConfig} from './ConfigDirPlugin';
 
@@ -22,7 +22,7 @@ export class GoogleFilesPlugin extends BasePlugin {
       this.flat_folder_structure = drive_config.flat_folder_structure;
       await this.init();
     });
-    eventBus.on('list_root:done', async () => {
+    eventBus.on('sync:done', async () => {
       await this.scanFileSystem();
       this.eventBus.emit('google_files:dirty');
     });
@@ -39,7 +39,7 @@ export class GoogleFilesPlugin extends BasePlugin {
   }
 
   async cleanupDir() {
-    const files = this.googleFiles.findFiles(item => GoogleFiles.DOCUMENT_MIME === item.mimeType);
+    const files = this.googleFiles.findFiles(item => MimeTypes.DOCUMENT_MIME === item.mimeType);
     const fileService = new FileService();
 
     for (const file of files) {
@@ -67,10 +67,10 @@ export class GoogleFilesPlugin extends BasePlugin {
     for (const file of files) {
       let targetPath;
       switch (file.mimeType) {
-        case GoogleFiles.DOCUMENT_MIME:
+        case MimeTypes.DOCUMENT_MIME:
           targetPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
           break;
-        case GoogleFiles.DRAWING_MIME:
+        case MimeTypes.DRAWING_MIME:
           targetPath = path.join(this.config_dir, 'files', file.id + '.svg');
           break;
       }
