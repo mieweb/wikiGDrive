@@ -20,6 +20,7 @@ import 'winston-daily-rotate-file';
 import {ProgressPlugin} from './progress/ProgressPlugin';
 import {GoogleFiles} from './storage/GoogleFiles';
 import {argsToGoogleFileIds} from './utils/idParsers';
+import {createLogger} from './utils/logger';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -48,37 +49,9 @@ export interface CliParams {
   git_update_delay: number;
 }
 
-const myFormat = winston.format.printf((params) => {
-  const { level, message, timestamp } = params;
-  let { filename } = params;
-
-  let errorStr = '';
-  if (level === 'error') {
-    if (params.stack) {
-      errorStr += ' ' + params.stack;
-    }
-    if (params.origError) {
-      errorStr += ' ' + JSON.stringify(params.origError, null, 2);
-    }
-  }
-
-  if (filename) {
-    filename = filename.replace(/^.+\//sg, '');
-  }
-
-  if ('/index.js' === filename) {
-    filename = null;
-  }
-
-  if (filename) {
-    return `${timestamp} [${level}] (${filename}): ${message}` + errorStr;
-  } else {
-    return `${timestamp} [${level}]: ${message}` + errorStr;
-  }
-});
 
 export class MainService {
-  readonly eventBus: EventEmitter;
+  private readonly eventBus: EventEmitter;
   private readonly command: string;
   private plugins: BasePlugin[];
   private readonly logger: winston.Logger;
@@ -93,27 +66,7 @@ export class MainService {
       this.attachDebug();
     }
 
-    this.logger = winston.createLogger({
-      level: 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        myFormat
-      ),
-      defaultMeta: {},
-      transports: [
-        //
-        // - Write all logs with level `error` and below to `error.log`
-        // - Write all logs with level `info` and below to `combined.log`
-        //
-      ],
-    });
-
-    this.logger.add(new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        myFormat
-      )
-    }));
+    this.logger = createLogger(this.eventBus);
   }
 
   attachDebug() {
@@ -123,7 +76,7 @@ export class MainService {
       eventNames[event] = event;
 
       this.eventBus.on(event, () => {
-        console.debug('OnEvent', event);
+        this.logger.debug('OnEvent', event);
       });
     });
   }
@@ -312,7 +265,7 @@ export class MainService {
 
       default:
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
-        console.error('Unknown command: ' + this.command);
+        this.logger.error('Unknown command: ' + this.command);
         break;
     }
 
