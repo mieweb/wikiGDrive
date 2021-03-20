@@ -31,7 +31,7 @@ export class FileService {
   }
 
   writeFile(filePath: string, content: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       fs.writeFile(filePath, content, function (err) {
         if (err) return reject(err);
         resolve();

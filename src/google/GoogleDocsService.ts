@@ -29,7 +29,7 @@ export class GoogleDocsService {
       const res = await docs.documents.get({ documentId: file.id });
       const readable = new Readable();
 
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         let stream = readable
             .on('error', err => {
               this.logger.error('Download stream error', err);
