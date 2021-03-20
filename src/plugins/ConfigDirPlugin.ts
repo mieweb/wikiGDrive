@@ -5,7 +5,7 @@ import * as path from 'path';
 
 import {BasePlugin} from './BasePlugin';
 import {FileService} from '../utils/FileService';
-import {CliParams, LinkMode} from "../MainService";
+import {CliParams, LinkMode} from '../MainService';
 
 export interface DriveConfig {
   drive: string;

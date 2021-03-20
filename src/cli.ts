@@ -3,4 +3,4 @@ require('ts-node').register({
   transpileOnly: true,
   dir: __dirname
 });
-require('./index');
+require('./main');

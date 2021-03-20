@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as minimist from 'minimist';
 import {CliParams, MainService} from './MainService';
-const pkg = require('../package.json');
+import * as pkg from '../package.json';
 
 function usage() {
   console.log(
@@ -45,12 +45,12 @@ Examples:
     `}`);
 }
 
-async function index() {
+async function main() {
   const argv = minimist(process.argv.slice(2));
 
   if (argv._.length < 1 || argv.h || argv.help) {
     usage();
-    process.exit(1);
+    process.exit(0);
   }
 
   // PWD is null on Windows, so we can set it here
@@ -124,7 +124,7 @@ async function index() {
 
 require('dotenv').config();
 
-index()
+main()
   .then(() => {
     process.exit(0);
   })

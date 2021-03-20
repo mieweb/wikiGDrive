@@ -14,7 +14,7 @@ import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
 import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 import {TransformStatus} from '../storage/TransformStatus';
-import {CliParams, LinkMode} from "../MainService";
+import {CliParams, LinkMode} from '../MainService';
 import {DriveConfig} from './ConfigDirPlugin';
 import {ExternalFiles} from '../storage/ExternalFiles';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
@@ -133,7 +133,7 @@ export class TransformPlugin extends BasePlugin {
     for (const file of files) {
       const transformedFile = transformedFiles.find(transformedFile => transformedFile.id === file.id);
       if (transformedFile) {
-        if (!fs.existsSync(path.join(this.externalFiles.getDest(), transformedFile.localPath))) {
+        if (!fs.existsSync(path.join(this.externalFiles.getDest(), transformedFile.localPath))) { // eslint-disable-line no-empty
         } else if (transformedFile && transformedFile.modifiedTime === file.modifiedTime) {
           continue;
         }
@@ -223,7 +223,7 @@ export class TransformPlugin extends BasePlugin {
   async deleteTrashed() {
     const files = this.googleFiles.findFiles(file => file.trashed);
 
-    let removed = [];
+    const removed = [];
 
     for (const file of files) {
       const removePath = path.join(this.dest, file.localPath);

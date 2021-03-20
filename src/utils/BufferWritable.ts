@@ -11,7 +11,7 @@ export class BufferWritable extends Writable {
     }
 
     _write(chunk, encoding, callback) {
-        this.buffer = Buffer.concat([ this.buffer, chunk ])
+        this.buffer = Buffer.concat([ this.buffer, chunk ]);
 
         callback();
     }

@@ -1,5 +1,5 @@
-import slugify from "slugify";
-import {GoogleFile, GoogleFiles} from "./GoogleFiles";
+import slugify from 'slugify';
+import {GoogleFile, GoogleFiles} from './GoogleFiles';
 
 const MAX_FILENAME_LENGTH = 100;
 
@@ -21,7 +21,7 @@ export class LocalPathGenerator {
             const clone = JSON.parse(JSON.stringify(changedFile));
             clone.desiredLocalPath = null;
             return clone;
-        })
+        });
 
         const retVal = [];
 
@@ -82,7 +82,7 @@ export class LocalPathGenerator {
                 return slugifiedParent + '/' + getDesiredPath(changedFile.name);
             }
         } else {
-            const parent = this.googleFiles.findFile(file => file.id === changedFile.parentId)
+            const parent = this.googleFiles.findFile(file => file.id === changedFile.parentId);
             if (parent) {
                 const parentDirName = parent.desiredLocalPath;
                 if (parentDirName) {

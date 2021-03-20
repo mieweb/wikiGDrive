@@ -26,7 +26,7 @@ export class MarkDownTransform extends Transform {
     const document = JSON.parse(this.json);
 
     const converter = new JsonToMarkdown(document, this.localPath, this.linkTranslator);
-    const markdown = await converter.convert()
+    const markdown = await converter.convert();
     this.push(markdown);
 
     callback();
