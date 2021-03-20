@@ -110,7 +110,7 @@ git commit -m "Autocommit updated files" $@
         console.error(data.toString());
       });
 
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         process.on('exit', (code) => {
           if (code) {
             reject(code);
