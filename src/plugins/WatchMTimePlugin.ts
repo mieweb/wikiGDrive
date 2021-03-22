@@ -5,6 +5,7 @@ import {CliParams} from '../MainService';
 import {DriveConfig} from './ConfigDirPlugin';
 import {GoogleFiles} from '../storage/GoogleFiles';
 import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
+import {urlToFolderId} from '../utils/idParsers';
 
 export class WatchMTimePlugin extends BasePlugin {
   private command: string;
@@ -14,8 +15,6 @@ export class WatchMTimePlugin extends BasePlugin {
   private googleFiles: GoogleFiles;
   private auth: any;
   private googleDriveService: GoogleDriveService;
-  private context: ListContext;
-  private lastMTime: string;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -35,26 +34,29 @@ export class WatchMTimePlugin extends BasePlugin {
       this.auth = auth;
       this.googleDriveService = googleDriveService;
     });
-    eventBus.on('sync:done', ({ context, lastMTime }) => {
-      this.context = context;
-      this.lastMTime = lastMTime;
-    });
     eventBus.on('watch:run', async () => {
       if (this.watch_mode !== 'mtime') {
         return;
       }
-      await this.watch(this.context, this.lastMTime);
+      await this.watch();
     });
   }
 
-  async watch(context: ListContext, lastMTime) {
-    this.eventBus.emit('watch:event');
+  async watch() {
     this.logger.info('Watching changes with mtime');
+
+    const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     while (true) { // eslint-disable-line no-constant-condition
       try {
-        lastMTime = this.googleFiles.getMaxModifiedTime();
-        const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context, lastMTime);
+        const context: ListContext = {
+          fileIds: [],
+          parentId: rootFolderId,
+          driveId: this.drive_id ? this.drive_id : undefined,
+          modifiedTime: this.googleFiles.getMaxModifiedTime()
+        };
+
+        const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context);
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files modified');
           this.eventBus.emit('watch:event', changedFiles.length);

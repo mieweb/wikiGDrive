@@ -229,6 +229,18 @@ export class MainService {
         this.eventBus.on('transform:dirty', () => {
           this.eventBus.emit('download:retry');
         });
+
+        await this.emitThanAwait('main:run', this.params, [ 'google_api:done', 'google_files:initialized' ]);
+
+        if (this.params.watch_mode === 'changes') {
+          await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
+        }
+
+        // await this.emitThanAwait('sync:run', {}, ['sync:done']);
+        // await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
+        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
+        // await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
+
         this.eventBus.on('download:done', async () => {
           this.eventBus.emit('external:run');
         });
@@ -239,17 +251,10 @@ export class MainService {
           this.eventBus.emit('transform:run');
         });
 
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done', 'google_files:initialized' ]);
+        console.log('WWWWWWWWWWWWWWWWWWWATCH');
+        await this.emitThanAwait('watch:run', {}, ['watch:done']);
+        console.log('/WWWWWWWWWWWWWWWWWWWATCH');
 
-        if (this.params.watch_mode === 'changes') {
-          await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
-        }
-
-        await this.emitThanAwait('sync:run', {}, ['sync:done']);
-
-        this.eventBus.emit('watch:run');
-
-        await new Promise(() => {});
         break;
 
       case 'drives':

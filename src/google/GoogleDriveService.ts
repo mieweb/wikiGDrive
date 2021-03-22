@@ -36,9 +36,12 @@ interface GoogleDriveServiceErrorParams {
 }
 
 export interface ListContext {
+  parentId: string;
   fileIds: string[];
+  modifiedTime?: string;
   driveId?: string;
-  folderId: string;
+  retries?: number;
+  parentName?: string;
 }
 
 export class GoogleDriveServiceError extends Error {
@@ -61,43 +64,24 @@ export class GoogleDriveServiceError extends Error {
   }
 }
 export class GoogleDriveService {
-  private readonly progress: {
-    completed: number,
-    total: number,
-  };
 
   constructor(private eventBus, private logger: Logger) {
-    this.progress = {
-      completed: 0,
-      total: 0
-    };
   }
 
-  async listRootRecursive(auth, context: ListContext, modifiedTime) {
-    this.progress.completed = 0;
-    this.progress.total = 1;
+  async listRootRecursive(auth, context: ListContext) {
 
-    this.eventBus.emit('listen:progress', this.progress);
+    const files = await this._listFilesRecursive(auth, context);
 
-    const files = await this._listFilesRecursive(auth, context, modifiedTime);
-
-    if (!modifiedTime && files.length === 0) {
-      this.eventBus.emit('listen:failed', this.progress);
+    if (!context.modifiedTime && files.length === 0) {
       throw new GoogleDriveServiceError('Empty result for root directory check you auth data or add files');
     }
-
-    this.eventBus.emit('listen:done', this.progress);
 
     return files;
   }
 
-  private async _listFilesRecursive(auth, context: ListContext, modifiedTime, remotePath = ['']) {
+  private async _listFilesRecursive(auth, context: ListContext, remotePath = ['']) {
     this.logger.info('Listening folder: ' + (remotePath.join('/') || '/'));
-    const files: GoogleFile[] = await this.listFiles(auth, context, modifiedTime);
-    this.progress.completed++;
-    this.progress.total += files.filter(file => file.mimeType === MimeTypes.FOLDER_MIME).length;
-
-    this.eventBus.emit('listen:progress', this.progress);
+    const files: GoogleFile[] = await this.listFiles(auth, context);
 
     const retVal = [];
 
@@ -110,16 +94,15 @@ export class GoogleDriveService {
       const promises = [];
 
       for (const file of files) {
-        file.parentId = context.folderId;
+        file.parentId = context.parentId;
         if (file.mimeType !== MimeTypes.FOLDER_MIME) continue;
 
         const subContext: ListContext = {
-          folderId: file.id,
+          parentId: file.id,
           driveId: context.driveId,
           fileIds: [].concat(context.fileIds)
         };
-        const promise = this._listFilesRecursive(auth, subContext, modifiedTime,
-            remotePath.concat(file.name));
+        const promise = this._listFilesRecursive(auth, subContext, remotePath.concat(file.name));
         promises.push(promise);
 
         promise.catch(() => {
@@ -136,9 +119,9 @@ export class GoogleDriveService {
         .catch(() => {}); /* eslint-disable-line no-useless-catch, @typescript-eslint/no-empty-function */
     }
 
-    if (modifiedTime) {
+    if (context.modifiedTime) {
       const filtered = retVal.filter(dir => {
-        const isOldDir = dir.mimeType === MimeTypes.FOLDER_MIME && dir.modifiedTime < modifiedTime;
+        const isOldDir = dir.mimeType === MimeTypes.FOLDER_MIME && dir.modifiedTime < context.modifiedTime;
         return !isOldDir;
       });
 
@@ -167,17 +150,15 @@ export class GoogleDriveService {
   async watchChanges(auth, pageToken, driveId): Promise<Changes> {
     const drive = google.drive({ version: 'v3', auth });
 
-    const params = {
-      pageToken: pageToken,
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: true,
-      fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed))',
-      includeRemoved: true,
-      driveId: driveId ? driveId : undefined
-    };
-
     try {
-      const res = await drive.changes.list(params);
+      const res = await drive.changes.list({
+        pageToken: pageToken,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+        fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed))',
+        includeRemoved: true,
+        driveId: driveId ? driveId : undefined
+      });
 
       const files = res.data.changes
         .filter(change => !!change.file)
@@ -208,19 +189,19 @@ export class GoogleDriveService {
     }
   }
 
-  async listFiles(auth, context: ListContext, modifiedTime, nextPageToken?) {
+  async listFiles(auth, context: ListContext, nextPageToken?) {
     const drive = google.drive({ version: 'v3', auth });
 
     let query = '';
 
-    if (context.folderId) {
-      query += '\'' + context.folderId + '\' in parents and trashed = false';
+    if (context.parentId) {
+      query += '\'' + context.parentId + '\' in parents and trashed = false';
     }
-    if (context.fileIds?.length) {
+    if (context.fileIds?.length > 0) {
       query += '[' + context.fileIds.map(m => '\'' + m + '\'') + '] in id and trashed = false';
     }
-    if (modifiedTime) {
-      query += ' and ( modifiedTime > \'' + modifiedTime + '\' or mimeType = \'' + MimeTypes.FOLDER_MIME + '\' )';
+    if (context.modifiedTime) {
+      query += ' and ( modifiedTime > \'' + context.modifiedTime + '\' or mimeType = \'' + MimeTypes.FOLDER_MIME + '\' )';
     }
 
     const listParams = {
@@ -243,7 +224,7 @@ export class GoogleDriveService {
     try {
       const res = await drive.files.list(listParams);
       if (res.data.nextPageToken) {
-        const nextFiles = await this.listFiles(auth, context, modifiedTime, res.data.nextPageToken);
+        const nextFiles = await this.listFiles(auth, context, res.data.nextPageToken);
         return res.data.files.concat(nextFiles);
       } else {
         for (const apiFile of res.data.files) {
@@ -258,9 +239,9 @@ export class GoogleDriveService {
         return res.data.files;
       }
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
+      throw new GoogleDriveServiceError('Error listening directory ' + context.parentId, {
         origError: err,
-        folderId: context.folderId,
+        folderId: context.parentId,
         isQuotaError: err.isQuotaError
       });
     }
@@ -277,7 +258,7 @@ export class GoogleDriveService {
         supportsAllDrives: true
       }, { responseType: 'stream' });
 
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         res.data
             .on('end', () => {
               resolve();
