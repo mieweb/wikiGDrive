@@ -243,8 +243,10 @@ export class DownloadPlugin extends BasePlugin {
       }
     }, CONCURRENCY);
 
-    q.error(() => {
-      this.progress.failed++;
+    q.error((error, file) => {
+      this.logger.error(error);
+      q.push(file);
+      // this.progress.failed++;
       this.eventBus.emit('download:progress', this.progress);
     });
 

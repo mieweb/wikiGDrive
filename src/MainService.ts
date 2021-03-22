@@ -236,10 +236,10 @@ export class MainService {
           await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
         }
 
-        // await this.emitThanAwait('sync:run', {}, ['sync:done']);
-        // await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
-        // await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
+        await this.emitThanAwait('sync:run', {}, ['sync:done']);
+        await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
+        await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
+        await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
 
         this.eventBus.on('download:done', async () => {
           this.eventBus.emit('external:run');

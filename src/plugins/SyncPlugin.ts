@@ -172,7 +172,7 @@ export class SyncPlugin extends BasePlugin {
     }
 
     this.logger.info('Listening Google Drive done');
-    this.eventBus.emit('sync:done');
+    this.eventBus.emit('sync:done', this.progress);
     this.handlingFiles = false;
   }
 }
