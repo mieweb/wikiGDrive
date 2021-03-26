@@ -63,7 +63,7 @@
     "enquirer": "^2.3.6",
     "googleapis": "^67.1.1",
     "jszip": "^3.6.0",
-    "listr2": "^3.3.4",
+    "listr2": "^3.4.1",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
     "open": "^7.4.2",
