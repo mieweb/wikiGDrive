@@ -50,7 +50,6 @@ export class WatchMTimePlugin extends BasePlugin {
     while (true) { // eslint-disable-line no-constant-condition
       try {
         const context: ListContext = {
-          fileIds: [],
           parentId: rootFolderId,
           driveId: this.drive_id ? this.drive_id : undefined,
           modifiedTime: this.googleFiles.getMaxModifiedTime()
@@ -60,7 +59,7 @@ export class WatchMTimePlugin extends BasePlugin {
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files modified');
           this.eventBus.emit('watch:event', changedFiles.length);
-          await this.googleFiles.merge(changedFiles);
+          await this.googleFiles.merge(changedFiles, context.parentId);
           this.eventBus.emit('google_files:dirty');
         } else {
           this.logger.info('No files modified. Sleeping for 10 seconds.');

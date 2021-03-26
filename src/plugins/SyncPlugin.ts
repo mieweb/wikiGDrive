@@ -5,7 +5,11 @@ import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
 import {DriveConfig} from './ConfigDirPlugin';
 import {GoogleFile, GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {urlToFolderId} from '../utils/idParsers';
-import {queue} from 'async';
+import {ErrorCallback, queue, QueueObject} from 'async';
+import {StringWritable} from '../utils/StringWritable';
+
+const INITIAL_RETRIES = 4;
+const CONCURRENCY = 4;
 
 export class SyncPlugin extends BasePlugin {
   private command: string;
@@ -59,6 +63,76 @@ export class SyncPlugin extends BasePlugin {
     });
   }
 
+  async processQueueTask(q: QueueObject<ListContext>, context: ListContext, callback: ErrorCallback<Error>) {
+    try {
+      if (context.retries < INITIAL_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (context.parentName) {
+          this.logger.info('Listening (retry): ' + context.parentName);
+        }
+      } else {
+        if (context.parentName) {
+          this.logger.info('Listening: ' + context.parentName);
+        }
+      }
+
+      if (context.fileId) {
+        try {
+          const googleFile: GoogleFile = await this.googleDriveService.getFile(this.auth, context.fileId);
+
+          if (googleFile.mimeType === MimeTypes.FOLDER_MIME) {
+            this.progress.total++;
+            this.eventBus.emit('sync:progress', this.progress);
+            q.push({
+              retries: INITIAL_RETRIES,
+              parentName: context.fileId + '/',
+              parentId: googleFile.id,
+              driveId: this.drive_id ? this.drive_id : undefined,
+            });
+          }
+
+          await this.googleFiles.mergeSingleFile(googleFile);
+        } catch (err) {
+          if (404 === err.origError?.code) {
+            await this.googleFiles.removeFile(context.fileId);
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      if (context.parentId) {
+        const googleFiles: GoogleFile[] = (await this.googleDriveService.listFiles(this.auth, context))
+          .map(file => {file.parentId = context.parentId; return file;});
+        const folders = googleFiles.filter(file => file.mimeType === MimeTypes.FOLDER_MIME);
+
+        for (const folder of folders) {
+          const folderContext: ListContext = {
+            parentId: folder.id,
+            driveId: this.drive_id ? this.drive_id : undefined,
+            parentName: context.parentName ? context.parentName + folder.name + '/' : undefined,
+            retries: INITIAL_RETRIES
+          };
+
+          this.progress.total++;
+          this.eventBus.emit('sync:progress', this.progress);
+          q.push(folderContext);
+        }
+
+        await this.googleFiles.mergeFullDir(googleFiles, context.parentId);
+      }
+
+
+      this.progress.completed++;
+      this.eventBus.emit('sync:progress', this.progress);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      callback();
+    } catch (err) {
+      callback(err);
+    }
+  }
+
   async start() {
     if (this.handlingFiles) {
       return;
@@ -73,58 +147,7 @@ export class SyncPlugin extends BasePlugin {
       total: 0
     };
 
-    const INITIAL_RETRIES = 4;
-    const CONCURRENCY = 4;
-
-    const q = queue<ListContext>(async (context, callback) => {
-      try {
-        if (context.retries < INITIAL_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (context.parentName) {
-            this.logger.info('Listening (retry): ' + context.parentName);
-          }
-        } else {
-          if (context.parentName) {
-            this.logger.info('Listening: ' + context.parentName);
-          }
-        }
-
-        const apiFiles: GoogleFile[] = await this.googleDriveService.listFiles(this.auth, context);
-
-        const folders = apiFiles.filter(file => file.mimeType === MimeTypes.FOLDER_MIME);
-
-        for (const folder of folders) {
-          const folderContext: ListContext = {
-            fileIds: [],
-            parentId: folder.id,
-            driveId: this.drive_id ? this.drive_id : undefined,
-            parentName: context.parentName ? context.parentName + folder.name + '/' : undefined,
-            retries: INITIAL_RETRIES
-          };
-
-          this.progress.total++;
-          this.eventBus.emit('sync:progress', this.progress);
-          q.push(folderContext);
-        }
-
-        const changedFiles = apiFiles.map(file => {
-          if (file.parentId === rootFolderId) {
-            file.parentId = undefined;
-          }
-          return file;
-        });
-
-        await this.googleFiles.merge(changedFiles);
-
-        this.progress.completed++;
-        this.eventBus.emit('sync:progress', this.progress);
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        callback();
-      } catch (err) {
-        callback(err);
-      }
-    }, CONCURRENCY);
+    const q = queue<ListContext>(async (context, callback) => this.processQueueTask(q, context, callback), CONCURRENCY);
 
     q.error((err, context) => {
       this.logger.error(err);
@@ -138,37 +161,37 @@ export class SyncPlugin extends BasePlugin {
     });
 
     if (this.googleFileIds.length > 0) {
-      const context: ListContext = {
-        retries: INITIAL_RETRIES,
-        // parentName: '/', // TODO
-        fileIds: this.googleFileIds,
-        parentId: null,
-        driveId: this.drive_id ? this.drive_id : undefined,
-      };
-
-      this.progress.total++;
-      this.eventBus.emit('sync:progress', this.progress);
-      q.push(context);
-      await q.drain();
-    } else {
-      try {
+      for (const fileId of this.googleFileIds) {
         const context: ListContext = {
           retries: INITIAL_RETRIES,
-          parentName: '/',
-          fileIds: [],
-          parentId: rootFolderId,
+          parentName: fileId + '/',
+          fileId,
+          parentId: null,
           driveId: this.drive_id ? this.drive_id : undefined,
         };
 
+        q.push(context);
         this.progress.total++;
         this.eventBus.emit('sync:progress', this.progress);
-        q.push(context);
-        await q.drain();
-      } catch (e) {
-        this.eventBus.emit('panic', e);
-        return;
       }
+    } else {
+      const context: ListContext = {
+        retries: INITIAL_RETRIES,
+        parentName: '/',
+        parentId: rootFolderId,
+        driveId: this.drive_id ? this.drive_id : undefined,
+      };
 
+      q.push(context);
+      this.progress.total++;
+      this.eventBus.emit('sync:progress', this.progress);
+    }
+
+    try {
+      await q.drain();
+    } catch (e) {
+      this.eventBus.emit('panic', e);
+      return;
     }
 
     this.logger.info('Listening Google Drive done');

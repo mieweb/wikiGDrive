@@ -3,14 +3,11 @@
 import {google} from 'googleapis';
 import {GoogleFile, MimeTypes} from '../storage/GoogleFiles';
 import {Logger} from 'winston';
-
-export interface ApiFile extends GoogleFile {
-  parents: string[];
-}
+import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
 
 export interface Changes {
   token: string;
-  files: ApiFile[];
+  files: GoogleFile[];
 }
 
 function removeDuplicates(files) {
@@ -36,8 +33,8 @@ interface GoogleDriveServiceErrorParams {
 }
 
 export interface ListContext {
-  parentId: string;
-  fileIds: string[];
+  parentId?: string;
+  fileId?: string;
   modifiedTime?: string;
   driveId?: string;
   retries?: number;
@@ -63,6 +60,20 @@ export class GoogleDriveServiceError extends Error {
     }
   }
 }
+
+function apiFileToGoogleFile(apiFile: drive_v3.Schema$File): GoogleFile {
+  const googleFile: GoogleFile = <any>Object.assign({}, apiFile, {
+    parentId: (apiFile.parents && apiFile.parents.length > 0) ? apiFile.parents[0] : undefined,
+    size: apiFile.size ? +apiFile.size : undefined
+  });
+
+  if (googleFile['lastModifyingUser']) {
+    googleFile.lastAuthor = apiFile['lastModifyingUser'].displayName;
+  }
+
+  return googleFile;
+}
+
 export class GoogleDriveService {
 
   constructor(private eventBus, private logger: Logger) {
@@ -100,7 +111,7 @@ export class GoogleDriveService {
         const subContext: ListContext = {
           parentId: file.id,
           driveId: context.driveId,
-          fileIds: [].concat(context.fileIds)
+          fileId: context.fileId
         };
         const promise = this._listFilesRecursive(auth, subContext, remotePath.concat(file.name));
         promises.push(promise);
@@ -163,19 +174,7 @@ export class GoogleDriveService {
       const files = res.data.changes
         .filter(change => !!change.file)
         .map(change => change.file)
-        .map(apiFile => {
-          const file = <ApiFile><unknown>apiFile;
-          if (apiFile.parents && apiFile.parents.length > 0) {
-            file.parentId = apiFile.parents[0];
-          }
-
-          if (apiFile.lastModifyingUser) {
-            file.lastAuthor = apiFile.lastModifyingUser.displayName;
-            delete apiFile.lastModifyingUser;
-          }
-
-          return file;
-        });
+        .map(apiFile => apiFileToGoogleFile(apiFile));
 
       return {
         token: res.data.nextPageToken || res.data.newStartPageToken,
@@ -195,10 +194,10 @@ export class GoogleDriveService {
     let query = '';
 
     if (context.parentId) {
-      query += '\'' + context.parentId + '\' in parents and trashed = false';
+      query += ' \'' + context.parentId + '\' in parents and trashed = false';
     }
-    if (context.fileIds?.length > 0) {
-      query += '[' + context.fileIds.map(m => '\'' + m + '\'') + '] in id and trashed = false';
+    if (context.fileId) {
+      query += ' \'' + context.fileId + '\' = id and trashed = false';
     }
     if (context.modifiedTime) {
       query += ' and ( modifiedTime > \'' + context.modifiedTime + '\' or mimeType = \'' + MimeTypes.FOLDER_MIME + '\' )';
@@ -209,40 +208,49 @@ export class GoogleDriveService {
       q: query,
       pageToken: nextPageToken,
       pageSize: 1000,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents)',
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,
       orderBy: 'modifiedTime desc',
-      driveId: undefined
+      driveId: context.driveId ? context.driveId : undefined
     };
-
-    if (context.driveId) {
-      listParams.driveId = context.driveId;
-    }
 
     try {
       const res = await drive.files.list(listParams);
+
+      const apiFiles = [];
+
       if (res.data.nextPageToken) {
         const nextFiles = await this.listFiles(auth, context, res.data.nextPageToken);
-        return res.data.files.concat(nextFiles);
-      } else {
-        for (const apiFile of res.data.files) {
-          const file = <GoogleFile><unknown>apiFile;
-
-          if (apiFile.lastModifyingUser) {
-            file.lastAuthor = apiFile.lastModifyingUser.displayName;
-            delete apiFile.lastModifyingUser;
-          }
-        }
-
-        return res.data.files;
+        apiFiles.push(...nextFiles);
       }
+      apiFiles.push(...res.data.files);
+
+      return apiFiles.map(apiFile => apiFileToGoogleFile(apiFile));
     } catch (err) {
       throw new GoogleDriveServiceError('Error listening directory ' + context.parentId, {
         origError: err,
         folderId: context.parentId,
         isQuotaError: err.isQuotaError
+      });
+    }
+  }
+
+  async getFile(auth, fileId) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    try {
+      const res = await drive.files.get({
+        fileId: fileId,
+        supportsAllDrives: true,
+        fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+      });
+
+      return apiFileToGoogleFile(res.data);
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error download fileId: ' + fileId, {
+        origError: err, isQuotaError: err.isQuotaError
       });
     }
   }
@@ -254,7 +262,6 @@ export class GoogleDriveService {
       const res = <any>await drive.files.get({
         fileId: file.id,
         alt: 'media',
-        // includeItemsFromAllDrives: true,
         supportsAllDrives: true
       }, { responseType: 'stream' });
 

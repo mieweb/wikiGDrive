@@ -91,12 +91,12 @@ export class WatchChangesPlugin extends BasePlugin {
 
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files changed');
-          await this.googleFiles.merge(changedFiles);
+          await this.googleFiles.merge(changedFiles, context.parentId);
         }
 
         if (externalDocs.length > 0) {
           this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.googleFiles.merge(externalDocs);
+          await this.googleFiles.merge(externalDocs, context.parentId);
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates

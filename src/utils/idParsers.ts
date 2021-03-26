@@ -41,6 +41,10 @@ export function urlToFolderId(url) {
     return id;
   }
 
+  if (url.match(/^[A-Z0-9_]+$/ig)) {
+    return url;
+  }
+
   return false;
 }
 

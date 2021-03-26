@@ -155,26 +155,26 @@ describe('FileStructure', () => {
     await googleFiles.init();
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     let fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
 
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'renamed-example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
@@ -186,11 +186,11 @@ describe('FileStructure', () => {
     assert.equal(redir.localPath, 'example-1.md');
 
     await googleFiles.merge([
-      {
+        {
         'trashed': true,
         'id': 'id1'
-      },
-    ]);
+        },
+    ], context.parentId);
 
     fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
@@ -204,13 +204,13 @@ describe('FileStructure', () => {
     assert.equal(redir.trashed, true);
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id2',
         'name': 'Example 2',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 2, 'Wrong number of files');
@@ -225,13 +225,13 @@ describe('FileStructure', () => {
 
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id3',
         'name': 'Example 3',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'renamed-example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 3, 'Wrong number of files');
@@ -254,26 +254,26 @@ describe('FileStructure', () => {
     await googleFiles.init();
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     let fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
 
     await googleFiles.merge([
-      {
+        {
         'trashed': true,
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     fileMap = googleFiles.getFileMap();
     assert.equal(Object.keys(fileMap).length, 1, 'Wrong number of files');
@@ -292,19 +292,19 @@ describe('FileStructure', () => {
     await googleFiles.init();
 
     await googleFiles.merge([
-      {
+        {
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-      {
+        },
+        {
         'id': 'id2',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      }
-    ]);
+        }
+    ], context.parentId);
 
     let fileMap = googleFiles.getFileMap();
 
@@ -320,14 +320,14 @@ describe('FileStructure', () => {
     assert.equal(conflict.localPath, 'example-1.md');
 
     await googleFiles.merge([
-      {
+        {
         'trashed': true,
         'id': 'id1',
         'name': 'Example 1',
         'mimeType': MimeTypes.DOCUMENT_MIME,
         'desiredLocalPath': 'example-1.md',
-      },
-    ]);
+        },
+    ], context.parentId);
 
     assert.equal(Object.keys(fileMap).length, 3, 'Wrong number of files');
 
