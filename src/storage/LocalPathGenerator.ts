@@ -1,5 +1,5 @@
 import slugify from 'slugify';
-import {GoogleFile, GoogleFiles} from './GoogleFiles';
+import {GoogleFile, GoogleFilesStorage} from './GoogleFilesStorage';
 
 const MAX_PATH_LENGTH = 2000;
 const MAX_FILENAME_LENGTH = 200;
@@ -14,7 +14,7 @@ export function getDesiredPath(name) {
 
 export class LocalPathGenerator {
 
-  constructor(private googleFiles: GoogleFiles, private flat_folder_structure: boolean) {
+  constructor(private googleFiles: GoogleFilesStorage, private flat_folder_structure: boolean) {
   }
 
   generateDesiredPaths(changedFiles: GoogleFile[]) {

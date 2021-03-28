@@ -6,14 +6,14 @@ import * as SimpleGit from 'simple-git/promise';
 import {spawn} from 'child_process';
 
 import {BasePlugin} from './BasePlugin';
-import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
+import {GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 
 export class GitPlugin extends BasePlugin {
   private gitUpdateSecondsDelay: number;
   private config_dir: any;
   private dest: string;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -36,8 +36,8 @@ export class GitPlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.dest = drive_config.dest;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('transform:done', async () => {
       await this.processGit();
@@ -68,7 +68,7 @@ git commit -m "Autocommit updated files" $@
       }
       const status = await repository.status();
 
-      const documents = this.googleFiles.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
+      const documents = this.googleFilesStorage.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
       // console.log('status', status);
 
       const not_added = documents.filter(doc => status.not_added.indexOf(doc.localPath) > -1);

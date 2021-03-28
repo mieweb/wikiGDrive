@@ -1,5 +1,5 @@
 import {Transform} from 'stream';
-import {FileMap, GoogleFiles} from "./storage/GoogleFiles";
+import {FileMap, GoogleFilesStorage} from "./storage/GoogleFilesStorage";
 import {ExternalFiles, LinkEntry} from "./storage/ExternalFiles";
 
 async function processRecursive(json, func) {
@@ -41,7 +41,7 @@ export class ExternalToLocalTransform extends Transform {
   private fileMap: FileMap;
   private json: string;
 
-  constructor(private googleFiles: GoogleFiles, private externalFiles: ExternalFiles) {
+  constructor(private googleFiles: GoogleFilesStorage, private externalFiles: ExternalFiles) {
     super();
 
     this.fileMap = this.googleFiles.getFileMap();

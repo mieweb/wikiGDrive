@@ -6,6 +6,8 @@ import * as path from 'path';
 import {BasePlugin} from './BasePlugin';
 import {FileService} from '../utils/FileService';
 import {CliParams, LinkMode} from '../MainService';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
+import {DownloadFilesStorage} from '../storage/DownloadFilesStorage';
 
 export interface DriveConfig {
   drive: string;
@@ -20,12 +22,14 @@ export interface DriveConfig {
   service_account?: string;
 }
 
-export class ConfigDirPlugin extends BasePlugin {
+export class StoragePlugin extends BasePlugin {
   private fileService: FileService;
   private command: string;
   private driveConfig: DriveConfig;
   private config_dir: string;
   private params: CliParams;
+  private googleFilesStorage: GoogleFilesStorage;
+  private downloadFilesStorage: DownloadFilesStorage;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -102,7 +106,18 @@ export class ConfigDirPlugin extends BasePlugin {
     this.driveConfig = await this._loadConfig(path.join(this.config_dir, 'drive.json'));
     const quotaConfig = await this._loadConfig(path.join(this.config_dir, 'quota.json'));
     this.eventBus.emit('quota_jobs:loaded', quotaConfig.jobs || []);
+    await this.initStorages();
     this.eventBus.emit('drive_config:loaded', this.driveConfig);
+  }
+
+  async initStorages() {
+    this.googleFilesStorage = new GoogleFilesStorage(this.config_dir);
+    await this.googleFilesStorage.init();
+    this.eventBus.emit('google_files:initialized', { googleFilesStorage: this.googleFilesStorage });
+
+    this.downloadFilesStorage = new DownloadFilesStorage(this.config_dir);
+    await this.downloadFilesStorage.init();
+    this.eventBus.emit('download_files:initialized', { downloadFilesStorage: this.downloadFilesStorage });
   }
 
   async _loadConfig(filePath) {
@@ -134,6 +149,15 @@ export class ConfigDirPlugin extends BasePlugin {
       default:
         await this.loadDriveConfig();
         break;
+    }
+  }
+
+  async flushData() {
+    if (this.googleFilesStorage) {
+      await this.googleFilesStorage.flushData();
+    }
+    if (this.downloadFilesStorage) {
+      await this.downloadFilesStorage.flushData();
     }
   }
 

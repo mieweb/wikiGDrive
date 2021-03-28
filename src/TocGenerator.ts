@@ -1,7 +1,7 @@
 'use strict';
 
 import * as path from 'path';
-import {MimeTypes} from './storage/GoogleFiles';
+import {MimeTypes} from './storage/GoogleFilesStorage';
 import {LinkTranslator} from './LinkTranslator';
 
 export class TocGenerator {

@@ -1,7 +1,7 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {GoogleFile, MimeTypes} from '../storage/GoogleFiles';
+import {GoogleFile, MimeTypes} from '../storage/GoogleFilesStorage';
 import {Logger} from 'winston';
 import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
 
@@ -305,13 +305,13 @@ export class GoogleDriveService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
             resolve(file);
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.localPath + ']');
+            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
             resolve(file);
           });
         }

@@ -1,26 +1,26 @@
 'use strict';
 
 import {EventEmitter} from 'events';
+import * as path from 'path';
 import * as winston from 'winston';
+import 'winston-daily-rotate-file';
 
-import {ConfigDirPlugin} from './plugins/ConfigDirPlugin';
+import {StoragePlugin} from './plugins/StoragePlugin';
 import {SyncPlugin} from './plugins/SyncPlugin';
 import {WatchChangesPlugin} from './plugins/WatchChangesPlugin';
 import {TransformPlugin} from './plugins/TransformPlugin';
 import {GoogleApiPlugin} from './plugins/GoogleApiPlugin';
 import {DownloadPlugin} from './plugins/DownloadPlugin';
-import {GoogleFilesPlugin} from './plugins/GoogleFilesPlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
 import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
 import {GitPlugin} from './plugins/GitPlugin';
 import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
 import {BasePlugin} from './plugins/BasePlugin';
-import * as path from 'path';
-import 'winston-daily-rotate-file';
 import {ProgressPlugin} from './progress/ProgressPlugin';
-import {GoogleFiles} from './storage/GoogleFiles';
+import {GoogleFilesStorage} from './storage/GoogleFilesStorage';
 import {argsToGoogleFileIds} from './utils/idParsers';
 import {createLogger} from './utils/logger';
+import {DownloadFilesStorage} from './storage/DownloadFilesStorage';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -86,8 +86,7 @@ export class MainService {
     if (!this.disable_progress) {
       this.plugins.push(new ProgressPlugin(this.eventBus, this.logger));
     }
-    this.plugins.push(new ConfigDirPlugin(this.eventBus, this.logger));
-    this.plugins.push(new GoogleFilesPlugin(this.eventBus, this.logger));
+    this.plugins.push(new StoragePlugin(this.eventBus, this.logger));
     this.plugins.push(new ExternalFilesPlugin(this.eventBus, this.logger));
     this.plugins.push(new GoogleApiPlugin(this.eventBus, this.logger));
     this.plugins.push(new WatchMTimePlugin(this.eventBus, this.logger));
@@ -161,18 +160,18 @@ export class MainService {
       process.exit();
     });
 
-    let googleFiles: GoogleFiles;
-    this.eventBus.on('google_files:initialized', ({ googleFiles: param }) => {
-      googleFiles = param;
+    let googleFilesStorage: GoogleFilesStorage;
+    this.eventBus.on('google_files:initialized', ({ googleFilesStorage: param }) => {
+      googleFilesStorage = param;
     });
 
     switch (this.command) {
       case 'init':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
         break;
 
       case 'status':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
         for (const plugin of this.plugins) {
           if (plugin.status) {
             await plugin.status();
@@ -182,31 +181,31 @@ export class MainService {
         break;
 
       case 'sync':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'google_files:initialized', 'external_files:initialized' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'external_files:initialized' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
 
         await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         break;
 
       case 'download':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'google_files:initialized', 'external_files:initialized' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'external_files:initialized' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
 
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
         break;
 
       case 'external':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
         await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
         break;
 
       case 'transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
         await this.emitThanAwait('transform:run', {}, [ 'transform:done', 'git:done' ]);
         break;
 
       case 'clear:transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
         await this.emitThanAwait('transform:clear', {}, [ 'transform:cleared' ]);
         break;
 
@@ -215,8 +214,8 @@ export class MainService {
           this.eventBus.emit('download:retry');
         });
 
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done', 'google_files:initialized' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFiles));
+        await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
 
         await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
@@ -230,7 +229,7 @@ export class MainService {
           this.eventBus.emit('download:retry');
         });
 
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done', 'google_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
 
         if (this.params.watch_mode === 'changes') {
           await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
@@ -269,7 +268,7 @@ export class MainService {
         break;
 
       default:
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
         this.logger.error('Unknown command: ' + this.command);
         break;
     }

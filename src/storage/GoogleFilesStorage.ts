@@ -13,14 +13,9 @@ export interface GoogleFile {
   parentId?: FileId;
   name: string;
   size?: number;
-
   trashed?: boolean;
-
   mimeType: string;
-
-  dirty?: boolean;
   modifiedTime?: DateISO;
-
   lastAuthor?: string;
 }
 
@@ -39,14 +34,14 @@ export const MimeTypes = {
   REDIRECT_MIME: 'redirect'
 };
 
-export class GoogleFiles {
+export class GoogleFilesStorage {
   private fileService: FileService;
   private readonly filePath: string;
   private save_needed = false;
 
   private fileMap: FileMap;
 
-  constructor(private config_dir: string, private flat_folder_structure: boolean = false) {
+  constructor(private config_dir: string) {
     this.fileService = new FileService();
     this.filePath = path.join(config_dir, 'google_files.json');
   }
@@ -163,11 +158,6 @@ export class GoogleFiles {
     return maxModifiedTime;
   }
 
-  private async _putFile(id, file) { // Must be atomic (use fs sync functions)
-    this.fileMap[id] = JSON.parse(JSON.stringify(file));
-    this.save_needed = true;
-  }
-
   async loadData() {
     try {
       const content = await this.fileService.readFile(this.filePath);
@@ -187,4 +177,3 @@ export class GoogleFiles {
     this.save_needed = false;
   }
 }
-

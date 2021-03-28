@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as RelateUrl from 'relateurl';
 
 import {FileService} from './utils/FileService';
-import {FileMap, GoogleFiles, MimeTypes} from './storage/GoogleFiles';
+import {FileMap, GoogleFilesStorage, MimeTypes} from './storage/GoogleFilesStorage';
 import {ExternalFiles} from './storage/ExternalFiles';
 import {LinkMode} from './MainService';
 
@@ -12,7 +12,7 @@ export class LinkTranslator {
   private readonly fileMap: FileMap;
   private mode: LinkMode;
 
-  constructor(private googleFiles: GoogleFiles, private externalFiles: ExternalFiles) {
+  constructor(private googleFiles: GoogleFilesStorage, private externalFiles: ExternalFiles) {
     this.fileMap = googleFiles.getFileMap();
 
     /*

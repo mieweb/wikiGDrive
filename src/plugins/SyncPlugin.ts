@@ -2,8 +2,8 @@
 
 import {BasePlugin} from './BasePlugin';
 import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
-import {DriveConfig} from './ConfigDirPlugin';
-import {GoogleFile, GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
+import {DriveConfig} from './StoragePlugin';
+import {GoogleFile, GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
 import {urlToFolderId} from '../utils/idParsers';
 import {ErrorCallback, queue, QueueObject} from 'async';
 import {StringWritable} from '../utils/StringWritable';
@@ -16,7 +16,7 @@ export class SyncPlugin extends BasePlugin {
   private drive_id: string;
   private force: boolean;
   private drive_config: DriveConfig;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
   private googleDriveService: GoogleDriveService;
   private auth: any;
   private googleFileIds: string[];
@@ -51,8 +51,8 @@ export class SyncPlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -91,10 +91,10 @@ export class SyncPlugin extends BasePlugin {
             });
           }
 
-          await this.googleFiles.mergeSingleFile(googleFile);
+          await this.googleFilesStorage.mergeSingleFile(googleFile);
         } catch (err) {
           if (404 === err.origError?.code) {
-            await this.googleFiles.removeFile(context.fileId);
+            await this.googleFilesStorage.removeFile(context.fileId);
           } else {
             throw err;
           }
@@ -119,7 +119,7 @@ export class SyncPlugin extends BasePlugin {
           q.push(folderContext);
         }
 
-        await this.googleFiles.mergeFullDir(googleFiles, context.parentId);
+        await this.googleFilesStorage.mergeFullDir(googleFiles, context.parentId);
       }
 
 

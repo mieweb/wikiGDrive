@@ -3,51 +3,17 @@
 import {BasePlugin} from './BasePlugin';
 import {HttpClient} from '../utils/HttpClient';
 import {ExternalFiles} from '../storage/ExternalFiles';
-import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
+import {GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
 import {FileService} from '../utils/FileService';
 
 import * as path from 'path';
 import {queue} from 'async';
-import {DriveConfig} from './ConfigDirPlugin';
-
-async function convertImageLink(document, url) {
-  if (document.inlineObjects[url]) {
-    const inlineObject = document.inlineObjects[url];
-
-    const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-    if (embeddedObject.imageProperties) {
-      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-      } else {
-        url = '';
-      }
-    }
-  }
-
-  if (!url) {
-    return '';
-  }
-
-  return url;
-}
-
-async function processRecursive(json, func) {
-  if (Array.isArray(json)) {
-    for (const item of json) {
-      await processRecursive(item, func);
-    }
-  } else
-  if (typeof json === 'object') {
-    for (const k in json) {
-      await processRecursive(json[k], func);
-    }
-    await func(json);
-  }
-}
+import {DriveConfig} from './StoragePlugin';
+import {extractDocumentImages} from '../utils/extractDocumentLinks';
 
 export class ExternalFilesPlugin extends BasePlugin {
   private externalFiles: ExternalFiles;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
   private config_dir: string;
   private dest: string;
 
@@ -74,8 +40,8 @@ export class ExternalFilesPlugin extends BasePlugin {
       this.dest = drive_config.dest;
       await this.init();
     });
-    eventBus.on('google_files:initialized', async ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('external:run', async () => {
       await this.process();
@@ -98,40 +64,9 @@ export class ExternalFilesPlugin extends BasePlugin {
     }
     this.handlingFiles = true;
 
-    const files = this.googleFiles.findFiles(item => !item.dirty && MimeTypes.DOCUMENT_MIME === item.mimeType);
-
-    for (const file of files) {
-      const links = await this.extractExternalFiles(file);
-      for (const url of links) {
-        await this.externalFiles.addLink(url, { url, md5Checksum: null });
-      }
-    }
-
     await this.download();
 
     this.handlingFiles = false;
-  }
-
-  async extractExternalFiles(file) {
-    const links = {};
-    const fileService = new FileService();
-
-    try {
-      const filePath = path.join(this.config_dir, 'files', file.id + '.gdoc');
-
-      const content = await fileService.readFile(filePath);
-      const document = JSON.parse(content);
-
-      await processRecursive(document.body.content, async (json) => {
-        if (json.inlineObjectElement) {
-          const url = json.inlineObjectElement.inlineObjectId;
-          links[await convertImageLink(document, url)] = true;
-        }
-      });
-    } catch (ignore) { /* eslint-disable-line no-empty */
-    }
-
-    return Object.keys(links);
   }
 
   async download() {
@@ -201,8 +136,6 @@ export class ExternalFilesPlugin extends BasePlugin {
 
       await this.externalFiles.addLink(url, { url, md5Checksum });
     }
-
-    // md5
   }
 
   async flushData() {

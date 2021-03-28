@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import {GoogleFiles, MimeTypes} from '../src/storage/GoogleFiles';
+import {GoogleFilesStorage, MimeTypes} from '../src/storage/GoogleFilesStorage';
 import {createTmpDir} from './utils';
 
 describe('FileStructure', () => {
@@ -151,8 +151,8 @@ describe('FileStructure', () => {
   it('test rename then trash', async () => {
     let example1, example2, redir;
 
-    const googleFiles = new GoogleFiles(createTmpDir());
-    await googleFiles.init();
+    const googleFiles = new GoogleFilesStorage(createTmpDir());
+    await googleFiles.init(this.eventBus);
 
     await googleFiles.merge([
         {
@@ -250,8 +250,8 @@ describe('FileStructure', () => {
   });
 
   it('test create then trash', async () => {
-    const googleFiles = new GoogleFiles(createTmpDir());
-    await googleFiles.init();
+    const googleFiles = new GoogleFilesStorage(createTmpDir());
+    await googleFiles.init(this.eventBus);
 
     await googleFiles.merge([
         {
@@ -288,8 +288,8 @@ describe('FileStructure', () => {
   it('test collision then trash', async () => {
     let example1, example2, conflict, redir;
 
-    const googleFiles = new GoogleFiles(createTmpDir());
-    await googleFiles.init();
+    const googleFiles = new GoogleFilesStorage(createTmpDir());
+    await googleFiles.init(this.eventBus);
 
     await googleFiles.merge([
         {

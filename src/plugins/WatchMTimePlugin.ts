@@ -2,8 +2,8 @@
 
 import {BasePlugin} from './BasePlugin';
 import {CliParams} from '../MainService';
-import {DriveConfig} from './ConfigDirPlugin';
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {DriveConfig} from './StoragePlugin';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
 import {urlToFolderId} from '../utils/idParsers';
 
@@ -12,7 +12,7 @@ export class WatchMTimePlugin extends BasePlugin {
   private drive_id: string;
   private watch_mode: string;
   private drive_config: DriveConfig;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
   private auth: any;
   private googleDriveService: GoogleDriveService;
 
@@ -27,8 +27,8 @@ export class WatchMTimePlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', (drive_config: DriveConfig) => {
       this.drive_config = drive_config;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -52,14 +52,14 @@ export class WatchMTimePlugin extends BasePlugin {
         const context: ListContext = {
           parentId: rootFolderId,
           driveId: this.drive_id ? this.drive_id : undefined,
-          modifiedTime: this.googleFiles.getMaxModifiedTime()
+          modifiedTime: this.googleFilesStorage.getMaxModifiedTime()
         };
 
         const changedFiles = await this.googleDriveService.listRootRecursive(this.auth, context);
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files modified');
           this.eventBus.emit('watch:event', changedFiles.length);
-          await this.googleFiles.merge(changedFiles, context.parentId);
+          await this.googleFilesStorage.merge(changedFiles, context.parentId);
           this.eventBus.emit('google_files:dirty');
         } else {
           this.logger.info('No files modified. Sleeping for 10 seconds.');

@@ -2,8 +2,8 @@
 
 import {BasePlugin} from './BasePlugin';
 import {CliParams} from '../MainService';
-import {DriveConfig} from './ConfigDirPlugin';
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {DriveConfig} from './StoragePlugin';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {urlToFolderId} from '../utils/idParsers';
 
@@ -13,7 +13,7 @@ export class WatchChangesPlugin extends BasePlugin {
   private watch_mode: string;
   private debug: string[];
   private drive_config: DriveConfig;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
   private auth: any;
   private googleDriveService: GoogleDriveService;
   private startTrackToken: string;
@@ -30,8 +30,8 @@ export class WatchChangesPlugin extends BasePlugin {
       this.drive_config = drive_config;
       this.drive_id = drive_config.drive_id;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -67,7 +67,7 @@ export class WatchChangesPlugin extends BasePlugin {
             if (parentId === rootFolderId) {
               retVal = true;
             }
-            if (this.googleFiles.containsFile(parentId)) {
+            if (this.googleFilesStorage.containsFile(parentId)) {
               retVal = true;
             }
           });
@@ -91,12 +91,12 @@ export class WatchChangesPlugin extends BasePlugin {
 
         if (changedFiles.length > 0) {
           this.logger.info(changedFiles.length + ' files changed');
-          await this.googleFiles.merge(changedFiles, context.parentId);
+          await this.googleFilesStorage.merge(changedFiles, context.parentId);
         }
 
         if (externalDocs.length > 0) {
           this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.googleFiles.merge(externalDocs, context.parentId);
+          await this.googleFilesStorage.merge(externalDocs, context.parentId);
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates

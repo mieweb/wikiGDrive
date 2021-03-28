@@ -1,4 +1,4 @@
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 
 export function urlToFolderId(url) {
   if (url.match(/drive\.google\.com\/drive.*folders\//)) {
@@ -48,7 +48,7 @@ export function urlToFolderId(url) {
   return false;
 }
 
-export function argToGoogleFileId(arg: string, googleFiles?: GoogleFiles) {
+export function argToGoogleFileId(arg: string, googleFiles?: GoogleFilesStorage) {
   let googleFileId = urlToFolderId(arg);
 
   if (googleFiles) {
@@ -70,7 +70,7 @@ export function argToGoogleFileId(arg: string, googleFiles?: GoogleFiles) {
   return googleFileId;
 }
 
-export function argsToGoogleFileIds(args: string[], googleFiles?: GoogleFiles) {
+export function argsToGoogleFileIds(args: string[], googleFiles?: GoogleFilesStorage) {
   if (args.length === 1) { // TODO add more args parsing
     const googleFileId = argToGoogleFileId(args[0], googleFiles);
     if (!googleFileId) {

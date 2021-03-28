@@ -5,7 +5,7 @@ import {QuotaLimiter} from '../google/QuotaLimiter';
 import {GoogleAuthService} from '../google/GoogleAuthService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ConfigService} from '../storage/ConfigService';
-import {DriveConfig} from './ConfigDirPlugin';
+import {DriveConfig} from './StoragePlugin';
 
 export class GoogleApiPlugin extends BasePlugin {
   private command: string;
