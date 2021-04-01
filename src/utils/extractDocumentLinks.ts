@@ -1,4 +1,4 @@
-import {DownloadFileImages} from '../storage/DownloadFilesStorage';
+import {DownloadFileImage} from '../storage/DownloadFilesStorage';
 
 export async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -35,12 +35,15 @@ export async function processRecursive(json, func) {
   }
 }
 
-export async function extractDocumentImages(document: any): Promise<DownloadFileImages> {
-  const links = {};
+export async function extractDocumentImages(document: any): Promise<DownloadFileImage[]> {
+  const links: DownloadFileImage[] = [];
   await processRecursive(document.body.content, async (json) => {
     if (json.inlineObjectElement) {
-      const url = json.inlineObjectElement.inlineObjectId;
-      links[url] = await convertImageLink(document, url);
+      const docUrl = json.inlineObjectElement.inlineObjectId;
+      links.push({
+        docUrl,
+        pngUrl: await convertImageLink(document, docUrl)
+      });
     }
   });
 

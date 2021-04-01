@@ -8,6 +8,8 @@ import {FileService} from '../utils/FileService';
 import {CliParams, LinkMode} from '../MainService';
 import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {DownloadFilesStorage} from '../storage/DownloadFilesStorage';
+import {ExternalFilesStorage} from '../storage/ExternalFilesStorage';
+import {HttpClient} from '../utils/HttpClient';
 
 export interface DriveConfig {
   drive: string;
@@ -30,6 +32,7 @@ export class StoragePlugin extends BasePlugin {
   private params: CliParams;
   private googleFilesStorage: GoogleFilesStorage;
   private downloadFilesStorage: DownloadFilesStorage;
+  private externalFilesStorage: ExternalFilesStorage;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -118,6 +121,10 @@ export class StoragePlugin extends BasePlugin {
     this.downloadFilesStorage = new DownloadFilesStorage(this.config_dir);
     await this.downloadFilesStorage.init();
     this.eventBus.emit('download_files:initialized', { downloadFilesStorage: this.downloadFilesStorage });
+
+    this.externalFilesStorage = new ExternalFilesStorage(this.logger, this.config_dir, new HttpClient());
+    await this.externalFilesStorage.init();
+    this.eventBus.emit('external_files:initialized', { externalFilesStorage: this.externalFilesStorage });
   }
 
   async _loadConfig(filePath) {

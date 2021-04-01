@@ -53,6 +53,7 @@ export class GoogleApiPlugin extends BasePlugin {
       case 'pull':
       case 'watch':
       case 'download':
+      case 'external':
       case 'drives':
       case 'sync':
         if (this.drive_config.service_account) {

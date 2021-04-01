@@ -61,16 +61,18 @@ export async function handleGoogleError(err, reject, context) {
         reject(err); // TODO rate error
         return;
       }
-      console.error(context, errorMessage);
+      // console.error(context, errorMessage);
     }
 
-    if (err.config && err.config.url) {
-      console.error('Forbidden', err.config.url);
-    }
     if (err.response && err.response.data) {
       const errorData = await handleReadable(err.response.data);
       reject(new Error(errorData));
       return;
+    }
+
+    if (err.config && err.config.url) {
+      throw err;
+      // console.error('Forbidden', err.config.url);
     }
   }
 

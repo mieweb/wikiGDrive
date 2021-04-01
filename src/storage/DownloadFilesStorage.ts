@@ -8,8 +8,17 @@ import {FileService} from '../utils/FileService';
 type DateISO = string;
 type FileId = string;
 
-export interface DownloadFileImages {
-  [k: string]: string;
+export interface ImageMeta {
+  zipPath?: string;
+  width: number;
+  height: number;
+  hash: string;
+}
+
+export interface DownloadFileImage {
+  docUrl: string;
+  pngUrl?: string;
+  zipImage?: ImageMeta;
 }
 
 export interface DownloadFile {
@@ -18,7 +27,8 @@ export interface DownloadFile {
   mimeType: string;
   modifiedTime?: DateISO;
   md5Checksum?: string;
-  images?: DownloadFileImages;
+  image?: ImageMeta;
+  images?: DownloadFileImage[];
 }
 
 export interface FileMap {
@@ -48,7 +58,7 @@ export class DownloadFilesStorage {
     return this.fileMap;
   }
 
-  findFile(checker) {
+  findFile(checker): DownloadFile {
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (checker(file)) {
@@ -57,7 +67,7 @@ export class DownloadFilesStorage {
     }
   }
 
-  findFiles(checker) {
+  findFiles(checker): DownloadFile[] {
     const retVal = [];
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];

@@ -181,31 +181,33 @@ export class MainService {
         break;
 
       case 'sync':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
         this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
 
         await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         break;
 
       case 'download':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
         this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
 
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
         break;
 
       case 'external':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
+
         await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
         break;
 
       case 'transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
         await this.emitThanAwait('transform:run', {}, [ 'transform:done', 'git:done' ]);
         break;
 
       case 'clear:transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'external_files:initialized' ]);
+        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
         await this.emitThanAwait('transform:clear', {}, [ 'transform:cleared' ]);
         break;
 

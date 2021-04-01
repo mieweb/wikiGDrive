@@ -1,34 +1,20 @@
-import {Transform} from 'stream';
 import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
+import {Node} from 'domhandler';
 
-export class EmbedImageFixer extends Transform {
-  private readonly content: string;
-  private images: any;
-  private json: string;
+export class EmbedImageFixer {
+  private readonly images: any[];
+  private readonly html: string;
   private document: any;
 
-  constructor(content, images) {
-    super();
-
-    this.content = content;
+  constructor(html: string, images: any[]) {
+    this.html = html;
     this.images = images;
-    this.json = '';
   }
 
-  _transform(chunk, encoding, callback) {
-    if (encoding === 'buffer') {
-      chunk = chunk.toString();
-    }
-
-    this.json += chunk;
-
-    callback();
-  }
-
-  async createDom(html) {
+  async createDom(html): Promise<Node[]> {
     return new Promise((resolve, reject) => {
-      const handler = new DomHandler(function(error, dom) {
+      const handler = new DomHandler((error, dom) => {
         if (error) {
           reject(error);
         } else {
@@ -44,21 +30,7 @@ export class EmbedImageFixer extends Transform {
     });
   }
 
-  getImages(dom) {
-    const elements = findAll((elem) => {
-      return elem.name === 'img';
-    }, dom);
-
-    const images = [];
-
-    for (const elem of elements) {
-      images.push(elem);
-    }
-
-    return images;
-  }
-
-  fixEmbedImages(content, images, currentNo = 0) {
+  fixEmbedImages(content: any[], images, currentNo = 0) {
     const fixUrl = (src) => {
       if (!src) return src;
 
@@ -120,19 +92,22 @@ export class EmbedImageFixer extends Transform {
     return currentNo;
   }
 
-  async _flush(callback) {
-    const html = this.content;
-    const dom = await this.createDom(html);
+  async process(document) {
+    const dom = await this.createDom(this.html);
+    const images = [];
+    const elements = findAll((elem) => {
+      return elem.name === 'img';
+    }, dom);
 
-    this.document = JSON.parse(this.json);
+    for (const elem of elements) {
+      images.push(elem);
+    }
 
-    const images = this.getImages(dom);
+    this.document = document;
 
     this.fixEmbedImages(this.document.body.content, images);
 
-    this.push(JSON.stringify(this.document, null, 4));
-
-    callback();
+    return this.document;
   }
 
 }

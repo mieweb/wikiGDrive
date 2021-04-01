@@ -11,10 +11,11 @@ import {StringWritable} from '../utils/StringWritable';
 import {BufferWritable} from '../utils/BufferWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
-import {ExternalFiles} from '../storage/ExternalFiles';
 import {CliParams} from '../MainService';
 import {DownloadFile, DownloadFilesStorage} from '../storage/DownloadFilesStorage';
 import {extractDocumentImages} from '../utils/extractDocumentLinks';
+import {UnZipper} from '../utils/UnZipper';
+import {getImageMeta} from '../utils/getImageMeta';
 
 export class DownloadPlugin extends BasePlugin {
   private fileService: FileService;
@@ -24,7 +25,6 @@ export class DownloadPlugin extends BasePlugin {
   private downloadFilesStorage: DownloadFilesStorage;
   private auth: any;
   private googleDriveService: GoogleDriveService;
-  private externalFiles: ExternalFiles;
 
   private readonly progress: {
     failed: number;
@@ -38,7 +38,6 @@ export class DownloadPlugin extends BasePlugin {
     super(eventBus, logger.child({ filename: __filename }));
 
     this.fileService = new FileService();
-    this.googleFileIds = [];
 
     this.progress = {
       failed: 0,
@@ -48,6 +47,7 @@ export class DownloadPlugin extends BasePlugin {
 
     this.googleDocsService = new GoogleDocsService(this.logger);
 
+    this.googleFileIds = [];
     eventBus.on('main:set_google_file_ids_filter', (googleFileIds) => {
       this.googleFileIds = googleFileIds;
     });
@@ -59,9 +59,6 @@ export class DownloadPlugin extends BasePlugin {
     });
     eventBus.on('download_files:initialized', ({ downloadFilesStorage }) => {
       this.downloadFilesStorage = downloadFilesStorage;
-    });
-    eventBus.on('external_files:initialized', ({ externalFiles }) => {
-      this.externalFiles = externalFiles;
     });
     eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -128,7 +125,8 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
-      md5Checksum
+      md5Checksum,
+      image: await getImageMeta(await this.fileService.readBuffer(targetPathPng))
     };
   }
 
@@ -147,6 +145,17 @@ export class DownloadPlugin extends BasePlugin {
 
     const document = JSON.parse(destJson.getString());
     const images = await extractDocumentImages(document);
+
+    const unZipper = new UnZipper();
+    await unZipper.load(fs.readFileSync(zipPath));
+    const zipImages = unZipper.getImages();
+    for (let imageNo = 0; imageNo < images.length; imageNo++) {
+      if (imageNo < zipImages.length) {
+        images[imageNo] = Object.assign(images[imageNo], zipImages[imageNo]);
+      }
+    }
+
+    // await addZipImages(images);
 
     return {
       id: file.id,

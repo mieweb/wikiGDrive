@@ -1,49 +1,12 @@
-import {Transform} from 'stream';
-import {FileMap, GoogleFilesStorage} from "./storage/GoogleFilesStorage";
-import {ExternalFiles, LinkEntry} from "./storage/ExternalFiles";
+import {GoogleFilesStorage} from "./storage/GoogleFilesStorage";
+import {ExternalFilesStorage} from "./storage/ExternalFilesStorage";
+import {convertImageLink, processRecursive} from './utils/extractDocumentLinks';
 
-async function processRecursive(json, func) {
-  if (Array.isArray(json)) {
-    for (const item of json) {
-      await processRecursive(item, func);
-    }
-  } else
-  if (typeof json === 'object') {
-    for (let k in json) {
-      await processRecursive(json[k], func);
-    }
-    await func(json);
-  }
-}
-
-async function convertImageLink(document, url) {
-  if (document.inlineObjects[url]) {
-    const inlineObject = document.inlineObjects[url];
-
-    const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-    if (embeddedObject.imageProperties) {
-      if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-        url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-      } else {
-        url = '';
-      }
-    }
-  }
-
-  if (!url) {
-    return '';
-  }
-
-  return url;
-}
-
-export class ExternalToLocalTransform extends Transform {
+export class ExternalToLocalTransform {
   private fileMap: FileMap;
   private json: string;
 
-  constructor(private googleFiles: GoogleFilesStorage, private externalFiles: ExternalFiles) {
-    super();
-
+  constructor(private googleFiles: GoogleFilesStorage, private externalFiles: ExternalFilesStorage) {
     this.fileMap = this.googleFiles.getFileMap();
     this.json = '';
   }

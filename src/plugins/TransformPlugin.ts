@@ -16,7 +16,7 @@ import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 import {TransformStatus} from '../storage/TransformStatus';
 import {CliParams, LinkMode} from '../MainService';
 import {DriveConfig} from './StoragePlugin';
-import {ExternalFiles} from '../storage/ExternalFiles';
+import {ExternalFilesStorage} from '../storage/ExternalFilesStorage';
 import {ClearShortCodesTransform} from '../markdown/ClearShortCodesTransform';
 import {SvgTransform} from '../SvgTransform';
 import {UnZipper} from '../utils/UnZipper';
@@ -30,7 +30,7 @@ export class TransformPlugin extends BasePlugin {
   private dest: string;
   private flat_folder_structure: boolean;
   private googleFilesStorage: GoogleFilesStorage;
-  private externalFiles: ExternalFiles;
+  private externalFilesStorage: ExternalFilesStorage;
   private linkTranslator: LinkTranslator;
   private force: boolean;
   private oldTocString: string;
@@ -65,8 +65,8 @@ export class TransformPlugin extends BasePlugin {
     eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
       this.googleFilesStorage = googleFilesStorage;
     });
-    eventBus.on('external_files:initialized', ({ externalFiles }) => {
-      this.externalFiles = externalFiles;
+    eventBus.on('external_files:initialized', ({ externalFilesStorage }) => {
+      this.externalFilesStorage = externalFilesStorage;
     });
     eventBus.on('transform:run', async () => {
       await this.handleTransform();
@@ -77,7 +77,7 @@ export class TransformPlugin extends BasePlugin {
   }
 
   async handleTransform() {
-    this.linkTranslator = new LinkTranslator(this.googleFilesStorage, this.externalFiles);
+    this.linkTranslator = new LinkTranslator(this.googleFilesStorage, this.externalFilesStorage);
     if (this.link_mode) {
       this.linkTranslator.setMode(this.link_mode);
     }
@@ -272,12 +272,12 @@ export class TransformPlugin extends BasePlugin {
           throw new Error('Zip version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.zip'));
         }
 
-        const unZipper = new UnZipper(this.externalFiles);
+        const unZipper = new UnZipper(this.externalFilesStorage);
         await unZipper.load(path.join(this.config_dir, 'files', file.id + '.zip'));
 
         const googleListFixer = new GoogleListFixer(unZipper.getHtml());
         const embedImageFixer = new EmbedImageFixer(unZipper.getHtml(), unZipper.getImages());
-        const externalToLocalTransform = new ExternalToLocalTransform(this.googleFilesStorage, this.externalFiles);
+        const externalToLocalTransform = new ExternalToLocalTransform(this.googleFilesStorage, this.externalFilesStorage);
         const clearShortCodesTransform = new ClearShortCodesTransform(false);
 
         const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');

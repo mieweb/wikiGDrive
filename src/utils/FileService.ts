@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as identify from 'identify-filetype';
 
 export class FileService {
 
@@ -20,19 +21,24 @@ export class FileService {
     });
   }
 
-  readFile(filePath: string): Promise<string> {
+  async readFile(filePath: string): Promise<string> {
+    const buffer = await this.readBuffer(filePath);
+    return buffer.toString();
+  }
+
+  readBuffer(filePath: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      fs.readFile(filePath, function (err, data) {
+      fs.readFile(filePath, (err, data) => {
         if (err) return reject(err);
 
-        resolve(data.toString());
+        resolve(data);
       });
     });
   }
 
   writeFile(filePath: string, content: string) {
     return new Promise<void>((resolve, reject) => {
-      fs.writeFile(filePath, content, function (err) {
+      fs.writeFile(filePath, content, (err) => {
         if (err) return reject(err);
         resolve();
       });
@@ -66,4 +72,8 @@ export class FileService {
     fs.unlinkSync(filePath);
   }
 
+  async guessExtension(filePath: string) {
+    const buffer = await this.readBuffer(filePath);
+    return identify(buffer) || 'bin';
+  }
 }

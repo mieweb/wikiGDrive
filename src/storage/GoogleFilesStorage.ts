@@ -19,7 +19,7 @@ export interface GoogleFile {
   lastAuthor?: string;
 }
 
-export interface FileMap {
+interface FileMap {
   [id: string]: GoogleFile;
 }
 
