@@ -324,6 +324,10 @@ export class DownloadPlugin extends BasePlugin {
 
     this.logger.info('Download done');
     this.eventBus.emit('download:done', this.progress);
+
+    if (this.googleFileIds.length === 0) {
+      this.eventBus.emit('download:complete');
+    }
     this.handlingFiles = false;
   }
 

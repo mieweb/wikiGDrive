@@ -6,7 +6,6 @@ import {DriveConfig} from './StoragePlugin';
 import {GoogleFile, GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
 import {urlToFolderId} from '../utils/idParsers';
 import {ErrorCallback, queue, QueueObject} from 'async';
-import {StringWritable} from '../utils/StringWritable';
 
 const INITIAL_RETRIES = 4;
 const CONCURRENCY = 4;

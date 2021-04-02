@@ -10,6 +10,7 @@ import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {DownloadFilesStorage} from '../storage/DownloadFilesStorage';
 import {ExternalFilesStorage} from '../storage/ExternalFilesStorage';
 import {HttpClient} from '../utils/HttpClient';
+import {LocalFilesStorage} from '../storage/LocalFilesStorage';
 
 export interface DriveConfig {
   drive: string;
@@ -33,6 +34,7 @@ export class StoragePlugin extends BasePlugin {
   private googleFilesStorage: GoogleFilesStorage;
   private downloadFilesStorage: DownloadFilesStorage;
   private externalFilesStorage: ExternalFilesStorage;
+  private localFilesStorage: LocalFilesStorage;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -125,6 +127,10 @@ export class StoragePlugin extends BasePlugin {
     this.externalFilesStorage = new ExternalFilesStorage(this.logger, this.config_dir, new HttpClient());
     await this.externalFilesStorage.init();
     this.eventBus.emit('external_files:initialized', { externalFilesStorage: this.externalFilesStorage });
+
+    this.localFilesStorage = new LocalFilesStorage(this.config_dir, this.params.flat_folder_structure);
+    await this.localFilesStorage.init();
+    this.eventBus.emit('local_files:initialized', { localFilesStorage: this.localFilesStorage });
   }
 
   async _loadConfig(filePath) {

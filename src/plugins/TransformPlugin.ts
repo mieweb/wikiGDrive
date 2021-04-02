@@ -12,7 +12,6 @@ import {FrontMatterTransform} from '../markdown/FrontMatterTransform';
 import {GoogleListFixer} from '../html/GoogleListFixer';
 import {EmbedImageFixer} from '../html/EmbedImageFixer';
 import {NavigationTransform} from '../NavigationTransform';
-import {ExternalToLocalTransform} from '../ExternalToLocalTransform';
 import {TransformStatus} from '../storage/TransformStatus';
 import {CliParams, LinkMode} from '../MainService';
 import {DriveConfig} from './StoragePlugin';
@@ -272,7 +271,7 @@ export class TransformPlugin extends BasePlugin {
           throw new Error('Zip version of document is not downloaded (marking dirty): ' + path.join(this.config_dir, 'files', file.id + '.zip'));
         }
 
-        const unZipper = new UnZipper(this.externalFilesStorage);
+        const unZipper = new UnZipper();
         await unZipper.load(path.join(this.config_dir, 'files', file.id + '.zip'));
 
         const googleListFixer = new GoogleListFixer(unZipper.getHtml());
@@ -534,3 +533,14 @@ export class TransformPlugin extends BasePlugin {
   }
 
 }
+
+/*
+switch (changedFile.mimeType) {
+  case 'application/vnd.google-apps.drawing':
+    changedFile.desiredLocalPath += '.svg';
+    break;
+  case 'application/vnd.google-apps.document':
+    changedFile.desiredLocalPath += '.md';
+    break;
+}
+*/

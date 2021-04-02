@@ -32,7 +32,7 @@ export interface CliParams {
   config_dir: string;
   link_mode: LinkMode;
   dest: string;
-  flat_folder_structure: Boolean;
+  flat_folder_structure: boolean;
   drive_id: string;
   drive: string;
   command: string;
@@ -221,7 +221,7 @@ export class MainService {
 
         await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
+        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
         await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
 
         break;
@@ -239,22 +239,17 @@ export class MainService {
 
         await this.emitThanAwait('sync:run', {}, ['sync:done']);
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
+        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
         await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
 
-        this.eventBus.on('download:done', async () => {
-          this.eventBus.emit('external:run');
-        });
         this.eventBus.on('google_files:dirty', async () => {
           this.eventBus.emit('download:run');
         });
-        this.eventBus.on('external:done', async () => {
+        this.eventBus.on('download:complete', async () => {
           this.eventBus.emit('transform:run');
         });
 
-        console.log('WWWWWWWWWWWWWWWWWWWATCH');
         await this.emitThanAwait('watch:run', {}, ['watch:done']);
-        console.log('/WWWWWWWWWWWWWWWWWWWATCH');
 
         break;
 

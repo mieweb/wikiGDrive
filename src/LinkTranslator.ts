@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as RelateUrl from 'relateurl';
 
 import {FileService} from './utils/FileService';
-import {FileMap, GoogleFilesStorage, MimeTypes} from './storage/GoogleFilesStorage';
+import {GoogleFilesStorage, MimeTypes} from './storage/GoogleFilesStorage';
 import {ExternalFilesStorage} from './storage/ExternalFilesStorage';
 import {LinkMode} from './MainService';
 

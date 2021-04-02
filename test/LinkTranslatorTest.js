@@ -6,10 +6,10 @@ import {createTmpDir} from './utils';
 describe('LinkTranslatorTest', () => {
   it('test convertToRelativePath', async () => {
 
-    const googleFiles = new GoogleFilesStorage(createTmpDir());
-    await googleFiles.init(this.eventBus);
+    const googleFilesStorage = new GoogleFilesStorage(createTmpDir());
+    await googleFilesStorage.init();
 
-    const linkTranslator = new LinkTranslator(googleFiles);
+    const linkTranslator = new LinkTranslator(googleFilesStorage);
 
     assert.equal(linkTranslator.convertToRelativeSvgPath('example folder', 'resources/Diagram.svg'), '../example folder');
     assert.equal(linkTranslator.convertToRelativeSvgPath('example-folder/example-document.html', 'resources/Diagram.svg'), '../example-folder/example-document.html');
