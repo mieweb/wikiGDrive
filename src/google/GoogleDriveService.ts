@@ -277,7 +277,7 @@ export class GoogleDriveService {
         supportsAllDrives: true
       }, { responseType: 'stream' });
 
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         res.data
             .on('end', () => {
               resolve();

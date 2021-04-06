@@ -149,7 +149,7 @@ async function transform(doc) {
 
   let markdown = '';
 
-  await new Promise(((resolve, reject) => {
+  await new Promise((resolve, reject) => {
 
     const readable = new Readable();
     const writable = new Writable({
@@ -171,7 +171,7 @@ async function transform(doc) {
 
     readable.push(JSON.stringify(doc, null, 2));
     readable.push(null);
-  }));
+  });
 
   return markdown;
 }
