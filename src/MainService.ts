@@ -202,6 +202,8 @@ export class MainService {
 
       case 'transform':
         await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
+        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage));
+
         await this.emitThanAwait('transform:run', {}, [ 'transform:done', 'git:done' ]);
         break;
 

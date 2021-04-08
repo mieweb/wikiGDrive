@@ -13,7 +13,7 @@ const CONCURRENCY = 4;
 export class SyncPlugin extends BasePlugin {
   private command: string;
   private drive_id: string;
-  private force: boolean;
+  private force: boolean;f
   private drive_config: DriveConfig;
   private googleFilesStorage: GoogleFilesStorage;
   private googleDriveService: GoogleDriveService;

@@ -48,13 +48,9 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
   private drive_config: DriveConfig;
   private config_dir: any;
   private toGenerate: string[] = [];
+  private googleFileIds: string[];
 
-  private progressDocs: {
-    failed: number;
-    completed: number;
-    total: number;
-  };
-  private progressDiags: {
+  private progress: {
     failed: number;
     completed: number;
     total: number;
@@ -64,6 +60,11 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
   constructor(eventBus, logger) {
     super(eventBus, logger.child({filename: __filename}));
 
+    this.googleFileIds = [];
+
+    eventBus.on('main:set_google_file_ids_filter', (googleFileIds) => {
+      this.googleFileIds = googleFileIds;
+    });
     eventBus.on('main:run', async (params) => {
       this.config_dir = params.config_dir;
     });
@@ -104,9 +105,17 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     const localFiles = await localPathGenerator.generateDesiredPaths(rootFolderId, googleFiles);
 
     this.toGenerate = [];
+
+    this.progress = {
+      total: 0,
+      completed: 0,
+      failed: 0
+    };
+    this.eventBus.emit('transform:progress', this.progress);
+
     await this.localFilesStorage.commit(localFiles, this);
 
-    this.eventBus.emit('transform:done');
+    this.eventBus.emit('transform:done', this.progress);
 
     this.handlingFiles = false;
   }
@@ -127,11 +136,26 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       }
     }
 
-    for (const id of this.toGenerate) {
+
+    let toGenerate = this.toGenerate;
+    if (this.googleFileIds.length > 0) {
+      toGenerate = this.googleFileIds;
+    }
+
+    this.progress.total = toGenerate.length;
+    this.eventBus.emit('transform:progress', this.progress);
+
+    for (const id of toGenerate) {
       const localFile = this.localFilesStorage.findFile(f => f.id === id);
       if (localFile) {
         await this.generate(localFile, hierarchy);
+        this.progress.completed++;
+        this.eventBus.emit('transform:progress', this.progress);
       }
+    }
+
+    if (this.googleFileIds.length > 0) {
+      return false;
     }
 
     return true;
@@ -227,7 +251,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
               const unZipper = new UnZipper();
               await unZipper.load(zipBuffer);
               const googleListFixer = new GoogleListFixer(unZipper.getHtml());
-              const embedImageFixer = new EmbedImageFixer(downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
+              const embedImageFixer = new EmbedImageFixer(this.downloadFilesStorage, this.localFilesStorage, downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
               const linkRewriter = new LinkRewriter(gdoc, this.linkTranslator, localFile.localPath);
 
               await linkRewriter.process();

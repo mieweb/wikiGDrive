@@ -171,13 +171,10 @@ export class ProgressPlugin extends BasePlugin {
       }, 1000);
     });
 
-    this.parentsMap['transform'] = 'Transforming';
-
     this.addPluginProgressTask('sync', 'Listening');
     this.addPluginProgressTask('download', 'Downloading');
     this.addPluginProgressTask('external', 'Downloading external');
-    this.addPluginProgressTask('transform:documents', 'Transforming documents');
-    this.addPluginProgressTask('transform:diagrams', 'Transforming diagrams');
+    this.addPluginProgressTask('transform', 'Transforming');
   }
 
   private addPluginProgressTask(prefix: string, title: string) {
