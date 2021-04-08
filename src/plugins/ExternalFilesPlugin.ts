@@ -154,7 +154,7 @@ export class ExternalFilesPlugin extends BasePlugin {
   }
 
   async downloadFile(url, auth) {
-    const tempPath = await this.externalFilesStorage.downloadTemp(url, path.join(this.config_dir, 'external_files'), auth);
+    const tempPath = await this.externalFilesStorage.downloadTemp(url, path.join(this.config_dir, 'external_files'));
     const fileService = new FileService();
     const ext = await fileService.guessExtension(tempPath);
     const md5Checksum = await fileService.md5File(tempPath);

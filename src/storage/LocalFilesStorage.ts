@@ -8,12 +8,27 @@ import {FileService} from '../utils/FileService';
 type DateISO = string;
 type FileId = string;
 
-function generateUniqId() {
-  return Math.random().toString(26).slice(2);
+export interface TransformHandler {
+  removeMarkDownsAndImages(localFile: LocalFile): Promise<void>;
+  forceGeneration(localFile: LocalFile): Promise<void>;
+  beforeSave(): Promise<boolean>;
+}
+
+class VoidTransformHandler implements TransformHandler {
+  async removeMarkDownsAndImages(localFile: LocalFile): Promise<void> {
+    return Promise.resolve();
+  }
+  async forceGeneration(localFile: LocalFile) {
+    localFile.modifiedTime = undefined;
+  }
+  async beforeSave() {
+    return true;
+  }
 }
 
 export interface LocalFile {
   id: FileId;
+  name: string;
 
   modifiedTime?: DateISO;
 
@@ -34,10 +49,6 @@ export function isConflict(file: LocalFile) {
   return file.conflicting && file.conflicting.length > 0;
 }
 
-function forceGeneration(file: LocalFile) {
-  file.modifiedTime = undefined;
-}
-
 export interface LocalFileMap {
   [id: string]: LocalFile;
 }
@@ -45,7 +56,7 @@ export interface LocalFileMap {
 export class LocalFilesStorage {
   private fileService: FileService;
   private readonly filePath: string;
-  private save_needed = false;
+  // private save_needed = false;
 
   private fileMap: LocalFileMap;
   private intervalHandler: NodeJS.Timeout;
@@ -55,25 +66,32 @@ export class LocalFilesStorage {
     this.filePath = path.join(config_dir, 'local_files.json');
   }
 
-  async commit(filesToCommit: LocalFile[]) {
-    await this.handleRemoval(filesToCommit);
-    await this.handleExistingFiles(filesToCommit);
-    await this.handleNewFiles(filesToCommit);
+  async commit(filesToCommit: LocalFile[], transformHandler: TransformHandler = new VoidTransformHandler()) {
+    await this.handleRemoval(filesToCommit, transformHandler);
+    await this.handleExistingFiles(filesToCommit, transformHandler);
+    await this.handleNewFiles(filesToCommit, transformHandler);
 
     let retry = true;
     while (retry) {
       retry = false;
 
       await this.removeDanglingRedirects();
-      const anyConflictRemoved = await this.handleConflicts();
+      const anyConflictRemoved = await this.handleConflicts(transformHandler);
 
       if (anyConflictRemoved) {
         retry = true;
       }
     }
+
+    if (!await transformHandler.beforeSave()) {
+      return;
+    }
+
+    const content = JSON.stringify(this.fileMap, null, 2);
+    fs.writeFileSync(this.filePath, content);
   }
 
-  private async handleRemoval(filesToCommit: LocalFile[]) {
+  private async handleRemoval(filesToCommit: LocalFile[], transformHandler: TransformHandler) {
     for (const fileId in this.fileMap) {
       const dbFile = this.fileMap[fileId];
       if (isConflict(dbFile)) {
@@ -84,15 +102,13 @@ export class LocalFilesStorage {
       }
       const found = filesToCommit.find(file => file.id === dbFile.id);
       if (!found) {
-        await this.removeMarkDownsAndImages(this.fileMap[fileId].localPath);
-
+        await transformHandler.removeMarkDownsAndImages(this.fileMap[fileId]);
         delete this.fileMap[fileId];
-        this.save_needed = true;
       }
     }
   }
 
-  private async handleExistingFiles(filesToCommit: LocalFile[]) {
+  private async handleExistingFiles(filesToCommit: LocalFile[], transformHandler: TransformHandler) {
     for (const file of filesToCommit) {
       const dbFile = this.fileMap[file.id];
       if (!dbFile) {
@@ -102,33 +118,33 @@ export class LocalFilesStorage {
       if (dbFile.desiredLocalPath !== file.desiredLocalPath) {
         // Create redir with old desiredLocalPath
         const redirFile: LocalFile = {
+          name: dbFile.name,
           id: dbFile.desiredLocalPath + ':redir:' + file.id,
           desiredLocalPath: dbFile.desiredLocalPath,
           redirectTo: file.id
         };
         this.fileMap[redirFile.id] = redirFile;
 
-        await this.removeMarkDownsAndImages(file.localPath);
+        await transformHandler.removeMarkDownsAndImages(file);
 
         dbFile.desiredLocalPath = file.desiredLocalPath;
-        forceGeneration(dbFile);
-
-        this.save_needed = true;
+        dbFile.name = file.name;
+        await transformHandler.forceGeneration(dbFile);
       }
     }
   }
 
-  private async handleNewFiles(filesToCommit: LocalFile[]) {
+  private async handleNewFiles(filesToCommit: LocalFile[], transformHandler: TransformHandler) {
     for (const file of filesToCommit) {
       const dbFile = this.fileMap[file.id];
 
       if (!dbFile) {
         this.fileMap[file.id] = {
           id: file.id,
+          name: file.name,
           desiredLocalPath: file.desiredLocalPath,
           modifiedTime: file.modifiedTime,
         };
-        this.save_needed = true;
       }
     }
   }
@@ -152,7 +168,7 @@ export class LocalFilesStorage {
     }
   }
 
-  private async handleConflicts() {
+  private async handleConflicts(transformHandler: TransformHandler) {
     let anyConflictRemoved = false;
     const pathGroups = {};
 
@@ -181,32 +197,31 @@ export class LocalFilesStorage {
       if (files.length === 1) {
         const conflictFile = pathGroups[desiredLocalPath].conflict;
         if (conflictFile) {
-          this.removeMarkDownsAndImages(conflictFile.localPath);
+          await transformHandler.removeMarkDownsAndImages(conflictFile.localPath);
           delete this.fileMap[conflictFile.id];
           anyConflictRemoved = true;
 
           if (files[0].localPath !== files[0].desiredLocalPath) {
             const redirFile: LocalFile = {
               id: files[0].localPath + ':redir:' + files[0].id,
+              name: files[0].name,
               desiredLocalPath: files[0].localPath,
               localPath: files[0].localPath,
               redirectTo: files[0].id
             };
-            forceGeneration(redirFile);
+            await transformHandler.forceGeneration(redirFile);
             this.fileMap[redirFile.id] = redirFile;
           }
 
           files[0].localPath = files[0].desiredLocalPath;
-          forceGeneration(files[0]);
-          this.save_needed = true;
+          await transformHandler.forceGeneration(files[0]);
         }
 
         delete files[0].conflictId;
         delete files[0].counter;
         if (files[0].localPath !== files[0].desiredLocalPath) {
           files[0].localPath = files[0].desiredLocalPath;
-          forceGeneration(files[0]);
-          this.save_needed = true;
+          await transformHandler.forceGeneration(files[0]);
         }
         continue;
       }
@@ -214,6 +229,7 @@ export class LocalFilesStorage {
       if (!pathGroups[desiredLocalPath].conflict) {
         const conflictFile: LocalFile = {
           id: desiredLocalPath + ':conflict',
+          name: 'Conflict: ' + files[0].name,
           desiredLocalPath,
           localPath: desiredLocalPath,
           counter: 1,
@@ -221,7 +237,6 @@ export class LocalFilesStorage {
         };
         pathGroups[desiredLocalPath].conflict = conflictFile;
         this.fileMap[conflictFile.id] = conflictFile;
-        this.save_needed = true;
       }
 
       const conflictFile: LocalFile = pathGroups[desiredLocalPath].conflict;
@@ -231,13 +246,11 @@ export class LocalFilesStorage {
           file.counter = conflictFile.counter;
 
           conflictFile.counter++;
-          this.save_needed = true;
         }
 
         if (file.localPath !== desiredLocalPath + '_' + file.counter) {
           file.localPath = desiredLocalPath + '_' + file.counter;
-          forceGeneration(file);
-          this.save_needed = true;
+          await transformHandler.forceGeneration(file);
         }
       }
     }
@@ -272,11 +285,6 @@ export class LocalFilesStorage {
     return retVal;
   }
 
-  private async _putFile(id, file) { // Must be atomic (use fs sync functions)
-    this.fileMap[id] = JSON.parse(JSON.stringify(file));
-    this.save_needed = true;
-  }
-
   private async loadData() {
     try {
       const content = await this.fileService.readFile(this.filePath);
@@ -287,21 +295,16 @@ export class LocalFilesStorage {
   }
 
   private async flushData() {
-    if (!this.save_needed) {
-      return ;
-    }
-
-    const content = JSON.stringify(this.fileMap, null, 2);
-    fs.writeFileSync(this.filePath, content);
-    this.save_needed = false;
-  }
-
-  private removeMarkDownsAndImages(localPath: string) {
-    // TODO Remove all markdowns and images
+    // if (!this.save_needed) {
+    //   return ;
+    // }
+    // const content = JSON.stringify(this.fileMap, null, 2);
+    // fs.writeFileSync(this.filePath, content);
+    // this.save_needed = false;
   }
 
   async destroy() {
-    await this.flushData();
+    // await this.flushData();
     if (this.intervalHandler) {
       clearInterval(this.intervalHandler);
     }

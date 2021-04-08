@@ -12,7 +12,7 @@ import {BufferWritable} from '../utils/BufferWritable';
 import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {CliParams} from '../MainService';
-import {DownloadFile, DownloadFilesStorage} from '../storage/DownloadFilesStorage';
+import {DownloadFile, DownloadFileImage, DownloadFilesStorage, ImageMeta} from '../storage/DownloadFilesStorage';
 import {extractDocumentImages} from '../utils/extractDocumentLinks';
 import {UnZipper} from '../utils/UnZipper';
 import {getImageMeta} from '../utils/getImageMeta';
@@ -144,14 +144,14 @@ export class DownloadPlugin extends BasePlugin {
     fs.writeFileSync(gdocPath, destJson.getString());
 
     const document = JSON.parse(destJson.getString());
-    const images = await extractDocumentImages(document);
+    const images: DownloadFileImage[] = await extractDocumentImages(document);
 
     const unZipper = new UnZipper();
     await unZipper.load(fs.readFileSync(zipPath));
-    const zipImages = unZipper.getImages();
+    const zipImages: ImageMeta[] = unZipper.getImages();
     for (let imageNo = 0; imageNo < images.length; imageNo++) {
       if (imageNo < zipImages.length) {
-        images[imageNo] = Object.assign(images[imageNo], zipImages[imageNo]);
+        images[imageNo].zipImage = zipImages[imageNo];
       }
     }
 

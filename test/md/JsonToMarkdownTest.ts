@@ -129,52 +129,6 @@ describe('MarkDownTransformTest', () => {
 });
 
 async function transform(doc) {
-
-  const linkTranslator = {
-    async imageUrlToLocalPath(url) {
-      return url;
-    },
-    convertToRelativeMarkDownPath(localPath) {
-      return localPath;
-    },
-    urlToDestUrl(url) {
-      return url;
-    }
-  };
-
-  const converter = new JsonToMarkdown(doc, 'test.md', <any>linkTranslator);
-  const markdown = await converter.convert();
-
-  // const markDownTransform = new MarkDownTransform('test.md', linkTranslator);
-
-/*
-  let markdown = '';
-
-  await new Promise((resolve, reject) => {
-
-    const readable = new Readable();
-    const writable = new Writable({
-      write: function(chunk, encoding, next) {
-        markdown += chunk.toString();
-        next();
-      }
-    });
-
-    readable
-      .pipe(markDownTransform)
-      .pipe(writable)
-      .on('finish', () => {
-        resolve();
-      })
-      .on('error', err => {
-        reject(err);
-      });
-
-    readable.push(JSON.stringify(doc, null, 2));
-    readable.push(null);
-  });
-*/
-
-  return markdown;
+  const converter = new JsonToMarkdown(doc);
+  return await converter.convert();
 }
-

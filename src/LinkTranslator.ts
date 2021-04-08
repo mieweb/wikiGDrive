@@ -1,20 +1,14 @@
 'use strict';
 
-import * as path from 'path';
 import * as RelateUrl from 'relateurl';
 
-import {FileService} from './utils/FileService';
-import {GoogleFilesStorage, MimeTypes} from './storage/GoogleFilesStorage';
-import {ExternalFilesStorage} from './storage/ExternalFilesStorage';
 import {LinkMode} from './MainService';
+import {LocalFilesStorage} from './storage/LocalFilesStorage';
 
 export class LinkTranslator {
-  private readonly fileMap: FileMap;
   private mode: LinkMode;
 
-  constructor(private googleFiles: GoogleFilesStorage, private externalFiles: ExternalFilesStorage) {
-    this.fileMap = googleFiles.getFileMap();
-
+  constructor(private localFilesStorage: LocalFilesStorage) {
     /*
      * uglyURLs - https://gohugo.io/getting-started/configuration/
      *
@@ -27,7 +21,8 @@ export class LinkTranslator {
   }
 
   async urlToLocalPath(url) {
-    for (let fileId in this.fileMap) {
+/*
+    for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
 
       if (url.indexOf(fileId) > -1) {
@@ -35,27 +30,22 @@ export class LinkTranslator {
         return url;
       }
     }
+*/
   }
 
   async urlToDestUrl(url) {
-    for (let fileId in this.fileMap) {
-      const file = this.fileMap[fileId];
-
-      if (url.indexOf(fileId) > -1) {
-        url = file.localPath;
-
-        if (file.mimeType === MimeTypes.FOLDER_MIME) {
-          // url += '/';
-        }
-
-        return url;
-      }
+    const file = this.localFilesStorage.findFile(file => url.indexOf(file.id) > -1);
+    if (file && file.localPath) {
+      return file.localPath;
+      // if (file.mimeType === MimeTypes.FOLDER_MIME) {
+        // url += '/';
+      // }
     }
 
     return url;
   }
 
-  async imageUrlToLocalPath(url) {
+  /*async imageUrlToLocalPath(url) {
     return url;
     for (let fileId in this.fileMap) {
       const file = this.fileMap[fileId];
@@ -85,7 +75,7 @@ export class LinkTranslator {
     }
 
     return url;
-  }
+  }*/
 
   convertExtension(localPath: string, mode?: LinkMode) {
     if (!mode) mode = this.mode;

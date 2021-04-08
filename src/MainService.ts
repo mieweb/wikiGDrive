@@ -8,7 +8,6 @@ import 'winston-daily-rotate-file';
 import {StoragePlugin} from './plugins/StoragePlugin';
 import {SyncPlugin} from './plugins/SyncPlugin';
 import {WatchChangesPlugin} from './plugins/WatchChangesPlugin';
-import {TransformPlugin} from './plugins/TransformPlugin';
 import {GoogleApiPlugin} from './plugins/GoogleApiPlugin';
 import {DownloadPlugin} from './plugins/DownloadPlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
@@ -20,7 +19,7 @@ import {ProgressPlugin} from './progress/ProgressPlugin';
 import {GoogleFilesStorage} from './storage/GoogleFilesStorage';
 import {argsToGoogleFileIds} from './utils/idParsers';
 import {createLogger} from './utils/logger';
-import {DownloadFilesStorage} from './storage/DownloadFilesStorage';
+import {TransformPlugin} from './plugins/TransformPlugin';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',

@@ -25,12 +25,14 @@ describe('LocalFiles', () => {
 
     const files1: LocalFile[] = [
       {
-        'id': 'id1',
-        'desiredLocalPath': 'test-file',
+        id: 'id1',
+        name: 'test-file',
+        desiredLocalPath: 'test-file',
       },
       {
-        'id': 'id2',
-        'desiredLocalPath': 'test-file',
+        id: 'id2',
+        name: 'test-file',
+        desiredLocalPath: 'test-file',
       }
     ];
 
@@ -41,6 +43,7 @@ describe('LocalFiles', () => {
     compareFiles(dbFiles, [
       {
         id: 'test-file:conflict',
+        name: 'Conflict: test-file',
         desiredLocalPath: 'test-file',
         localPath: 'test-file',
         counter: 3,
@@ -48,6 +51,7 @@ describe('LocalFiles', () => {
       },
       {
         id: 'id1',
+        name: 'test-file',
         desiredLocalPath: 'test-file',
         conflictId: "test-file:conflict",
         localPath: 'test-file_1',
@@ -56,6 +60,7 @@ describe('LocalFiles', () => {
       },
       {
         id: 'id2',
+        name: 'test-file',
         desiredLocalPath: 'test-file',
         conflictId: "test-file:conflict",
         localPath: 'test-file_2',
@@ -73,12 +78,14 @@ describe('LocalFiles', () => {
 
     await localFilesStorage.commit([
       {
-        'id': 'id1',
-        'desiredLocalPath': 'example-1',
+        id: 'id1',
+        name: 'example-1',
+        desiredLocalPath: 'example-1',
       },
       {
-        'id': 'id2',
-        'desiredLocalPath': 'example-2',
+        id: 'id2',
+        name: 'example-2',
+        desiredLocalPath: 'example-2',
       }
     ]);
 
@@ -87,12 +94,14 @@ describe('LocalFiles', () => {
       compareFiles(dbFiles, [
         {
           id: 'id1',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: "example-1",
           modifiedTime: undefined
         },
         {
           id: 'id2',
+          name: 'example-2',
           desiredLocalPath: 'example-2',
           localPath: "example-2",
           modifiedTime: undefined
@@ -103,10 +112,12 @@ describe('LocalFiles', () => {
     await localFilesStorage.commit([
       {
         id: 'id1',
+        name: 'example-1-renamed',
         desiredLocalPath: 'example-1-renamed',
       },
       {
         id: 'id2',
+        name: 'example-2-renamed',
         desiredLocalPath: 'example-2-renamed',
       }
     ]);
@@ -117,6 +128,7 @@ describe('LocalFiles', () => {
         {
           id: 'example-1:redir:id1',
           redirectTo: 'id1',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: "example-1",
           modifiedTime: undefined
@@ -124,12 +136,14 @@ describe('LocalFiles', () => {
         {
           id: 'example-2:redir:id2',
           redirectTo: 'id2',
+          name: 'example-2',
           desiredLocalPath: 'example-2',
           localPath: "example-2",
           modifiedTime: undefined
         },
         {
           id: 'id1',
+          name: 'example-1-renamed',
           desiredLocalPath: 'example-1-renamed',
           localPath: 'example-1-renamed',
           modifiedTime: undefined
@@ -137,6 +151,7 @@ describe('LocalFiles', () => {
         {
           id: 'id2',
           desiredLocalPath: 'example-2-renamed',
+          name: 'example-2-renamed',
           localPath: 'example-2-renamed',
           modifiedTime: undefined
         }
@@ -152,8 +167,9 @@ describe('LocalFiles', () => {
 
     await localFilesStorage.commit([
       {
-        'id': 'id1',
-        'desiredLocalPath': 'example-1',
+        id: 'id1',
+        name: 'example-1',
+        desiredLocalPath: 'example-1',
       },
     ]);
 
@@ -164,8 +180,9 @@ describe('LocalFiles', () => {
 
     await localFilesStorage.commit([
       {
-        'id': 'id1',
-        'desiredLocalPath': 'renamed-example-1',
+        id: 'id1',
+        name: 'renamed-example-1',
+        desiredLocalPath: 'renamed-example-1',
       },
     ]);
 
@@ -176,12 +193,14 @@ describe('LocalFiles', () => {
           id: 'example-1:redir:id1',
           redirectTo: 'id1',
           localPath: 'example-1',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           modifiedTime: undefined
         },
         {
           id: 'id1',
           desiredLocalPath: 'renamed-example-1',
+          name: 'renamed-example-1',
           localPath: 'renamed-example-1',
           modifiedTime: undefined
         },
@@ -205,10 +224,11 @@ describe('LocalFiles', () => {
     await localFilesStorage.init();
 
     await localFilesStorage.commit([
-        {
-        'id': 'id1',
-        'desiredLocalPath': 'example-1',
-        },
+      {
+        id: 'id1',
+        name: 'example-1',
+        desiredLocalPath: 'example-1',
+      },
     ]);
 
     {
@@ -234,10 +254,12 @@ describe('LocalFiles', () => {
     await localFilesStorage.commit([
       {
         id: 'id1',
+        name: 'example-1',
         desiredLocalPath: 'example-1',
       },
       {
         id: 'id2',
+        name: 'example-1',
         desiredLocalPath: 'example-1',
       }
     ]);
@@ -247,6 +269,7 @@ describe('LocalFiles', () => {
       compareFiles(dbFiles, [
         {
           id: 'example-1:conflict',
+          name: 'Conflict: example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
           counter: 3,
@@ -254,6 +277,7 @@ describe('LocalFiles', () => {
         },
         {
           id: 'id1',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1_1',
           conflictId: "example-1:conflict",
@@ -262,6 +286,7 @@ describe('LocalFiles', () => {
         },
         {
           id: 'id2',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1_2',
           conflictId: "example-1:conflict",
@@ -272,10 +297,11 @@ describe('LocalFiles', () => {
     }
 
     await localFilesStorage.commit([
-        {
-        'id': 'id2',
-        'desiredLocalPath': 'example-1',
-        },
+      {
+        id: 'id2',
+        name: 'example-1',
+        desiredLocalPath: 'example-1',
+      },
     ]);
 
     {
@@ -283,6 +309,7 @@ describe('LocalFiles', () => {
       compareFiles(dbFiles, [
         {
           id: 'id2',
+          name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
           modifiedTime: undefined
@@ -290,6 +317,7 @@ describe('LocalFiles', () => {
         {
           id: 'example-1_2:redir:id2',
           redirectTo: 'id2',
+          name: 'example-1',
           desiredLocalPath: 'example-1_2',
           localPath: 'example-1_2',
           modifiedTime: undefined

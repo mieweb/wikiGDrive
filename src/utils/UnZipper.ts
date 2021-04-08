@@ -41,7 +41,7 @@ export class UnZipper {
         });
 
         const buffer = await files[relativePath].async('nodebuffer');
-        this.images.push(Object.assign({ zipPath: relativePath }, await getImageMeta(buffer)));
+        this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
       }
     }
   }
@@ -50,7 +50,7 @@ export class UnZipper {
     return this.html;
   }
 
-  getImages() {
+  getImages(): ImageMeta[] {
     return this.images;
   }
 }

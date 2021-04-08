@@ -128,7 +128,7 @@ export class StoragePlugin extends BasePlugin {
     await this.externalFilesStorage.init();
     this.eventBus.emit('external_files:initialized', { externalFilesStorage: this.externalFilesStorage });
 
-    this.localFilesStorage = new LocalFilesStorage(this.config_dir, this.params.flat_folder_structure);
+    this.localFilesStorage = new LocalFilesStorage(this.config_dir);
     await this.localFilesStorage.init();
     this.eventBus.emit('local_files:initialized', { localFilesStorage: this.localFilesStorage });
   }

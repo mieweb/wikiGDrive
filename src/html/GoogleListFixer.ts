@@ -2,15 +2,14 @@ import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
 import {NodeWithChildren} from 'domhandler/lib/node';
 import {Node} from 'domhandler';
+import {docs_v1} from 'googleapis';
+import Schema$Document = docs_v1.Schema$Document;
 
 export class GoogleListFixer {
   private readonly html: string;
-  private json: string;
-  private document: any;
 
   constructor(html) {
     this.html = html;
-    this.json = '';
   }
 
   async createDom(html): Promise<Node[]> {
@@ -31,10 +30,7 @@ export class GoogleListFixer {
     });
   }
 
-  async getOlLists() {
-    const dom = await this.createDom(this.html);
-    this.document = JSON.parse(this.json);
-
+  private async getOlLists(dom) {
     const elements = findAll((elem) => {
       return elem.name === 'ol';
     }, dom);
@@ -59,7 +55,7 @@ export class GoogleListFixer {
     return olLists;
   }
 
-  async fixOlLists(content: any[], docLists, olLists) {
+  private async fixOlLists(docLists: {[key: string]: any}, olLists) {
     for (const listName of olLists) {
       if (docLists[listName]) {
         if (!docLists[listName].listProperties) continue;
@@ -73,6 +69,23 @@ export class GoogleListFixer {
         }
       }
     }
+  }
+
+  async process(document: Schema$Document) {
+    const dom = await this.createDom(this.html);
+    const images = [];
+    const elements = findAll((elem) => {
+      return elem.name === 'img';
+    }, dom);
+
+    for (const elem of elements) {
+      images.push(elem);
+    }
+
+    const olLists = await this.getOlLists(dom);
+    await this.fixOlLists(document.lists, olLists);
+
+    return document;
   }
 
 }

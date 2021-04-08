@@ -12,6 +12,7 @@ export interface GoogleFile {
   id: FileId;
   parentId?: FileId;
   name: string;
+  version: number;
   size?: number;
   trashed?: boolean;
   mimeType: string;
@@ -30,8 +31,6 @@ export const MimeTypes = {
   SPREADSHEET_MIME: 'application/vnd.google-apps.spreadsheet',
   FORM_MIME: 'application/vnd.google-apps.form',
   PRESENTATION_MIME: 'application/vnd.google-apps.presentation',
-  CONFLICT_MIME: 'conflict',
-  REDIRECT_MIME: 'redirect'
 };
 
 export class GoogleFilesStorage {
