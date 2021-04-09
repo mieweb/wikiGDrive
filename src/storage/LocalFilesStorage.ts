@@ -116,7 +116,6 @@ export class LocalFilesStorage {
       }
 
       if (dbFile.desiredLocalPath !== file.desiredLocalPath) {
-        // Create redir with old desiredLocalPath
         const redirFile: LocalFile = {
           name: dbFile.name,
           id: dbFile.desiredLocalPath + ':redir:' + file.id,
@@ -125,10 +124,16 @@ export class LocalFilesStorage {
         };
         this.fileMap[redirFile.id] = redirFile;
 
-        await transformHandler.removeMarkDownsAndImages(file);
+        await transformHandler.removeMarkDownsAndImages(dbFile);
 
         dbFile.desiredLocalPath = file.desiredLocalPath;
+        dbFile.modifiedTime = file.modifiedTime;
         dbFile.name = file.name;
+        await transformHandler.forceGeneration(dbFile);
+      }
+
+      if (dbFile.modifiedTime !== file.modifiedTime) {
+        dbFile.modifiedTime = file.modifiedTime;
         await transformHandler.forceGeneration(dbFile);
       }
     }
@@ -248,8 +253,12 @@ export class LocalFilesStorage {
           conflictFile.counter++;
         }
 
-        if (file.localPath !== desiredLocalPath + '_' + file.counter) {
-          file.localPath = desiredLocalPath + '_' + file.counter;
+        const parts = desiredLocalPath.split('.');
+        parts[0] = parts[0] + '_' + file.counter;
+        const desiredLocalPathWithCounter = parts.join('.');
+
+        if (file.localPath !== desiredLocalPathWithCounter) {
+          file.localPath = desiredLocalPathWithCounter;
           await transformHandler.forceGeneration(file);
         }
       }

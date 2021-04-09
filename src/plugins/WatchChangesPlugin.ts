@@ -63,30 +63,11 @@ export class WatchChangesPlugin extends BasePlugin {
 
         const trashed: string[] = result.files.filter(f => f.trashed).map(f => f.id);
 
-        const apiFiles = result.files
-          .filter(f => !f.trashed)
-          .filter(file => {
-            if (file.parentId === rootFolderId) {
-              return true;
-            }
-            if (this.googleFilesStorage.containsFile(file.parentId)) {
-              return true;
-            }
-            return false;
-          });
-
-        // const externalDocs = result.files.filter(file => !apiFiles.find(apiFile => apiFile.id === file.id));
-
-        const changedFiles = apiFiles.map(file => {
-          if (file.parentId === rootFolderId) {
-            file.parentId = undefined;
-          }
-          return file;
-        });
+        const changedFiles = result.files
+          .filter(f => !f.trashed);
 
         this.eventBus.emit('watch:event', changedFiles.length);
 
-        // if (changedFiles.length === 0 && externalDocs.length === 0 && trashed.length === 0) {
         if (changedFiles.length === 0 && trashed.length === 0) {
           this.logger.debug('No changes detected. Sleeping for 10 seconds.');
         }
@@ -95,13 +76,6 @@ export class WatchChangesPlugin extends BasePlugin {
           this.logger.info(changedFiles.length + ' files changed, ' + trashed.length + ' files trashed');
           await this.googleFilesStorage.mergeChanges(changedFiles, trashed);
         }
-
-/*
-        if (externalDocs.length > 0) {
-          this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.googleFilesStorage.mergeChanges(externalDocs, context.parentId);
-        }
-*/
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
         this.logger.debug('Pulled latest changes');

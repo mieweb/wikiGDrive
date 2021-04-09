@@ -176,7 +176,9 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
   }
 
   async removeMarkDownsAndImages(file: LocalFile): Promise<void> {
-    const removePath = path.join(this.drive_config.dest, ...file.localPath.substr(1).split('/').join(path.sep));
+    if (!file || !file.localPath) return;
+
+    const removePath = path.join(this.drive_config.dest, ...file.localPath.substr(1).split('/'));
     const stat = fs.statSync(removePath);
     if (stat.isDirectory()) {
       const files = fs.readdirSync(removePath);

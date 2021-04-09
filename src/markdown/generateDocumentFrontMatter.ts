@@ -8,7 +8,9 @@ import {NavigationHierarchy} from '../generateNavigationHierarchy';
 export function generateDocumentFrontMatter(file: GoogleFile, localFile: LocalFile, linkTranslator: LinkTranslator, navigationHierarchy: NavigationHierarchy) {
   let frontMatter = '---\n';
   frontMatter += 'title: "' + file.name + '"\n';
-  frontMatter += 'date: ' + localFile.modifiedTime + '\n';
+  if (localFile.modifiedTime) {
+    frontMatter += 'date: "' + localFile.modifiedTime + '"\n';
+  }
   const htmlPath = linkTranslator.convertToRelativeMarkDownPath(localFile.localPath, '');
   if (htmlPath) {
     frontMatter += 'url: "' + htmlPath + '"\n';
@@ -19,8 +21,8 @@ export function generateDocumentFrontMatter(file: GoogleFile, localFile: LocalFi
   if (file.version) {
     frontMatter += 'version: ' + file.version + '\n';
   }
-  frontMatter += 'id: ' + file.id + '\n';
-  frontMatter += 'source: ' + 'https://drive.google.com/open?id=' + file.id + '\n';
+  frontMatter += 'id: "' + file.id + '"\n';
+  frontMatter += 'source: "' + 'https://drive.google.com/open?id=' + file.id + '"\n';
 
   if (navigationHierarchy[file.id]) {
     const navigationData = navigationHierarchy[file.id];

@@ -65,7 +65,7 @@ export class LocalPathGenerator {
     const externalFiles: GoogleFile[] = googleFiles.filter(googleFile => !retVal.find(localFile => localFile.id === googleFile.id));
 
     retVal.push(...externalFiles.map(googleFile => {
-      const desiredLocalPath = 'external_docs/' + googleFile.parentId + '/' + getDesiredPath(googleFile.name, googleFile.mimeType);
+      const desiredLocalPath = '/external_docs/' + googleFile.parentId + '/' + getDesiredPath(googleFile.name, googleFile.mimeType);
       return {
         id: googleFile.id,
         name: googleFile.name,
