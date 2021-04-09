@@ -1,15 +1,7 @@
 import {LocalFile} from '../storage/LocalFilesStorage';
 import {LinkTranslator} from '../LinkTranslator';
-import {LocalGoogleFile} from './generateConflictMarkdown';
 
-export function generateRedirectMarkdown(redirFile: LocalFile, redirectTo: LocalGoogleFile, linkTranslator: LinkTranslator) {
-  if (!redirectTo.googleFile) {
-    return;
-  }
-  if (!redirectTo.localFile) {
-    return;
-  }
-
+export function generateRedirectMarkdown(redirFile: LocalFile, redirectTo: LocalFile, linkTranslator: LinkTranslator) {
   let frontMatter = '---\n';
   // frontMatter += 'title: "' + redirFile.name + '"\n';
   frontMatter += 'title: "Redirect"\n';
@@ -25,8 +17,8 @@ export function generateRedirectMarkdown(redirFile: LocalFile, redirectTo: Local
 
   let md = frontMatter;
   md += 'Renamed to: ';
-  const relativePath = linkTranslator.convertToRelativeMarkDownPath(redirectTo.localFile.localPath, redirFile.localPath);
-  md += '[' + redirectTo.googleFile.name + '](' + relativePath + ')\n';
+  const relativePath = linkTranslator.convertToRelativeMarkDownPath(redirectTo.localPath, redirFile.localPath);
+  md += '[' + redirectTo.name + '](' + relativePath + ')\n';
 
   return md;
 }

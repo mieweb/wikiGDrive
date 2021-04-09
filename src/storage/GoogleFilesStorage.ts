@@ -88,6 +88,18 @@ export class GoogleFilesStorage {
     }
   }
 
+  async mergeChanges(files: GoogleFile[], trashed: string[]) {
+    for (const id in trashed) {
+      await this.removeFile(id);
+    }
+
+    for (const file of files) {
+      this.fileMap[file.id] = file;
+    }
+
+    this.save_needed = true;
+  }
+
   async mergeFullDir(files: GoogleFile[], parentId: string) {
     const dbFileIds = [];
     for (const k in this.fileMap) {

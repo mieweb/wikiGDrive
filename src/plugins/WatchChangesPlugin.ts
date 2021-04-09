@@ -61,20 +61,21 @@ export class WatchChangesPlugin extends BasePlugin {
       try {
         const result = await this.googleDriveService.watchChanges(this.auth, this.startTrackToken, this.drive_id);
 
-        const apiFiles = result.files.filter(file => {
-          let retVal = false;
-          file.parents.forEach((parentId) => {
-            if (parentId === rootFolderId) {
-              retVal = true;
-            }
-            if (this.googleFilesStorage.containsFile(parentId)) {
-              retVal = true;
-            }
-          });
-          return retVal;
-        });
+        const trashed: string[] = result.files.filter(f => f.trashed).map(f => f.id);
 
-        const externalDocs = result.files.filter(file => !apiFiles.find(apiFile => apiFile.id === file.id));
+        const apiFiles = result.files
+          .filter(f => !f.trashed)
+          .filter(file => {
+            if (file.parentId === rootFolderId) {
+              return true;
+            }
+            if (this.googleFilesStorage.containsFile(file.parentId)) {
+              return true;
+            }
+            return false;
+          });
+
+        // const externalDocs = result.files.filter(file => !apiFiles.find(apiFile => apiFile.id === file.id));
 
         const changedFiles = apiFiles.map(file => {
           if (file.parentId === rootFolderId) {
@@ -85,19 +86,22 @@ export class WatchChangesPlugin extends BasePlugin {
 
         this.eventBus.emit('watch:event', changedFiles.length);
 
-        if (changedFiles.length === 0 && externalDocs.length === 0) {
+        // if (changedFiles.length === 0 && externalDocs.length === 0 && trashed.length === 0) {
+        if (changedFiles.length === 0 && trashed.length === 0) {
           this.logger.debug('No changes detected. Sleeping for 10 seconds.');
         }
 
-        if (changedFiles.length > 0) {
-          this.logger.info(changedFiles.length + ' files changed');
-          await this.googleFilesStorage.merge(changedFiles, context.parentId);
+        if (changedFiles.length > 0 || trashed) {
+          this.logger.info(changedFiles.length + ' files changed, ' + trashed.length + ' files trashed');
+          await this.googleFilesStorage.mergeChanges(changedFiles, trashed);
         }
 
+/*
         if (externalDocs.length > 0) {
           this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.googleFilesStorage.merge(externalDocs, context.parentId);
+          await this.googleFilesStorage.mergeChanges(externalDocs, context.parentId);
         }
+*/
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
         this.logger.debug('Pulled latest changes');

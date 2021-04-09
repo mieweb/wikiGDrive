@@ -4,6 +4,9 @@ const fs = require('fs'); // eslint-disable-line @typescript-eslint/no-var-requi
 module.exports = {
   target: 'node',
   devtool: 'source-map',
+  externals: {
+    'sharp': 'commonjs sharp'
+  },
   module: {
     rules: [
       {

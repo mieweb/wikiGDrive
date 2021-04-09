@@ -11,7 +11,6 @@ import {WatchChangesPlugin} from './plugins/WatchChangesPlugin';
 import {GoogleApiPlugin} from './plugins/GoogleApiPlugin';
 import {DownloadPlugin} from './plugins/DownloadPlugin';
 import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
-import {WatchMTimePlugin} from './plugins/WatchMTimePlugin';
 import {GitPlugin} from './plugins/GitPlugin';
 import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
 import {BasePlugin} from './plugins/BasePlugin';
@@ -91,7 +90,6 @@ export class MainService {
     this.plugins.push(new StoragePlugin(this.eventBus, this.logger));
     this.plugins.push(new ExternalFilesPlugin(this.eventBus, this.logger));
     this.plugins.push(new GoogleApiPlugin(this.eventBus, this.logger));
-    this.plugins.push(new WatchMTimePlugin(this.eventBus, this.logger));
     this.plugins.push(new WatchChangesPlugin(this.eventBus, this.logger));
     this.plugins.push(new SyncPlugin(this.eventBus, this.logger));
     this.plugins.push(new DownloadPlugin(this.eventBus, this.logger));

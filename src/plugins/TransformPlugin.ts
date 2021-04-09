@@ -209,10 +209,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     } else
     if (isRedirect(localFile)) {
 
-      const md = await generateRedirectMarkdown(localFile, {
-        localFile: this.localFilesStorage.findFile(f => f.id === localFile.id),
-        googleFile: this.googleFilesStorage.findFile(f => f.id === localFile.id),
-      }, this.linkTranslator);
+      const md = await generateRedirectMarkdown(localFile, this.localFilesStorage.findFile(f => f.id === localFile.id), this.linkTranslator);
       fs.writeFileSync(targetPath, md);
 
     } else {
