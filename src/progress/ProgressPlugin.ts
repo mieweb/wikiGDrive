@@ -34,6 +34,10 @@ class ProgressTask {
     return !!this.enabled;
   }
 
+  isRetrying() {
+    return false;
+  }
+
   hasTitle() {
     return !!this.title;
   }
