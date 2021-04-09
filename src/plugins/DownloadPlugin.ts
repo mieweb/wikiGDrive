@@ -222,7 +222,7 @@ export class DownloadPlugin extends BasePlugin {
 
     if (googleFiles.length > 0) {
       const debugInfo = JSON.stringify(googleFiles.slice(0, 10).map(item => item.id))
-        .replace(']', (googleFiles.length > 10 ? ', ...' + (googleFiles.length - 10) + ' more]' : ']'));
+        .replace(/]$/, (googleFiles.length > 10 ? ', ...' + (googleFiles.length - 10) + ' more]' : ']'));
 
       this.logger.info('Downloading modified files: ' + debugInfo);
     }
@@ -308,7 +308,7 @@ export class DownloadPlugin extends BasePlugin {
 
     if (dirtyFilesAfter.length > 0) {
       const debugInfo = JSON.stringify(dirtyFilesAfter.slice(0, 10).map(item => item.id))
-          .replace(']', (dirtyFilesAfter.length > 10 ? ', ...' + (dirtyFilesAfter.length - 10) + ' more]' : ']'));
+          .replace(/]$/, (dirtyFilesAfter.length > 10 ? ', ...' + (dirtyFilesAfter.length - 10) + ' more]' : ']'));
 
       this.logger.info('Download retry required: ' + debugInfo);
       this.eventBus.emit('download:failed', this.progress);

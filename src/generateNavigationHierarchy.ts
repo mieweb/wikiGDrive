@@ -1,11 +1,8 @@
 'use strict';
 
-import { PREFIX_LEVEL } from './markdown/JsonToMarkdown';
-import {LinkMode} from './MainService';
 import {LocalFile} from './storage/LocalFilesStorage';
 import {docs_v1} from 'googleapis';
 import Schema$Document = docs_v1.Schema$Document;
-import {getDesiredPath} from './storage/LocalPathGenerator';
 import {urlToFolderId} from './utils/idParsers';
 
 export interface NavigationHierarchyNode {
