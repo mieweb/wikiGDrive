@@ -55,7 +55,6 @@ export class WatchChangesPlugin extends BasePlugin {
   async watch() {
     this.logger.info('Watching changes');
     this.eventBus.emit('watch:event');
-    const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
       try {

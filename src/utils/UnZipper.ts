@@ -28,18 +28,6 @@ export class UnZipper {
         this.html = await (zip.file(relativePath).async('string'));
       }
       if (relativePath.endsWith('.png')) {
-        const md5Checksum = await new Promise<string>(resolve => {
-          const hash = crypto.createHash('md5');
-          hash.setEncoding('hex');
-
-          files[relativePath].nodeStream()
-            .on('end', () => {
-              hash.end();
-              resolve(hash.read());
-            })
-            .pipe(hash);
-        });
-
         const buffer = await files[relativePath].async('nodebuffer');
         this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
       }
