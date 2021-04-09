@@ -12,9 +12,6 @@ export class BasePlugin {
     this.logger = logger;
   }
 
-  async status() { // eslint-disable-line @typescript-eslint/no-empty-function
-  }
-
   async flushData() { // eslint-disable-line @typescript-eslint/no-empty-function
   }
 }

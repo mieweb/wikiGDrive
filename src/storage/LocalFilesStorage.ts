@@ -265,7 +265,7 @@ export class LocalFilesStorage {
     }, 500);
   }
 
-  findFile(checker): LocalFile {
+  findFile(checker: (f: LocalFile) => boolean): LocalFile {
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (checker(file)) {
@@ -274,7 +274,7 @@ export class LocalFilesStorage {
     }
   }
 
-  findFiles(checker): LocalFile[] {
+  findFiles(checker: (f: LocalFile) => boolean): LocalFile[] {
     const retVal = [];
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];

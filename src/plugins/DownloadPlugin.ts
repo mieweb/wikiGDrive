@@ -343,16 +343,6 @@ export class DownloadPlugin extends BasePlugin {
     }
   }
 
-  async status() {
-    const allFiles = this.googleFilesStorage.findFiles(item => !!item);
-    const dirtyFiles = this.googleFilesStorage.findFiles(item => !!item.dirty && !item.trashed);
-    console.log('Files status:');
-    console.table({
-      'All files': allFiles.length,
-      'Dirty files': dirtyFiles.length
-    });
-  }
-
 /*
   async cleanupDir() {
     const files = this.googleFilesStorage.findFiles(item => MimeTypes.DOCUMENT_MIME === item.mimeType);

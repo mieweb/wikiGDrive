@@ -115,7 +115,7 @@ export class GoogleFilesStorage {
     this.save_needed = true;
   }
 
-  findFile(checker) {
+  findFile(checker: (f: GoogleFile) => boolean): GoogleFile {
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];
       if (checker(file)) {
@@ -124,7 +124,7 @@ export class GoogleFilesStorage {
     }
   }
 
-  findFiles(checker) {
+  findFiles(checker: (f: GoogleFile) => boolean): GoogleFile[] {
     const retVal = [];
     for (const fileId in this.fileMap) {
       const file = this.fileMap[fileId];

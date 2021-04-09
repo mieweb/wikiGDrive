@@ -147,12 +147,6 @@ export class StoragePlugin extends BasePlugin {
     return this.fileService.writeFile(filePath, content);
   }
 
-  async status() {
-    await this.loadDriveConfig();
-    console.log('Config status:');
-    console.table(this.driveConfig);
-  }
-
   private async init(params) {
     switch (this.command) {
       case 'init':
