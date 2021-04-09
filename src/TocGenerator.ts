@@ -1,35 +1,45 @@
 'use strict';
 
-import * as path from 'path';
-import {MimeTypes} from './storage/GoogleFilesStorage';
 import {LinkTranslator} from './LinkTranslator';
+import {LocalFile, LocalFilesStorage} from './storage/LocalFilesStorage';
+
+function isFolder(file: LocalFile) {
+  return file.localPath.indexOf('.') === -1;
+}
+
+function isDocument(file: LocalFile) {
+  return file.localPath.endsWith('.md') || file.localPath.endsWith('.html');
+}
+
+interface LocalFileWithLevel extends LocalFile {
+  level: number;
+}
+
+interface LocalFileWithLevelMap {
+  [k: string]: LocalFileWithLevel;
+}
 
 export class TocGenerator {
-  private readonly localPath: string;
-  private linkTranslator: LinkTranslator;
-
-  constructor(localPath, linkTranslator) {
-    this.localPath = localPath;
-    this.linkTranslator = linkTranslator;
+  constructor(private localPath: string, private linkTranslator: LinkTranslator, private localFilesStorage: LocalFilesStorage) {
   }
 
-  addLevels(files) {
+  addLevels(files: LocalFile[]) {
     const copy = {};
 
     for (const file of files) {
-      file.level = file.localPath.split(path.sep).length - 1;
       copy[file.id] = file;
+      copy[file.id].level = file.localPath.split('/').length - 2;
     }
 
     return copy;
   }
 
-  sortLevel(files) {
+  sortLevel(files: LocalFile[]) {
     return files.sort((file1, file2) => {
-      if ((file1.mimeType === MimeTypes.FOLDER_MIME) && (file2.mimeType !== MimeTypes.FOLDER_MIME)) {
+      if (isFolder(file1) && !isFolder(file2)) {
         return -1;
       }
-      if ((file1.mimeType !== MimeTypes.FOLDER_MIME) && (file2.mimeType === MimeTypes.FOLDER_MIME)) {
+      if (!isFolder(file1) && isFolder(file2)) {
         return 1;
       }
 
@@ -37,19 +47,10 @@ export class TocGenerator {
     });
   }
 
-  getDir(fileMap, level, prefix) {
-    const arr = [];
-    for (const id in fileMap) {
-      const file = fileMap[id];
-      if (file.localPath.startsWith(prefix) && file.level === level) {
-        arr.push(file);
-      }
-    }
-    return this.sortLevel(arr);
-  }
-
-  async outputDir(fileMap, writeStream, level, prefix) {
+  async outputDir(fileMap: LocalFileWithLevelMap, level, prefix) {
     const rootDir = this.getDir(fileMap, level, prefix);
+
+    let markdown = '';
 
     for (let dirNo = 0; dirNo < rootDir.length; dirNo++) {
       const file = rootDir[dirNo];
@@ -58,28 +59,43 @@ export class TocGenerator {
         lineStart = ' ' + lineStart;
       }
 
-      if (file.mimeType === MimeTypes.FOLDER_MIME) {
-        await new Promise(resolve => writeStream.write(lineStart + ' ' + file.name + '\n', resolve));
-        await this.outputDir(fileMap, writeStream, level + 1, file.localPath + path.sep);
+      if (isFolder(file)) {
+        markdown += lineStart + ' ' + file.name + '\n';
+        markdown += await this.outputDir(fileMap,  level + 1, file.localPath + '/');
       } else
-      if (file.mimeType === MimeTypes.DOCUMENT_MIME) {
+      if (isDocument(file)) {
         const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(file.localPath, this.localPath);
-        await new Promise(resolve => writeStream.write(lineStart + ' [' + file.name + '](' + (relativePath) + ')\n', resolve));
+        markdown += lineStart + ' [' + file.name + '](' + (relativePath) + ')\n';
       }
     }
+
+    return markdown;
   }
 
-  async generate(googleFiles, writeStream) {
-    const files = googleFiles.findFiles(item => !!item)
-        .filter(file => !file.trashed && !!file.localPath);
+  getDir(fileMap: LocalFileWithLevelMap, level, prefix) {
+    const arr = [];
+
+    for (const id in fileMap) {
+      const file = fileMap[id];
+      if (file.localPath.startsWith(prefix) && file.level === level) {
+        arr.push(file);
+      }
+    }
+
+    return this.sortLevel(arr);
+  }
+
+  async generate() {
+    const files = this.localFilesStorage.findFiles(file => !!file.localPath);
+
+    const fileMapCopy = this.addLevels(files);
+    const markdown = await this.outputDir(fileMapCopy, 0, '');
+
     let frontMatter = '---\n';
     frontMatter += 'type: page\n';
     frontMatter += '---\n';
 
-    await new Promise(resolve => writeStream.write(frontMatter, resolve));
-
-    const fileMapCopy = this.addLevels(files);
-    await this.outputDir(fileMapCopy, writeStream, 0, '');
+    return frontMatter + markdown;
   }
 
 }

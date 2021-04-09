@@ -22,6 +22,7 @@ import {JsonToMarkdown} from '../markdown/JsonToMarkdown';
 import {generateDocumentFrontMatter} from '../markdown/generateDocumentFrontMatter';
 import {generateNavigationHierarchy, NavigationHierarchy} from '../generateNavigationHierarchy';
 import {LinkRewriter} from '../markdown/LinkRewriter';
+import {TocGenerator} from '../TocGenerator';
 
 async function ensureDir(filePath) {
   const parts = filePath.split(path.sep);
@@ -49,6 +50,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
   private config_dir: any;
   private toGenerate: string[] = [];
   private googleFileIds: string[];
+  private oldTocMd;
 
   private progress: {
     failed: number;
@@ -136,7 +138,6 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       }
     }
 
-
     let toGenerate = this.toGenerate;
     if (this.googleFileIds.length > 0) {
       toGenerate = this.googleFileIds;
@@ -158,7 +159,20 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       return false;
     }
 
+    await this.writeToc();
+
     return true;
+  }
+
+  async writeToc() {
+    const targetPath = path.join(this.drive_config.dest, 'toc.md');
+    const tocGenerator = new TocGenerator('toc.md', this.linkTranslator, this.localFilesStorage);
+    const md = await tocGenerator.generate();
+
+    if (this.oldTocMd !== md) {
+      fs.writeFileSync(targetPath, md);
+      this.oldTocMd = md;
+    }
   }
 
   async removeMarkDownsAndImages(file: LocalFile): Promise<void> {
