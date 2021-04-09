@@ -5,7 +5,6 @@ import {CliParams} from '../MainService';
 import {DriveConfig} from './StoragePlugin';
 import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {GoogleDriveService} from '../google/GoogleDriveService';
-import {urlToFolderId} from '../utils/idParsers';
 
 export class WatchChangesPlugin extends BasePlugin {
   private command: string;
