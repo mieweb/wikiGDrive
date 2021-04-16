@@ -52,7 +52,8 @@ export class LinkRewriter {
         }
       }
     } else
-    if (element.inlineObjectElement) {
+    if (element.inlineObjectElement?.src) {
+      element.inlineObjectElement.src = this.linkTranslator.convertToRelativeMarkDownPath(element.inlineObjectElement.src, this.localPath);
       // const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
       // const localPath = await this.linkTranslator.imageUrlToLocalPath(element.inlineObjectElement.inlineObjectId);
       // const imageLink = localPath;

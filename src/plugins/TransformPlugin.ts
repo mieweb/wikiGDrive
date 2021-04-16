@@ -267,9 +267,9 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
               const embedImageFixer = new EmbedImageFixer(this.downloadFilesStorage, this.localFilesStorage, downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
               const linkRewriter = new LinkRewriter(gdoc, this.linkTranslator, localFile.localPath);
 
-              await linkRewriter.process();
               await googleListFixer.process(gdoc);
               await embedImageFixer.process(gdoc);
+              await linkRewriter.process();
 
               const jsonToMarkdown = new JsonToMarkdown(gdoc);
               const md = await jsonToMarkdown.convert();
