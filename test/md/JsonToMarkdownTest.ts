@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-
 import {assert} from 'chai';
-import {Readable, Writable} from 'stream';
+import * as fs from 'fs';
 
-import {MarkDownTransform} from '../../src/markdown/MarkDownTransform';
 import {JsonToMarkdown} from '../../src/markdown/JsonToMarkdown';
 import {compareTexts} from '../utils';
 
@@ -11,8 +8,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./raw-html.md.markdown', async () => {
 
-    const doc = require('./raw-html.md.json');
-    const testMarkdown = require('!!raw-loader!./raw-html.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/raw-html.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/raw-html.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -31,8 +28,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./block-macro.md.markdown', async () => {
 
-    const doc = require('./block-macro.md.json');
-    const testMarkdown = require('!!raw-loader!./block-macro.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/block-macro.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/block-macro.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -42,8 +39,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./bullets.md.markdown', async () => {
 
-    const doc = require('./bullets.md.json');
-    const testMarkdown = require('!!raw-loader!./bullets.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/bullets.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/bullets.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -53,8 +50,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./quotes.md.markdown', async () => {
 
-    const doc = require('./quotes.md.json');
-    const testMarkdown = require('!!raw-loader!./quotes.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/quotes.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/quotes.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -64,8 +61,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./curly-braces.md.markdown', async () => {
 
-    const doc = require('./curly-braces.md.json');
-    const testMarkdown = require('!!raw-loader!./curly-braces.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/curly-braces.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/curly-braces.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -75,8 +72,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./test-page.md.markdown', async () => {
 
-    const doc = require('./test-page.md.json');
-    const testMarkdown = require('!!raw-loader!./test-page.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/test-page.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/test-page.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -86,8 +83,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./confluence.md.markdown', async () => {
 
-    const doc = require('./confluence.md.json');
-    const testMarkdown = require('!!raw-loader!./confluence.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/confluence.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/confluence.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -97,8 +94,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./project-overview.md.markdown', async () => {
 
-    const doc = require('./project-overview.md.json');
-    const testMarkdown = require('!!raw-loader!./project-overview.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/project-overview.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/project-overview.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -108,8 +105,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./example-document.md.markdown', async () => {
 
-    const doc = require('./example-document.md.json');
-    const testMarkdown = require('!!raw-loader!./example-document.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/example-document.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
 
     const markdown = await transform(doc);
     assert.ok(compareTexts(testMarkdown, markdown));
@@ -119,8 +116,8 @@ describe('MarkDownTransformTest', () => {
 
   it('test ./intro-to-the-system.md.markdown', async () => {
 
-    const doc = require('./intro-to-the-system.md.json');
-    const testMarkdown = require('!!raw-loader!./intro-to-the-system.md').default;
+    const doc = JSON.parse(fs.readFileSync(__dirname + '/intro-to-the-system.md.json').toString());
+    const testMarkdown = fs.readFileSync(__dirname + '/intro-to-the-system.md').toString();
 
     const markdown = await transform(doc);
 
@@ -132,47 +129,6 @@ describe('MarkDownTransformTest', () => {
 });
 
 async function transform(doc) {
-
-  const linkTranslator = {
-    async imageUrlToLocalPath(url) {
-      return url;
-    },
-    convertToRelativeMarkDownPath(localPath) {
-      return localPath;
-    },
-    urlToDestUrl(url) {
-      return url;
-    }
-  };
-
-  const markDownTransform = new MarkDownTransform('test.md', linkTranslator);
-
-  let markdown = '';
-
-  await new Promise((resolve, reject) => {
-
-    const readable = new Readable();
-    const writable = new Writable({
-      write: function(chunk, encoding, next) {
-        markdown += chunk.toString();
-        next();
-      }
-    });
-
-    readable
-      .pipe(markDownTransform)
-      .pipe(writable)
-      .on('finish', () => {
-        resolve();
-      })
-      .on('error', err => {
-        reject(err);
-      });
-
-    readable.push(JSON.stringify(doc, null, 2));
-    readable.push(null);
-  });
-
-  return markdown;
+  const converter = new JsonToMarkdown(doc);
+  return await converter.convert();
 }
-

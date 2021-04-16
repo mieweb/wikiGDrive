@@ -2,10 +2,9 @@
 
 import {BasePlugin} from './BasePlugin';
 import {CliParams} from '../MainService';
-import {DriveConfig} from './ConfigDirPlugin';
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {DriveConfig} from './StoragePlugin';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {GoogleDriveService} from '../google/GoogleDriveService';
-import {urlToFolderId} from '../utils/idParsers';
 
 export class WatchChangesPlugin extends BasePlugin {
   private command: string;
@@ -13,7 +12,7 @@ export class WatchChangesPlugin extends BasePlugin {
   private watch_mode: string;
   private debug: string[];
   private drive_config: DriveConfig;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
   private auth: any;
   private googleDriveService: GoogleDriveService;
   private startTrackToken: string;
@@ -30,8 +29,8 @@ export class WatchChangesPlugin extends BasePlugin {
       this.drive_config = drive_config;
       this.drive_id = drive_config.drive_id;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
     });
     eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
       this.auth = auth;
@@ -55,48 +54,25 @@ export class WatchChangesPlugin extends BasePlugin {
   async watch() {
     this.logger.info('Watching changes');
     this.eventBus.emit('watch:event');
-    const rootFolderId = urlToFolderId(this.drive_config['drive']);
 
     await new Promise(() => setInterval(async () => {
       try {
         const result = await this.googleDriveService.watchChanges(this.auth, this.startTrackToken, this.drive_id);
 
-        const apiFiles = result.files.filter(file => {
-          let retVal = false;
-          file.parents.forEach((parentId) => {
-            if (parentId === rootFolderId) {
-              retVal = true;
-            }
-            if (this.googleFiles.containsFile(parentId)) {
-              retVal = true;
-            }
-          });
-          return retVal;
-        });
+        const trashed: string[] = result.files.filter(f => f.trashed).map(f => f.id);
 
-        const externalDocs = result.files.filter(file => !apiFiles.find(apiFile => apiFile.id === file.id));
-
-        const changedFiles = apiFiles.map(file => {
-          if (file.parentId === rootFolderId) {
-            file.parentId = undefined;
-          }
-          return file;
-        });
+        const changedFiles = result.files
+          .filter(f => !f.trashed);
 
         this.eventBus.emit('watch:event', changedFiles.length);
 
-        if (changedFiles.length === 0 && externalDocs.length === 0) {
+        if (changedFiles.length === 0 && trashed.length === 0) {
           this.logger.debug('No changes detected. Sleeping for 10 seconds.');
         }
 
-        if (changedFiles.length > 0) {
-          this.logger.info(changedFiles.length + ' files changed');
-          await this.googleFiles.merge(changedFiles);
-        }
-
-        if (externalDocs.length > 0) {
-          this.logger.info('Files outside folder: ' + externalDocs.length);
-          await this.googleFiles.merge(externalDocs);
+        if (changedFiles.length > 0 || trashed) {
+          this.logger.info(changedFiles.length + ' files changed, ' + trashed.length + ' files trashed');
+          await this.googleFilesStorage.mergeChanges(changedFiles, trashed);
         }
 
         this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates

@@ -1,31 +1,18 @@
-import {Transform} from 'stream';
 import {DomHandler, Parser} from 'htmlparser2';
 import {findAll} from 'domutils';
 import {NodeWithChildren} from 'domhandler/lib/node';
+import {Node} from 'domhandler';
+import {docs_v1} from 'googleapis';
+import Schema$Document = docs_v1.Schema$Document;
 
-export class GoogleListFixer extends Transform {
-  private readonly content: string;
-  private json: string;
-  private document: any;
+export class GoogleListFixer {
+  private readonly html: string;
 
-  constructor(content) {
-    super();
-
-    this.content = content;
-    this.json = '';
+  constructor(html) {
+    this.html = html;
   }
 
-  _transform(chunk, encoding, callback) {
-    if (encoding === 'buffer') {
-      chunk = chunk.toString();
-    }
-
-    this.json += chunk;
-
-    callback();
-  }
-
-  async createDom(html) {
+  async createDom(html): Promise<Node[]> {
     return new Promise((resolve, reject) => {
       const handler = new DomHandler(function(error, dom: NodeWithChildren[]) {
         if (error) {
@@ -43,7 +30,7 @@ export class GoogleListFixer extends Transform {
     });
   }
 
-  getOlLists(dom) {
+  private async getOlLists(dom) {
     const elements = findAll((elem) => {
       return elem.name === 'ol';
     }, dom);
@@ -68,7 +55,7 @@ export class GoogleListFixer extends Transform {
     return olLists;
   }
 
-  fixOlLists(docLists, olLists) {
+  private async fixOlLists(docLists: {[key: string]: any}, olLists) {
     for (const listName of olLists) {
       if (docLists[listName]) {
         if (!docLists[listName].listProperties) continue;
@@ -84,19 +71,21 @@ export class GoogleListFixer extends Transform {
     }
   }
 
-  async _flush(callback) {
-    const html = this.content;
-    const dom = await this.createDom(html);
+  async process(document: Schema$Document) {
+    const dom = await this.createDom(this.html);
+    const images = [];
+    const elements = findAll((elem) => {
+      return elem.name === 'img';
+    }, dom);
 
-    this.document = JSON.parse(this.json);
+    for (const elem of elements) {
+      images.push(elem);
+    }
 
-    const olLists = this.getOlLists(dom);
+    const olLists = await this.getOlLists(dom);
+    await this.fixOlLists(document.lists, olLists);
 
-    this.fixOlLists(this.document.lists, olLists);
-
-    this.push(JSON.stringify(this.document, null, 4));
-
-    callback();
+    return document;
   }
 
 }

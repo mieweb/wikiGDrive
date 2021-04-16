@@ -21,7 +21,6 @@ export class ListDrivesPlugin extends BasePlugin {
 
   async start() {
     try {
-      console.log('Listening Google Drives');
       const drives = await this.googleDriveService.listDrives(this.auth);
       this.eventBus.emit('list_drives:done', drives);
     } catch (e) {

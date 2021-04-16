@@ -1,5 +1,4 @@
 import slugify from 'slugify';
-import {LinkTranslator} from '../LinkTranslator';
 
 export const PREFIX_LEVEL = '    ';
 
@@ -93,10 +92,10 @@ export class JsonToMarkdown {
   private lists: DocLists;
   private inRawHtml = false;
 
-  constructor(private document, private localPath: string, private linkTranslator: LinkTranslator) {
+  constructor(private document) {
   }
 
-  async convert() {
+  async convert(): Promise<string> {
     this.styles = this.transformNamedStyles(this.document.namedStyles);
     this.lists = this.document.lists;
     this.headings = {};
@@ -334,13 +333,7 @@ export class JsonToMarkdown {
     if (element.textRun.textStyle.link) {
 
       if (element.textRun.textStyle.link.url) {
-        if (this.linkTranslator) {
-          const localPath = await this.linkTranslator.urlToDestUrl(element.textRun.textStyle.link.url);
-          const relativePath = this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
-          pOut = '[' + pOut + '](' + relativePath + ')';
-        } else {
-          pOut = '[' + pOut + '](' + element.textRun.textStyle.link.url + ')';
-        }
+        pOut = '[' + pOut + '](' + element.textRun.textStyle.link.url + ')';
       } else
       if (element.textRun.textStyle.link.headingId) {
         pOut = '[' + pOut + '](#' + element.textRun.textStyle.link.headingId + ')';
@@ -380,33 +373,6 @@ export class JsonToMarkdown {
     });
 
     return styles;
-  }
-
-  async convertImageLink(url) {
-    if (this.document.inlineObjects[url]) {
-      const inlineObject = this.document.inlineObjects[url];
-
-      const embeddedObject = inlineObject.inlineObjectProperties.embeddedObject;
-      if (embeddedObject.imageProperties) {
-        if (embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri) {
-          url = embeddedObject.imageProperties.sourceUri || embeddedObject.imageProperties.contentUri;
-        } else {
-          url = '';
-        }
-      }
-    }
-
-    if (!url) {
-      return '';
-    }
-
-    // const localPath = await this.linkTranslator.imageUrlToLocalPath(url);
-    // return this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
-    if (this.linkTranslator) {
-      return this.linkTranslator.convertToRelativeMarkDownPath(url, this.localPath);
-    } else {
-      return this.localPath;
-    }
   }
 
   async processTos(content) {
@@ -483,7 +449,7 @@ export class JsonToMarkdown {
 
       const paragraph = element.paragraph;
 
-      if (paragraph.paragraphStyle.namedStyleType) {
+      if (paragraph.paragraphStyle?.namedStyleType) {
         const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
         if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
           textElements.push('```\n');
@@ -503,11 +469,7 @@ export class JsonToMarkdown {
           textElements.push(element);
         } else
         if (element.inlineObjectElement) {
-          const imageLink = await this.convertImageLink(element.inlineObjectElement.inlineObjectId);
-          // const localPath = await this.linkTranslator.imageUrlToLocalPath(element.inlineObjectElement.inlineObjectId);
-          // const imageLink = localPath;
-          // const imageLink = await this.linkTranslator.convertToRelativeMarkDownPath(localPath, this.localPath);
-          // const imageLink = await this.convertImageLink(localPath);
+          const imageLink = element.inlineObjectElement.src;
           if (imageLink) {
             if (imageLink.endsWith('.svg')) {
               textElements.push('<object type="image/svg+xml" data="' + imageLink + '">' +
@@ -516,15 +478,20 @@ export class JsonToMarkdown {
             } else {
               textElements.push('![](' + (imageLink) + ')');
             }
+          } else {
+            const uri = this.getLinkFromId(element.inlineObjectElement.inlineObjectId);
+            if (uri) {
+              textElements.push('![](' + (uri) + ')');
+            }
           }
         }
       }
 
-      if (paragraph.paragraphStyle.headingId) {
+      if (paragraph.paragraphStyle?.headingId) {
         this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
       }
 
-      if (paragraph.paragraphStyle.namedStyleType) {
+      if (paragraph.paragraphStyle?.namedStyleType) {
         const fontFamily = this.styles[paragraph.paragraphStyle.namedStyleType].fontFamily;
         if (fontFamily === 'Courier New' || fontFamily === 'Courier') {
           textElements.push('```\n');
@@ -622,7 +589,7 @@ export class JsonToMarkdown {
     }
     let prefix = '';
 
-    switch (element.paragraph.paragraphStyle.namedStyleType) {
+    switch (element.paragraph.paragraphStyle?.namedStyleType) {
       // Add a # for each heading level. No break, so we accumulate the right number.
       case 'HEADING_6':
         prefix += '#'; // eslint-disable-line no-fallthrough
@@ -690,4 +657,18 @@ export class JsonToMarkdown {
     return prefix;
   }
 
+  private getLinkFromId(inlineObjectId: string) {
+    const inlineObject = this.document.inlineObjects[inlineObjectId];
+    if (inlineObject) {
+      const sourceUri = inlineObject?.inlineObjectProperties?.embeddedObject?.imageProperties?.sourceUri;
+      if (sourceUri) {
+        return sourceUri;
+      }
+      const contentUri = inlineObject?.inlineObjectProperties?.embeddedObject?.imageProperties?.contentUri;
+      if (contentUri) {
+        return contentUri;
+      }
+    }
+    return null;
+  }
 }

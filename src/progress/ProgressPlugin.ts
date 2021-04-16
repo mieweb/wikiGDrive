@@ -1,5 +1,6 @@
 import {BasePlugin} from '../plugins/BasePlugin';
 import {DefaultRenderer} from 'listr2/dist/renderer/default.renderer';
+import chalk from 'chalk';
 
 class ProgressTask {
   public title: string;
@@ -31,6 +32,10 @@ class ProgressTask {
 
   isEnabled() {
     return !!this.enabled;
+  }
+
+  isRetrying() {
+    return false;
   }
 
   hasTitle() {
@@ -170,13 +175,10 @@ export class ProgressPlugin extends BasePlugin {
       }, 1000);
     });
 
-    this.parentsMap['transform'] = 'Transforming';
-
-    this.addPluginProgressTask('listen', 'Listening');
+    this.addPluginProgressTask('sync', 'Listening');
     this.addPluginProgressTask('download', 'Downloading');
     this.addPluginProgressTask('external', 'Downloading external');
-    this.addPluginProgressTask('transform:documents', 'Transforming documents');
-    this.addPluginProgressTask('transform:diagrams', 'Transforming diagrams');
+    this.addPluginProgressTask('transform', 'Transforming');
   }
 
   private addPluginProgressTask(prefix: string, title: string) {
@@ -210,7 +212,11 @@ export class ProgressPlugin extends BasePlugin {
         tasks.push(this[taskKey]);
       }
 
-      this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      if (context.failed > 0) {
+        this[taskKey].title = title + ' ' + context.completed + '/' + chalk.red(context.failed) + '/' + context.total;
+      } else {
+        this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      }
     });
 
     this.eventBus.on(prefix + ':done', async (context) => {
@@ -218,7 +224,11 @@ export class ProgressPlugin extends BasePlugin {
         return;
       }
 
-      this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      if (context.failed > 0) {
+        this[taskKey].title = title + ' ' + context.completed + '/' + chalk.red(context.failed) + '/' + context.total;
+      } else {
+        this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      }
       this[taskKey].pending = false;
       this[taskKey].failed = false;
       this[taskKey].completed = true;
@@ -229,7 +239,11 @@ export class ProgressPlugin extends BasePlugin {
         return;
       }
 
-      this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      if (context.failed > 0) {
+        this[taskKey].title = title + ' ' + context.completed + '/' + chalk.red(context.failed) + '/' + context.total;
+      } else {
+        this[taskKey].title = title + ' ' + context.completed + '/' + context.total;
+      }
       this[taskKey].pending = false;
       this[taskKey].failed = true;
       this[taskKey].completed = true;

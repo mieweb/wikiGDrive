@@ -5,7 +5,7 @@ import {QuotaLimiter} from '../google/QuotaLimiter';
 import {GoogleAuthService} from '../google/GoogleAuthService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ConfigService} from '../storage/ConfigService';
-import {DriveConfig} from './ConfigDirPlugin';
+import {DriveConfig} from './StoragePlugin';
 
 export class GoogleApiPlugin extends BasePlugin {
   private command: string;
@@ -53,6 +53,7 @@ export class GoogleApiPlugin extends BasePlugin {
       case 'pull':
       case 'watch':
       case 'download':
+      case 'external':
       case 'drives':
       case 'sync':
         if (this.drive_config.service_account) {

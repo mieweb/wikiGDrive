@@ -1,6 +1,7 @@
-import {GoogleFiles} from '../storage/GoogleFiles';
+import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
+import {LocalFilesStorage} from '../storage/LocalFilesStorage';
 
-export function urlToFolderId(url) {
+export function urlToFolderId(url: string): string {
   if (url.match(/drive\.google\.com\/drive.*folders\//)) {
     let id = url.substr(url.indexOf('/folders/') + '/folders/'.length);
     if (id.indexOf('/') > 0) {
@@ -41,38 +42,40 @@ export function urlToFolderId(url) {
     return id;
   }
 
-  return false;
+  if (url.match(/^[A-Z0-9_]+$/ig)) {
+    return url;
+  }
+
+  return null;
 }
 
-export function argToGoogleFileId(arg: string, googleFiles?: GoogleFiles) {
-  let googleFileId = urlToFolderId(arg);
+export function argToGoogleFileId(arg: string, googleFilesStorage: GoogleFilesStorage, localFilesStorage: LocalFilesStorage): string[] {
+  const googleFileId = urlToFolderId(arg);
 
-  if (googleFiles) {
-    if (!googleFileId) {
-      const file = googleFiles.findFile(file => file.id === arg);
-      if (file) {
-        googleFileId = file.id;
-      }
-    }
-
-    if (!googleFileId) {
-      const file = googleFiles.findFile(file => file.desiredLocalPath === arg);
-      if (file) {
-        googleFileId = file.id;
-      }
+  if (!googleFileId) {
+    const files = googleFilesStorage.findFiles(file => file.id === arg);
+    if (files.length > 0) {
+      return files.map(f => f.id);
     }
   }
 
-  return googleFileId;
+  if (!googleFileId) {
+    const files = localFilesStorage.findFiles(file => file.desiredLocalPath === arg);
+    if (files.length > 0) {
+      return files.map(f => f.id);
+    }
+  }
+
+  return [googleFileId];
 }
 
-export function argsToGoogleFileIds(args: string[], googleFiles?: GoogleFiles) {
+export function argsToGoogleFileIds(args: string[], googleFilesStorage: GoogleFilesStorage, localFilesStorage: LocalFilesStorage) {
   if (args.length === 1) { // TODO add more args parsing
-    const googleFileId = argToGoogleFileId(args[0], googleFiles);
-    if (!googleFileId) {
+    const googleFileIds: string[] = argToGoogleFileId(args[0], googleFilesStorage, localFilesStorage);
+    if (googleFileIds.length === 0) {
       throw new Error('Invalid argument: ' + args.join(' '));
     }
-    return [googleFileId];
+    return [].concat(googleFileIds);
   } else {
     return [];
   }

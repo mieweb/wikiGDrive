@@ -13,7 +13,15 @@ See [Node setup on the system](#Node-setup-on-the-system) for prereq.
 ```
 npm install
 npm run build
+npm link --local # or node ./dist/main.js 
+```
+
+## Running as typescript
+
+```
+npm install
 npm link --local
+wikigdrive-ts # or node ./src/cli.ts
 ```
 
 ## Debugging
@@ -84,8 +92,14 @@ Run continuous documents watch
 ```
 wikigdrive watch --git_update_delay=10
 
---watch [mtime|changes] - Run program in loop, watch for gdrive changes
+--watch - Run program in loop, watch for gdrive changes
 --git_update_delay=x - trigger git update hook after x minutes
+```
+
+Status
+
+```
+wikigdrive status
 ```
 
 Run server mode for webhooks support (TODO: not implemented yet)
@@ -183,6 +197,23 @@ or start server for development:
 hexo serve
 ```
 
+## Conflict resolution and redirect algorithm
+
+### Sync stage: get files from google by listening root directory or watching changes - save into google_files.json
+### Download stage: download all files that does not exist in download.json - save into download.json
+### Transform stage:
+
+0. Get files to transform (does not exist in local_files.json, have different modifiedTime, are trashed), generate desireLocalPaths based on parents
+1. If file is removed - remove .md file, remove images
+2. If file is new (not exists in local_files.json) - add to localFiles, schedule for generation
+3. If file exists but with different desireLocalPath:
+   3.1. Remove old .md, remove old images
+   3.2. Schedule for generation
+   3.3. Generate redir with old localPath
+4. Remove dangling redirects
+5. Check if there are any conflicts (same desireLocalPath)
+6. Check if any conflicts can be removed
+
 ## Authorization
 
 There are two methods: individual credentials or a service account.
@@ -241,19 +272,14 @@ A website front end is a goal for real-time testing of the viewing experience, b
 }
 ```
 
-#### files.json is indexed with Google's fileId
+#### google_files.json is indexed with Google's fileId - data got from google (just adding parentId, simplify lastAuthor)
 
 - id - Google's fileId
 - name - Title set inside google docs. It is not unique 
 - mimeType - Google's mime type or 'conflict' or 'redirect'
 - modifiedTime - Server-size mtime
-- desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
 - localPath - real local path, unique with handled conflicts and redirects (in case of title rename)
 - lastAuthor - Google's last author if available
-- dirty - file needs to be downloaded
-- conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
-- conflicting - array of fileIds when mimeType = 'conflict'
-- counter - current number of existing conflicts when mimeType = 'conflict'
 
 ```
 {
@@ -264,24 +290,49 @@ A website front end is a goal for real-time testing of the viewing experience, b
         "modifiedTime": "2020-02-27T20:20:20.123Z",
         "desiredLocalPath": "a-title-of-document",
         "lastAuthor": "John Smith",
-        "localPath": "a-title-of-document"
     }
 }
 ```
 
-#### binaryFiles.json is indexed with md5 sums: 
+#### download.json is indexed with Google's fileId - it contains gdoc JSON sources, svg for diagrams and zip with images:
 
-- localPath - path to file, generated using md5 sum
-- md5Checksum - md5 sum
+```
+{
+  "123123": {
+    "id": "123123",
+    "name": "System Conversion",
+    "mimeType": "application/vnd.google-apps.document",
+    "modifiedTime": "2020-02-27T21:31:21.718Z",
+    "images": [
+      {
+        "docUrl": "i.0",
+        "pngUrl": "https://lh6.googleusercontent.com/123123123123",
+        "zipImage": {
+          "zipPath": "image1.png",
+          "width": 704,
+          "height": 276,
+          "hash": "0000001101010111101111010010101001010110001011101000111100110111"
+        }
+      }
+    ]
+  }
+}
+```
 
-#### transform.json is indexed with file id
+#### local_files.json is indexed with file id
 
+- desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
+- dirty - file needs to be downloaded
+- conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
+- conflicting - array of fileIds when mimeType = 'conflict'
+- counter - current number of existing conflicts when mimeType = 'conflict'
 - localPath - path to transformed markdown file
 - modifiedTime - fetched from google server
 
 ```
 {
     "123123123": {
+        "localPath": "a-title-of-document"
         "localPath": "external_path/123123123.png",
         "md5Checksum": "123123123"
     }

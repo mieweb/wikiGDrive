@@ -1,27 +1,12 @@
 import 'colors';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as Diff from 'diff';
+import {LocalFile} from '../src/storage/LocalFilesStorage';
 
 export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
-}
-
-export class DummyConfig {
-
-  constructor() {
-    this.fileMap = {};
-  }
-
-  async loadFileMap() {
-    return this.fileMap;
-  }
-
-  async putFile(id, file) {
-    this.fileMap[id] = file;
-  }
 }
 
 export function compareTexts(input, output) {

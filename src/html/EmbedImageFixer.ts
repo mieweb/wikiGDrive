@@ -1,138 +1,68 @@
-import {Transform} from 'stream';
-import {DomHandler, Parser} from 'htmlparser2';
-import {findAll} from 'domutils';
+import {docs_v1} from 'googleapis';
+import Schema$Document = docs_v1.Schema$Document;
+import {DownloadFile, DownloadFileImage, DownloadFilesStorage} from '../storage/DownloadFilesStorage';
+import {MimeTypes} from '../storage/GoogleFilesStorage';
+import {getImageDistance} from '../utils/getImageMeta';
+import {LocalFilesStorage} from '../storage/LocalFilesStorage';
 
-export class EmbedImageFixer extends Transform {
-  private readonly content: string;
-  private images: any;
-  private json: string;
-  private document: any;
+const TOLERANCE = 5;
 
-  constructor(content, images) {
-    super();
+export class EmbedImageFixer {
+  private readonly images: any[];
+  private diagrams: DownloadFile[];
 
-    this.content = content;
+  constructor(private downloadFilesStorage: DownloadFilesStorage, private localFilesStorage: LocalFilesStorage, images: DownloadFileImage[], private imagesDirPath: string) {
     this.images = images;
-    this.json = '';
   }
 
-  _transform(chunk, encoding, callback) {
-    if (encoding === 'buffer') {
-      chunk = chunk.toString();
-    }
+  private async fixUrl(image: DownloadFileImage) {
+    if (image.zipImage) {
 
-    this.json += chunk;
+      const distances = this.diagrams
+        .map(diagram => {
+          return {
+            distance: getImageDistance(diagram.image.hash, image.zipImage.hash),
+            diagram: diagram
+          };
+        })
+        .filter(item => item.distance < TOLERANCE)
+        .sort((a, b) => a.distance - b.distance);
 
-    callback();
-  }
-
-  async createDom(html) {
-    return new Promise((resolve, reject) => {
-      const handler = new DomHandler(function(error, dom) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(dom[0]['children']);
+      if (distances.length > 0) {
+        const localFile = await this.localFilesStorage.findFile(file => file.id === distances[0].diagram.id);
+        if (localFile) {
+          return localFile.localPath;
         }
-      });
-      const parser = new Parser(handler, {
-        recognizeSelfClosing: true,
-        recognizeCDATA: false
-      });
-      parser.write(html);
-      parser.end();
-    });
-  }
+      }
 
-  getImages(dom) {
-    const elements = findAll((elem) => {
-      return elem.name === 'img';
-    }, dom);
-
-    const images = [];
-
-    for (const elem of elements) {
-      images.push(elem);
+      return this.imagesDirPath + '' + image.zipImage.zipPath;
     }
 
-    return images;
+    return image.pngUrl;
   }
 
-  fixEmbedImages(content, images, currentNo = 0) {
-    const fixUrl = (src) => {
-      if (!src) return src;
-
-      if (this.images[src]) {
-        return this.images[src] + '.md5';
-      }
-
-      if (!src.startsWith('http')) {
-        return src;
-      }
-
-      src = src.replace(/&amp;/g, '&');
-
-      const url = new URL(src);
-      const searchParams = url.searchParams;
-
-      if (searchParams.get('w') && searchParams.get('h')) {
-        const scale = 2;
-        searchParams.set('w', String(scale * parseInt(searchParams.get('w'))));
-        searchParams.set('h', String(scale * parseInt(searchParams.get('h'))));
-      }
-
-      return url.toString();
-    };
-
+  private async fixEmbedImages(content: any, inlineObjects: {[key: string]: any}, currentNo = 0) {
     for (const item of content) {
       if (item.inlineObjectElement && item.inlineObjectElement.inlineObjectId) {
-        const id = item.inlineObjectElement.inlineObjectId;
+        const image: DownloadFileImage = this.images[currentNo];
+        const src = await this.fixUrl(image);
 
-        if (this.document.inlineObjects[id]) {
-          const embeddedObject = this.document.inlineObjects[id].inlineObjectProperties.embeddedObject;
-          const src = fixUrl(images[currentNo].attribs['src']);
-
-          if (embeddedObject.imageProperties && embeddedObject.imageProperties.contentUri && embeddedObject.imageProperties.contentUri.indexOf('googleusercontent') > -1) {
-            if (src && src.endsWith('.md5')) {
-              // const md5 = src.replace('.md5', '');
-              embeddedObject.imageProperties = {
-                contentUri: src
-              };
-            }
-          } else
-          if (!embeddedObject.imageProperties) {
-            if (src) {
-              embeddedObject.imageProperties = {
-                contentUri: src
-              };
-            }
-          }
-        }
+        item.inlineObjectElement.src = src;
 
         currentNo++;
       }
 
       if (item.paragraph && item.paragraph.elements) {
-        currentNo = this.fixEmbedImages(item.paragraph.elements, images, currentNo);
+        currentNo = await this.fixEmbedImages(item.paragraph.elements, inlineObjects, currentNo);
       }
     }
 
     return currentNo;
   }
 
-  async _flush(callback) {
-    const html = this.content;
-    const dom = await this.createDom(html);
-
-    this.document = JSON.parse(this.json);
-
-    const images = this.getImages(dom);
-
-    this.fixEmbedImages(this.document.body.content, images);
-
-    this.push(JSON.stringify(this.document, null, 4));
-
-    callback();
+  async process(document: Schema$Document) {
+    this.diagrams = await this.downloadFilesStorage.findFiles(file => file.mimeType === MimeTypes.DRAWING_MIME);
+    await this.fixEmbedImages(document.body.content, document.inlineObjects);
+    return document;
   }
-
 }

@@ -1,62 +1,43 @@
 'use strict';
 
-import * as fs from 'fs';
 import * as JSZip from 'jszip';
-import * as crypto from 'crypto';
-import {ExternalFiles} from '../storage/ExternalFiles';
-
-interface Images {
-  [k: string]: string;
-}
+import {ImageMeta} from '../storage/DownloadFilesStorage';
+import {getImageMeta} from './getImageMeta';
 
 export class UnZipper {
-    private html: string;
-    private readonly images: Images;
+  private html: string;
+  private readonly images: ImageMeta[];
 
-    constructor(private externalFiles: ExternalFiles) {
-        this.html = '<html></html>';
-        this.images = {};
+  constructor() {
+    this.html = '<html></html>';
+    this.images = [];
+  }
+
+  async load(input) {
+    const jsZip = new JSZip();
+    const zip = await jsZip.loadAsync(input);
+
+    const files = {};
+    zip.folder('').forEach((relativePath, entry) => {
+      files[relativePath] = entry;
+    });
+
+    for (const relativePath in files) {
+      if (relativePath.endsWith('.html')) {
+        this.html = await (zip.file(relativePath).async('string'));
+      }
+      if (relativePath.endsWith('.png')) {
+        const buffer = await files[relativePath].async('nodebuffer');
+        this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
+      }
     }
+  }
 
-    async load(zipPath: string) {
-        const jsZip = new JSZip();
-        const zip = await jsZip.loadAsync(fs.readFileSync(zipPath));
+  getHtml() {
+    return this.html;
+  }
 
-        const files = {};
-        zip.folder('').forEach((relativePath, entry) => {
-            files[relativePath] = entry;
-        });
-
-        for (const relativePath in files) {
-            if (relativePath.endsWith('.html')) {
-                this.html = await (zip.file(relativePath).async('string'));
-            }
-            if (relativePath.endsWith('.png')) {
-                const md5Checksum = await new Promise<string>(resolve => {
-                    const hash = crypto.createHash('md5');
-                    hash.setEncoding('hex');
-
-                    files[relativePath].nodeStream()
-                        .on('end', () => {
-                            hash.end();
-                            resolve(hash.read());
-                        })
-                        .pipe(hash);
-                });
-
-                const externalFile = this.externalFiles.findFile(file => file.md5Checksum === md5Checksum);
-                if (externalFile) {
-                    this.images[relativePath] = md5Checksum;
-                }
-            }
-        }
-    }
-
-    getHtml() {
-        return this.html;
-    }
-
-    getImages() {
-        return this.images;
-    }
+  getImages(): ImageMeta[] {
+    return this.images;
+  }
 }

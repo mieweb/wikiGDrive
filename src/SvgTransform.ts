@@ -10,7 +10,7 @@ export class SvgTransform extends Transform {
   private readonly localPath: string;
   private content: string;
 
-  constructor(localPath, linkTranslator) {
+  constructor(localPath, linkTranslator: LinkTranslator) {
     super();
 
     this.linkTranslator = linkTranslator;
@@ -52,7 +52,9 @@ export class SvgTransform extends Transform {
 
       if (id) {
         const localPath = await this.linkTranslator.urlToDestUrl(id);
-        urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
+        if (localPath !== id) {
+          urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
+        }
       } else {
         const localPath = await this.linkTranslator.urlToDestUrl(url);
         if (localPath !== url) {

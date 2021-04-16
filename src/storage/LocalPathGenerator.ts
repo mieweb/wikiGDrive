@@ -1,104 +1,81 @@
 import slugify from 'slugify';
-import {GoogleFile, GoogleFiles} from './GoogleFiles';
+import {GoogleFile, MimeTypes} from './GoogleFilesStorage';
+import {LocalFile} from './LocalFilesStorage';
 
-const MAX_FILENAME_LENGTH = 100;
+const MAX_PATH_LENGTH = 2000;
+const MAX_FILENAME_LENGTH = 200;
 
-export function getDesiredPath(name) {
-    name = name.replace(/[&]+/g, ' and ');
-    name = name.replace(/[/:()]+/g, ' ');
-    name = name.trim();
-    name = slugify(name, { replacement: '-', lower: true });
-    return name;
+export function getDesiredPath(name, mimeType?: string) {
+  name = name.replace(/[&]+/g, ' and ');
+  name = name.replace(/[/:()]+/g, ' ');
+  name = name.trim();
+  name = slugify(name, {replacement: '-', lower: true});
+
+  if (mimeType) {
+    switch (mimeType) {
+      case MimeTypes.DOCUMENT_MIME:
+        name += '.md';
+        break;
+      case MimeTypes.DRAWING_MIME:
+        name += '.svg';
+        break;
+      case MimeTypes.FOLDER_MIME:
+        break;
+      default:
+        name += '.bin';
+    }
+  }
+
+  return name.substr(0, MAX_FILENAME_LENGTH);
 }
 
 export class LocalPathGenerator {
 
-    constructor(private googleFiles: GoogleFiles, private flat_folder_structure: boolean) {
+  constructor(private flat_folder_structure: boolean) {
+  }
+
+  generateLevelFiles(parentId: string, googleFiles: GoogleFile[], prefix = '') {
+    if (this.flat_folder_structure) {
+      prefix = '';
     }
 
-    generateDesiredPaths(changedFiles: GoogleFile[]) {
-        changedFiles = changedFiles.map(changedFile => {
-            const clone = JSON.parse(JSON.stringify(changedFile));
-            clone.desiredLocalPath = null;
-            return clone;
-        });
+    const levelFiles: LocalFile[] = googleFiles.filter(file => file.parentId === parentId)
+      .map(googleFile => {
+        const desiredLocalPath = (prefix + '/' + getDesiredPath(googleFile.name, googleFile.mimeType)).substr(0, MAX_PATH_LENGTH);
+        return {
+          id: googleFile.id,
+          name: googleFile.name,
+          modifiedTime: googleFile.modifiedTime,
+          mimeType: googleFile.mimeType,
+          desiredLocalPath
+        };
+      });
 
-        const retVal = [];
-
-        let filesWithoutPath = changedFiles.filter(file => !file.desiredLocalPath).length;
-
-        while (filesWithoutPath > 0) {
-            for (const changedFile of changedFiles) {
-                if (!changedFile.desiredLocalPath) {
-                    changedFile.desiredLocalPath = this.generateDesiredPath(changedFile, changedFiles);
-                    if (!changedFile.desiredLocalPath) {
-                        continue;
-                    }
-
-                    if (changedFile.desiredLocalPath.length > MAX_FILENAME_LENGTH) {
-                        changedFile.desiredLocalPath = changedFile.desiredLocalPath.substr(0, MAX_FILENAME_LENGTH);
-                    }
-
-                    switch (changedFile.mimeType) {
-                        case 'application/vnd.google-apps.drawing':
-                            changedFile.desiredLocalPath += '.svg';
-                            break;
-                        case 'application/vnd.google-apps.document':
-                            changedFile.desiredLocalPath += '.md';
-                            break;
-                    }
-                    retVal.push(changedFile);
-                }
-            }
-
-            filesWithoutPath = changedFiles.filter(file => !file.desiredLocalPath).length;
-        }
-
-        retVal.sort((a, b) => {
-          return -(a.desiredLocalPath.length - b.desiredLocalPath.length);
-        });
-
-        return retVal;
+    for (const levelFile of levelFiles) {
+      const subLevelFiles = this.generateLevelFiles(levelFile.id, googleFiles, levelFile.desiredLocalPath);
+      levelFiles.push(...subLevelFiles);
     }
 
-    generateDesiredPath(changedFile: GoogleFile, changedFiles: GoogleFile[]) {
-        if (this.flat_folder_structure) {
-            return getDesiredPath(changedFile.name);
-        }
+    return levelFiles;
+  }
 
-        if (!changedFile.parentId) {
-            return getDesiredPath(changedFile.name);
-        }
+  async generateDesiredPaths(rootId: string, googleFiles: GoogleFile[]) {
+    const retVal: LocalFile[] = this.generateLevelFiles(rootId, googleFiles);
 
-        const parent = changedFiles.find(file => file.id === changedFile.parentId);
-        if (parent) {
-            const parentDirName = parent.desiredLocalPath;
-            if (parentDirName) {
-                const slugifiedParent = parentDirName
-                    .split('/')
-                    .map(part => getDesiredPath(part))
-                    .join('/');
+    const externalFiles: GoogleFile[] = googleFiles.filter(googleFile => !retVal.find(localFile => localFile.id === googleFile.id));
 
-                return slugifiedParent + '/' + getDesiredPath(changedFile.name);
-            }
-        } else {
-            const parent = this.googleFiles.findFile(file => file.id === changedFile.parentId);
-            if (parent) {
-                const parentDirName = parent.desiredLocalPath;
-                if (parentDirName) {
-                    const slugifiedParent = parentDirName
-                        .split('/')
-                        .map(part => getDesiredPath(part))
-                        .join('/');
+    retVal.push(...externalFiles.map(googleFile => {
+      const desiredLocalPath = '/external_docs/' + googleFile.parentId + '/' + getDesiredPath(googleFile.name, googleFile.mimeType);
+      return {
+        id: googleFile.id,
+        name: googleFile.name,
+        modifiedTime: googleFile.modifiedTime,
+        mimeType: googleFile.mimeType,
+        desiredLocalPath
+      };
+    }));
 
-                    return slugifiedParent + '/' + getDesiredPath(changedFile.name);
-                }
-            } else {
-                return 'external_docs/' + changedFile.parentId + '/' + getDesiredPath(changedFile.name);
-            }
-        }
-
-        return null;
-    }
+    return retVal;
+  }
 
 }

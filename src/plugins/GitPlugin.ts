@@ -5,15 +5,17 @@ import * as fs from 'fs';
 import * as SimpleGit from 'simple-git/promise';
 import {spawn} from 'child_process';
 
-import {BasePlugin} from './BasePlugin';
-import {GoogleFiles, MimeTypes} from '../storage/GoogleFiles';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
+import {BasePlugin} from './BasePlugin';
+import {GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
+import {LocalFilesStorage} from '../storage/LocalFilesStorage';
 
 export class GitPlugin extends BasePlugin {
   private gitUpdateSecondsDelay: number;
   private config_dir: any;
   private dest: string;
-  private googleFiles: GoogleFiles;
+  private googleFilesStorage: GoogleFilesStorage;
+  private localFilesStorage: LocalFilesStorage;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -36,8 +38,11 @@ export class GitPlugin extends BasePlugin {
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.dest = drive_config.dest;
     });
-    eventBus.on('google_files:initialized', ({ googleFiles }) => {
-      this.googleFiles = googleFiles;
+    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+      this.googleFilesStorage = googleFilesStorage;
+    });
+    eventBus.on('google_files:initialized', ({ localFilesStorage }) => {
+      this.localFilesStorage = localFilesStorage;
     });
     eventBus.on('transform:done', async () => {
       await this.processGit();
@@ -68,15 +73,17 @@ git commit -m "Autocommit updated files" $@
       }
       const status = await repository.status();
 
-      const documents = this.googleFiles.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
+      const documents = this.googleFilesStorage.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
       // console.log('status', status);
 
-      const not_added = documents.filter(doc => status.not_added.indexOf(doc.localPath) > -1);
+      const localDocs = this.localFilesStorage.findFiles(lFile => !!documents.find(doc => doc.id === lFile.id));
+
+      const not_added = localDocs.filter(doc => status.not_added.indexOf(doc.localPath) > -1);
       if (not_added.length > 0) {
         await this.fireHook('md_new', not_added.map(file => file.localPath));
       }
 
-      const modified = documents.filter(doc => status.modified.indexOf(doc.localPath) > -1);
+      const modified = localDocs.filter(doc => status.modified.indexOf(doc.localPath) > -1);
       const now = +new Date();
       if (modified.length > 0) {
         const to_update = modified.filter(file => {
