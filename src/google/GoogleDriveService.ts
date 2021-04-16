@@ -27,7 +27,7 @@ interface GoogleDriveServiceErrorParams {
   origError: Error;
   isQuotaError: boolean;
 
-  file?: string;
+  file?: any;
   dest?: string;
   folderId?: string;
 }
@@ -283,7 +283,7 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth, file, dest) {
+  async exportDocument(auth, file: { id: string, mimeType: string, name: string }, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
     const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';

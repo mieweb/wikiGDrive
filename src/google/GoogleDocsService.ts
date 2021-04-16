@@ -2,6 +2,7 @@
 
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import {GoogleFile} from '../storage/GoogleFilesStorage';
 
 export class GoogleDocsServiceError extends Error {
   private file: any;
@@ -22,7 +23,7 @@ export class GoogleDocsService {
 
   constructor(private logger) {}
 
-  async download(auth, file, dest) {
+  async download(auth, file: GoogleFile, dest) {
     const docs = google.docs({ version: 'v1', auth });
 
     try {
@@ -39,13 +40,13 @@ export class GoogleDocsService {
         if (Array.isArray(dest)) {
           dest.forEach(pipe => stream = stream.pipe(pipe));
           stream.on('finish', () => {
-            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
+            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.name + ']');
             resolve();
           });
         } else {
           stream.pipe(dest);
           dest.on('finish', () => {
-            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.localPath + ']');
+            this.logger.info('Downloaded document: ' + file.id + '.gdoc [' + file.name + ']');
             resolve();
           });
         }
