@@ -17,11 +17,11 @@ export interface NavigationHierarchy {
 }
 
 // https://developers.google.com/docs/api/concepts/structure
-export async function generateNavigationHierarchy(doc: Schema$Document, files: LocalFile[]): Promise<NavigationHierarchy> {
+export async function generateNavigationHierarchy(doc: Schema$Document, files: LocalFile[], logger): Promise<NavigationHierarchy> {
   const result: NavigationHierarchy = {};
 
   let counter = 30;
-  let lastcontent = '';
+  let lastContent = '';
 
   const levelParent = {};
 
@@ -37,7 +37,7 @@ export async function generateNavigationHierarchy(doc: Schema$Document, files: L
       const url = element?.textRun?.textStyle.link?.url;
 
       if (content && url) {
-        lastcontent = content;
+        lastContent = content;
         const fileId = urlToFolderId(url);
 
         const desiredPath = '/' + url.split('.')[0];
@@ -60,7 +60,7 @@ export async function generateNavigationHierarchy(doc: Schema$Document, files: L
           counter += 10;
         }
       } else if (content != '\n') {
-        console.log('Warning: .navigation menu has ' + content.trim() + ' without url near: ' + lastcontent.trim());
+        logger.warn('Warning: .navigation menu has \"' + content.trim() + '\" without url near: \"' + lastContent.trim() + '\"');
       }
     }
   }

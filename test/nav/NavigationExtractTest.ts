@@ -110,7 +110,7 @@ describe('NavigationExtractTest', () => {
       expected[node.identifier] = node;
     }
 
-    const actual = await generateNavigationHierarchy(doc, FILES);
+    const actual = await generateNavigationHierarchy(doc, FILES, { warn: (msg) => console.warn(msg)});
     assert.deepEqual(actual, expected);
 
     return Promise.resolve();

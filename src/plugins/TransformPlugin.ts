@@ -135,7 +135,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
         await linkRewriter.process();
 
         const files = this.localFilesStorage.findFiles(file => !!file);
-        hierarchy = await generateNavigationHierarchy(navDoc, files);
+        hierarchy = await generateNavigationHierarchy(navDoc, files, this.logger);
       }
     }
 
