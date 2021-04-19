@@ -166,11 +166,13 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       this.logger.error(error);
     });
 
-    for (const id of toGenerate) {
-      const localFile = this.localFilesStorage.findFile(f => f.id === id);
-      q.push(localFile);
+    if (toGenerate.length > 0) {
+      for (const id of toGenerate) {
+        const localFile = this.localFilesStorage.findFile(f => f.id === id);
+        q.push(localFile);
+      }
+      await q.drain();
     }
-    await q.drain();
 
     if (this.googleFileIds.length > 0) {
       return false;
@@ -206,11 +208,15 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       }
     }
 
-    if (fs.existsSync(removePath + '.md')) {
-      fs.unlinkSync(removePath + '.md');
+    if (fs.existsSync(removePath)) {
+      fs.unlinkSync(removePath);
     }
-    if (fs.existsSync(removePath + '.svg')) {
-      fs.unlinkSync(removePath + '.svg');
+
+    if (removePath.endsWith('.md')) {
+      const imagesPath = removePath.replace(/.md$/, '.images');
+      if (fs.existsSync(imagesPath)) {
+        fs.rmdirSync(imagesPath, { recursive: true });
+      }
     }
   }
 

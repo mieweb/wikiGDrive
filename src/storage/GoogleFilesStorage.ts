@@ -89,7 +89,7 @@ export class GoogleFilesStorage {
   }
 
   async mergeChanges(files: GoogleFile[], trashed: string[]) {
-    for (const id in trashed) {
+    for (const id of trashed) {
       await this.removeFile(id);
     }
 
@@ -115,7 +115,7 @@ export class GoogleFilesStorage {
     const newFileIds = newFiles
       .map(file => file.id);
 
-    for (const dbId in dbFileIds) {
+    for (const dbId of dbFileIds) {
       if (newFileIds.indexOf(dbId) === -1) {
         await this.removeFile(dbId);
       }
