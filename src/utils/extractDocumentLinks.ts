@@ -1,4 +1,6 @@
 import {DownloadFileImage} from '../storage/DownloadFilesStorage';
+import {findAll} from 'domutils';
+import {createDom} from '../html/GoogleListFixer';
 
 export async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -48,4 +50,13 @@ export async function extractDocumentImages(document: any): Promise<DownloadFile
   });
 
   return links;
+}
+
+export async function extractHtmlImagesOrder(html) {
+  const dom = await createDom(html);
+  const elements = findAll((elem) => {
+    return elem.name === 'img';
+  }, dom);
+
+  return elements.map(element => element.attribs['src']?.replace(/^images\//, ''));
 }
