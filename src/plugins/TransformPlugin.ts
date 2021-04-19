@@ -23,6 +23,7 @@ import {generateDocumentFrontMatter} from '../markdown/generateDocumentFrontMatt
 import {generateNavigationHierarchy, NavigationHierarchy} from '../generateNavigationHierarchy';
 import {LinkRewriter} from '../markdown/LinkRewriter';
 import {TocGenerator} from '../TocGenerator';
+import {queue} from 'async';
 
 async function ensureDir(filePath) {
   const parts = filePath.split(path.sep);
@@ -146,14 +147,30 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     this.progress.total = toGenerate.length;
     this.eventBus.emit('transform:progress', this.progress);
 
-    for (const id of toGenerate) {
-      const localFile = this.localFilesStorage.findFile(f => f.id === id);
-      if (localFile) {
-        await this.generate(localFile, hierarchy);
+    const CONCURRENCY = 4;
+
+    const q = queue<LocalFile>(async (localFile, callback) => {
+      try {
+        if (localFile) {
+          await this.generate(localFile, hierarchy);
+        }
         this.progress.completed++;
         this.eventBus.emit('transform:progress', this.progress);
+        callback();
+      } catch (err) {
+        callback(err);
       }
+    }, CONCURRENCY);
+
+    q.error(async (error, file) => {
+      this.logger.error(error);
+    });
+
+    for (const id of toGenerate) {
+      const localFile = this.localFilesStorage.findFile(f => f.id === id);
+      q.push(localFile);
     }
+    await q.drain();
 
     if (this.googleFileIds.length > 0) {
       return false;
