@@ -70,7 +70,7 @@ export class WatchChangesPlugin extends BasePlugin {
           this.logger.debug('No changes detected. Sleeping for 10 seconds.');
         }
 
-        if (changedFiles.length > 0 || trashed) {
+        if (changedFiles.length > 0 || trashed.length > 0) {
           this.logger.info(changedFiles.length + ' files changed, ' + trashed.length + ' files trashed');
           await this.googleFilesStorage.mergeChanges(changedFiles, trashed);
         }
