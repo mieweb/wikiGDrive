@@ -26,6 +26,7 @@ export interface DownloadFile {
   name: string;
   mimeType: string;
   modifiedTime?: DateISO;
+  version: number;
   md5Checksum?: string;
   image?: ImageMeta;
   images?: DownloadFileImage[];

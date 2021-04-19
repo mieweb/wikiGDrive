@@ -96,7 +96,8 @@ export class DownloadPlugin extends BasePlugin {
       id: file.id,
       name: file.name,
       mimeType: file.mimeType,
-      modifiedTime: file.modifiedTime
+      modifiedTime: file.modifiedTime,
+      version: file.version
     };
   }
 
@@ -125,6 +126,7 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version,
       md5Checksum,
       image: await getImageMeta(await this.fileService.readBuffer(targetPathPng))
     };
@@ -162,6 +164,7 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version,
       images
     };
   }
@@ -176,6 +179,7 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version
     };
   }
 

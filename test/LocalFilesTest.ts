@@ -56,7 +56,8 @@ describe('LocalFiles', () => {
         conflictId: "test-file:conflict",
         localPath: 'test-file_1',
         counter: 1,
-        modifiedTime: undefined
+        modifiedTime: undefined,
+        version: undefined
       },
       {
         id: 'id2',
@@ -65,7 +66,8 @@ describe('LocalFiles', () => {
         conflictId: "test-file:conflict",
         localPath: 'test-file_2',
         counter: 2,
-        modifiedTime: undefined
+        modifiedTime: undefined,
+        version: undefined
       }
     ]);
 
@@ -96,15 +98,17 @@ describe('LocalFiles', () => {
           id: 'id1',
           name: 'example-1',
           desiredLocalPath: 'example-1',
-          localPath: "example-1",
-          modifiedTime: undefined
+          localPath: 'example-1',
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'id2',
           name: 'example-2',
           desiredLocalPath: 'example-2',
-          localPath: "example-2",
-          modifiedTime: undefined
+          localPath: 'example-2',
+          modifiedTime: undefined,
+          version: undefined
         }
       ]);
     }
@@ -130,30 +134,34 @@ describe('LocalFiles', () => {
           redirectTo: 'id1',
           name: 'example-1',
           desiredLocalPath: 'example-1',
-          localPath: "example-1",
-          modifiedTime: undefined
+          localPath: 'example-1',
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'example-2:redir:id2',
           redirectTo: 'id2',
           name: 'example-2',
           desiredLocalPath: 'example-2',
-          localPath: "example-2",
-          modifiedTime: undefined
+          localPath: 'example-2',
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'id1',
           name: 'example-1-renamed',
           desiredLocalPath: 'example-1-renamed',
           localPath: 'example-1-renamed',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'id2',
           desiredLocalPath: 'example-2-renamed',
           name: 'example-2-renamed',
           localPath: 'example-2-renamed',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         }
       ]);
     }
@@ -195,14 +203,16 @@ describe('LocalFiles', () => {
           localPath: 'example-1',
           name: 'example-1',
           desiredLocalPath: 'example-1',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'id1',
           desiredLocalPath: 'renamed-example-1',
           name: 'renamed-example-1',
           localPath: 'renamed-example-1',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         },
       ]);
     }
@@ -282,7 +292,8 @@ describe('LocalFiles', () => {
           localPath: 'example-1_1',
           conflictId: "example-1:conflict",
           counter: 1,
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'id2',
@@ -291,7 +302,8 @@ describe('LocalFiles', () => {
           localPath: 'example-1_2',
           conflictId: "example-1:conflict",
           counter: 2,
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         }
       ]);
     }
@@ -312,7 +324,8 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         },
         {
           id: 'example-1_2:redir:id2',
@@ -320,7 +333,8 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1_2',
           localPath: 'example-1_2',
-          modifiedTime: undefined
+          modifiedTime: undefined,
+          version: undefined
         }
       ]);
     }
