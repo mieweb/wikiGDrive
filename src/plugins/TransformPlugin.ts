@@ -23,6 +23,7 @@ import {generateDocumentFrontMatter} from '../markdown/generateDocumentFrontMatt
 import {generateNavigationHierarchy, NavigationHierarchy} from '../generateNavigationHierarchy';
 import {LinkRewriter} from '../markdown/LinkRewriter';
 import {TocGenerator} from '../TocGenerator';
+import {queue} from 'async';
 
 async function ensureDir(filePath) {
   const parts = filePath.split(path.sep);
@@ -134,7 +135,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
         await linkRewriter.process();
 
         const files = this.localFilesStorage.findFiles(file => !!file);
-        hierarchy = await generateNavigationHierarchy(navDoc, files);
+        hierarchy = await generateNavigationHierarchy(navDoc, files, this.logger);
       }
     }
 
@@ -146,13 +147,31 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     this.progress.total = toGenerate.length;
     this.eventBus.emit('transform:progress', this.progress);
 
-    for (const id of toGenerate) {
-      const localFile = this.localFilesStorage.findFile(f => f.id === id);
-      if (localFile) {
-        await this.generate(localFile, hierarchy);
+    const CONCURRENCY = 4;
+
+    const q = queue<LocalFile>(async (localFile, callback) => {
+      try {
+        if (localFile) {
+          await this.generate(localFile, hierarchy);
+        }
         this.progress.completed++;
         this.eventBus.emit('transform:progress', this.progress);
+        callback();
+      } catch (err) {
+        callback(err);
       }
+    }, CONCURRENCY);
+
+    q.error(async (error, file) => {
+      this.logger.error(error);
+    });
+
+    if (toGenerate.length > 0) {
+      for (const id of toGenerate) {
+        const localFile = this.localFilesStorage.findFile(f => f.id === id);
+        q.push(localFile);
+      }
+      await q.drain();
     }
 
     if (this.googleFileIds.length > 0) {
@@ -189,11 +208,15 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       }
     }
 
-    if (fs.existsSync(removePath + '.md')) {
-      fs.unlinkSync(removePath + '.md');
+    if (fs.existsSync(removePath)) {
+      fs.unlinkSync(removePath);
     }
-    if (fs.existsSync(removePath + '.svg')) {
-      fs.unlinkSync(removePath + '.svg');
+
+    if (removePath.endsWith('.md')) {
+      const imagesPath = removePath.replace(/.md$/, '.images');
+      if (fs.existsSync(imagesPath)) {
+        fs.rmdirSync(imagesPath, { recursive: true });
+      }
     }
   }
 

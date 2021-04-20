@@ -24,12 +24,13 @@ Main commands:
         --link_mode [mdURLs|dirURLs|uglyURLs]
         --without-folder-structure
 
-    wikigdrive pull
+    wikigdrive pull [URL to specific file]
 
     wikigdrive watch --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
 
 Other commands:
 
+    wikigdrive status [ID of document]   - Show status of the document or stats of the entire path.
     wikigdrive drives
     wikigdrive sync
     wikigdrive download

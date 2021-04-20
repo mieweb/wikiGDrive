@@ -13,7 +13,7 @@ import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {CliParams} from '../MainService';
 import {DownloadFile, DownloadFileImage, DownloadFilesStorage, ImageMeta} from '../storage/DownloadFilesStorage';
-import {extractDocumentImages} from '../utils/extractDocumentLinks';
+import {extractDocumentImages, extractHtmlImagesOrder} from '../utils/extractDocumentLinks';
 import {UnZipper} from '../utils/UnZipper';
 import {getImageMeta} from '../utils/getImageMeta';
 
@@ -96,7 +96,8 @@ export class DownloadPlugin extends BasePlugin {
       id: file.id,
       name: file.name,
       mimeType: file.mimeType,
-      modifiedTime: file.modifiedTime
+      modifiedTime: file.modifiedTime,
+      version: file.version
     };
   }
 
@@ -125,6 +126,7 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version,
       md5Checksum,
       image: await getImageMeta(await this.fileService.readBuffer(targetPathPng))
     };
@@ -148,20 +150,24 @@ export class DownloadPlugin extends BasePlugin {
 
     const unZipper = new UnZipper();
     await unZipper.load(fs.readFileSync(zipPath));
+
+    const htmlImages = await extractHtmlImagesOrder(unZipper.getHtml());
+
     const zipImages: ImageMeta[] = unZipper.getImages();
-    for (let imageNo = 0; imageNo < images.length; imageNo++) {
-      if (imageNo < zipImages.length) {
-        images[imageNo].zipImage = zipImages[imageNo];
+    for (let imageNo = 0; imageNo < htmlImages.length; imageNo++) {
+      const htmlImage = htmlImages[imageNo];
+      const zipImage = zipImages.find(zipImage => zipImage.zipPath === htmlImage);
+      if (zipImage) {
+        images[imageNo].zipImage = zipImage;
       }
     }
-
-    // await addZipImages(images);
 
     return {
       id: file.id,
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version,
       images
     };
   }
@@ -176,6 +182,7 @@ export class DownloadPlugin extends BasePlugin {
       name: file.name,
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
+      version: file.version
     };
   }
 
@@ -212,7 +219,7 @@ export class DownloadPlugin extends BasePlugin {
           return false;
         }
         const dFile = downloadedFiles.find(dFile => dFile.id === item.id);
-        if (dFile && dFile.modifiedTime === item.modifiedTime) {
+        if (dFile && dFile.modifiedTime === item.modifiedTime && dFile.version === item.version) {
           return false;
         }
         return true;

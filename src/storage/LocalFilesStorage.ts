@@ -19,6 +19,7 @@ class VoidTransformHandler implements TransformHandler {
     return Promise.resolve();
   }
   async forceGeneration(localFile: LocalFile) {
+    localFile.version = undefined;
     localFile.modifiedTime = undefined;
   }
   async beforeSave() {
@@ -31,6 +32,7 @@ export interface LocalFile {
   name: string;
 
   modifiedTime?: DateISO;
+  version?: number;
 
   desiredLocalPath: string;
   localPath?: string;
@@ -59,7 +61,7 @@ export class LocalFilesStorage {
   // private save_needed = false;
 
   private fileMap: LocalFileMap;
-  private intervalHandler: NodeJS.Timeout;
+  private intervalHandler: null | ReturnType<typeof setTimeout>;
 
   constructor(private config_dir: string) {
     this.fileService = new FileService();
@@ -128,12 +130,14 @@ export class LocalFilesStorage {
 
         dbFile.desiredLocalPath = file.desiredLocalPath;
         dbFile.modifiedTime = file.modifiedTime;
+        dbFile.version = file.version;
         dbFile.name = file.name;
         await transformHandler.forceGeneration(dbFile);
       }
 
-      if (dbFile.modifiedTime !== file.modifiedTime) {
+      if (dbFile.version !== file.version) {
         dbFile.modifiedTime = file.modifiedTime;
+        dbFile.version = file.version;
         await transformHandler.forceGeneration(dbFile);
       }
     }
@@ -149,6 +153,7 @@ export class LocalFilesStorage {
           name: file.name,
           desiredLocalPath: file.desiredLocalPath,
           modifiedTime: file.modifiedTime,
+          version: file.version,
         };
       }
     }

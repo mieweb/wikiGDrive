@@ -27,7 +27,7 @@ interface GoogleDriveServiceErrorParams {
   origError: Error;
   isQuotaError: boolean;
 
-  file?: string;
+  file?: any;
   dest?: string;
   folderId?: string;
 }
@@ -166,14 +166,19 @@ export class GoogleDriveService {
         pageToken: pageToken,
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
-        fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed))',
+        fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed), removed)',
         includeRemoved: true,
         driveId: driveId ? driveId : undefined
       });
 
       const files = res.data.changes
         .filter(change => !!change.file)
-        .map(change => change.file)
+        .map(change => {
+          if (change.removed) {
+            change.file.trashed = true;
+          }
+          return change.file;
+        })
         .map(apiFile => apiFileToGoogleFile(apiFile));
 
       return {
@@ -283,7 +288,7 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth, file, dest) {
+  async exportDocument(auth, file: { id: string, mimeType: string, name: string }, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
     const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';

@@ -46,6 +46,7 @@ export class LocalPathGenerator {
           id: googleFile.id,
           name: googleFile.name,
           modifiedTime: googleFile.modifiedTime,
+          version: googleFile.version,
           mimeType: googleFile.mimeType,
           desiredLocalPath
         };
@@ -70,6 +71,7 @@ export class LocalPathGenerator {
         id: googleFile.id,
         name: googleFile.name,
         modifiedTime: googleFile.modifiedTime,
+        version: googleFile.version,
         mimeType: googleFile.mimeType,
         desiredLocalPath
       };

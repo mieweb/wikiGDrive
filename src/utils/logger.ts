@@ -25,7 +25,6 @@ const myFormat = winston.format.printf((params) => {
   if (filename) {
     return `${timestamp} [${level}] (${filename}): ${message}` + errorStr;
   } else {
-    console.error(message);
     return `${timestamp} [${level}]: ${message}` + errorStr;
   }
 });

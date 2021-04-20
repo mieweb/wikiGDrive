@@ -8,6 +8,9 @@ export function generateRedirectMarkdown(redirFile: LocalFile, redirectTo: Local
   if (redirFile.modifiedTime) {
     frontMatter += 'date: "' + redirFile.modifiedTime + '"\n';
   }
+  if (redirFile.version) {
+    frontMatter += 'date: "' + redirFile.version + '"\n';
+  }
   const htmlPath = linkTranslator.convertToRelativeMarkDownPath(redirFile.localPath, '');
   if (htmlPath) {
     frontMatter += 'url: "' + htmlPath + '"\n';
