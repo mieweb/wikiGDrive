@@ -72,7 +72,7 @@
     "sharp": "^0.28.0",
     "sharp-phash": "^2.0.0",
     "simple-git": "^2.37.0",
-    "slugify": "^1.4.7",
+    "slugify": "^1.5.0",
     "stream": "^0.0.2",
     "ts-node": "^9.1.1",
     "typescript": "4.2.3",
