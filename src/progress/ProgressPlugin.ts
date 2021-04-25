@@ -133,6 +133,13 @@ export class ProgressPlugin extends BasePlugin {
 
     this.renderer.render();
 
+    eventBus.on('progress:pause', () => {
+      this.renderer.end();
+    });
+    eventBus.on('progress:unpause', () => {
+      this.renderer.render();
+    });
+
     eventBus.once('main:run', async () => {
       this.tasks.push(new ProgressTask({
         title: 'Wikigdrive initialized',

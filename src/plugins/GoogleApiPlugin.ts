@@ -63,7 +63,9 @@ export class GoogleApiPlugin extends BasePlugin {
             googleDriveService
           });
         } else {
+          this.eventBus.emit('progress:pause');
           const auth = await googleAuthService.authorize(this.drive_config.client_id, this.drive_config.client_secret);
+          this.eventBus.emit('progress:unpause');
           this.eventBus.emit('google_api:done', {
             auth,
             googleDriveService
