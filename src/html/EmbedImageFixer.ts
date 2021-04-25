@@ -16,6 +16,13 @@ export class EmbedImageFixer {
   }
 
   private async fixUrl(image: DownloadFileImage) {
+    if (image.fileId) {
+      const localFile = await this.localFilesStorage.findFile(file => file.id === image.fileId);
+      if (localFile) {
+        return localFile.localPath;
+      }
+    }
+
     if (image.zipImage) {
 
       const distances = this.diagrams
