@@ -73,10 +73,11 @@ export class WatchChangesPlugin extends BasePlugin {
         if (changedFiles.length > 0 || trashed.length > 0) {
           this.logger.info(changedFiles.length + ' files changed, ' + trashed.length + ' files trashed');
           await this.googleFilesStorage.mergeChanges(changedFiles, trashed);
-          this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
           this.logger.debug('Pulled latest changes');
           this.eventBus.emit('google_files:dirty');
         }
+
+        this.startTrackToken = result.token; // eslint-disable-line require-atomic-updates
       } catch (e) {
         this.logger.error(e);
       }
