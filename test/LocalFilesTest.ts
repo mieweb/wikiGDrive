@@ -46,6 +46,7 @@ describe('LocalFiles', () => {
         name: 'Conflict: test-file',
         desiredLocalPath: 'test-file',
         localPath: 'test-file',
+        mimeType: 'application/vnd.google-apps.document',
         counter: 3,
         conflicting: ['id1', 'id2']
       },
@@ -56,6 +57,7 @@ describe('LocalFiles', () => {
         conflictId: "test-file:conflict",
         localPath: 'test-file_1',
         counter: 1,
+        mimeType: undefined,
         modifiedTime: undefined,
         version: undefined
       },
@@ -66,6 +68,7 @@ describe('LocalFiles', () => {
         conflictId: "test-file:conflict",
         localPath: 'test-file_2',
         counter: 2,
+        mimeType: undefined,
         modifiedTime: undefined,
         version: undefined
       }
@@ -99,6 +102,7 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         },
@@ -107,6 +111,7 @@ describe('LocalFiles', () => {
           name: 'example-2',
           desiredLocalPath: 'example-2',
           localPath: 'example-2',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         }
@@ -135,6 +140,7 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
+          mimeType: 'application/vnd.google-apps.document',
           modifiedTime: undefined,
           version: undefined
         },
@@ -144,6 +150,7 @@ describe('LocalFiles', () => {
           name: 'example-2',
           desiredLocalPath: 'example-2',
           localPath: 'example-2',
+          mimeType: 'application/vnd.google-apps.document',
           modifiedTime: undefined,
           version: undefined
         },
@@ -152,6 +159,7 @@ describe('LocalFiles', () => {
           name: 'example-1-renamed',
           desiredLocalPath: 'example-1-renamed',
           localPath: 'example-1-renamed',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         },
@@ -160,6 +168,7 @@ describe('LocalFiles', () => {
           desiredLocalPath: 'example-2-renamed',
           name: 'example-2-renamed',
           localPath: 'example-2-renamed',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         }
@@ -203,6 +212,7 @@ describe('LocalFiles', () => {
           localPath: 'example-1',
           name: 'example-1',
           desiredLocalPath: 'example-1',
+          mimeType: 'application/vnd.google-apps.document',
           modifiedTime: undefined,
           version: undefined
         },
@@ -211,6 +221,7 @@ describe('LocalFiles', () => {
           desiredLocalPath: 'renamed-example-1',
           name: 'renamed-example-1',
           localPath: 'renamed-example-1',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         },
@@ -282,6 +293,7 @@ describe('LocalFiles', () => {
           name: 'Conflict: example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
+          mimeType: 'application/vnd.google-apps.document',
           counter: 3,
           conflicting: ['id1', 'id2']
         },
@@ -290,8 +302,9 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1_1',
-          conflictId: "example-1:conflict",
+          conflictId: 'example-1:conflict',
           counter: 1,
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         },
@@ -300,8 +313,9 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1_2',
-          conflictId: "example-1:conflict",
+          conflictId: 'example-1:conflict',
           counter: 2,
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         }
@@ -324,6 +338,7 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1',
           localPath: 'example-1',
+          mimeType: undefined,
           modifiedTime: undefined,
           version: undefined
         },
@@ -333,6 +348,7 @@ describe('LocalFiles', () => {
           name: 'example-1',
           desiredLocalPath: 'example-1_2',
           localPath: 'example-1_2',
+          mimeType: 'application/vnd.google-apps.document',
           modifiedTime: undefined,
           version: undefined
         }
