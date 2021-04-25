@@ -41,7 +41,7 @@ export interface CliParams {
   debug: string[];
   force: boolean;
 
-  disable_progress: Boolean;
+  disable_progress: boolean;
 
   client_id?: string;
   client_secret?: string;
@@ -55,7 +55,7 @@ export class MainService {
   private readonly command: string;
   private plugins: BasePlugin[];
   private readonly logger: winston.Logger;
-  private readonly disable_progress: Boolean;
+  private readonly disable_progress: boolean;
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
@@ -244,7 +244,7 @@ export class MainService {
         await this.emitThanAwait('sync:run', {}, ['sync:done']);
         await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
         // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
-        await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
+        await this.emitThanAwait('transform:run', {}, [ 'transform:done' ]);
 
         this.eventBus.on('google_files:dirty', async () => {
           this.eventBus.emit('download:run');
