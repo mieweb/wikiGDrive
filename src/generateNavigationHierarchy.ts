@@ -32,36 +32,46 @@ export async function generateNavigationHierarchy(doc: Schema$Document, files: L
 
     const level = structuralElement?.paragraph?.bullet?.nestingLevel || 0;
 
+    let paraUrl;
+    let paraContent = '';
+
     for (const element of structuralElement.paragraph.elements) {
       const content = element?.textRun?.content;
       const url = element?.textRun?.textStyle.link?.url;
 
-      if (content && url) {
-        lastContent = content;
-        const fileId = urlToFolderId(url);
-
-        const desiredPath = '/' + url.split('.')[0];
-        const file = files.find(file => file.id === fileId || file.desiredLocalPath.split('.')[0] === desiredPath || file.desiredLocalPath === url);
-
-        if (file) {
-          levelParent[level] = file.id;
-
-          const hierarchyFrontMatter: NavigationHierarchyNode = {
-            identifier: file.id,
-            name: content,
-            weight: counter
-          };
-
-          if (level > 0) {
-            hierarchyFrontMatter.parent = levelParent[level - 1];
-          }
-
-          result[hierarchyFrontMatter.identifier] = hierarchyFrontMatter;
-          counter += 10;
-        }
-      } else if (content != '\n') {
-        logger.warn('Warning: .navigation menu has \"' + content.trim() + '\" without url near: \"' + lastContent.trim() + '\"');
+      if (content) {
+        paraContent += content;
       }
+      if (url) {
+        paraUrl = url;
+      }
+    }
+
+    if (paraContent && paraUrl) {
+      lastContent = paraContent;
+      const fileId = urlToFolderId(paraUrl);
+
+      const desiredPath = '/' + paraUrl.split('.')[0];
+      const file = files.find(file => file.id === fileId || file.desiredLocalPath.split('.')[0] === desiredPath || file.desiredLocalPath === paraUrl);
+
+      if (file) {
+        levelParent[level] = file.id;
+
+        const hierarchyFrontMatter: NavigationHierarchyNode = {
+          identifier: file.id,
+          name: paraContent.trim(),
+          weight: counter
+        };
+
+        if (level > 0) {
+          hierarchyFrontMatter.parent = levelParent[level - 1];
+        }
+
+        result[hierarchyFrontMatter.identifier] = hierarchyFrontMatter;
+        counter += 10;
+      }
+    } else if (paraContent != '\n') {
+      logger.warn('Warning: .navigation menu has \"' + paraContent.trim() + '\" without url near: \"' + lastContent.trim() + '\"');
     }
   }
 

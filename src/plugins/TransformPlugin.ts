@@ -198,18 +198,13 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     if (!file || !file.localPath) return;
 
     const removePath = path.join(this.drive_config.dest, ...file.localPath.substr(1).split('/'));
-    const stat = fs.statSync(removePath);
-    if (stat.isDirectory()) {
-      const files = fs.readdirSync(removePath);
-      for (const file of files) {
-        if (file.endsWith('.png')) {
-          fs.unlinkSync(path.join(removePath, file));
-        }
-      }
-    }
-
     if (fs.existsSync(removePath)) {
-      fs.unlinkSync(removePath);
+      const stat = fs.statSync(removePath);
+      if (stat.isDirectory()) {
+        fs.rmdirSync(removePath, {recursive: true});
+      } else {
+        fs.unlinkSync(removePath);
+      }
     }
 
     if (removePath.endsWith('.md')) {
@@ -230,11 +225,13 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     if (isConflict(localFile)) {
       const conflicting = localFile.conflicting.map(id => this.localFilesStorage.findFile(f => f.id === id));
       const md = await generateConflictMarkdown(localFile, conflicting);
+      await ensureDir(targetPath);
       fs.writeFileSync(targetPath, md);
     } else
     if (isRedirect(localFile)) {
 
-      const md = await generateRedirectMarkdown(localFile, this.localFilesStorage.findFile(f => f.id === localFile.id), this.linkTranslator);
+      const md = await generateRedirectMarkdown(localFile, this.localFilesStorage.findFile(f => f.id === localFile.redirectTo), this.linkTranslator);
+      await ensureDir(targetPath);
       fs.writeFileSync(targetPath, md);
 
     } else {

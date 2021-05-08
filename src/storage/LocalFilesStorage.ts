@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import {FileService} from '../utils/FileService';
+import { MimeTypes } from './GoogleFilesStorage';
 
 type DateISO = string;
 type FileId = string;
@@ -33,6 +34,7 @@ export interface LocalFile {
 
   modifiedTime?: DateISO;
   version?: number;
+  mimeType?: string;
 
   desiredLocalPath: string;
   localPath?: string;
@@ -118,18 +120,22 @@ export class LocalFilesStorage {
       }
 
       if (dbFile.desiredLocalPath !== file.desiredLocalPath) {
-        const redirFile: LocalFile = {
-          name: dbFile.name,
-          id: dbFile.desiredLocalPath + ':redir:' + file.id,
-          desiredLocalPath: dbFile.desiredLocalPath,
-          redirectTo: file.id
-        };
-        this.fileMap[redirFile.id] = redirFile;
+        if (file.mimeType !== MimeTypes.FOLDER_MIME) {
+          const redirFile: LocalFile = {
+            name: dbFile.name,
+            id: dbFile.desiredLocalPath + ':redir:' + file.id,
+            desiredLocalPath: dbFile.desiredLocalPath,
+            mimeType: MimeTypes.DOCUMENT_MIME,
+            redirectTo: file.id
+          };
+          this.fileMap[redirFile.id] = redirFile;
+        }
 
         await transformHandler.removeMarkDownsAndImages(dbFile);
 
         dbFile.desiredLocalPath = file.desiredLocalPath;
         dbFile.modifiedTime = file.modifiedTime;
+        dbFile.mimeType = file.mimeType;
         dbFile.version = file.version;
         dbFile.name = file.name;
         await transformHandler.forceGeneration(dbFile);
@@ -137,6 +143,7 @@ export class LocalFilesStorage {
 
       if (dbFile.version !== file.version) {
         dbFile.modifiedTime = file.modifiedTime;
+        dbFile.mimeType = file.mimeType;
         dbFile.version = file.version;
         await transformHandler.forceGeneration(dbFile);
       }
@@ -154,6 +161,7 @@ export class LocalFilesStorage {
           desiredLocalPath: file.desiredLocalPath,
           modifiedTime: file.modifiedTime,
           version: file.version,
+          mimeType: file.mimeType
         };
       }
     }
@@ -217,6 +225,7 @@ export class LocalFilesStorage {
               name: files[0].name,
               desiredLocalPath: files[0].localPath,
               localPath: files[0].localPath,
+              mimeType: MimeTypes.DOCUMENT_MIME,
               redirectTo: files[0].id
             };
             await transformHandler.forceGeneration(redirFile);
@@ -241,6 +250,7 @@ export class LocalFilesStorage {
           id: desiredLocalPath + ':conflict',
           name: 'Conflict: ' + files[0].name,
           desiredLocalPath,
+          mimeType: MimeTypes.DOCUMENT_MIME,
           localPath: desiredLocalPath,
           counter: 1,
           conflicting: files.map(file => file.id)
