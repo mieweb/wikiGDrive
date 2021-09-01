@@ -55,6 +55,11 @@ const NODES: NavigationHierarchyNode[] = [
     name: 'Worksite Injury & Illness',
     weight: 100,
     parent: '7',
+  },
+  {
+    identifier: "9",
+    name: "Functionss",
+    weight: 110
   }
 ];
 
@@ -98,6 +103,11 @@ const FILES: LocalFile[] = [
     id: '8',
     name: 'Worksite Injury & Illness',
     desiredLocalPath: 'https://drive.google.com/open?id=11c7LYNpC6JP7pLJuiK9RWaFFr6CN20w9S0z9t5hvN8o'
+  },
+  {
+    id: '9',
+    name: 'Functionss',
+    desiredLocalPath: 'https://drive.google.com/open?id=1E0DKcCJjdeSPf_YjJUF7pMO72HzWYbsLw3cEmdGW5g0'
   },
 ]
 
