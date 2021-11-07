@@ -59,8 +59,7 @@ export function createLogger(eventBus) {
 
   process
     .on('unhandledRejection', async (reason: any, p) => {
-      // if (reason'invalid_grant')
-      logger.error(reason, 'Unhandled Rejection at Promise', p);
+      logger.error(reason, reason);
 
       if (reason.origError) {
         reason = reason.origError;
