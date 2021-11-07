@@ -201,16 +201,21 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     if (fs.existsSync(removePath)) {
       const stat = fs.statSync(removePath);
       if (stat.isDirectory()) {
-        fs.rmdirSync(removePath, {recursive: true});
+        const files = fs.readdirSync(removePath);
+        for (const file of files) {
+          if (file.endsWith('.png')) {
+            fs.unlinkSync(path.join(removePath, file));
+          }
+        }
       } else {
         fs.unlinkSync(removePath);
-      }
-    }
 
-    if (removePath.endsWith('.md')) {
-      const imagesPath = removePath.replace(/.md$/, '.images');
-      if (fs.existsSync(imagesPath)) {
-        fs.rmdirSync(imagesPath, { recursive: true });
+        if (removePath.endsWith('.md')) {
+          const imagesPath = removePath.replace(/.md$/, '.images');
+          if (fs.existsSync(imagesPath)) {
+            fs.rmdirSync(imagesPath, { recursive: true });
+          }
+        }
       }
     }
   }
