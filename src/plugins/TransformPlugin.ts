@@ -198,6 +198,11 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     if (!file || !file.localPath) return;
 
     const removePath = path.join(this.drive_config.dest, ...file.localPath.substr(1).split('/'));
+
+    if (!fs.existsSync(removePath)) {
+      return;
+    }
+
     const stat = fs.statSync(removePath);
     if (stat.isDirectory()) {
       const files = fs.readdirSync(removePath);
@@ -206,16 +211,14 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
           fs.unlinkSync(path.join(removePath, file));
         }
       }
-    }
-
-    if (fs.existsSync(removePath)) {
+    } else {
       fs.unlinkSync(removePath);
-    }
 
-    if (removePath.endsWith('.md')) {
-      const imagesPath = removePath.replace(/.md$/, '.images');
-      if (fs.existsSync(imagesPath)) {
-        fs.rmdirSync(imagesPath, { recursive: true });
+      if (removePath.endsWith('.md')) {
+        const imagesPath = removePath.replace(/.md$/, '.images');
+        if (fs.existsSync(imagesPath)) {
+          fs.rmdirSync(imagesPath, { recursive: true });
+        }
       }
     }
   }
