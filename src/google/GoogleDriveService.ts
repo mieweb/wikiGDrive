@@ -281,7 +281,7 @@ export class GoogleDriveService {
             .pipe(dest);
       });
     } catch (err) {
-      throw new GoogleDriveServiceError('Error download file: ' + file.id, {
+      throw new GoogleDriveServiceError('Error download file: ' + file.id + ' ' + err.message, {
         origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });
@@ -325,7 +325,7 @@ export class GoogleDriveService {
       if (!err.isQuotaError && err?.code != 404) {
         this.logger.error(err);
       }
-      throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id, {
+      throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id + ' ' + file.name, {
         origError: err,
         file, dest, isQuotaError: err.isQuotaError
       });

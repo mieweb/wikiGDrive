@@ -261,8 +261,16 @@ export class DownloadPlugin extends BasePlugin {
         } else
         if (file.mimeType === 'application/vnd.google-apps.form') {
           downloadedFile = await this.exportBinary(file, 'application/zip', 'zip');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.script') {
+          downloadedFile = await this.exportBinary(file, file.mimeType, 'gson');
         } else {
-          downloadedFile = await this.downloadAsset(file);
+          try {
+            downloadedFile = await this.downloadAsset(file);
+          } catch (err) {
+            this.logger.error('Error downloading asset: ' + file.name + ' ' + file.mimeType);
+            throw err;
+          }
         }
 
         if (downloadedFile) {
