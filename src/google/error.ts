@@ -1,6 +1,6 @@
 import {Readable} from 'stream';
 
-async function handleReadable(obj):Promise<string> {
+async function handleReadable(obj): Promise<string> {
   if (obj instanceof Readable) {
     const chunks = [];
     for await (const chunk of obj) {
@@ -42,6 +42,18 @@ function jsonToErrorMessage(json) {
 }
 
 export async function handleGoogleError(err, reject, context) {
+  if (err.dest) {
+    delete err.dest;
+  }
+
+  if (err.message) {
+    err.message = await handleReadable(err.message);
+  }
+
+  if (err.response && err.response.data) {
+    err.response.data = await handleReadable(err.response.data);
+  }
+
   if (parseInt(err.code) === 429) { // Too many requests
     err.isQuotaError = true;
     reject(err); // TODO rate error
@@ -54,20 +66,26 @@ export async function handleGoogleError(err, reject, context) {
     }
 
     if (err.message) {
-      const json = await handleReadable(err.message);
+      const json = err.message;
       const errorMessage = jsonToErrorMessage(json);
       if (errorMessage && errorMessage.indexOf('User Rate Limit Exceeded') > -1) {
         err.isQuotaError = true;
         reject(err); // TODO rate error
         return;
       }
-      // console.error(context, errorMessage);
+
+      if ('string' === typeof errorMessage) {
+        reject(new Error(errorMessage));
+        return;
+      }
     }
 
     if (err.response && err.response.data) {
-      const errorData = await handleReadable(err.response.data);
-      reject(new Error(errorData));
-      return;
+      const errorData = err.response.data;
+      if ('string' === typeof errorData) {
+        reject(new Error(errorData));
+        return;
+      }
     }
 
     if (err.config && err.config.url) {

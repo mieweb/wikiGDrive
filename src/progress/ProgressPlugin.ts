@@ -141,6 +141,14 @@ export class ProgressPlugin extends BasePlugin {
       this.renderer.render();
     });
 
+    eventBus.once('server:initialized', async () => {
+      this.tasks.push(new ProgressTask({
+        title: 'Server initialized',
+        pending: false,
+        completed: true
+      }));
+    });
+
     eventBus.once('drive_config:loaded', async (drive_config: DriveConfig) => {
       this.tasks.push(new ProgressTask({
         title: 'Wikigdrive initialized: ' + chalk.green(drive_config.drive),
@@ -187,6 +195,7 @@ export class ProgressPlugin extends BasePlugin {
     this.addPluginProgressTask('download', 'Downloading');
     this.addPluginProgressTask('external', 'Downloading external');
     this.addPluginProgressTask('transform', 'Transforming');
+    this.addPluginProgressTask('server', 'Server');
   }
 
   private addPluginProgressTask(prefix: string, title: string) {
