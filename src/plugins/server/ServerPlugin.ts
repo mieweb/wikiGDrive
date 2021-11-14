@@ -64,7 +64,7 @@ export class ServerPlugin extends BasePlugin {
     app.post('/file/:id/mark_dirty', async (req, res, next) => {
       try {
         const fileId: string = req.params.id;
-        console.log('mark_dirty', fileId);
+        this.logger.info('mark_dirty ' + fileId);
         await this.googleFilesStorage.removeFile(fileId);
         res.json({});
       } catch (err) {
@@ -72,7 +72,7 @@ export class ServerPlugin extends BasePlugin {
       }
     });
 
-    app.get('/logs', (req, res) => {
+    app.get('/logs', (req, res, next) => {
       if (isHtml(req)) {
         return res.render('index.html', { title: 'wikigdrive' });
       }
@@ -86,24 +86,12 @@ export class ServerPlugin extends BasePlugin {
         fields: undefined//['message']
       };
 
-      // options['json'] = true;
       this.logger.query(options, (err, results) => {
-        console.error(err, results);
+        if (err) {
+          return next(err);
+        }
         res.json(results);
       });
     });
-
-/*
-    for (const transport of this.logger.transports) {
-      if (transport instanceof DailyRotateFile) {
-      }
-
-      console.log(transport);
-
-    }
-*/
-
-
-
   }
 }
