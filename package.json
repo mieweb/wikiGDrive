@@ -63,7 +63,7 @@
     "enquirer": "^2.3.6",
     "googleapis": "^71.0.0",
     "identify-filetype": "^1.0.0",
-    "jszip": "^3.6.0",
+    "jszip": "^3.7.0",
     "listr2": "^3.6.3",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
