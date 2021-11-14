@@ -71,7 +71,7 @@
     "relateurl": "^0.2.7",
     "sharp": "^0.28.1",
     "sharp-phash": "^2.0.0",
-    "simple-git": "^2.37.0",
+    "simple-git": "^2.38.0",
     "slugify": "^1.5.0",
     "stream": "^0.0.2",
     "ts-node": "^9.1.1",
