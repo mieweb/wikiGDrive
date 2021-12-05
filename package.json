@@ -75,7 +75,7 @@
     "slugify": "^1.5.1",
     "stream": "^0.0.2",
     "ts-node": "^9.1.1",
-    "typescript": "4.2.4",
+    "typescript": "4.4.4",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.2",
     "xmldoc": "^1.1.2"
