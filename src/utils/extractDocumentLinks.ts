@@ -1,4 +1,7 @@
 import {DownloadFileImage} from '../storage/DownloadFilesStorage';
+import {findAll} from 'domutils';
+import {createDom} from '../html/GoogleListFixer';
+import { urlToFolderId } from './idParsers';
 
 export async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -40,12 +43,29 @@ export async function extractDocumentImages(document: any): Promise<DownloadFile
   await processRecursive(document.body.content, async (json) => {
     if (json.inlineObjectElement) {
       const docUrl = json.inlineObjectElement.inlineObjectId;
-      links.push({
+
+      const link: DownloadFileImage = {
         docUrl,
         pngUrl: await convertImageLink(document, docUrl)
-      });
+      };
+
+      const url = json.inlineObjectElement.textStyle?.link?.url;
+      if (url && url.startsWith('https://docs.google.com/drawings/d/')) {
+        link.fileId = urlToFolderId(url);
+      }
+
+      links.push(link);
     }
   });
 
   return links;
+}
+
+export async function extractHtmlImagesOrder(html) {
+  const dom = await createDom(html);
+  const elements = findAll((elem) => {
+    return elem.name === 'img';
+  }, dom);
+
+  return elements.map(element => element.attribs['src']?.replace(/^images\//, ''));
 }

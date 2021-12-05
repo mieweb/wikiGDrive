@@ -14,7 +14,7 @@ export class ImageUnZipper {
     });
 
     for (const relativePath in files) {
-      if (relativePath.endsWith('.png')) {
+      if (relativePath.endsWith('.png') || relativePath.endsWith('.jpg')) {
         const buffer = await files[relativePath].async('nodebuffer');
         const fileName = path.basename(relativePath);
         fs.writeFileSync(path.join(destPath, fileName), buffer);

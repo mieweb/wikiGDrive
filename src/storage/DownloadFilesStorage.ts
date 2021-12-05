@@ -19,6 +19,7 @@ export interface DownloadFileImage {
   docUrl: string;
   pngUrl?: string;
   zipImage?: ImageMeta;
+  fileId?: string;
 }
 
 export interface DownloadFile {
