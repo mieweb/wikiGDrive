@@ -30,6 +30,10 @@ export class UnZipper {
         const buffer = await files[relativePath].async('nodebuffer');
         this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
       }
+      if (relativePath.endsWith('.jpg')) {
+        const buffer = await files[relativePath].async('nodebuffer');
+        this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
+      }
     }
   }
 

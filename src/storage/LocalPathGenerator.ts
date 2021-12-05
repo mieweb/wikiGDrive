@@ -60,14 +60,14 @@ export class LocalPathGenerator {
     return levelFiles;
   }
 
-  async generateDesiredPaths(rootId: string, googleFiles: GoogleFile[]) {
+  async generateDesiredPaths(rootId: string, googleFiles: GoogleFile[]): Promise<LocalFile[]> {
     const retVal: LocalFile[] = this.generateLevelFiles(rootId, googleFiles);
 
     const externalFiles: GoogleFile[] = googleFiles.filter(googleFile => !retVal.find(localFile => localFile.id === googleFile.id));
 
     retVal.push(...externalFiles.map(googleFile => {
       const desiredLocalPath = '/external_docs/' + googleFile.parentId + '/' + getDesiredPath(googleFile.name, googleFile.mimeType);
-      return {
+      const localFile: LocalFile = {
         id: googleFile.id,
         name: googleFile.name,
         modifiedTime: googleFile.modifiedTime,
@@ -75,6 +75,7 @@ export class LocalPathGenerator {
         mimeType: googleFile.mimeType,
         desiredLocalPath
       };
+      return localFile;
     }));
 
     return retVal;

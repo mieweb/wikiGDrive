@@ -68,9 +68,10 @@ export class StatusPlugin extends BasePlugin {
         if (lFile) {
           console.log(chalk.green('Local file:'));
           console.log(JSON.stringify(lFile, null, 2));
+          console.log(chalk.green('Drive url:'), 'https://drive.google.com/open?id=' + id);
           if (lFile.localPath) {
             const targetPath = path.join(this.dest, lFile.localPath);
-            console.log(targetPath, fs.existsSync(targetPath) ? chalk.green('- exists') : chalk.red('- not exists'));
+            console.log(chalk.green('Generated file:'), targetPath, fs.existsSync(targetPath) ? chalk.green('- exists') : chalk.red('- not exists'));
           }
         }
       }

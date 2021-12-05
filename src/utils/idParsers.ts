@@ -28,6 +28,20 @@ export function urlToFolderId(url: string): string {
     return id;
   }
 
+  if (url.startsWith('https://docs.google.com/drawings/d/')) {
+    let id = url.substr(url.indexOf('docs.google.com/drawings/d/') + 'docs.google.com/drawings/d/'.length);
+    if (id.indexOf('/') > 0) {
+      id = id.substr(0, id.indexOf('/'));
+    }
+    if (id.indexOf('?') > 0) {
+      id = id.substr(0, id.indexOf('?'));
+    }
+    if (id.indexOf('&') > 0) {
+      id = id.substr(0, id.indexOf('&'));
+    }
+    return id;
+  }
+
   if (url.indexOf('docs.google.com/document/d/') > 0) {
     let id = url.substr(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
     if (id.indexOf('/') > 0) {
