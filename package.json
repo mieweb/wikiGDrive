@@ -59,7 +59,7 @@
     "async": "^3.2.0",
     "buffer": "^5.7.1",
     "cli-progress": "^3.9.0",
-    "dotenv": "^8.2.0",
+    "dotenv": "^8.6.0",
     "enquirer": "^2.3.6",
     "googleapis": "^71.0.0",
     "identify-filetype": "^1.0.0",
