@@ -64,7 +64,7 @@
     "googleapis": "^71.0.0",
     "identify-filetype": "^1.0.0",
     "jszip": "^3.7.0",
-    "listr2": "^3.13.1",
+    "listr2": "^3.13.3",
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
     "open": "^7.4.2",
