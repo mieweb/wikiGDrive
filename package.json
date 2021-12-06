@@ -56,7 +56,7 @@
   },
   "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "dependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "buffer": "^5.7.1",
     "cli-progress": "^3.9.0",
     "dotenv": "^8.6.0",
