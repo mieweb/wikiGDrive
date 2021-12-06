@@ -77,7 +77,7 @@
     "ts-node": "^9.1.1",
     "typescript": "4.4.4",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4.5.2",
+    "winston-daily-rotate-file": "^4.5.5",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
