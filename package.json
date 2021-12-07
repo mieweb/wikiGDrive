@@ -58,7 +58,7 @@
   "dependencies": {
     "async": "^3.2.0",
     "buffer": "^5.7.1",
-    "cli-progress": "^3.9.0",
+    "cli-progress": "^3.9.1",
     "dotenv": "^8.6.0",
     "enquirer": "^2.3.6",
     "googleapis": "^71.0.0",
