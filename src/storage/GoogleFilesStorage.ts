@@ -11,6 +11,7 @@ type FileId = string;
 export interface GoogleFile {
   id: FileId;
   parentId?: FileId;
+  parents: string[];
   name: string;
   version: number;
   size?: number;
