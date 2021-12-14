@@ -71,6 +71,7 @@ git commit -m "Autocommit updated files" $@
       if (!isRepo) {
         return;
       }
+      return ; // TODO
       const status = await repository.status();
 
       const documents = this.googleFilesStorage.findFiles(file => file.mimeType === MimeTypes.DOCUMENT_MIME);
