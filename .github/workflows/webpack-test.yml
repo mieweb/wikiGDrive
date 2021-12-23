@@ -1,4 +1,4 @@
-name: NodeJS with Webpack
+name: NodeJS with webpack-test.yaml
 
 on: [push]
 
