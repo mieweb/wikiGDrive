@@ -81,7 +81,8 @@ async function main() {
     service_account: argv['service_account'] || null,
     git_update_delay: argv['git_update_delay'] || 60,
     force: !!argv['force'],
-    disable_progress: !!argv['disable-progress']
+    disable_progress: !!argv['disable-progress'],
+    server_port: +argv['server']
   };
   
   const mainService = new MainService(params);

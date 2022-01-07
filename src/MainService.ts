@@ -21,6 +21,7 @@ import {createLogger} from './utils/logger';
 import {TransformPlugin} from './plugins/TransformPlugin';
 import {StatusPlugin} from './plugins/StatusPlugin';
 import {LocalFilesStorage} from './storage/LocalFilesStorage';
+import {ServerPlugin} from './plugins/server/ServerPlugin';
 
 export enum LinkMode {
   dirURLs = 'dirURLs',
@@ -47,6 +48,7 @@ export interface CliParams {
   client_secret?: string;
   service_account?: string;
   git_update_delay: number;
+  server_port?: number;
 }
 
 
@@ -59,7 +61,7 @@ export class MainService {
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
-    this.disable_progress = params.disable_progress || this.command === 'drives' || this.command === 'status';
+    this.disable_progress = !!params.disable_progress || this.command === 'drives' || this.command === 'status';
     this.eventBus = new EventEmitter();
     this.eventBus.setMaxListeners(0);
     if (params.debug.indexOf('main') > -1) {
@@ -96,6 +98,7 @@ export class MainService {
     this.plugins.push(new TransformPlugin(this.eventBus, this.logger));
     this.plugins.push(new GitPlugin(this.eventBus, this.logger));
     this.plugins.push(new ListDrivesPlugin(this.eventBus, this.logger));
+    this.plugins.push(new ServerPlugin(this.eventBus, this.logger));
   }
 
   async emitThanAwait(event, params, awaitEvents) {
@@ -109,19 +112,27 @@ export class MainService {
       const logsDir = path.join(this.params.config_dir, 'logs');
 
       this.logger.add(new winston.transports.DailyRotateFile({
+        format: winston.format.json(),
         zippedArchive: true,
         maxSize: '20m',
         maxFiles: '14d',
         dirname: logsDir,
+        createSymlink: true,
+        symlinkName: 'error.log',
         filename: '%DATE%-error.log',
-        level: 'error'
+        level: 'error',
+        json: true
       }));
       this.logger.add(new winston.transports.DailyRotateFile({
+        format: winston.format.json(),
         zippedArchive: true,
         maxSize: '20m',
         maxFiles: '14d',
         dirname: logsDir,
-        filename: '%DATE%-combined.log'
+        createSymlink: true,
+        symlinkName: 'combined.log',
+        filename: '%DATE%-combined.log',
+        json: true
       }));
 
       if (!this.disable_progress) {

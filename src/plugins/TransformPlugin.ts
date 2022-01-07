@@ -74,13 +74,13 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     eventBus.on('drive_config:loaded', (drive_config) => {
       this.drive_config = drive_config;
     });
-    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
+    eventBus.on('google_files:initialized', ({googleFilesStorage}) => {
       this.googleFilesStorage = googleFilesStorage;
     });
-    eventBus.on('download_files:initialized', ({ downloadFilesStorage }) => {
+    eventBus.on('download_files:initialized', ({downloadFilesStorage}) => {
       this.downloadFilesStorage = downloadFilesStorage;
     });
-    eventBus.on('local_files:initialized', ({ localFilesStorage }) => {
+    eventBus.on('local_files:initialized', ({localFilesStorage}) => {
       this.localFilesStorage = localFilesStorage;
     });
 
@@ -201,16 +201,21 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     if (fs.existsSync(removePath)) {
       const stat = fs.statSync(removePath);
       if (stat.isDirectory()) {
-        fs.rmdirSync(removePath, {recursive: true});
+        const files = fs.readdirSync(removePath);
+        for (const file of files) {
+          if (file.endsWith('.png')) {
+            fs.unlinkSync(path.join(removePath, file));
+          }
+        }
       } else {
         fs.unlinkSync(removePath);
-      }
-    }
 
-    if (removePath.endsWith('.md')) {
-      const imagesPath = removePath.replace(/.md$/, '.images');
-      if (fs.existsSync(imagesPath)) {
-        fs.rmdirSync(imagesPath, { recursive: true });
+        if (removePath.endsWith('.md')) {
+          const imagesPath = removePath.replace(/.md$/, '.images');
+          if (fs.existsSync(imagesPath)) {
+            fs.rmdirSync(imagesPath, {recursive: true});
+          }
+        }
       }
     }
   }
@@ -227,8 +232,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       const md = await generateConflictMarkdown(localFile, conflicting);
       await ensureDir(targetPath);
       fs.writeFileSync(targetPath, md);
-    } else
-    if (isRedirect(localFile)) {
+    } else if (isRedirect(localFile)) {
 
       const md = await generateRedirectMarkdown(localFile, this.localFilesStorage.findFile(f => f.id === localFile.redirectTo), this.linkTranslator);
       await ensureDir(targetPath);
@@ -239,70 +243,67 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
       const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
       if (googleFile && downloadFile) {
         switch (googleFile.mimeType) {
-          case MimeTypes.DRAWING_MIME:
-            {
-              await ensureDir(targetPath);
-              const dest = fs.createWriteStream(targetPath);
-              const svgTransform = new SvgTransform(localFile.localPath, this.linkTranslator);
-              const svgPath = path.join(this.config_dir, 'files', localFile.id + '.svg');
+          case MimeTypes.DRAWING_MIME: {
+            await ensureDir(targetPath);
+            const dest = fs.createWriteStream(targetPath);
+            const svgTransform = new SvgTransform(localFile.localPath, this.linkTranslator);
+            const svgPath = path.join(this.config_dir, 'files', localFile.id + '.svg');
 
-              await new Promise<void>((resolve, reject) => {
-                dest.on('error', err => {
-                  reject(err);
-                });
-
-                const stream = fs.createReadStream(svgPath)
-                  .pipe(svgTransform)
-                  .pipe(dest);
-
-                stream.on('finish', () => {
-                  resolve();
-                });
-                stream.on('error', err => {
-                  reject(err);
-                });
+            await new Promise<void>((resolve, reject) => {
+              dest.on('error', err => {
+                reject(err);
               });
-            }
+
+              const stream = fs.createReadStream(svgPath)
+                .pipe(svgTransform)
+                .pipe(dest);
+
+              stream.on('finish', () => {
+                resolve();
+              });
+              stream.on('error', err => {
+                reject(err);
+              });
+            });
+          }
             break;
 
-          case MimeTypes.DOCUMENT_MIME:
-            {
-              const zipPath = path.join(this.config_dir, 'files', localFile.id + '.zip');
-              const zipBuffer = fs.readFileSync(zipPath);
+          case MimeTypes.DOCUMENT_MIME: {
+            const zipPath = path.join(this.config_dir, 'files', localFile.id + '.zip');
+            const zipBuffer = fs.readFileSync(zipPath);
 
-              if (downloadFile.images?.length > 0) {
-                const imagesDirPath = targetPath.replace(/.md$/, '.images/');
-                const imageUnZipper = new ImageUnZipper();
-                if (!fs.existsSync(imagesDirPath)) {
-                  fs.mkdirSync(imagesDirPath, { recursive: true });
-                }
-                await imageUnZipper.unpack(zipBuffer, imagesDirPath);
+            if (downloadFile.images?.length > 0) {
+              const imagesDirPath = targetPath.replace(/.md$/, '.images/');
+              const imageUnZipper = new ImageUnZipper();
+              if (!fs.existsSync(imagesDirPath)) {
+                fs.mkdirSync(imagesDirPath, {recursive: true});
               }
-
-              const gdoc = await loadJson(path.join(this.config_dir, 'files', localFile.id + '.gdoc'));
-
-              const unZipper = new UnZipper();
-              await unZipper.load(zipBuffer);
-              const googleListFixer = new GoogleListFixer(unZipper.getHtml());
-              const embedImageFixer = new EmbedImageFixer(this.downloadFilesStorage, this.localFilesStorage, downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
-              const linkRewriter = new LinkRewriter(gdoc, this.linkTranslator, localFile.localPath);
-
-              await googleListFixer.process(gdoc);
-              await embedImageFixer.process(gdoc);
-              await linkRewriter.process();
-
-              const jsonToMarkdown = new JsonToMarkdown(gdoc);
-              const md = await jsonToMarkdown.convert();
-
-              const frontMatter = generateDocumentFrontMatter(googleFile, localFile, this.linkTranslator, hierarchy);
-
-              await ensureDir(targetPath);
-              fs.writeFileSync(targetPath, frontMatter + md);
+              await imageUnZipper.unpack(zipBuffer, imagesDirPath);
             }
+
+            const gdoc = await loadJson(path.join(this.config_dir, 'files', localFile.id + '.gdoc'));
+
+            const unZipper = new UnZipper();
+            await unZipper.load(zipBuffer);
+            const googleListFixer = new GoogleListFixer(unZipper.getHtml());
+            const embedImageFixer = new EmbedImageFixer(this.downloadFilesStorage, this.localFilesStorage, downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
+            const linkRewriter = new LinkRewriter(gdoc, this.linkTranslator, localFile.localPath);
+
+            await googleListFixer.process(gdoc);
+            await embedImageFixer.process(gdoc);
+            await linkRewriter.process();
+
+            const jsonToMarkdown = new JsonToMarkdown(gdoc);
+            const md = await jsonToMarkdown.convert();
+
+            const frontMatter = generateDocumentFrontMatter(googleFile, localFile, this.linkTranslator, hierarchy);
+
+            await ensureDir(targetPath);
+            fs.writeFileSync(targetPath, frontMatter + md);
+          }
             break;
         }
       }
     }
   }
-
 }

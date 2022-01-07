@@ -244,6 +244,7 @@ export class DownloadPlugin extends BasePlugin {
     const q = queue<GoogleFile>(async (file, callback) => {
       let downloadedFile: DownloadFile;
 
+      // https://developers.google.com/drive/api/v3/ref-export-formats
       try {
         if (file.mimeType === MimeTypes.DRAWING_MIME) {
           downloadedFile = await this.downloadDiagram(file);
@@ -261,8 +262,16 @@ export class DownloadPlugin extends BasePlugin {
         } else
         if (file.mimeType === 'application/vnd.google-apps.form') {
           downloadedFile = await this.exportBinary(file, 'application/zip', 'zip');
+        } else
+        if (file.mimeType === 'application/vnd.google-apps.script') {
+          downloadedFile = await this.exportBinary(file, 'application/vnd.google-apps.script+json', 'gson');
         } else {
-          downloadedFile = await this.downloadAsset(file);
+          try {
+            downloadedFile = await this.downloadAsset(file);
+          } catch (err) {
+            this.logger.error('Error downloading asset: ' + file.name + ' ' + file.mimeType);
+            throw err;
+          }
         }
 
         if (downloadedFile) {
