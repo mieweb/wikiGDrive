@@ -364,7 +364,7 @@ A website front end is a goal for real-time testing of the viewing experience, b
 ## using OS
 
 ```
-curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo bash -
 sudo apt install nodejs
 ```
 
@@ -372,5 +372,5 @@ sudo apt install nodejs
 
 ```
 sudo npm install -g n
-sudo n 12.18.3
+sudo n 16.13.1
 ```
