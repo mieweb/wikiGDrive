@@ -291,8 +291,7 @@ export class DownloadPlugin extends BasePlugin {
       if (error['isQuotaError']) {
         q.push(file);
       } else {
-        this.logger.error(error);
-        console.error(error);
+        this.logger.error(error.message);
         this.progress.failed++;
         this.eventBus.emit('download:progress', this.progress);
       }
