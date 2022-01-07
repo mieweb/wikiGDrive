@@ -30,8 +30,8 @@ export class GoogleAuthService {
   }
 
   async authorize(client_id, client_secret) {
-    if (!client_id) throw 'Unknown: client_id';
-    if (!client_secret) throw 'Unknown: client_secret';
+    if (!client_id) throw new Error('Unknown: client_id');
+    if (!client_secret) throw new Error('Unknown: client_secret');
 
     const oAuth2Client = new QuotaAuthClient(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
     oAuth2Client.setQuotaLimiter(this.quotaLimiter);
