@@ -3,8 +3,6 @@ name: Dev Server Test/Deploy
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -19,6 +17,15 @@ jobs:
         node-version: 14.x
 
     - name: Build
-      run: |
-        npm install
-        npm build
+      run: docker build -t wikigdrive-prod .
+
+    - name: Stop
+      run: docker stop wikigdrive-prod
+      continue-on-error: true
+
+    - name: Remove
+      run: docker rm wikigdrive-prod
+      continue-on-error: true
+
+    - name: Start
+      run: docker run -d --name wikigdrive-prod --mount type=bind,source=/var/www/folder-prod,target=/data --publish 127.0.0.1:3000:3000 wikigdrive-prod
