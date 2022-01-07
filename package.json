@@ -9,6 +9,10 @@
     "Google Docs",
     "Wiki"
   ],
+  "engines": {
+    "node": ">= 16.13.1",
+    "npm": ">= 8.1.2"
+  },
   "bin": {
     "wikigdrive": "./dist/main.js",
     "wikigdrive-ts": "./src/cli.ts"
@@ -59,7 +63,7 @@
   "dependencies": {
     "async": "^3.2.0",
     "buffer": "^5.7.1",
-    "cli-progress": "^3.9.0",
+    "cli-progress": "^3.9.1",
     "dotenv": "^8.6.0",
     "enquirer": "^2.3.6",
     "express": "^4.17.1",
@@ -68,14 +72,14 @@
     "jszip": "^3.7.0",
     "listr2": "^3.14.0",
     "minimist": "^1.2.5",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.0",
     "nunjucks": "^3.2.3",
     "open": "^7.4.2",
     "relateurl": "^0.2.7",
     "sharp": "^0.29.3",
     "sharp-phash": "^2.0.0",
     "simple-git": "^2.47.0",
-    "slugify": "^1.5.1",
+    "slugify": "^1.6.5",
     "stream": "^0.0.2",
     "ts-node": "^9.1.1",
     "typescript": "4.4.4",
@@ -88,10 +92,10 @@
     "@babel/plugin-transform-runtime": "7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-typescript": "^7.10.4",
-    "@types/async": "^3.2.5",
+    "@types/async": "^3.2.12",
     "@types/express": "^4.17.13",
     "@types/mocha": "^8.2.2",
-    "@types/node": "^14.10.1",
+    "@types/node": "^16.11.19",
     "@types/relateurl": "^0.2.28",
     "@types/xmldoc": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
