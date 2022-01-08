@@ -1,11 +1,15 @@
 'use strict';
 
-import {BasePlugin} from './BasePlugin';
-import {GoogleDriveService, ListContext} from '../google/GoogleDriveService';
-import {DriveConfig} from './StoragePlugin';
-import {GoogleFile, GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
-import {urlToFolderId} from '../utils/idParsers';
-import {ErrorCallback, queue, QueueObject} from 'async';
+
+// this module is for discovering files in the Google Directory tree.  Maybe rename to TreeSync?
+// The DownloadPlugin.ts is responsible for sync'ing content so go there is you are look for file sync stuff.
+
+import { BasePlugin } from './BasePlugin';
+import { GoogleDriveService, ListContext } from '../google/GoogleDriveService';
+import { DriveConfig } from './StoragePlugin';
+import { GoogleFile, GoogleFilesStorage, MimeTypes } from '../storage/GoogleFilesStorage';
+import { urlToFolderId } from '../utils/idParsers';
+import { ErrorCallback, queue, QueueObject } from 'async';
 
 const INITIAL_RETRIES = 4;
 const CONCURRENCY = 4;
@@ -102,7 +106,7 @@ export class SyncPlugin extends BasePlugin {
 
       if (context.parentId) {
         const googleFiles: GoogleFile[] = (await this.googleDriveService.listFiles(this.auth, context))
-          .map(file => {file.parentId = context.parentId; return file;});
+          .map(file => { file.parentId = context.parentId; return file; });
         const folders = googleFiles.filter(file => file.mimeType === MimeTypes.FOLDER_MIME);
 
         for (const folder of folders) {
