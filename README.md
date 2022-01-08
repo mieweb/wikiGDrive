@@ -342,6 +342,7 @@ A website front end is a goal for real-time testing of the viewing experience, b
 ```
 
 #### local_files.json is indexed with file id
+### This too is going to be refactored
 
 - desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
 - dirty - file needs to be downloaded
