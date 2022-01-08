@@ -28,4 +28,4 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: docker run -d --name wikigdrive-prod --mount type=bind,source=/var/www/folder-prod,target=/data --publish 127.0.0.1:3000:3000 wikigdrive-prod
+      run: docker run -d --name wikigdrive-prod -v wikiGDriveExample:/data --publish 127.0.0.1:3000:3000 wikigdrive-prod
