@@ -21,3 +21,30 @@ jobs:
 
       - name: Test
         run: npm run test
+
+  test:
+    runs-on: wgd-dev
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: Build
+      run: docker build -t wikigdrive-test .
+
+    - name: Stop
+      run: docker stop wikigdrive-test
+      continue-on-error: true
+
+    - name: Remove
+      run: docker rm wikigdrive-test
+      continue-on-error: true
+
+    - name: Start
+      run: rdocker run -it -v wikiGDriveExample:/data wikigdrive-test wikigdrive-ts pull --disable-progress
+
+
