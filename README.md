@@ -294,6 +294,8 @@ A website front end is a goal for real-time testing of the viewing experience, b
 
 #### google_files.json is indexed with Google's fileId - data got from google (just adding parentId, simplify lastAuthor)
 
+### Note this is going away.  Will be replacing this single database with a multi-file version for scale.
+
 - id - Google's fileId
 - name - Title set inside google docs. It is not unique
 - mimeType - Google's mime type or 'conflict' or 'redirect'
