@@ -93,7 +93,7 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
 --without-folder-structure    Download documents into single, flat folder
 ```
 
-List available drive ids
+List available drive ids that wikigdrive has access to on Google:
 
 ```
 wikigdrive drives
