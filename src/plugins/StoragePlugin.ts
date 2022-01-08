@@ -58,18 +58,18 @@ export class StoragePlugin extends BasePlugin {
   async initConfigDir(params: CliParams) {
     if (fs.existsSync(this.config_dir)) {
       if (fs.lstatSync(this.config_dir).isDirectory()) {
-        throw '.wgd already exists - WikiGDrive already initialized.';
+        throw new Error('.wgd already exists - WikiGDrive already initialized.');
       } else {
-        throw '.wgd is not a directory';
+        throw new Error('.wgd is not a directory');
       }
     }
 
     if (!params['drive']) {
-      throw '--drive not specified';
+      throw new Error('--drive not specified');
     }
 
     if (!params['service_account'] && !params['client_id']) {
-      throw 'service_account or client_id / client_id not specified';
+      throw new Error('service_account or client_id / client_id not specified');
     }
 
     const driveConfig: DriveConfig = {
