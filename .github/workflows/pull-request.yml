@@ -45,6 +45,6 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: rdocker run -it -v wikiGDriveExample:/data wikigdrive-test wikigdrive-ts pull --disable-progress
+      run: docker run -it -v wikiGDriveExample:/data wikigdrive-test wikigdrive-ts pull --disable-progress
 
 
