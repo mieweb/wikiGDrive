@@ -12,17 +12,32 @@ import {ExternalFilesStorage} from '../storage/ExternalFilesStorage';
 import {HttpClient} from '../utils/HttpClient';
 import {LocalFilesStorage} from '../storage/LocalFilesStorage';
 
-export interface DriveConfig {
+export interface ServiceAccountJson {
+  type: string;
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  client_id: string;
+  auth_uri: string;
+  token_uri: string;
+  auth_provider_x509_cert_url: string;
+  client_x509_cert_url: string;
+}
+
+export interface AuthConfig{
+  client_id?: string;
+  client_secret?: string;
+  service_account_json?: ServiceAccountJson;
+}
+
+export interface DriveConfig extends AuthConfig {
   drive: string;
   drive_id: string;
   dest: string;
   flat_folder_structure: boolean;
 
   link_mode: LinkMode;
-
-  client_id?: string;
-  client_secret?: string;
-  service_account?: string;
 }
 
 export class StoragePlugin extends BasePlugin {
@@ -35,6 +50,7 @@ export class StoragePlugin extends BasePlugin {
   private downloadFilesStorage: DownloadFilesStorage;
   private externalFilesStorage: ExternalFilesStorage;
   private localFilesStorage: LocalFilesStorage;
+  private authConfig: AuthConfig = {};
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
@@ -46,13 +62,29 @@ export class StoragePlugin extends BasePlugin {
       this.command = params.command;
       this.config_dir = params.config_dir;
       this.params = params;
+      await this.initGoogleApi(params);
       await this.init(params);
     });
     eventBus.on('quota_jobs:save', async (jobs) => {
-      await this._saveConfig(path.join(this.config_dir, 'quota.json'), {
-        jobs
-      });
+      const quotaPath = path.join(this.config_dir, 'quota.json');
+      if (fs.existsSync(quotaPath)) {
+        await this._saveConfig(quotaPath, {
+          jobs
+        });
+      }
     });
+  }
+
+  async initGoogleApi(params) {
+    if (params['service_account']) {
+      this.authConfig.service_account_json = JSON.parse(fs.readFileSync(params['service_account']).toString());
+      this.eventBus.emit('auth_config:loaded', this.authConfig);
+    } else
+    if (params['client_id'] && params['client_secret']) {
+      this.authConfig.client_id = params['client_id'];
+      this.authConfig.client_secret = params['client_secret'];
+      this.eventBus.emit('auth_config:loaded', this.authConfig);
+    }
   }
 
   async initConfigDir(params: CliParams) {
@@ -80,12 +112,9 @@ export class StoragePlugin extends BasePlugin {
       link_mode: params.link_mode
     };
 
-    if (params['service_account']) {
-      driveConfig.service_account = params['service_account'];
-    } else {
-      driveConfig.client_id = params['client_id'];
-      driveConfig.client_secret = params['client_secret'];
-    }
+    driveConfig.service_account_json = this.authConfig.service_account_json;
+    driveConfig.client_id = this.authConfig.client_id;
+    driveConfig.client_secret = this.authConfig.client_secret;
 
     fs.mkdirSync(params.config_dir, { recursive: true });
     fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
@@ -113,6 +142,7 @@ export class StoragePlugin extends BasePlugin {
     this.eventBus.emit('quota_jobs:loaded', quotaConfig.jobs || []);
     await this.initStorages();
     this.eventBus.emit('drive_config:loaded', this.driveConfig);
+    this.eventBus.emit('auth_config:loaded', this.authConfig);
   }
 
   async initStorages() {
@@ -149,6 +179,8 @@ export class StoragePlugin extends BasePlugin {
 
   private async init(params) {
     switch (this.command) {
+      case 'drives':
+        return;
       case 'init':
         await this.initConfigDir(params);
         process.exit(0);

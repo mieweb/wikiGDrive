@@ -58,8 +58,8 @@ export function createLogger(eventBus) {
   }));
 
   process
-    .on('unhandledRejection', async (reason: any, p) => {
-      logger.error(reason, reason);
+    .on('unhandledRejection', async (reason: any) => {
+      logger.error(reason.message, reason);
 
       if (reason.origError) {
         reason = reason.origError;

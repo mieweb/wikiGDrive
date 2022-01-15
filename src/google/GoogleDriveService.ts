@@ -357,12 +357,11 @@ export class GoogleDriveService {
         return drives;
       }
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening drives', {
+      throw new GoogleDriveServiceError('Error listening drives: ' + err.response.statusText, {
         origError: err,
         isQuotaError: err.isQuotaError,
       });
     }
-
   }
 
 }

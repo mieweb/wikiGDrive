@@ -38,8 +38,9 @@ export class ServerPlugin extends BasePlugin {
     eventBus.on('download_files:initialized', ({ downloadFilesStorage }) => {
       this.downloadFilesStorage = downloadFilesStorage;
     });
-    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth }) => {
       this.auth = auth;
+      const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
       this.googleDriveService = googleDriveService;
     });
     eventBus.on('drive_config:loaded', (drive_config) => {

@@ -51,6 +51,11 @@ export class ExternalFilesPlugin extends BasePlugin {
     eventBus.on('external:run', async () => {
       await this.process();
     });
+    eventBus.on('drive_config:loaded', async () => {
+      if (!fs.existsSync(path.join(this.config_dir, 'external_files'))) {
+        fs.mkdirSync(path.join(this.config_dir, 'external_files'), { recursive: true });
+      }
+    });
   }
 
   async process() {
@@ -70,9 +75,6 @@ export class ExternalFilesPlugin extends BasePlugin {
     }
     this.handlingFiles = true;
 
-    if (!fs.existsSync(path.join(this.config_dir, 'external_files'))) {
-      fs.mkdirSync(path.join(this.config_dir, 'external_files'), { recursive: true });
-    }
     await this.cleanup();
 
     const downloadFiles = this.downloadFilesStorage.findFiles((file) => {

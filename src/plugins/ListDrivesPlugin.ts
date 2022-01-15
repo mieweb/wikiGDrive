@@ -5,14 +5,12 @@ import {GoogleDriveService} from '../google/GoogleDriveService';
 
 export class ListDrivesPlugin extends BasePlugin {
   private auth: any;
-  private googleDriveService: GoogleDriveService;
-  
+
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));
 
-    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth }) => {
       this.auth = auth;
-      this.googleDriveService = googleDriveService;
     });
     eventBus.on('list_drives:run', async () => {
       await this.start();
@@ -21,7 +19,8 @@ export class ListDrivesPlugin extends BasePlugin {
 
   async start() {
     try {
-      const drives = await this.googleDriveService.listDrives(this.auth);
+      const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
+      const drives = await googleDriveService.listDrives(this.auth);
       this.eventBus.emit('list_drives:done', drives);
     } catch (e) {
       this.eventBus.emit('panic', {

@@ -1,12 +1,12 @@
 'use strict';
 
 import * as readline from 'readline';
-import * as fs from 'fs';
 import * as open from 'open';
 
 import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {ConfigService} from '../storage/ConfigService';
 import {QuotaLimiter} from './QuotaLimiter';
+import {ServiceAccountJson} from '../plugins/StoragePlugin';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -21,10 +21,8 @@ export class GoogleAuthService {
   constructor(private configService: ConfigService, private quotaLimiter: QuotaLimiter) {
   }
 
-  async authorizeServiceAccount(account_json_file_name) {
-    const opts = JSON.parse(fs.readFileSync(account_json_file_name).toString());
-
-    const oAuth2Client = new QuotaJwtClient(opts.client_email, null, opts.private_key, SCOPES);
+  async authorizeServiceAccount(service_account_json: ServiceAccountJson) {
+    const oAuth2Client = new QuotaJwtClient(service_account_json.client_email, null, service_account_json.private_key, SCOPES);
     oAuth2Client.setQuotaLimiter(this.quotaLimiter);
     return oAuth2Client;
   }

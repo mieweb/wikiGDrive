@@ -29,14 +29,13 @@ export class GitPlugin extends BasePlugin {
       if (seconds > 0) {
         this.gitUpdateSecondsDelay = seconds;
       }
-
-      if (!fs.existsSync(path.join(params.config_dir, 'hooks'))) {
-        fs.mkdirSync(path.join(params.config_dir, 'hooks'), { recursive: true });
-      }
-      await this.createHookExamples();
     });
     eventBus.on('drive_config:loaded', async (drive_config) => {
       this.dest = drive_config.dest;
+      if (!fs.existsSync(path.join(this.config_dir, 'hooks'))) {
+        fs.mkdirSync(path.join(this.config_dir, 'hooks'), { recursive: true });
+      }
+      await this.createHookExamples();
     });
     eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
       this.googleFilesStorage = googleFilesStorage;

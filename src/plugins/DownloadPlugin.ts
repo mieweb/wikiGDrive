@@ -60,8 +60,9 @@ export class DownloadPlugin extends BasePlugin {
     eventBus.on('download_files:initialized', ({ downloadFilesStorage }) => {
       this.downloadFilesStorage = downloadFilesStorage;
     });
-    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth }) => {
       this.auth = auth;
+      const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
       this.googleDriveService = googleDriveService;
     });
     eventBus.on('download:run', async () => {
@@ -69,6 +70,11 @@ export class DownloadPlugin extends BasePlugin {
     });
     eventBus.on('download:retry', async () => {
       await this.start();
+    });
+    eventBus.on('drive_config:loaded', async () => {
+      if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
+        fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
+      }
     });
   }
 
@@ -191,10 +197,6 @@ export class DownloadPlugin extends BasePlugin {
       return;
     }
     this.handlingFiles = true;
-
-    if (!fs.existsSync(path.join(this.config_dir, 'files'))) {
-      fs.mkdirSync(path.join(this.config_dir, 'files'), { recursive: true });
-    }
 
     const toRemove = this.downloadFilesStorage.findFiles(dFile => {
       return !this.googleFilesStorage.containsFile(dFile.id);

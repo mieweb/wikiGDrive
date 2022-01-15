@@ -57,8 +57,9 @@ export class SyncPlugin extends BasePlugin {
     eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
       this.googleFilesStorage = googleFilesStorage;
     });
-    eventBus.on('google_api:done', ({ auth, googleDriveService }) => {
+    eventBus.on('google_api:done', ({ auth }) => {
       this.auth = auth;
+      const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
       this.googleDriveService = googleDriveService;
     });
     eventBus.on('sync:run', async () => {

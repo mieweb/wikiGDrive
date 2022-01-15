@@ -3,15 +3,14 @@
 import {BasePlugin} from './BasePlugin';
 import {QuotaLimiter} from '../google/QuotaLimiter';
 import {GoogleAuthService} from '../google/GoogleAuthService';
-import {GoogleDriveService} from '../google/GoogleDriveService';
 import {ConfigService} from '../storage/ConfigService';
-import {DriveConfig} from './StoragePlugin';
+import {AuthConfig} from './StoragePlugin';
 
 export class GoogleApiPlugin extends BasePlugin {
   private command: string;
   private config_dir: string;
   private initial_quota_jobs: any;
-  private drive_config: DriveConfig;
+  private auth_config: AuthConfig;
   private configService: ConfigService;
   private oldSave: string;
 
@@ -25,11 +24,13 @@ export class GoogleApiPlugin extends BasePlugin {
     eventBus.on('quota_jobs:loaded', async (quota_jobs) => {
       this.initial_quota_jobs = quota_jobs;
     });
-    eventBus.on('drive_config:loaded', async (drive_config) => {
-      this.drive_config = drive_config;
+    eventBus.on('drive_config:loaded', async () => {
       this.configService = new ConfigService(this.config_dir);
       await this.configService.init();
       eventBus.emit('configService:initialized', this.configService);
+    });
+    eventBus.on('auth_config:loaded', async (auth_config: AuthConfig) => {
+      this.auth_config = auth_config;
       await this.onConfigLoaded();
     });
   }
@@ -47,7 +48,6 @@ export class GoogleApiPlugin extends BasePlugin {
     });
 
     const googleAuthService = new GoogleAuthService(this.configService, quotaLimiter);
-    const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
 
     switch (this.command) {
       case 'pull':
@@ -56,19 +56,22 @@ export class GoogleApiPlugin extends BasePlugin {
       case 'external':
       case 'drives':
       case 'sync':
-        if (this.drive_config.service_account) {
-          const auth = await googleAuthService.authorizeServiceAccount(this.drive_config.service_account);
+        if (this.auth_config.service_account_json) {
+          const auth = await googleAuthService.authorizeServiceAccount(this.auth_config.service_account_json);
           this.eventBus.emit('google_api:done', {
-            auth,
-            googleDriveService
+            auth
           });
-        } else {
+        } else
+        if (this.auth_config.client_id) {
           this.eventBus.emit('progress:pause');
-          const auth = await googleAuthService.authorize(this.drive_config.client_id, this.drive_config.client_secret);
+          const auth = await googleAuthService.authorize(this.auth_config.client_id, this.auth_config.client_secret);
           this.eventBus.emit('progress:unpause');
           this.eventBus.emit('google_api:done', {
-            auth,
-            googleDriveService
+            auth
+          });
+        } else {
+          console.error('No auth data');
+          this.eventBus.emit('google_api:done', {
           });
         }
         break;

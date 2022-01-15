@@ -269,7 +269,9 @@ export class MainService {
         break;
 
       case 'drives':
+        console.log('zzzzzzzzzzzzbuuu11u');
         await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
+        console.log('zzzzzzzzzzzzbuuuu');
 
         this.eventBus.on('list_drives:done', (drives) => {
           console.log('Available drives:');
