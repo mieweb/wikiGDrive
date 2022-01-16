@@ -116,6 +116,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     };
     this.eventBus.emit('transform:progress', this.progress);
 
+    await this.localFilesStorage.checkIfExist(this.drive_config.dest, this);
     await this.localFilesStorage.commit(localFiles, this);
 
     this.eventBus.emit('transform:done', this.progress);
@@ -229,15 +230,13 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
     const targetSubPath = path.join(...localFile.localPath.substr(1).split('/'));
     if (isConflict(localFile)) {
       const conflicting = localFile.conflicting.map(id => this.localFilesStorage.findFile(f => f.id === id));
-      const md = await generateConflictMarkdown(localFile, conflicting);
+      const md = await generateConflictMarkdown(localFile, conflicting, this.linkTranslator);
       await ensureDir(targetPath);
       fs.writeFileSync(targetPath, md);
     } else if (isRedirect(localFile)) {
-
       const md = await generateRedirectMarkdown(localFile, this.localFilesStorage.findFile(f => f.id === localFile.redirectTo), this.linkTranslator);
       await ensureDir(targetPath);
       fs.writeFileSync(targetPath, md);
-
     } else {
       const googleFile = await this.googleFilesStorage.findFile(f => f.id === localFile.id);
       const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);

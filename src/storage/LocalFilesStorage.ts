@@ -333,4 +333,16 @@ export class LocalFilesStorage {
       clearInterval(this.intervalHandler);
     }
   }
+
+  async checkIfExist(dest: string, transformHandler: TransformHandler = new VoidTransformHandler()) {
+    for (const fileId in this.fileMap) {
+      const dbFile = this.fileMap[fileId];
+      if (dbFile.localPath) {
+        const localPath = path.join(dest, ...dbFile.localPath.substr(1).split('/'));
+        if (!fs.existsSync(localPath)) {
+          await transformHandler.forceGeneration(dbFile);
+        }
+      }
+    }
+  }
 }
