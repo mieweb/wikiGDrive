@@ -142,7 +142,7 @@ export class StoragePlugin extends BasePlugin {
     this.eventBus.emit('quota_jobs:loaded', quotaConfig.jobs || []);
     await this.initStorages();
     this.eventBus.emit('drive_config:loaded', this.driveConfig);
-    this.eventBus.emit('auth_config:loaded', this.authConfig);
+    this.eventBus.emit('auth_config:loaded', this.driveConfig);
   }
 
   async initStorages() {

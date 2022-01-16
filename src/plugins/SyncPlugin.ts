@@ -126,7 +126,6 @@ export class SyncPlugin extends BasePlugin {
         await this.googleFilesStorage.mergeFullDir(googleFiles, context.parentId);
       }
 
-
       this.progress.completed++;
       this.eventBus.emit('sync:progress', this.progress);
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -155,6 +154,13 @@ export class SyncPlugin extends BasePlugin {
 
     q.error((err, context) => {
       this.logger.error(err);
+
+      if (403 === err.origError?.code) {
+        this.progress.failed++;
+        this.eventBus.emit('sync:progress', this.progress);
+        return;
+      }
+
       if (context.retries > 0) {
         context.retries--;
         q.push(context);
