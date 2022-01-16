@@ -146,6 +146,13 @@ export class DownloadPlugin extends BasePlugin {
     const destJson = new StringWritable();
 
     await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', name: file.name }, destZip);
+    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.oasis.opendocument.text', name: file.name },
+      fs.createWriteStream(path.join(this.config_dir, 'files', file.id + '.odt'))
+    );
+    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: file.name },
+      fs.createWriteStream(path.join(this.config_dir, 'files', file.id + '.docx'))
+    );
+
     await this.googleDocsService.download(this.auth, file, destJson);
 
     fs.writeFileSync(zipPath, destZip.getBuffer());
@@ -163,7 +170,7 @@ export class DownloadPlugin extends BasePlugin {
     for (let imageNo = 0; imageNo < htmlImages.length; imageNo++) {
       const htmlImage = htmlImages[imageNo];
       const zipImage = zipImages.find(zipImage => zipImage.zipPath === htmlImage);
-      if (zipImage) {
+      if (zipImage && images[imageNo]) {
         images[imageNo].zipImage = zipImage;
       }
     }
