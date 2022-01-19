@@ -13,7 +13,7 @@ import {GoogleDocsService} from '../google/GoogleDocsService';
 import {GoogleDriveService} from '../google/GoogleDriveService';
 import {CliParams} from '../MainService';
 import {DownloadFile, DownloadFileImage, DownloadFilesStorage, ImageMeta} from '../storage/DownloadFilesStorage';
-import {extractDocumentImages, extractHtmlImagesOrder} from '../utils/extractDocumentLinks';
+import {extractDocumentImages, extractXmlImagesOrder} from '../utils/extractDocumentLinks';
 import {UnZipper} from '../utils/UnZipper';
 import {getImageMeta} from '../utils/getImageMeta';
 
@@ -139,32 +139,26 @@ export class DownloadPlugin extends BasePlugin {
   }
 
   private async downloadDocument(file: GoogleFile): Promise<DownloadFile> {
-    const zipPath = path.join(this.config_dir, 'files', file.id + '.zip');
+    const odtPath = path.join(this.config_dir, 'files', file.id + '.odt');
     const gdocPath = path.join(this.config_dir, 'files', file.id + '.gdoc');
 
-    const destZip = new BufferWritable();
+    const destOdt = new BufferWritable();
     const destJson = new StringWritable();
 
-    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/zip', name: file.name }, destZip);
-    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.oasis.opendocument.text', name: file.name },
-      fs.createWriteStream(path.join(this.config_dir, 'files', file.id + '.odt'))
-    );
-    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: file.name },
-      fs.createWriteStream(path.join(this.config_dir, 'files', file.id + '.docx'))
-    );
-
+    await this.googleDriveService.exportDocument(this.auth, { id: file.id, mimeType: 'application/vnd.oasis.opendocument.text', name: file.name }, destOdt);
     await this.googleDocsService.download(this.auth, file, destJson);
 
-    fs.writeFileSync(zipPath, destZip.getBuffer());
+    fs.writeFileSync(odtPath, destOdt.getBuffer());
+    // fs.writeFileSync(zipPath, destZip.getBuffer());
     fs.writeFileSync(gdocPath, destJson.getString());
 
     const document = JSON.parse(destJson.getString());
     const images: DownloadFileImage[] = await extractDocumentImages(document);
 
     const unZipper = new UnZipper();
-    await unZipper.load(fs.readFileSync(zipPath));
+    await unZipper.load(fs.readFileSync(odtPath));
 
-    const htmlImages = await extractHtmlImagesOrder(unZipper.getHtml());
+    const htmlImages = await extractXmlImagesOrder(unZipper.getXml());
 
     const zipImages: ImageMeta[] = unZipper.getImages();
     for (let imageNo = 0; imageNo < htmlImages.length; imageNo++) {

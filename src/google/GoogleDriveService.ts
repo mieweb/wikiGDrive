@@ -1,7 +1,7 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {GoogleFile, MimeTypes} from '../storage/GoogleFilesStorage';
+import {GoogleFile, MimeToExt, MimeTypes} from '../storage/GoogleFilesStorage';
 import {Logger} from 'winston';
 import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
 
@@ -291,7 +291,7 @@ export class GoogleDriveService {
   async exportDocument(auth, file: { id: string, mimeType: string, name: string }, dest) {
     const drive = google.drive({ version: 'v3', auth });
 
-    const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';
+    const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
       const res = <any>await drive.files.export({

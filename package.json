@@ -24,7 +24,7 @@
     "dev": "webpack --mode development --watch ./src/main",
     "build": "webpack --mode production ./src/main",
     "build:docs": "mmdc -i docs/plugin_sequence.mmd -o docs/plugin_sequence.svg -b '#FFFFFF'",
-    "start": "wikigdrive-ts watch --server 3000 "
+    "start": "wikigdrive-ts watch --server 3000"
   },
   "repository": {
     "type": "git",
@@ -79,12 +79,13 @@
     "sharp": "^0.29.3",
     "sharp-phash": "^2.0.0",
     "simple-git": "^2.47.0",
-    "slugify": "^1.6.5",
+    "slugify": "1.6.5",
     "stream": "^0.0.2",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4.5.5",
+    "winston-daily-rotate-file": "4.5.5",
+    "xml-js": "1.6.11",
     "xmldoc": "^1.1.2"
   },
   "devDependencies": {
@@ -106,9 +107,7 @@
     "chai": "^4.2.0",
     "colors": "^1.4.0",
     "diff": "^4.0.2",
-    "domutils": "^2.2.0",
     "eslint": "8.6.0",
-    "htmlparser2": "^4.1.0",
     "husky": "^4.3.0",
     "jshint": "^2.12.0",
     "mermaid": "^8.8.0",

@@ -1,39 +1,28 @@
-import {DomHandler, Parser} from 'htmlparser2';
-import {findAll} from 'domutils';
-import {NodeWithChildren} from 'domhandler/lib/node';
-import {Node} from 'domhandler';
 import {docs_v1} from 'googleapis';
 import Schema$Document = docs_v1.Schema$Document;
-
-export async function createDom(html): Promise<Node[]> {
-  return new Promise((resolve, reject) => {
-    const handler = new DomHandler(function(error, dom: NodeWithChildren[]) {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(dom[0].children);
-      }
-    });
-    const parser = new Parser(handler, {
-      recognizeSelfClosing: true,
-      recognizeCDATA: false
-    });
-    parser.write(html);
-    parser.end();
-  });
-}
+import {xml2js} from 'xml-js';
+import {traverseObject} from '../utils/extractDocumentLinks';
 
 export class GoogleListFixer {
-  private readonly html: string;
+  private readonly xml: string;
 
-  constructor(html) {
-    this.html = html;
+  constructor(xml) {
+    this.xml = xml;
   }
 
-  private async getOlLists(dom) {
-    const elements = findAll((elem) => {
-      return elem.name === 'ol';
-    }, dom);
+  private async getOlLists(oodoc) {
+    const elements = [];
+    // findAll((elem) => {
+    //   return elem.name === 'ol';
+    // }, dom);
+    traverseObject(oodoc, (obj) => {
+      if (typeof obj === 'object') {
+        if ('draw:image' === obj['name'] && obj['attributes'] && obj['attributes']['xlink:href']) {
+          // elements.push(obj);
+        }
+      }
+      return true;
+    });
 
     const olLists = [];
 
@@ -72,18 +61,25 @@ export class GoogleListFixer {
   }
 
   async process(document: Schema$Document) {
-    const dom = await createDom(this.html);
+    const oodoc = xml2js(this.xml, { alwaysArray: true });
     const images = [];
-    const elements = findAll((elem) => {
-      return elem.name === 'img';
-    }, dom);
+
+    const elements = [];
+    traverseObject(oodoc, (obj) => {
+      if (typeof obj === 'object') {
+        if ('draw:image' === obj['name'] && obj['attributes'] && obj['attributes']['xlink:href']) {
+          elements.push(obj);
+        }
+      }
+      return true;
+    });
 
     for (const elem of elements) {
       images.push(elem);
     }
 
-    const olLists = await this.getOlLists(dom);
-    await this.fixOlLists(document.lists, olLists);
+    // const olLists = await this.getOlLists(oodoc);
+    // await this.fixOlLists(document.lists, olLists);
 
     return document;
   }

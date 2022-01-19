@@ -34,6 +34,11 @@ export const MimeTypes = {
   PRESENTATION_MIME: 'application/vnd.google-apps.presentation',
 };
 
+export const MimeToExt = {
+  'image/svg+xml': '.svg',
+  'application/vnd.oasis.opendocument.text': '.odt'
+};
+
 export class GoogleFilesStorage {
   private fileService: FileService;
   private readonly filePath: string;

@@ -268,7 +268,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
             break;
 
           case MimeTypes.DOCUMENT_MIME: {
-            const zipPath = path.join(this.config_dir, 'files', localFile.id + '.zip');
+            const zipPath = path.join(this.config_dir, 'files', localFile.id + '.odt');
             const zipBuffer = fs.readFileSync(zipPath);
 
             if (downloadFile.images?.length > 0) {
@@ -284,7 +284,7 @@ export class TransformPlugin extends BasePlugin implements TransformHandler {
 
             const unZipper = new UnZipper();
             await unZipper.load(zipBuffer);
-            const googleListFixer = new GoogleListFixer(unZipper.getHtml());
+            const googleListFixer = new GoogleListFixer(unZipper.getXml());
             const embedImageFixer = new EmbedImageFixer(this.downloadFilesStorage, this.localFilesStorage, downloadFile.images, targetSubPath.replace(/.md$/, '.images/'));
             const linkRewriter = new LinkRewriter(gdoc, this.linkTranslator, localFile.localPath);
 

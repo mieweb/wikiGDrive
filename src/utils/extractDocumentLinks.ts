@@ -1,7 +1,29 @@
 import {DownloadFileImage} from '../storage/DownloadFilesStorage';
-import {findAll} from 'domutils';
-import {createDom} from '../html/GoogleListFixer';
 import { urlToFolderId } from './idParsers';
+import {xml2js} from 'xml-js';
+
+export function traverseObject(obj: string|object|string[]|object[], func: (obj: string|object|string[]|object[], path: string) => boolean, path = '') {
+  if (!obj) {
+    return obj;
+  }
+  if (func(obj, path) === false) {
+    return;
+  }
+  if (Array.isArray(obj)) {
+    for (let idx = 0; idx < obj.length; idx++) {
+      const subPath = path + '[' + idx + ']';
+      obj[idx] = traverseObject(obj[idx], func, subPath);
+    }
+    return obj;
+  }
+  if (typeof obj === 'object') {
+    for (const k in obj) {
+      const subPath = path ? path + '.' + k : k;
+      obj[k] = traverseObject(obj[k], func, subPath);
+    }
+  }
+  return obj;
+}
 
 export async function convertImageLink(document, url) {
   if (document.inlineObjects[url]) {
@@ -61,11 +83,18 @@ export async function extractDocumentImages(document: any): Promise<DownloadFile
   return links;
 }
 
-export async function extractHtmlImagesOrder(html) {
-  const dom = await createDom(html);
-  const elements = findAll((elem) => {
-    return elem.name === 'img';
-  }, dom);
+export async function extractXmlImagesOrder(xml) {
+  const oodoc = xml2js(xml, { alwaysArray: true });
 
-  return elements.map(element => element.attribs['src']?.replace(/^images\//, ''));
+  const elements = [];
+  traverseObject(oodoc, (obj) => {
+    if (typeof obj === 'object') {
+      if ('draw:image' === obj['name'] && obj['attributes'] && obj['attributes']['xlink:href']) {
+        elements.push(obj);
+      }
+    }
+    return true;
+  });
+
+  return elements.map(element => element.attributes['xlink:href']?.replace(/^Pictures\//, ''));
 }
