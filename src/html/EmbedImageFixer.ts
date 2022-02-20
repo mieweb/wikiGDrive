@@ -1,9 +1,8 @@
 import {docs_v1} from 'googleapis';
 import Schema$Document = docs_v1.Schema$Document;
 import {DownloadFile, DownloadFileImage, DownloadFilesStorage} from '../storage/DownloadFilesStorage';
-import {MimeTypes} from '../storage/GoogleFilesStorage';
 import {getImageDistance} from '../utils/getImageMeta';
-import {LocalFilesStorage} from '../storage/LocalFilesStorage';
+import {MimeTypes} from '../model/GoogleFile';
 
 const TOLERANCE = 5;
 
@@ -11,16 +10,16 @@ export class EmbedImageFixer {
   private readonly images: any[];
   private diagrams: DownloadFile[];
 
-  constructor(private downloadFilesStorage: DownloadFilesStorage, private localFilesStorage: LocalFilesStorage, images: DownloadFileImage[], private imagesDirPath: string) {
+  constructor(private downloadFilesStorage: DownloadFilesStorage, images: DownloadFileImage[], private imagesDirPath: string) {
     this.images = images;
   }
 
   private async fixUrl(image: DownloadFileImage) {
     if (image.fileId) {
-      const localFile = await this.localFilesStorage.findFile(file => file.id === image.fileId);
-      if (localFile) {
-        return localFile.localPath;
-      }
+      // const localFile = await this.localFilesStorage.findFile(file => file.id === image.fileId);
+      // if (localFile) {
+      //   return localFile.localPath;
+      // }
     }
 
     if (image.zipImage) {
@@ -36,10 +35,10 @@ export class EmbedImageFixer {
         .sort((a, b) => a.distance - b.distance);
 
       if (distances.length > 0) {
-        const localFile = await this.localFilesStorage.findFile(file => file.id === distances[0].diagram.id);
-        if (localFile) {
-          return localFile.localPath;
-        }
+        // const localFile = await this.localFilesStorage.findFile(file => file.id === distances[0].diagram.id);
+        // if (localFile) {
+        //   return localFile.localPath;
+        // }
       }
 
       return this.imagesDirPath + '' + image.zipImage.zipPath;

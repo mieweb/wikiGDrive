@@ -4,8 +4,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import * as winston from 'winston';
-import {FileService} from '../utils/FileService';
 import {HttpClient} from '../utils/HttpClient';
+import {FileContentService} from '../utils/FileContentService';
 
 function createTempName(tmpdir) {
   const filename = 'temp_' + crypto.randomBytes(4).readUInt32LE(0) + '_ext';
@@ -23,7 +23,7 @@ export interface ExternalFilesMap {
 }
 
 export class ExternalFilesStorage {
-  private fileService: FileService;
+  private fileService: FileContentService;
   private readonly filePath: string;
   private save_needed = false;
   private externalFiles: ExternalFilesMap;
@@ -31,7 +31,7 @@ export class ExternalFilesStorage {
 
   constructor(logger, private config_dir: string, private httpClient: HttpClient) {
     this.logger = logger.child({ filename: __filename });
-    this.fileService = new FileService();
+    this.fileService = new FileContentService();
     this.filePath = path.join(config_dir, 'external_files.json');
   }
 
@@ -88,17 +88,8 @@ export class ExternalFilesStorage {
     return retVal;
   }
 
-  async _loadJson(filePath) {
-    try {
-      const content = await this.fileService.readFile(filePath);
-      return JSON.parse(content);
-    } catch (error) {
-      return {};
-    }
-  }
-
   private async loadData() {
-    this.externalFiles = await this._loadJson(this.filePath) || {};
+    this.externalFiles = await this.fileService.readJson(this.filePath);
   }
 
   async flushData() {
@@ -106,7 +97,7 @@ export class ExternalFilesStorage {
       return ;
     }
 
-    fs.writeFileSync(this.filePath,  JSON.stringify(this.externalFiles, null, 2));
+    await this.fileService.writeJson(this.filePath, this.externalFiles);
     this.save_needed = false;
   }
 

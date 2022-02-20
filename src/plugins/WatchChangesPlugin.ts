@@ -5,15 +5,15 @@ import {CliParams} from '../MainService';
 import {DriveConfig} from './StoragePlugin';
 import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {GoogleDriveService} from '../google/GoogleDriveService';
+import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 
 export class WatchChangesPlugin extends BasePlugin {
   private command: string;
   private drive_id: string;
-  private watch_mode: string;
   private debug: string[];
   private drive_config: DriveConfig;
   private googleFilesStorage: GoogleFilesStorage;
-  private auth: any;
+  private auth: OAuth2Client;
   private googleDriveService: GoogleDriveService;
   private startTrackToken: string;
 
@@ -22,7 +22,6 @@ export class WatchChangesPlugin extends BasePlugin {
 
     eventBus.on('main:run', async (params: CliParams) => {
       this.command = params.command;
-      this.watch_mode = params.watch_mode;
       this.debug = params.debug;
     });
     eventBus.on('drive_config:loaded', (drive_config: DriveConfig) => {
@@ -38,16 +37,10 @@ export class WatchChangesPlugin extends BasePlugin {
       this.googleDriveService = googleDriveService;
     });
     eventBus.on('watch_changes:fetch_token', async () => {
-      if (this.watch_mode !== 'changes') {
-        return;
-      }
       this.startTrackToken = await this.googleDriveService.getStartTrackToken(this.auth, this.drive_id);
       eventBus.emit('watch_changes:token_ready');
     });
     eventBus.on('watch:run', async () => {
-      if (this.watch_mode !== 'changes') {
-        return;
-      }
       await this.watch();
     });
   }

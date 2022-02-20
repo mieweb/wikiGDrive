@@ -1,7 +1,6 @@
 import {BasePlugin} from '../plugins/BasePlugin';
 import {DefaultRenderer} from 'listr2/dist/renderer/default.renderer';
 import chalk from 'chalk';
-import {DriveConfig} from '../plugins/StoragePlugin';
 
 class ProgressTask {
   public title: string;
@@ -149,7 +148,7 @@ export class ProgressPlugin extends BasePlugin {
       }));
     });
 
-    eventBus.once('drive_config:loaded', async (drive_config: DriveConfig) => {
+    eventBus.once('drive_config:loaded', async (drive_config) => {
       this.tasks.push(new ProgressTask({
         title: 'Wikigdrive initialized: ' + chalk.green(drive_config.drive),
         pending: false,

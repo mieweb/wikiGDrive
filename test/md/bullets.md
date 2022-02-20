@@ -16,7 +16,7 @@
 
 ## Mixed Lists
 
-Item before  list
+Item before list
 
 1. Some item
 2. Some item

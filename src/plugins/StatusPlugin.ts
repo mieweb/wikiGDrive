@@ -5,14 +5,12 @@ import * as path from 'path';
 import {BasePlugin} from './BasePlugin';
 import {GoogleFilesStorage} from '../storage/GoogleFilesStorage';
 import {DownloadFilesStorage} from '../storage/DownloadFilesStorage';
-import {LocalFilesStorage} from '../storage/LocalFilesStorage';
-import {DriveConfig} from './StoragePlugin';
 
 export class StatusPlugin extends BasePlugin {
   private googleFilesStorage: GoogleFilesStorage;
   private downloadFilesStorage: DownloadFilesStorage;
-  private localFilesStorage: LocalFilesStorage;
-  private drive_config: DriveConfig;
+  private localFilesStorage: any;
+  private drive_config: any;
   private googleFileIds: string[];
   private config_dir: string;
   private dest: string;

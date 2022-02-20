@@ -8,14 +8,14 @@ import {spawn} from 'child_process';
 import {parseSecondsInterval} from '../utils/parseSecondsInterval';
 import {BasePlugin} from './BasePlugin';
 import {GoogleFilesStorage, MimeTypes} from '../storage/GoogleFilesStorage';
-import {LocalFilesStorage} from '../storage/LocalFilesStorage';
+import {LocalFilesProcessor} from '../containers/transform/LocalFilesProcessor';
 
 export class GitPlugin extends BasePlugin {
   private gitUpdateSecondsDelay: number;
-  private config_dir: any;
+  private config_dir: string;
   private dest: string;
   private googleFilesStorage: GoogleFilesStorage;
-  private localFilesStorage: LocalFilesStorage;
+  private localFilesStorage: LocalFilesProcessor;
 
   constructor(eventBus, logger) {
     super(eventBus, logger.child({ filename: __filename }));

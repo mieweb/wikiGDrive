@@ -1,9 +1,8 @@
 'use strict';
 
 import * as path from 'path';
-import * as fs from 'fs';
 
-import {FileService} from '../utils/FileService';
+import {FileContentService} from '../utils/FileContentService';
 
 type DateISO = string;
 type FileId = string;
@@ -38,19 +37,20 @@ export interface FileMap {
 }
 
 export class DownloadFilesStorage {
-  private fileService: FileService;
+  private fileService: FileContentService;
   private readonly filePath: string;
   private save_needed = false;
 
   private fileMap: FileMap;
 
   constructor(private config_dir: string) {
-    this.fileService = new FileService();
+    this.fileService = new FileContentService();
     this.filePath = path.join(config_dir, 'download.json');
   }
 
   async init() {
-    await this.loadData();
+    this.fileMap = await this.fileService.readJson(this.filePath);
+
     setInterval(() => {
       this.flushData();
     }, 500);
@@ -84,22 +84,12 @@ export class DownloadFilesStorage {
     return !!this.fileMap[fileId];
   }
 
-  async loadData() {
-    try {
-      const content = await this.fileService.readFile(this.filePath);
-      this.fileMap = JSON.parse(content) || {};
-    } catch (error) {
-      this.fileMap = {};
-    }
-  }
-
   async flushData() {
     if (!this.save_needed) {
       return ;
     }
 
-    const content = JSON.stringify(this.fileMap, null, 2);
-    fs.writeFileSync(this.filePath, content);
+    await this.fileService.writeJson(this.filePath, this.fileMap);
     this.save_needed = false;
   }
 

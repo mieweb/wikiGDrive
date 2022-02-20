@@ -286,7 +286,6 @@ A website front end is a goal for real-time testing of the viewing experience, b
   "drive": "https://drive.google.com/drive/folders/FOLDER_ID",
   "drive_id": "",
   "dest": "/home/user/mieweb/wikigdrive-test",
-  "flat_folder_structure": false,
   "link_mode": "mdURLs",
   "service_account": "wikigdrive.json"
 }
@@ -345,9 +344,7 @@ A website front end is a goal for real-time testing of the viewing experience, b
 
 - desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
 - dirty - file needs to be downloaded
-- conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
 - conflicting - array of fileIds when mimeType = 'conflict'
-- counter - current number of existing conflicts when mimeType = 'conflict'
 - localPath - path to transformed markdown file
 - modifiedTime - fetched from google server
 
