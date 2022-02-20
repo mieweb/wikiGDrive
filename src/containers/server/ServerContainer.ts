@@ -1,69 +1,44 @@
-'use strict';
-
+import {Container, ContainerEngine} from '../../ContainerEngine';
 import * as express from 'express';
-import * as nunjucks from 'nunjucks';
+import * as winston from 'winston';
+import {Express} from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
-import {Express} from 'express';
-import {BasePlugin} from '../BasePlugin';
-import {CliParams} from '../../MainService';
-import {GoogleFilesStorage} from '../../storage/GoogleFilesStorage';
-import {QueryOptions} from 'winston';
-import {LocalFile, LocalFilesStorage} from '../../storage/LocalFilesStorage';
-import {DownloadFilesStorage} from '../../storage/DownloadFilesStorage';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {DriveConfig} from '../StoragePlugin';
-import * as SimpleGit from 'simple-git/promise';
+import {LocalFile} from '../../model/LocalFile';
 
 const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
+const extToMime = {
+  '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
+  '.css': 'text/css',
+  '.txt': 'text/plain',
+  '.md': 'text/plain',
+  '.htm': 'text/html',
+  '.html': 'text/html'
+};
 
-export class ServerPlugin extends BasePlugin {
+export class ServerContainer extends Container {
+  private logger: winston.Logger;
   private app: Express;
-  private googleFilesStorage: GoogleFilesStorage;
-  private localFilesStorage: LocalFilesStorage;
-  private downloadFilesStorage: DownloadFilesStorage;
-  private googleDriveService: GoogleDriveService;
-  private auth: any;
-  private drive_config: DriveConfig;
 
-  constructor(eventBus, logger) {
-    super(eventBus, logger.child({filename: __filename}));
+  async init(engine: ContainerEngine): Promise<void> {
+    await super.init(engine);
+    this.logger = engine.logger.child({ filename: __filename });
+  }
 
-    eventBus.on('google_files:initialized', ({ googleFilesStorage }) => {
-      this.googleFilesStorage = googleFilesStorage;
-    });
-    eventBus.on('local_files:initialized', ({ localFilesStorage }) => {
-      this.localFilesStorage = localFilesStorage;
-    });
-    eventBus.on('download_files:initialized', ({ downloadFilesStorage }) => {
-      this.downloadFilesStorage = downloadFilesStorage;
-    });
-    eventBus.on('google_api:done', ({ auth }) => {
-      this.auth = auth;
-      const googleDriveService = new GoogleDriveService(this.eventBus, this.logger);
-      this.googleDriveService = googleDriveService;
-    });
-    eventBus.on('drive_config:loaded', (drive_config) => {
-      this.drive_config = drive_config;
-    });
-
-    eventBus.on('main:run', async (params: CliParams) => {
-      this.eventBus.emit('server:initialized');
-      if (params.server_port) {
-        this.startServer(params.server_port);
-      }
-    });
+  async destroy(): Promise<void> {
+    // TODO
   }
 
   private startServer(port = 3000) {
     const app = this.app = express();
 
-    const env = nunjucks.configure([__dirname + '/templates/'], { // set folders with templates
+/*    const env = nunjucks.configure([__dirname + '/templates/'], { // set folders with templates
       autoescape: true,
       express: app
-    });
+    });*/
 
-    app.use(express.static(__dirname + '/assets'));
+    app.use(express.static(__dirname + '/static'));
 
     this.initRouter(app);
 
@@ -72,18 +47,39 @@ export class ServerPlugin extends BasePlugin {
     });
   }
 
-  async loadGenerated(localFile: LocalFile) {
-    const targetPath = path.join(this.drive_config.dest, ...localFile.localPath.substr(1).split('/'));
-    if (!fs.existsSync(targetPath)) {
-      return null;
+  tryOutput(res, filename) {
+    if (fs.existsSync(filename)) {
+      console.log(filename);
+      const stat = fs.statSync(filename);
+      if (stat.isFile()) {
+        res.setHeader('content-type', extToMime[path.extname(filename)] || 'text/plain');
+        fs.createReadStream(filename).pipe(res);
+        return true;
+      }
     }
-
-    return fs.readFileSync(targetPath).toString();
   }
 
   initRouter(app) {
-    app.get('/', (req, res) => {
-      res.render('index.html', { title: 'wikigdrive' });
+/*    app.use((req: express.Request, res) => {
+      const url = new URL(req.url, 'http://localhost:' + 3000);
+      console.log(path.join(__dirname, 'static', url.pathname));
+      if (this.tryOutput(res, path.join(__dirname, 'static', url.pathname))) {
+        return;
+      }
+      if (this.tryOutput(res, path.join(__dirname, 'static', url.pathname, 'index.html'))) {
+        return;
+      }
+      res.end('aaa');
+      // res.render('index.html', { title: 'wikigdrive' });
+    });*/
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    app.get('/api', (req, res) => {
+
+    });
+
+    app.post('/api/test', async (req, res) => {
+      res.json({aaa: 1});
     });
 
     app.get('/file/:id', async (req, res) => {
@@ -93,7 +89,7 @@ export class ServerPlugin extends BasePlugin {
         return res.render('file.html', { title: 'wikigdrive' });
       }
 
-      const google = this.googleFilesStorage.findFile(item => item.id === fileId);
+ /*     const google = this.googleFilesStorage.findFile(item => item.id === fileId);
       const local = this.localFilesStorage.findFile(item => item.id === fileId);
       const downloaded = this.downloadFilesStorage.findFile(item => item.id === fileId);
 
@@ -129,18 +125,18 @@ export class ServerPlugin extends BasePlugin {
           git.status = 'Modified';
         }
       }
-/*
-      if (!foundFile) {
-        return res.status(404).send('Not found.');
-      }
-*/
+      /!*
+            if (!foundFile) {
+              return res.status(404).send('Not found.');
+            }
+      *!/
 
       res.json({
         google, local, downloaded, api, parents, markdown, git
-      });
+      });*/
     });
 
-    app.post('/file/:id/mark_dirty', async (req, res, next) => {
+  /*  app.post('/file/:id/mark_dirty', async (req, res, next) => {
       try {
         const fileId: string = req.params.id;
         this.logger.info('mark_dirty ' + fileId);
@@ -174,6 +170,25 @@ export class ServerPlugin extends BasePlugin {
         }
         res.json(results);
       });
-    });
+    });*/
+  }
+
+  async loadGenerated(localFile: LocalFile) {
+/*
+    const targetPath = path.join(this.drive_config.dest, ...localFile.localPath.substring(1).split('/'));
+    if (!fs.existsSync(targetPath)) {
+      return null;
+    }
+
+    return fs.readFileSync(targetPath).toString();
+*/
+  }
+
+  async run() {
+    await this.startServer(3000); // TODO
+  }
+
+  getServer() {
+    return this.app;
   }
 }
