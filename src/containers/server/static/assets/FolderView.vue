@@ -271,7 +271,7 @@ export default {
     async sync(file) {
       file.syncing = true;
       try {
-        const response = await fetch(`/api/drive/${this.driveId}/sync/${file.google.id}`, {
+        await fetch(`/api/drive/${this.driveId}/sync/${file.google.id}`, {
           method: 'post'
         });
       } finally {
@@ -280,7 +280,7 @@ export default {
     async syncAll() {
       this.rootFolder.syncing = true;
       try {
-        const response = await fetch(`/api/drive/${this.driveId}/sync`, {
+        await fetch(`/api/drive/${this.driveId}/sync`, {
           method: 'post'
         });
       } finally {
@@ -308,11 +308,16 @@ export default {
           }
         }
 
+        const oldRootSyncing = this.rootFolder.syncing;
         this.rootFolder.syncing = (runningJob.type === 'sync_all');
 
         for (const file of this.files) {
           const job = inspected.jobs.find(job => job.payload === file.id);
           file.syncing = !!job || (runningJob.type === 'sync_all');
+        }
+
+        if (oldRootSyncing && !this.rootFolder.syncing) {
+          this.refresh();
         }
       } catch (error404) {}
     }

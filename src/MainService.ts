@@ -19,6 +19,7 @@ import {AuthConfig} from './model/AccountJson';
 import {loadRunningInstance} from './containers/server/loadRunningInstance';
 import {FolderRegistryContainer} from './containers/folder_registry/FolderRegistryContainer';
 import {JobManagerContainer} from './containers/job/JobManagerContainer';
+import fetch from 'node-fetch';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
@@ -202,10 +203,44 @@ export class MainService {
     await serverContainer.run();
 
     const containerEnginePromise = this.containerEngine.run();
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    containerEnginePromise.then(() => {
+    });
 
     await new Promise(resolve => {
       this.eventBus.on('end', resolve);
     });
+  }
+
+  async cmdInspect() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const instance = await loadRunningInstance();
+    if (!instance) {
+      this.logger.error('WikiGDrive server is not running');
+      process.exit(1);
+    }
+
+    const response = await fetch(`http://localhost:${instance.port}/api/drive/${folderId}/inspect`);
+    const json = await response.json();
+
+    console.log(json);
+  }
+
+  async cmdPs() {
+    const instance = await loadRunningInstance();
+    if (!instance) {
+      this.logger.error('WikiGDrive server is not running');
+      process.exit(1);
+    }
+
+    const response = await fetch(`http://localhost:${instance.port}/api/ps`);
+    const json = await response.json();
+
+    console.table(json);
   }
 
   async start() {
@@ -253,6 +288,12 @@ export class MainService {
         break;
       case 'unregister':
         await this.cmdUnregister();
+        break;
+      case 'ps':
+        await this.cmdPs();
+        break;
+      case 'inspect':
+        await this.cmdInspect();
         break;
     }
 

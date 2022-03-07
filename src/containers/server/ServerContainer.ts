@@ -14,8 +14,7 @@ import {AuthConfig} from '../../model/AccountJson';
 import {urlToFolderId} from '../../utils/idParsers';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {JobManagerContainer} from '../job/JobManagerContainer';
+import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 
 interface TreeItem {
   id: FileId;
@@ -181,7 +180,7 @@ export class ServerContainer extends Container {
         // const files = await driveFileSystem.list();
         res.json({ rootFolder, drive, driveId, folderId, files, parentId, markdownPath });
       } catch (err) {
-        if (err.message === 'Drive not shared with wikigdrive') {
+        if (err.message === 'Drive not shared with wikigdrive' || err.message.indexOf('Error download fileId') === 0) {
           const authConfig: AuthConfig = this.authContainer['authConfig'];
           res.status(404).json({ not_registered: true, share_email: authConfig.share_email, rootFolder });
           return;
@@ -222,6 +221,29 @@ export class ServerContainer extends Container {
       }
     });
 
+    app.get('/api/ps', async (req, res, next) => {
+      try {
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        const driveJobsMap: DriveJobsMap = await jobManagerContainer.ps();
+
+        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+        const folders = await folderRegistryContainer.getFolders();
+
+        const retVal = [];
+        for (const folderId in folders) {
+          const driveJobs = driveJobsMap[folderId] || { jobs: [] };
+          const folder = folders[folderId];
+          retVal.push({
+            folderId, name: folder.name, jobs_count: driveJobs.jobs.length
+          });
+        }
+
+        res.json(retVal);
+      } catch (err) {
+        next(err);
+      }
+    });
+
     app.post('/api/drive/:driveId/sync/:fileId', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
@@ -243,6 +265,12 @@ export class ServerContainer extends Container {
         const driveId = req.params.driveId;
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         const inspected = await jobManagerContainer.inspect(driveId);
+
+        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+        const folders = await folderRegistryContainer.getFolders();
+        const folder = folders[driveId];
+        inspected['folder'] = folder;
+
         res.json(inspected);
       } catch (err) {
         next(err);
