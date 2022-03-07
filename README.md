@@ -12,6 +12,8 @@ WikiGDrive is a node app that uses the [Google Drive API](https://developers.goo
 
 ![Diagram](./doc/Diagram.svg)
 
+[Google Drive Notes](https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#)
+
 With a "Shared Drive" as the key, WikiGDrive:
 
 - Reads all the files from a Google "Shared Drive"
