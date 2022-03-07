@@ -40,12 +40,16 @@ export class FileContentService extends FileService {
     if (!subPath) {
       throw new Error('Empty subPath');
     }
-    const subFileService = new FileContentService(pathResolve(this.rootPath, subPath), virtualPath ? virtualPath : this.virtualPath + subPath + '/');
+    const subFileService = new FileContentService(pathResolve(this.rootPath, subPath), virtualPath !== undefined ? virtualPath : this.virtualPath + subPath + '/');
     await subFileService.mkdir('/');
     return subFileService;
   }
 
   getVirtualPath() {
     return this.virtualPath;
+  }
+
+  getRealPath() {
+    return this.rootPath;
   }
 }

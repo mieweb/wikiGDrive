@@ -1,7 +1,6 @@
 import slugify from 'slugify';
 import {BinaryFile, DrawingFile, Directory, LocalFile, MdFile} from '../../model/LocalFile';
 import { GoogleFile, MimeTypes } from '../../model/GoogleFile';
-import { FileContentService } from '../../utils/FileContentService';
 
 const MAX_PATH_LENGTH = 2000;
 const MAX_FILENAME_LENGTH = 200;
@@ -61,7 +60,7 @@ export class LocalFilesGenerator {
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
               version: googleFile.version,
-              mimeType: googleFile.mimeType,
+              mimeType: 'text/x-markdown',
               lastAuthor: googleFile.lastAuthor,
               fileName: desiredLocalPath,
             };
@@ -76,7 +75,7 @@ export class LocalFilesGenerator {
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
               version: googleFile.version,
-              mimeType: googleFile.mimeType,
+              mimeType: 'image/svg+xml',
               fileName: desiredLocalPath,
             };
             retVal.push(drawingFile);
@@ -89,6 +88,7 @@ export class LocalFilesGenerator {
               id: googleFile.id,
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
+              version: googleFile.version,
               mimeType: googleFile.mimeType,
               fileName: desiredLocalPath,
             };

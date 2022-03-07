@@ -16,3 +16,10 @@ export interface UserAccountJson {
     client_id?: string;
     client_secret?: string;
 }
+
+export interface AuthConfig {
+  user_account?: UserAccountJson;
+  web_account?: UserAccountJson;
+  service_account?: ServiceAccountJson;
+  share_email?: string;
+}

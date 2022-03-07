@@ -6,6 +6,9 @@ import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
+import Schema$Permission = drive_v3.Schema$Permission;
+import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
+import {FileId} from '../model/model';
 
 export interface Changes {
   token: string;
@@ -208,7 +211,7 @@ export class GoogleDriveService {
     }
   }
 
-  async getFile(auth: OAuth2Client, fileId: string) {
+  async getFile(auth: OAuth2Client, fileId: FileId) {
     const drive = google.drive({ version: 'v3', auth });
 
     try {
@@ -299,7 +302,22 @@ export class GoogleDriveService {
     }
   }
 
-  async listDrives(auth: OAuth2Client, pageToken?: string) {
+  async about(auth: OAuth2Client) {
+    try {
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.about.get({
+        fields: '*'
+      });
+      return res.data;
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error about: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
+
+  async listDrives(auth: OAuth2Client, pageToken?: string): Promise<Drive[]> {
     const drive = google.drive({ version: 'v3', auth });
 
     const listParams = {
@@ -331,4 +349,41 @@ export class GoogleDriveService {
     }
   }
 
+  async getDrive(auth: OAuth2Client, driveId) {
+    try {
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.drives.get({ driveId });
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
+
+  async shareDrive(auth: OAuth2Client, driveId: string, email: string) {
+    try {
+      const permissions: Schema$Permission = {
+        type: 'user',
+        role: 'reader',
+        emailAddress: email
+      };
+
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.permissions.create({
+        requestBody: permissions,
+        fileId: driveId,
+        fields: 'id',
+      });
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
 }

@@ -11,6 +11,7 @@ export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarc
     date: localFile.modifiedTime,
     version: localFile.version,
     lastAuthor: localFile.lastAuthor,
+    mimeType: localFile.mimeType,
     links,
     // url: htmlPath,
     source: 'https://drive.google.com/open?id=' + localFile.id

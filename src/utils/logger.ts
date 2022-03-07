@@ -59,7 +59,8 @@ export function createLogger(eventBus) {
 
   process
     .on('unhandledRejection', async (reason: any) => {
-      logger.error(reason.message, reason);
+      console.error(reason);
+      logger.error('unhandledRejection: ' + reason.message, reason);
 
       if (reason.origError) {
         reason = reason.origError;
@@ -74,6 +75,7 @@ export function createLogger(eventBus) {
       process.exit(1);
     })
     .on('uncaughtException', err => {
+      console.error(err);
       logger.error('Uncaught Exception thrown', err);
       process.exit(1);
     });

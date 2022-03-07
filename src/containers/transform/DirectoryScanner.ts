@@ -41,7 +41,7 @@ export class DirectoryScanner {
         id: props.id,
         title: props.title,
         modifiedTime: props.date,
-        mimeType: props.mimeType || MimeTypes.DOCUMENT_MIME,
+        mimeType: props.mimeType || MimeTypes.MARKDOWN,
         conflicting: Array.isArray(props.conflicting) ? props.conflicting : [],
         fileName: stripConflict(localPath),
       };
@@ -54,7 +54,7 @@ export class DirectoryScanner {
         id: props.id,
         title: props.title,
         modifiedTime: props.date,
-        mimeType: props.mimeType || MimeTypes.DOCUMENT_MIME,
+        mimeType: props.mimeType || MimeTypes.MARKDOWN,
         fileName: stripConflict(localPath),
         redirectTo: props.redirectTo,
       };
@@ -67,7 +67,7 @@ export class DirectoryScanner {
       version: props.version,
       title: props.title,
       modifiedTime: props.date,
-      mimeType: props.mimeType || MimeTypes.DOCUMENT_MIME,
+      mimeType: props.mimeType || MimeTypes.MARKDOWN,
       lastAuthor: props.lastAuthor,
       fileName: stripConflict(localPath)
     };
@@ -115,12 +115,17 @@ export class DirectoryScanner {
         continue;
       }
 
+      const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
+      const props = yaml.load(yamlContent);
+      const yamlFile = props.fileMap && props.fileMap[realFileName] ? props.fileMap[realFileName] : null;
+
       if (realFileName.endsWith('.svg')) {
         const drawingFile: DrawingFile = {
           type: 'drawing',
           fileName: stripConflict(realFileName),
-          id: 'TO_FILL',
-          modifiedTime: 'TO_FILL',
+          id: yamlFile ? yamlFile.id : 'TO_FILL',
+          modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
+          version: yamlFile ? yamlFile.version : undefined,
           mimeType: 'image/svg+xml',
           title: stripConflict(realFileName)
         };
@@ -137,8 +142,9 @@ export class DirectoryScanner {
         const binaryFile: BinaryFile = {
           type: 'binary',
           fileName: stripConflict(realFileName),
-          id: 'TO_FILL',
-          modifiedTime: 'TO_FILL',
+          id: yamlFile ? yamlFile.id : 'TO_FILL',
+          modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
+          version: yamlFile ? yamlFile.version : undefined,
           mimeType: 'application/binary',
           title: stripConflict(realFileName)
         };

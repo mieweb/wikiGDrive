@@ -1,3 +1,7 @@
+:root {
+  --sidebar-width: 600px;
+}
+
 /**
  * Body CSS
  */
@@ -24,22 +28,45 @@ body,
   transition: left 0.2s;
 }
 
+header a {
+  color: white;
+}
+
 #sidedrawer {
-  position: fixed;
+  position: absolute;
   top: 0;
   bottom: 0;
-  width: 200px;
-  left: -200px;
+  width: var(--sidebar-width);
+  left: calc(-1 * var(--sidebar-width));
   overflow: auto;
   z-index: 2;
   background-color: #fff;
   transition: transform 0.2s;
 }
 
+#content-wrapper > main {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  overflow: auto;
+}
+
+#main.hide-sidedrawer #sidedrawer {
+  display: none;
+}
+
+
+#main.hide-sidedrawer #content-wrapper > main {
+  left: 0;
+}
+
 #content-wrapper {
   overflow: auto;
   transition: margin-left 0.2s;
   flex: 1 1 auto;
+  position: relative;
 }
 
 #footer {
@@ -53,7 +80,7 @@ body,
   }
 
   #sidedrawer {
-    transform: translate(200px);
+    transform: translate(var(--sidebar-width));
   }
 
   #main.hide-sidedrawer #header {
@@ -69,7 +96,7 @@ body,
  * Toggle Side drawer
  */
 #sidedrawer.active {
-  transform: translate(200px);
+  transform: translate(var(--sidebar-width));
 }
 
 /**
@@ -100,4 +127,18 @@ ul.mui-tabs__bar li {
 ul.mui-tabs__bar>li>a {
   cursor: pointer;
   text-underline: none !important;
+}
+
+.mui-table--hover tr:hover {
+  background: #BDBDBD;
+}
+
+.mui-table--clickable tbody tr {
+  cursor: pointer;
+}
+
+/* Autolinker */
+
+.token a {
+  color: inherit;
 }

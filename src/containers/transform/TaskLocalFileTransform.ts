@@ -7,12 +7,12 @@ import {SvgTransform} from '../../SvgTransform';
 import {NavigationHierarchy} from './generateNavigationHierarchy';
 import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter';
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown';
-import * as path from 'path';
 import {OdtProcessor} from '../../odt/OdtProcessor';
 import {UnMarshaller} from '../../odt/UnMarshaller';
 import {LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
+import {googleMimeToExt} from '../google_folder/TaskFetchFolder';
 
 export class TaskLocalFileTransform extends QueueTask {
   constructor(protected logger: winston.Logger,
@@ -45,8 +45,8 @@ export class TaskLocalFileTransform extends QueueTask {
         reject(err);
       });
 
-      const ext = path.extname(this.googleFile.name);
-      const stream = this.googleFolder.createReadStream(`${binaryFile.id}${ext}`)
+      const ext = googleMimeToExt(this.googleFile.mimeType, this.googleFile.name);
+      const stream = this.googleFolder.createReadStream(`${binaryFile.id}${ext ? '.' + ext : ''}`)
         .pipe(dest);
 
       stream.on('finish', () => {
@@ -101,6 +101,8 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
+    this.logger.info('Transforming: ' + this.localFile.fileName);
+
     if (localFile.type === 'conflict') {
       const conflictingFiles: Array<RedirFile | MdFile> = [];
       const md = generateConflictMarkdown(localFile);

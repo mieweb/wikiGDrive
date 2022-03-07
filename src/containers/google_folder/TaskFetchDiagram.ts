@@ -11,7 +11,8 @@ export class TaskFetchDiagram extends QueueTask {
               private googleDriveService: GoogleDriveService,
               private auth: OAuth2Client,
               private fileService: FileContentService,
-              private file: SimpleFile) {
+              private file: SimpleFile,
+              private forceDownload: boolean) {
     super(logger);
   }
 
@@ -19,7 +20,7 @@ export class TaskFetchDiagram extends QueueTask {
     const targetPathSvg = this.file.id + '.svg';
     const targetPathPng = this.file.id + '.png';
 
-    if (await this.fileService.exists(targetPathPng) && await this.fileService.exists(targetPathSvg)) {
+    if (await this.fileService.exists(targetPathPng) && await this.fileService.exists(targetPathSvg) && !this.forceDownload) {
       return [];
     }
 

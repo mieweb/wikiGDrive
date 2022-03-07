@@ -1,10 +1,17 @@
 <template>
-  <div class="table-responsive">
-    <form @submit.prevent.stop="submit">
-      Share
-      <input v-model="url" />
-      <button type="submit">Share</button>
-    </form>
+  <div>
+    <header class="mui-appbar mui--z1">
+      <!-- Appbar HTML goes here -->
+    </header>
+    <div class="mui-container">
+      <form class="mui-form" @submit.prevent.stop="submit">
+        <legend>Share</legend>
+        <div class="mui-textfield">
+          <input v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
+        </div>
+        <button type="submit" class="mui-btn mui-btn--raised">Share</button>
+      </form>
+    </div>
   </div>
 </template>
 <script>
@@ -15,17 +22,25 @@ export default {
     }
   },
   created() {
-    console.log('ccc');
   },
   methods: {
     async submit() {
       console.log(this.url);
-      await fetch('/api/test', {
+      const response = await fetch('/api/share_drive', {
         method: 'POST',
-        data: {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
           url: this.url
-        }
+        })
       });
+      const json = await response.json();
+      await this.$router.push({ name: 'drive', params: { driveId: json.drive_id } });
+    },
+    share() {
+
     }
   }
 }

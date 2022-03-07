@@ -37,6 +37,7 @@ export interface DrawingFile extends CommonFileData {
 
 export interface BinaryFile extends CommonFileData { // TODO md5?
   type: 'binary';
+  version?: number;
 }
 
 export interface Directory extends CommonFileData {

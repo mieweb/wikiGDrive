@@ -11,6 +11,7 @@ import {ServiceAccountJson} from '../model/AccountJson';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.metadata.readonly'
 ];
 
@@ -46,6 +47,33 @@ export class GoogleAuthService {
     // API interfaces: https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly
 
     return new QuotaAuthClient(client_id, client_secret, redirect_uri);
+  }
+
+  async getWebAuthUrl(oAuth2Client: OAuth2Client, redirect_uri: string, state: string): Promise<string> {
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'online',
+      scope: SCOPES,
+      redirect_uri,
+      state
+    });
+
+    return authUrl;
+  }
+
+  async getWebToken(oAuth2Client: OAuth2Client, redirect_uri: string, code: string): Promise<GoogleAuth> {
+    const response = await oAuth2Client.getToken({
+      code,
+      redirect_uri
+    });
+
+    return {
+      access_token: response.tokens.access_token,
+      refresh_token: response.tokens.refresh_token,
+      scope: response.tokens.scope,
+      token_type: response.tokens.token_type,
+      expiry_date: response.tokens.expiry_date,
+      id_token: response.tokens.id_token
+    };
   }
 
   async getCliAccessToken(oAuth2Client: OAuth2Client): Promise<GoogleAuth> {

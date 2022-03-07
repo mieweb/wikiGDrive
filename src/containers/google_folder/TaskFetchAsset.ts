@@ -12,7 +12,8 @@ export class TaskFetchAsset extends QueueTask {
               private googleDriveService: GoogleDriveService,
               private auth: OAuth2Client,
               private fileService: FileContentService,
-              private file: GoogleFile) {
+              private file: GoogleFile,
+              private _forceDownload: boolean) {
     super(logger);
   }
 

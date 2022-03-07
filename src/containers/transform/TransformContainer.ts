@@ -1,9 +1,9 @@
 import * as winston from 'winston';
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
+import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import {FileContentService} from '../../utils/FileContentService';
 import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner';
 import {GoogleFilesScanner} from './GoogleFilesScanner';
-import {convertToRelativeMarkDownPath, LinkTranslator} from '../../LinkTranslator';
+import {convertToRelativeMarkDownPath} from '../../LinkTranslator';
 import {LocalFilesGenerator} from './LocalFilesGenerator';
 import {QueueTransformer} from './QueueTransformer';
 import {generateNavigationHierarchy, NavigationHierarchy} from './generateNavigationHierarchy';
@@ -19,6 +19,7 @@ import {UnMarshaller} from '../../odt/UnMarshaller';
 import {DocumentContent, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {TaskRedirFileTransform} from './TaskRedirFileTransform';
 import {TocGenerator} from './frontmatters/TocGenerator';
+import {FileId} from '../../model/model';
 
 function doesExistIn(googleFolderFiles: LocalFile[], localFile: LocalFile) {
   return !!googleFolderFiles.find(file => file.id === localFile.id);
@@ -47,7 +48,7 @@ export function solveConflicts(filesToGenerate: LocalFile[], destinationFiles: {
         conflicting: [],
         fileName: fileName,
         id: 'conflict:' + fileName,
-        mimeType: MimeTypes.DOCUMENT_MIME,
+        mimeType: MimeTypes.MARKDOWN,
         modifiedTime: new Date().toISOString(),
         title: 'Conflict: ' + group[0].title,
         type: 'conflict'
@@ -166,12 +167,12 @@ export class TransformContainer extends Container {
   private localLog: LocalLog;
   private localLinks: LocalLinks;
 
-  constructor(public readonly params: ContainerConfig) {
-    super(params);
+  constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
+    super(params, paramsArr);
   }
 
   async mount2(fileService: FileContentService, destFileService: FileContentService): Promise<void> {
-    this.googleFilesService = fileService;
+    this.filesService = fileService;
     this.generatedFileService = destFileService;
   }
 
@@ -254,14 +255,14 @@ export class TransformContainer extends Container {
     await destinationDirectory.writeFile('.wgd-directory.yaml', yaml);
   }
 
-  async run() {
+  async run(rootFolderId: FileId) {
     this.localLog = new LocalLog(this.generatedFileService);
     await this.localLog.load();
     this.localLinks = new LocalLinks(this.generatedFileService);
     await this.localLinks.load();
 
     this.hierarchy = await this.loadNavigationHierarchy();
-    await this.syncDir(this.googleFilesService, this.generatedFileService);
+    await this.syncDir(this.filesService, this.generatedFileService);
 
     await this.createRedirs(this.generatedFileService);
     await this.writeToc();
@@ -269,6 +270,38 @@ export class TransformContainer extends Container {
 
     await this.localLog.save();
     await this.localLinks.save();
+
+    const tree = await this.regenerateTree(this.generatedFileService, rootFolderId);
+    await this.generatedFileService.writeJson('.tree.json', tree);
+  }
+
+  async regenerateTree(filesService: FileContentService, parentId?: string) {
+    const scanner = new DirectoryScanner();
+    const files = await scanner.scan(filesService);
+    const retVal = [];
+    for (const realFileName in files) {
+      const file = files[realFileName];
+      if (file.mimeType === MimeTypes.FOLDER_MIME) {
+        filesService = await filesService.getSubFileService(realFileName);
+        const item = {
+          id: file.id,
+          name: file.fileName,
+          mimeType: file.mimeType,
+          parentId,
+          children: await this.regenerateTree(filesService, file.id)
+        };
+        retVal.push(item);
+      } else {
+        const item = {
+          id: file.id,
+          name: file.fileName,
+          mimeType: file.mimeType,
+          parentId
+        };
+        retVal.push(item);
+      }
+    }
+    return retVal;
   }
 
   async rewriteLinks(destinationDirectory: FileContentService) {
@@ -322,7 +355,7 @@ export class TransformContainer extends Container {
             type: 'redir',
             fileName,
             id: row.id,
-            mimeType: MimeTypes.DOCUMENT_MIME,
+            mimeType: MimeTypes.MARKDOWN,
             modifiedTime: new Date(row.mtime).toISOString(),
             redirectTo: lastLog.id,
             title: 'Redirect to: ' + localFile.title,
@@ -354,11 +387,11 @@ export class TransformContainer extends Container {
   }
 
   async loadNavigationHierarchy(): Promise<NavigationHierarchy> {
-    const googleFiles: GoogleFile[] = await this.googleFilesService.readJson('.folder-files.json') || [];
+    const googleFiles: GoogleFile[] = await this.filesService.readJson('.folder-files.json') || [];
 
     const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation');
     if (navigationFile) {
-      const processor = new OdtProcessor(this.googleFilesService, navigationFile.id);
+      const processor = new OdtProcessor(this.filesService, navigationFile.id);
       await processor.load();
       const content = processor.getContentXml();
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');

@@ -1,24 +1,30 @@
 import * as casual from 'casual';
 import * as winston from 'winston';
 import {FileContentService} from './utils/FileContentService';
+import {QueueObject} from 'async';
+import {QueueTask} from './containers/google_folder/QueueTask';
 
 export interface ContainerConfig {
   name?: string;
   [key: string]: string;
 }
 
+export interface ContainerConfigArr {
+  [key: string]: string[];
+}
+
 export class Container {
   protected engine: ContainerEngine;
-  protected googleFilesService: FileContentService;
+  protected filesService: FileContentService;
 
-  constructor(public readonly params: ContainerConfig) {
+  constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     if (!this.params.name) {
       this.params.name = casual.array_of_words(2).join('_');
     }
   }
 
   async mount(fileService: FileContentService) {
-    this.googleFilesService = fileService;
+    this.filesService = fileService;
   }
 
   async init(engine: ContainerEngine): Promise<void> {
@@ -38,6 +44,10 @@ export class Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async flushData() {
+  }
+
+  getQueue(): QueueObject<QueueTask> {
+    return null;
   }
 }
 

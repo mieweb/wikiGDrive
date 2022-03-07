@@ -8,7 +8,7 @@ import {Readable, Writable} from 'stream';
 export function pathResolve(rootPath: string, ...args: string[]): string {
   const retVal = path.resolve(path.join(rootPath, ...args));
   if (!retVal.startsWith(rootPath)) {
-    throw new Error('Access denied: ' + retVal);
+    throw new Error('Access denied: ' + retVal + ' outside of ' + rootPath);
   }
   return retVal;
 }
@@ -81,10 +81,6 @@ export class FileService {
 
   createWriteStream(filePath: string): Writable {
     const stream = fs.createWriteStream(pathResolve(this.rootPath, filePath));
-    stream.on('close', () => {
-
-    });
-
     return stream;
   }
 
@@ -97,7 +93,11 @@ export class FileService {
       const hash = crypto.createHash('md5');
       hash.setEncoding('hex');
 
-      const fd = fs.createReadStream(pathResolve(this.rootPath, filePath));
+      const fullFilePath = pathResolve(this.rootPath, filePath);
+      if (!fs.existsSync(fullFilePath)) {
+        return resolve(null);
+      }
+      const fd = fs.createReadStream(fullFilePath);
       fd
         .on('error', function (err) {
           reject(err);
@@ -116,7 +116,11 @@ export class FileService {
   }
 
   async list(dirPath = ''): Promise<string[]> {
-    const files = fs.readdirSync(pathResolve(this.rootPath, dirPath));
+    const fullPath = pathResolve(this.rootPath, dirPath);
+    if (!await this.exists(dirPath)) {
+      return [];
+    }
+    const files = fs.readdirSync(fullPath);
     return files;
   }
 

@@ -6,12 +6,14 @@ const CONCURRENCY = 4;
 
 export class QueueDownloader {
   private q: QueueObject<QueueTask>;
+  private logger: winston.Logger;
 
-  constructor(private logger: winston.Logger) {
+  constructor(logger: winston.Logger) {
+    this.logger = logger.child({ filename: __filename });
     this.q = queue<QueueTask, QueueTaskError>(async (queueTask, callback) => this.processQueueTask(queueTask, callback), CONCURRENCY);
 
     this.q.error((err: QueueTaskError, queueTask) => {
-      this.logger.error(err);
+      this.logger.error(err.message);
 
       if (403 === err.code) {
         // this.progress.failed++;

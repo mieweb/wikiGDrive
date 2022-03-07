@@ -12,6 +12,7 @@ export class TaskFetchBinary extends QueueTask {
               private auth: OAuth2Client,
               private fileService: FileContentService,
               private file: SimpleFile,
+              private forceDownload: boolean,
               private mimeType: string,
               private ext: string) {
     super(logger);
@@ -20,7 +21,7 @@ export class TaskFetchBinary extends QueueTask {
   async run(): Promise<QueueTask[]> {
     const assetPath = this.file.id + '.' + this.ext;
 
-    if (await this.fileService.exists(assetPath)) {
+    if (await this.fileService.exists(assetPath) && !this.forceDownload) {
       return [];
     }
 

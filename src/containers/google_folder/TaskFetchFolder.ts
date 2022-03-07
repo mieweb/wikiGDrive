@@ -8,6 +8,24 @@ import {TaskFetchDocument} from './TaskFetchDocument';
 import {TaskFetchBinary} from './TaskFetchBinary';
 import {TaskFetchAsset} from './TaskFetchAsset';
 import {MimeTypes, SimpleFile} from '../../model/GoogleFile';
+import {FileId} from '../../model/model';
+
+interface Filters {
+  filterFoldersIds: FileId[];
+  filterFilesIds: FileId[];
+}
+
+export function googleMimeToExt(mimeType: string, fileName: string) {
+  switch (mimeType) {
+    case MimeTypes.APPS_SCRIPT:
+      return 'gs';
+  }
+
+  if (fileName.indexOf('.') > -1) {
+    return '';
+  }
+  return 'bin';
+}
 
 export class TaskFetchFolder extends QueueTask {
 
@@ -15,11 +33,18 @@ export class TaskFetchFolder extends QueueTask {
               private googleDriveService: GoogleDriveService,
               private auth: OAuth2Client,
               private fileService: FileContentService,
-              private file: SimpleFile) {
+              private file: SimpleFile,
+              private filters: Filters) {
     super(logger);
   }
 
   async run(): Promise<QueueTask[]> {
+    if (this.filters.filterFoldersIds.length > 0) {
+      if (this.filters.filterFoldersIds.indexOf(this.file.id) === -1) {
+        return [];
+      }
+    }
+
     if (this.retries < INITIAL_RETRIES) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       this.logger.info('Listening (retry): ' + this.file.id);
@@ -32,17 +57,29 @@ export class TaskFetchFolder extends QueueTask {
     const tasks: QueueTask[] = [];
 
     const file = await this.googleDriveService.getFile(this.auth, this.file.id);
-    // console.log('file', file);
 
     if (file.mimeType === MimeTypes.FOLDER_MIME) {
       const oldFiles = await this.fileService.readJson('.folder-files.json') || [];
 
       await this.fileService.writeJson('.folder.json', file);
       const files = await this.googleDriveService.listFiles(this.auth, { folderId: this.file.id });
-      await this.fileService.writeJson('.folder-files.json', files);
       await this.deleteUnused(files);
 
+      const filesToSave = [];
+
       for (const file of files) {
+        const oldFile = oldFiles.find(oldFile => oldFile.id === file.id);
+
+        if (this.filters.filterFilesIds.length > 0) {
+          if (this.filters.filterFilesIds.indexOf(file.id) === -1 && this.filters.filterFoldersIds.indexOf(file.id) === -1) {
+            if (oldFile) {
+              filesToSave.push(oldFile);
+            }
+            continue;
+          }
+        }
+
+        filesToSave.push(file);
 /*
         const oldFile = oldFiles.find(oldFile => oldFile.id === file.id);
         if (oldFile && oldFile.version !== file.version) {
@@ -62,7 +99,8 @@ export class TaskFetchFolder extends QueueTask {
               this.googleDriveService,
               this.auth,
               await this.fileService.getSubFileService(file.id),
-              file
+              file,
+              this.filters
             ));
             break;
 
@@ -72,7 +110,8 @@ export class TaskFetchFolder extends QueueTask {
               this.googleDriveService,
               this.auth,
               await this.fileService,
-              file
+              file,
+              oldFile?.version !== file.version
             ));
             break;
 
@@ -82,7 +121,8 @@ export class TaskFetchFolder extends QueueTask {
               this.googleDriveService,
               this.auth,
               await this.fileService,
-              file
+              file,
+              oldFile?.version !== file.version
             ));
             break;
 
@@ -93,6 +133,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version,
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -101,6 +142,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version,
               'text/csv', 'csv'
             ));
             break;
@@ -112,6 +154,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version,
               'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -120,6 +163,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version,
               'application/pdf', 'pdf'
             ));
             break;
@@ -131,6 +175,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version,
               'application/zip', 'zip'
             ));
             break;
@@ -142,7 +187,8 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              'application/vnd.google-apps.script+json', 'gson'
+              oldFile?.version !== file.version,
+              'application/vnd.google-apps.script+json', googleMimeToExt(file.mimeType, file.name)
             ));
             break;
 
@@ -153,11 +199,14 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
+              oldFile?.version !== file.version
             ));
             break;
         }
       }
+      await this.fileService.writeJson('.folder-files.json', filesToSave);
     }
+
     return tasks;
   }
 

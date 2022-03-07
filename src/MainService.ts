@@ -15,7 +15,10 @@ import * as path from 'path';
 import {urlToFolderId} from './utils/idParsers';
 import {TransformContainer} from './containers/transform/TransformContainer';
 import {CliParams} from './model/CliParams';
-import {ServiceAccountJson, UserAccountJson} from './model/AccountJson';
+import {AuthConfig} from './model/AccountJson';
+import {loadRunningInstance} from './containers/server/loadRunningInstance';
+import {FolderRegistryContainer} from './containers/folder_registry/FolderRegistryContainer';
+import {JobManagerContainer} from './containers/job/JobManagerContainer';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
@@ -25,7 +28,7 @@ export class MainService {
   private containerEngine: ContainerEngine;
   private paths: Paths;
   private mainFileService: FileContentService;
-  private authConfig: UserAccountJson | ServiceAccountJson;
+  private authConfig: AuthConfig;
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
@@ -56,7 +59,7 @@ export class MainService {
     this.mainFileService = new FileContentService(this.params.dest || process.cwd());
     await this.mainFileService.mkdir('/');
 
-    const requireAuth = ['config', 'service', 'drives', 'pull'];
+    const requireAuth = ['config', 'server', 'drives', 'pull', 'register'];
 
     if (requireAuth.indexOf(this.command) > -1) {
       if (this.params.service_account) {
@@ -65,9 +68,11 @@ export class MainService {
       } else
       if (this.params.client_id && this.params.client_secret) {
         this.authConfig = {
-          type: 'user_account',
-          client_id: this.params.client_id,
-          client_secret: this.params.client_secret
+          user_account: {
+            type: 'user_account',
+            client_id: this.params.client_id,
+            client_secret: this.params.client_secret
+          }
         };
       } else {
         this.authConfig = await this.mainFileService.readJson('auth_config.json');
@@ -112,15 +117,17 @@ export class MainService {
 
     this.logger.info('Transforming');
 
+    const filesIds = this.params.args.slice(1);
     const transformContainer = new TransformContainer({
-      name: folderId + '_transform'
-    });
+      name: folderId
+    }, { filesIds });
     await transformContainer.mount2(
       await this.mainFileService.getSubFileService(folderId, '/'),
-      await this.mainFileService.getSubFileService(transformContainer.params.name, '/')
+      await this.mainFileService.getSubFileService(folderId + '_transform', '/')
     );
     await this.containerEngine.registerContainer(transformContainer);
-    await transformContainer.run();
+
+    await transformContainer.run(folderId);
 
     await this.containerEngine.unregisterContainer(transformContainer.params.name);
   }
@@ -133,27 +140,72 @@ export class MainService {
 
     this.logger.info('Downloading');
 
+    const filesIds = this.params.args.slice(1);
     const downloadContainer = new GoogleFolderContainer({
       cmd: 'pull',
-      name: folderId, //'1pfUcPgmEnzTFnlwap90XHXfRIJ1vqTgr',
+      name: folderId,
       folderId: folderId,
       apiContainer: 'google_api'
-    });
+    }, { filesIds });
     await downloadContainer.mount(await this.mainFileService.getSubFileService(folderId, '/'));
     await this.containerEngine.registerContainer(downloadContainer);
     await downloadContainer.run();
+    await this.containerEngine.unregisterContainer(downloadContainer.params.name);
 
     await this.cmdTransform();
+  }
 
-    await this.containerEngine.unregisterContainer(downloadContainer.params.name);
+  async cmdPrune() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    await folderRegistryContainer.pruneFolder(folderId);
+  }
+
+  async cmdRegister() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    const folder = await folderRegistryContainer.registerFolder(folderId);
+    if (folder.new) {
+      await this.cmdPull();
+    }
+  }
+
+  async cmdUnregister() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    await folderRegistryContainer.unregisterFolder(folderId);
   }
 
   async cmdServer() {
-    const serverContainer = new ServerContainer({ name: 'server' });
+    const instance = await loadRunningInstance();
+    if (instance) {
+      this.logger.error('WikiGDrive server already running, PID: ' + instance.pid);
+      process.exit(1);
+    }
+
+    const port = parseInt(this.params.args[0]) || 3000;
+    const serverContainer = new ServerContainer({ name: 'server' }, port);
     await serverContainer.mount(await this.mainFileService);
-    // await serverContainer.mount(await this.rootFileService.getSubFileService(serverContainer.params.name, '/'));
     await this.containerEngine.registerContainer(serverContainer);
     await serverContainer.run();
+
+    const containerEnginePromise = this.containerEngine.run();
+
+    await new Promise(resolve => {
+      this.eventBus.on('end', resolve);
+    });
   }
 
   async start() {
@@ -164,45 +216,45 @@ export class MainService {
       await apiContainer.run();
     }
 
+    const folderRegistryContainer = new FolderRegistryContainer({ name: 'folder_registry' });
+    await folderRegistryContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(folderRegistryContainer);
+    await folderRegistryContainer.run();
+
+
+    const jobManagerContainer = new JobManagerContainer({ name: 'job_manager' });
+    await jobManagerContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(jobManagerContainer);
+    await jobManagerContainer.run();
+
     switch (this.command) {
       case 'config':
         if (this.authConfig) {
           await this.mainFileService.writeJson('auth_config.json', this.authConfig);
         }
-        return;
+        break;
       case 'drives':
         await this.cmdDrives();
-        return;
-      case 'service':
+        break;
+      case 'server':
         await this.cmdServer();
-        return;
+        break;
       case 'pull':
         await this.cmdPull();
-        return;
+        break;
       case 'transform':
         await this.cmdTransform();
-        return;
+        break;
+      case 'prune':
+        await this.cmdPrune();
+        break;
+      case 'register':
+        await this.cmdRegister();
+        break;
+      case 'unregister':
+        await this.cmdUnregister();
+        break;
     }
-
-    //  const googleFileId = urlToFolderId(arg);
-
-    const containerEnginePromise = this.containerEngine.run();
-
-/*
-    const container2 = new GoogleFolderContainer({
-      name: '1pfUcPgmEnzTFnlwap90XHXfRIJ1vqTgr',
-      folderId: '1pfUcPgmEnzTFnlwap90XHXfRIJ1vqTgr',
-      apiContainer: 'google_api'
-    });
-
-    serverContainer.getServer().use('/' + container2.params.name, await container2.getRouter());
-    await this.containerEngine.startContainer(container2);
-*/
-
-    await new Promise(resolve => {
-      // setTimeout(resolve, 10000);
-      this.eventBus.on('end', resolve);
-    });
 
     await this.containerEngine.flushData();
 /*

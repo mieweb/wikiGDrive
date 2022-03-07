@@ -28,7 +28,6 @@ const app = Vue.createApp({
     template: '<App />'
 });
 
-
 const router = new VueRouter.createRouter({
     history: VueRouter.createWebHistory(),
     routes: [
@@ -38,6 +37,16 @@ const router = new VueRouter.createRouter({
             component: Vue.defineAsyncComponent( () => loadModule('/assets/FileView.vue', options) )
         },
         {
+            path: '/drive/:driveId',
+            name: 'drive',
+            component: Vue.defineAsyncComponent( () => loadModule('/assets/FolderView.vue', options) ),
+        },
+        {
+            path: '/drive/:driveId/folder/:folderId/:fileId?',
+            name: 'folder',
+            component: Vue.defineAsyncComponent( () => loadModule('/assets/FolderView.vue', options) ),
+        },
+        {
             path: '/logs',
             name: 'logs',
             component: Vue.defineAsyncComponent( () => loadModule('/assets/LogsView.vue', options) )
@@ -45,6 +54,11 @@ const router = new VueRouter.createRouter({
         {
             path: '/',
             component: Vue.defineAsyncComponent( () => loadModule('/assets/MainView.vue', options) )
+        },
+        {
+            path: '/:pathMatch(.*)*',
+            name: 'NotFound',
+            component: Vue.defineAsyncComponent( () => loadModule('/assets/NotFound.vue', options) )
         }
     ]
 });
