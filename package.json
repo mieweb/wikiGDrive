@@ -22,7 +22,6 @@
   "scripts": {
     "test": "mocha --require ts-node/register --ui bdd test/*.ts test/**/*.ts",
     "lint": "eslint ./src/**/*.ts",
-    "dev": "webpack --mode development --watch ./src/main",
     "start": "wikigdrive-ts watch --server 3000"
   },
   "repository": {
