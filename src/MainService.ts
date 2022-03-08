@@ -65,7 +65,9 @@ export class MainService {
     if (requireAuth.indexOf(this.command) > -1) {
       if (this.params.service_account) {
         const rootFileService = new FileContentService('/');
-        this.authConfig = await rootFileService.readJson(path.resolve(this.params.service_account));
+        this.authConfig = {
+          service_account: await rootFileService.readJson(path.resolve(this.params.service_account))
+        };
       } else
       if (this.params.client_id && this.params.client_secret) {
         this.authConfig = {
@@ -76,11 +78,17 @@ export class MainService {
           }
         };
       } else {
-        this.authConfig = await this.mainFileService.readJson('auth_config.json');
+        this.authConfig = {
+          user_account: await this.mainFileService.readJson('auth_config.json')
+        };
       }
 
       if (!this.authConfig) {
         throw new Error('No authentication credentials provided');
+      }
+
+      if (this.params.share_email) {
+        this.authConfig.share_email = this.params.share_email;
       }
     }
 
