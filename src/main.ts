@@ -73,7 +73,7 @@ async function main() {
     args: argv._.slice(1),
     drive: argv['drive'],
     config_dir: argv['config_dir'] || default_wgd_dir,
-    dest: argv['dest'] || process.env.PWD,
+    workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || process.env.PWD,
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,

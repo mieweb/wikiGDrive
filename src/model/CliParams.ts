@@ -3,7 +3,7 @@ import {LinkMode} from './model';
 export interface CliParams {
   config_dir: string;
   link_mode: LinkMode;
-  dest: string;
+  workdir: string;
   drive_id: string;
   drive: string;
   command: string;

@@ -142,3 +142,7 @@ ul.mui-tabs__bar>li>a {
 .token a {
   color: inherit;
 }
+
+pre[class*=language-] {
+  margin-top: 0 !important;
+}

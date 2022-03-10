@@ -1,6 +1,6 @@
 <template>
   <div id="main" :class="{'hide-sidedrawer': !sidebar}">
-    <header id="header" class="mui-appbar mui--z1">
+    <header id="header" class="mui-appbar mui--z1" v-if="navbar">
       <slot name="navbar">
         <div class="mui-container">
         <table>
@@ -37,6 +37,10 @@ import Sidebar from './Sidebar.vue';
 export default {
   components: {Sidebar},
   props: {
+    navbar: {
+      type: Boolean,
+      default: true
+    },
     sidebar: {
       type: Boolean,
       default: false

@@ -57,7 +57,7 @@ export class MainService {
   }
 
   async init() {
-    this.mainFileService = new FileContentService(this.params.dest || process.cwd());
+    this.mainFileService = new FileContentService(this.params.workdir || process.cwd());
     await this.mainFileService.mkdir('/');
 
     const requireAuth = ['config', 'server', 'drives', 'pull', 'register'];
@@ -78,9 +78,7 @@ export class MainService {
           }
         };
       } else {
-        this.authConfig = {
-          user_account: await this.mainFileService.readJson('auth_config.json')
-        };
+        this.authConfig = await this.mainFileService.readJson('auth_config.json');
       }
 
       if (!this.authConfig) {
