@@ -257,6 +257,13 @@ export class ServerContainer extends Container {
         }
         const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
 
+        if (!file?.name) {
+          res.json({
+            not_synced: true
+          });
+          return;
+        }
+
         const buffer = await transformedFileSystem.readBuffer(file.name);
 
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath());
