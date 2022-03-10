@@ -19,6 +19,10 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
     case MimeTypes.APPS_SCRIPT:
       return 'gs';
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/png':
+      return 'png';
   }
 
   if (fileName.indexOf('.') > -1) {
