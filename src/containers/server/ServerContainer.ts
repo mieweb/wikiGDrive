@@ -249,6 +249,12 @@ export class ServerContainer extends Container {
 
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
         const transformedTree = await transformedFileSystem.readJson('.tree.json');
+        if (!Array.isArray(transformedTree)) {
+          res.json({
+            not_synced: true
+          });
+          return;
+        }
         const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
 
         const buffer = await transformedFileSystem.readBuffer(file.name);
@@ -279,7 +285,7 @@ export class ServerContainer extends Container {
       } catch (err) {
         if (err.message === 'Drive not shared with wikigdrive') {
           const authConfig: AuthConfig = this.authContainer['authConfig'];
-          res.status(404).json({ notRegistered: true, share_email: authConfig.share_email });
+          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
           return;
         }
         next(err);

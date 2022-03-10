@@ -1,7 +1,7 @@
 <template>
   <BaseLayout :navbar="false">
     <template v-slot:default>
-      <NotRegistered v-if="notRegistered" />
+      <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
         <FilePreview :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
       </div>
@@ -14,19 +14,22 @@ import {UiMixin} from './UiMixin.mjs';
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
 import FilePreview from './FilePreview.vue';
+import NotRegistered from './NotRegistered.vue';
 
 export default {
   name: 'FileView',
   mixins: [UtilsMixin, UiMixin, GitMixin],
   components: {
     FilePreview,
-    BaseLayout
+    BaseLayout,
+    NotRegistered
   },
   data() {
     return {
       file: null,
       preview: {},
-      git: {}
+      git: {},
+      notRegistered: false
     };
   },
   created() {
@@ -46,6 +49,12 @@ export default {
         const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
         this.preview = await response.json();
         this.git = this.preview.git;
+
+        this.notRegistered = !!this.preview.not_registered;
+        if (this.notRegistered) {
+          this.shareEmail = this.preview.share_email;
+          return;
+        }
       }
     },
     async syncSingle() {

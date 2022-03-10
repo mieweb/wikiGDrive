@@ -1,5 +1,5 @@
 <template>
-  <BaseLayout :sidebar="!notRegistered">
+  <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
       <div class="mui-container-fluid">
         <table style="width: 100%;">
