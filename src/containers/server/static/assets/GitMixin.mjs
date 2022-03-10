@@ -24,6 +24,7 @@ export const GitMixin = {
           message: message
         })
       });
+      await this.fetch();
     },
     async push() {
       await fetch(`/api/drive/${this.driveId}/git/push`, {
