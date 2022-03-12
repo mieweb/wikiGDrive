@@ -2,6 +2,7 @@ import {assert} from 'chai';
 import {LocalFile, LocalFileMap} from '../src/model/LocalFile';
 import {solveConflicts} from '../src/containers/transform/TransformContainer';
 import {compareObjects} from './utils';
+import {MimeTypes} from '../src/model/GoogleFile';
 
 export function compareFiles(files1: LocalFileMap, files2: LocalFileMap) {
   for (const realFileName in files1) {
@@ -41,7 +42,7 @@ describe('LocalFiles', () => {
         id: 'conflict:test-file.md',
         title: 'Conflict: test-file',
         fileName: 'test-file.md',
-        mimeType: 'application/vnd.google-apps.document',
+        mimeType: MimeTypes.MARKDOWN,
         conflicting: [
           {
             id: 'id1',
@@ -97,7 +98,7 @@ describe('LocalFiles', () => {
         id: 'conflict:example-1.md',
         title: 'Conflict: example-1',
         fileName: 'example-1.md',
-        mimeType: 'application/vnd.google-apps.document',
+        mimeType: MimeTypes.MARKDOWN,
         conflicting: [
           {
             id: 'id1',
