@@ -45,4 +45,4 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: docker run -t -v wikiGDriveExample:/data wikigdrive-test wikigdrive-ts pull --disable-progress
+      run: docker start -v wikiGDriveExample:/data wikigdrive-test wikigdrive-ts server 3001
