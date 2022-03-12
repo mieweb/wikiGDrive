@@ -10,7 +10,7 @@ type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'TOC' | '/TOC' | 'SVG/' | 'IMG/';
 
 interface StackPos {
-  mode: 'md' | 'html';
+  mode: 'md' | 'html' | 'raw';
   counterId?: string;
 }
 
@@ -20,6 +20,7 @@ const DEFAULT_STACK_POS: StackPos = {
 };
 
 interface TagPayload {
+  position?: number;
   id?: string;
   counterId?: string;
   href?: string;
@@ -35,121 +36,121 @@ type Handler = (payload: TagPayload, stateMachine: StateMachine) => Promise<void
 
 const HTML_HANDLERS: {[name: string]: Handler} = {
   'CODE': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<code>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<code>', mode: stateMachine.currentMode, isTag: true });
   },
   '/CODE': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</code>`', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</code>`', mode: stateMachine.currentMode, isTag: true });
   },
   'UL': async (payload: TagPayload, stateMachine: StateMachine) => {
     // if (payload.numbered) {
-    //   stateMachine.markdownChunks.push({ txt: '<ol>', mode: stateMachine.currentMode });
+    //   stateMachine.markdownChunks.push({ txt: '<ol>', mode: stateMachine.currentMode, isTag: true });
     // } else {
-      stateMachine.markdownChunks.push({ txt: '<ul>', mode: stateMachine.currentMode });
+      stateMachine.markdownChunks.push({ txt: '<ul>', mode: stateMachine.currentMode, isTag: true });
     // }
   },
   '/UL': async (payload: TagPayload, stateMachine: StateMachine) => {
     // if (payload.numbered) {
-    //   stateMachine.markdownChunks.push({ txt: '</ol>', mode: stateMachine.currentMode });
+    //   stateMachine.markdownChunks.push({ txt: '</ol>', mode: stateMachine.currentMode, isTag: true });
     // } else {
-      stateMachine.markdownChunks.push({txt: '</ul>', mode: stateMachine.currentMode});
+      stateMachine.markdownChunks.push({ txt: '</ul>', mode: stateMachine.currentMode, isTag: true });
     // }
   },
   'LI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<li>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<li>', mode: stateMachine.currentMode, isTag: true });
   },
   '/LI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</li>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</li>', mode: stateMachine.currentMode, isTag: true });
   },
   'BI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<strong><em>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<strong><em>', mode: stateMachine.currentMode, isTag: true });
   },
   '/BI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</em></strong>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</em></strong>', mode: stateMachine.currentMode, isTag: true });
   },
   'B': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<strong>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<strong>', mode: stateMachine.currentMode, isTag: true });
   },
   '/B': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</strong>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</strong>', mode: stateMachine.currentMode, isTag: true });
   },
   'I': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<em>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<em>', mode: stateMachine.currentMode, isTag: true });
   },
   '/I': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</em>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</em>', mode: stateMachine.currentMode, isTag: true });
   },
   'P': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<p>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<p>', mode: stateMachine.currentMode, isTag: true });
   },
   '/P': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</p>\n', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</p>\n', mode: stateMachine.currentMode, isTag: true });
   },
   'H1': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<h1>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<h1>', mode: stateMachine.currentMode, isTag: true });
   },
   'H2': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<h2>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<h2>', mode: stateMachine.currentMode, isTag: true });
   },
   'H3': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<h3>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<h3>', mode: stateMachine.currentMode, isTag: true });
   },
   'H4': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<h4>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<h4>', mode: stateMachine.currentMode, isTag: true });
   },
   '/H1': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</h1>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</h1>', mode: stateMachine.currentMode, isTag: true });
   },
   '/H2': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</h2>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</h2>', mode: stateMachine.currentMode, isTag: true });
   },
   '/H3': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</h3>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</h3>', mode: stateMachine.currentMode, isTag: true });
   },
   '/H4': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</h4>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</h4>', mode: stateMachine.currentMode, isTag: true });
   },
   'HR': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '<hr />', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '<hr />', mode: stateMachine.currentMode, isTag: true });
   },
   'A': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: `<a href="${payload.href}">`, mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: `<a href="${payload.href}">`, mode: stateMachine.currentMode, isTag: true });
   },
   '/A': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '</a>', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '</a>', mode: stateMachine.currentMode, isTag: true });
   }
 };
 
 const MD_HANDLERS: {[name: string]: Handler} = {
   'CODE': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '`', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '`', mode: stateMachine.currentMode, isTag: true });
   },
   '/CODE': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '`', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '`', mode: stateMachine.currentMode, isTag: true });
   },
   'I': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '_', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '_', mode: stateMachine.currentMode, isTag: true });
   },
   '/I': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '_', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '_', mode: stateMachine.currentMode, isTag: true });
   },
   'BI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '**_', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '**_', mode: stateMachine.currentMode, isTag: true });
   },
   '/BI': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '_**', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '_**', mode: stateMachine.currentMode, isTag: true });
   },
   'B': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '**', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '**', mode: stateMachine.currentMode, isTag: true });
   },
   '/B': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '**', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '**', mode: stateMachine.currentMode, isTag: true });
   },
   'P': async (payload: TagPayload, stateMachine: StateMachine) => {
     if (payload.marginLeft) {
-      stateMachine.markdownChunks.push({ txt: spaces(payload.marginLeft), mode: stateMachine.currentMode });
+      stateMachine.markdownChunks.push({ txt: spaces(payload.marginLeft), mode: stateMachine.currentMode, isTag: true });
     }
     if (stateMachine.parentLevel?.tag === 'TOC') {
-      stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode });
+      stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode, isTag: true });
     }
     if (stateMachine.parentLevel?.tag === 'LI') {
       const level = stateMachine.parentLevel.payload.listLevel;
@@ -157,36 +158,53 @@ const MD_HANDLERS: {[name: string]: Handler} = {
       const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
 
       if (isNumeric) {
-        stateMachine.markdownChunks.push({ txt: `${stateMachine.parentLevel.payload.number}. `, mode: stateMachine.currentMode });
+        stateMachine.markdownChunks.push({ txt: `${stateMachine.parentLevel.payload.number}. `, mode: stateMachine.currentMode, isTag: true });
       } else {
-        stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode });
+        stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode, isTag: true });
       }
     }
   },
   '/P': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '\n', mode: stateMachine.currentMode });
+    // console.log('/P', payload.position, stateMachine.currentLevel.payload.position, innerTxt);
+    stateMachine.markdownChunks.push({ txt: '\n', mode: stateMachine.currentMode, isTag: true });
+    const innerTxt = stateMachine.markdownChunks.extractText(stateMachine.currentLevel.payload.position, payload.position);
+    switch (innerTxt) {
+      case '{{rawhtml}}':
+        stateMachine.currentMode = 'raw';
+    }
   },
   'H1': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '# ', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '# ', mode: stateMachine.currentMode, isTag: true });
   },
   'H2': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '## ', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '## ', mode: stateMachine.currentMode, isTag: true });
   },
   'H3': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '### ', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '### ', mode: stateMachine.currentMode, isTag: true });
   },
   'H4': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '#### ', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '#### ', mode: stateMachine.currentMode, isTag: true });
   },
   'HR': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '\n___\n ', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '\n___\n ', mode: stateMachine.currentMode, isTag: true });
   },
   'A': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: '[', mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: '[', mode: stateMachine.currentMode, isTag: true });
   },
   '/A': async (payload: TagPayload, stateMachine: StateMachine) => {
-    stateMachine.markdownChunks.push({ txt: `](${payload.href})`, mode: stateMachine.currentMode });
+    stateMachine.markdownChunks.push({ txt: `](${payload.href})`, mode: stateMachine.currentMode, isTag: true });
   }
+};
+
+const RAW_HANDLERS = {
+  '/P': async (payload: TagPayload, stateMachine: StateMachine) => {
+    stateMachine.markdownChunks.push({ txt: '\n', mode: stateMachine.currentMode, isTag: true });
+    const innerTxt = stateMachine.markdownChunks.extractText(stateMachine.currentLevel.payload.position, payload.position);
+    switch (innerTxt) {
+      case '{{/rawhtml}}':
+        stateMachine.currentMode = 'md';
+    }
+  },
 };
 
 interface TagLeaf {
@@ -210,6 +228,7 @@ export class StateMachine {
   private handlers = {
     html: HTML_HANDLERS,
     md: MD_HANDLERS,
+    raw: RAW_HANDLERS,
   };
 
   constructor(public markdownChunks: MarkdownChunks) {
@@ -228,6 +247,7 @@ export class StateMachine {
   }
 
   pushTag(tag: TAG, payload: TagPayload = {}) {
+    payload.position = this.markdownChunks.length;
     if (tag === 'UL') {
       this.listLevel++;
       payload.listLevel = this.listLevel;
@@ -266,7 +286,7 @@ export class StateMachine {
 
   pushText(txt: string) {
     txt = fixCharacters(txt);
-    this.markdownChunks.push({ txt: txt, mode: this.currentMode });
+    this.markdownChunks.push({ txt: txt, mode: this.currentMode, isTag: false });
   }
 /*
 

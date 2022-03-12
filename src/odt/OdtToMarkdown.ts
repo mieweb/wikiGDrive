@@ -203,19 +203,6 @@ export class OdtToMarkdown {
         }
     }*/
 
-/*
-    if (props.parentListItem === 'bullet') {
-      this.stateMachine.pushTag(' * ');
-    }
-    if (props.parentListItem === 'counter') {
-      if (!this.globalListCounters[props.counterId]) {
-        this.globalListCounters[props.counterId] = 0;
-      }
-      this.globalListCounters[props.counterId]++;
-      this.stateMachine.pushTag(` ${this.globalListCounters[props.counterId]}. `);
-    }
-*/
-
     if (this.hasStyle(paragraph, 'Heading_20_1')) {
       this.stateMachine.pushTag('H1');
     }
