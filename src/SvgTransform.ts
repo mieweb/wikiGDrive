@@ -10,10 +10,9 @@ export class SvgTransform extends Transform {
   private readonly localPath: string;
   private content: string;
 
-  constructor(localPath, linkTranslator: LinkTranslator) {
+  constructor(localPath) {
     super();
 
-    this.linkTranslator = linkTranslator;
     this.localPath = localPath;
     this.content = '';
   }
@@ -35,6 +34,10 @@ export class SvgTransform extends Transform {
 
     const findLinkInChild = (child) => {
       if (child.attr['xlink:href']) {
+        const fileId = urlToFolderId(child.attr['xlink:href']);
+        if (fileId) {
+          child.attr['xlink:href'] = 'gdoc:' + fileId;
+        }
         urlToRelativePath[child.attr['xlink:href']] = null;
       }
 
@@ -46,7 +49,7 @@ export class SvgTransform extends Transform {
     document.eachChild((child) => {
       findLinkInChild(child);
     });
-
+/*
     for (let url in urlToRelativePath) {
       const id = urlToFolderId(url);
 
@@ -61,7 +64,7 @@ export class SvgTransform extends Transform {
           urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
         }
       }
-    }
+    }*/
 
     const replaceLinkInChild = (child) => {
       if (child.attr['xlink:href']) {

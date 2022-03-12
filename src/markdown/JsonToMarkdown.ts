@@ -17,10 +17,10 @@ function fixBold(text) {
 
   return retVal.map(line => {
     while (line.endsWith('****')) {
-      line = line.substr(0, line.length - '****'.length);
+      line = line.substring(0, line.length - '****'.length);
     }
     while (line.endsWith('<strong></strong>')) {
-      line = line.substr(0, line.length - '<strong></strong>'.length);
+      line = line.substring(0, line.length - '<strong></strong>'.length);
     }
     return line;
   }).join('\n');
@@ -35,7 +35,7 @@ function wrapWith(wrapper, text, wrapper2) {
   }
 
   if (enterMode) {
-    text = text.substr(0, text.length - 1);
+    text = text.substring(0, text.length - 1);
     text = wrapper + text + wrapper2;
     text += '\n';
   } else {
@@ -123,7 +123,7 @@ export class JsonToMarkdown {
       if (idx % 2 == 0) {
         let prevChar = '';
         for (let colNo = 0; colNo < block.length; colNo++) {
-          let char = block.substr(colNo, 1);
+          let char = block.substring(colNo, 1);
 
           if (prevChar === '\\') {
             switch (char) {
@@ -191,9 +191,9 @@ export class JsonToMarkdown {
         idxEnd = line.indexOf(' %}}', idxStart);
         if (idxEnd > -1) {
           const parts = [
-            line.substr(0, idxStart),
-            line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-            line.substr(idxEnd + ' %}}'.length)
+            line.substring(0, idxStart),
+            line.substring(idxStart, -idxStart + idxEnd + ' %}}'.length),
+            line.substring(idxEnd + ' %}}'.length)
           ];
 
           if (parts[1].startsWith('{{% /')) {
@@ -204,10 +204,10 @@ export class JsonToMarkdown {
 
             if (idxOfClosing > -1) {
               const parts = [
-                line.substr(0, idxStart),
-                line.substr(idxStart, -idxStart + idxEnd + ' %}}'.length),
-                line.substr(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
-                line.substr(idxOfClosing)
+                line.substring(0, idxStart),
+                line.substring(idxStart, -idxStart + idxEnd + ' %}}'.length),
+                line.substring(idxEnd + ' %}}'.length, -(idxEnd + ' %}}'.length) + idxOfClosing),
+                line.substring(idxOfClosing)
               ];
 
               parts[2] = JsonToMarkdown.convertHtmlSimpleTags(parts[2]);
@@ -312,7 +312,7 @@ export class JsonToMarkdown {
       return pOut;
     }
 
-    if (pOut.substr(0, 3) === '{{%' && element.textRun.textStyle.italic) {
+    if (pOut.substring(0, 3) === '{{%' && element.textRun.textStyle.italic) {
       return pOut;
     }
 
@@ -531,8 +531,8 @@ export class JsonToMarkdown {
 
     if (prefix.match(/^#+ /)) {
       if (pOut.startsWith('<strong>') && pOut.trim().endsWith('</strong>')) {
-        pOut = pOut.substr('<strong>'.length);
-        pOut = pOut.substr(0, pOut.lastIndexOf('</strong>'));
+        pOut = pOut.substring('<strong>'.length);
+        pOut = pOut.substring(0, pOut.lastIndexOf('</strong>'));
       }
     }
 

@@ -5,12 +5,12 @@ Google Drive to MarkDown synchronization
 [![CircleCI](https://circleci.com/gh/mieweb/wikiGDrive.svg?style=svg)](https://circleci.com/gh/mieweb/wikiGDrive)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/mieweb/wikiGDrive.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mieweb/wikiGDrive/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/mieweb/wikiGDrive.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mieweb/wikiGDrive/context:javascript)
-[![Project Dependencies](https://david-dm.org/mieweb/wikiGDrive.svg)](https://david-dm.org/mieweb/wikiGDrive)
-[![devDependencies Status](https://david-dm.org/mieweb/wikiGDrive/dev-status.svg)](https://david-dm.org/mieweb/wikiGDrive?type=dev)
 
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
 ![Diagram](./doc/Diagram.svg)
+
+[Google Drive Notes](https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#)
 
 With a "Shared Drive" as the key, WikiGDrive:
 
@@ -286,13 +286,14 @@ A website front end is a goal for real-time testing of the viewing experience, b
   "drive": "https://drive.google.com/drive/folders/FOLDER_ID",
   "drive_id": "",
   "dest": "/home/user/mieweb/wikigdrive-test",
-  "flat_folder_structure": false,
   "link_mode": "mdURLs",
   "service_account": "wikigdrive.json"
 }
 ```
 
 #### google_files.json is indexed with Google's fileId - data got from google (just adding parentId, simplify lastAuthor)
+
+### Note this is going away.  Will be replacing this single database with a multi-file version for scale.
 
 - id - Google's fileId
 - name - Title set inside google docs. It is not unique
@@ -343,9 +344,7 @@ A website front end is a goal for real-time testing of the viewing experience, b
 
 - desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
 - dirty - file needs to be downloaded
-- conflictId - unique numeric id for file within files of same desiredLocalPath (used to append localPath)
 - conflicting - array of fileIds when mimeType = 'conflict'
-- counter - current number of existing conflicts when mimeType = 'conflict'
 - localPath - path to transformed markdown file
 - modifiedTime - fetched from google server
 

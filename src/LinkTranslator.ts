@@ -2,21 +2,82 @@
 
 import * as RelateUrl from 'relateurl';
 
-import {LinkMode} from './MainService';
-import {LocalFilesStorage} from './storage/LocalFilesStorage';
+import {LinkMode} from './model/model';
+import {DirectoryScanner} from './containers/transform/DirectoryScanner';
+
+export function convertExtension(localPath: string, mode?: LinkMode) {
+  const lastSlash = localPath.lastIndexOf('/');
+
+  const dirName = localPath.substring(0, lastSlash + 1);
+  const fileName = localPath.substring(lastSlash + 1);
+
+  const parts = fileName.split('.');
+
+  if (parts.length > 1) {
+    const ext = parts[parts.length - 1];
+
+    switch (ext) {
+      case 'md':
+
+        switch (mode) {
+          case 'uglyURLs':
+            parts[parts.length - 1] = 'html';
+            break;
+
+          case 'dirURLs':
+            parts.pop();
+            break;
+
+          case 'mdURLs':
+          default:
+            parts[parts.length - 1] = 'md';
+            break;
+        }
+
+        break;
+    }
+  }
+
+  return dirName + parts.join('.');
+}
+
+export function convertToRelativeMarkDownPath(localPath, basePath) {
+  if (localPath.startsWith('https://')) return localPath;
+  if (localPath.startsWith('http://')) return localPath;
+  if (basePath === localPath) return '.';
+
+  const host = '//example.com/';
+  return convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
+    output: RelateUrl.PATH_RELATIVE
+  })));
+}
+
+export function convertToRelativeSvgPath(localPath, basePath) {
+  if (localPath.startsWith('https://')) return localPath;
+  if (localPath.startsWith('http://')) return localPath;
+  if (basePath === localPath) return '.';
+
+  localPath = convertExtension(localPath);
+
+  const host = '//example.com/';
+  return convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
+    output: RelateUrl.PATH_RELATIVE
+  })), 'dirURLs');
+}
+
 
 export class LinkTranslator {
   private mode: LinkMode;
 
-  constructor(private localFilesStorage: LocalFilesStorage) {
+  constructor(private generatedScanner: DirectoryScanner) {
     /*
      * uglyURLs - https://gohugo.io/getting-started/configuration/
      *
      */
-    this.mode = LinkMode.uglyURLs;
+    this.mode = 'uglyURLs';
   }
 
-  setMode(mode = this.mode) {
+  setMode(mode: LinkMode) {
     this.mode = mode;
   }
 
@@ -33,8 +94,10 @@ export class LinkTranslator {
 */
   }
 
-  async urlToDestUrl(url) {
-    const file = this.localFilesStorage.findFile(file => url.indexOf(file.id) > -1);
+/*
+  async urlToDestUrl(url: string) {
+    const generatedFiles = this.generatedScanner.getFiles();
+    const file = generatedFiles.find(file => url.indexOf(file.id) > -1);
     if (file && file.localPath) {
       return file.localPath;
       // if (file.mimeType === MimeTypes.FOLDER_MIME) {
@@ -45,6 +108,7 @@ export class LinkTranslator {
     return url;
   }
 
+*/
   /*async imageUrlToLocalPath(url) {
     return url;
     for (let fileId in this.fileMap) {
@@ -77,65 +141,6 @@ export class LinkTranslator {
     return url;
   }*/
 
-  convertExtension(localPath: string, mode?: LinkMode) {
-    if (!mode) mode = this.mode;
-    const lastSlash = localPath.lastIndexOf('/');
 
-    const dirName = localPath.substr(0, lastSlash + 1);
-    const fileName = localPath.substr(lastSlash + 1);
-
-    const parts = fileName.split('.');
-
-    if (parts.length > 1) {
-      const ext = parts[parts.length - 1];
-
-      switch (ext) {
-      case 'md':
-
-        switch (mode) {
-        case LinkMode.uglyURLs:
-          parts[parts.length - 1] = 'html';
-          break;
-
-        case LinkMode.dirURLs:
-          parts.pop();
-          break;
-
-        case LinkMode.mdURLs:
-        default:
-          parts[parts.length - 1] = 'md';
-          break;
-        }
-
-        break;
-      }
-    }
-
-    return dirName + parts.join('.');
-  }
-
-  convertToRelativeMarkDownPath(localPath, basePath) {
-    if (localPath.startsWith('https://')) return localPath;
-    if (localPath.startsWith('http://')) return localPath;
-    if (basePath === localPath) return '.';
-
-    const host = '//example.com/';
-    return this.convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
-      output: RelateUrl.PATH_RELATIVE
-    })));
-  }
-
-  convertToRelativeSvgPath(localPath, basePath) {
-    if (localPath.startsWith('https://')) return localPath;
-    if (localPath.startsWith('http://')) return localPath;
-    if (basePath === localPath) return '.';
-
-    localPath = this.convertExtension(localPath);
-
-    const host = '//example.com/';
-    return this.convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
-      output: RelateUrl.PATH_RELATIVE
-    })), LinkMode.dirURLs);
-  }
 
 }

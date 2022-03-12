@@ -3,8 +3,10 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as minimist from 'minimist';
-import {CliParams, MainService} from './MainService';
+import {MainService} from './MainService';
 import * as pkg from '../package.json';
+import * as dotenv from 'dotenv';
+import {CliParams} from './model/CliParams';
 
 function usage() {
   console.log(
@@ -14,19 +16,23 @@ Usage:
 
 Main commands:
 
-    wikigdrive init
-        --drive [shared drive url]
+    wikigdrive config
         --client_id
         --client_secret
         --service_account=./private_key.json
+
+    wikigdrive service 
+
+    wikigdrive add [folder_id_or_url]
         --drive_id
+        --drive [shared drive url]
         --dest (current working folder)
         --link_mode [mdURLs|dirURLs|uglyURLs]
         --without-folder-structure
 
     wikigdrive pull [URL to specific file]
 
-    wikigdrive watch --watch_mode [mtime|changes] (keep scanning for changes, ie: daemon)
+    wikigdrive watch (keep scanning for changes, ie: daemon)
 
 Other commands:
 
@@ -42,7 +48,8 @@ Options:
     --dest (current working folder)
 
 Examples:
-    $ wikigdrive init --drive https://google.drive...
+    $ wikigdrive init
+    $ wikigdrive add https://google.drive...
     `}`);
 }
 
@@ -66,25 +73,24 @@ async function main() {
     args: argv._.slice(1),
     drive: argv['drive'],
     config_dir: argv['config_dir'] || default_wgd_dir,
-    dest: argv['dest'] || process.env.PWD,
-    watch_mode: argv['watch_mode'] || 'changes',
+    workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || process.env.PWD,
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,
 
     link_mode: argv['link_mode'] || 'mdURLs',
 
-    flat_folder_structure: !!argv['without-folder-structure'],
     debug: (argv['debug'] || '').split(',').map(str => str.toLocaleString().trim()),
 
     drive_id: argv['drive_id'] || '',
     service_account: argv['service_account'] || null,
+    share_email: argv['share_email'] || null,
     git_update_delay: argv['git_update_delay'] || 60,
     force: !!argv['force'],
     disable_progress: !!argv['disable-progress'],
     server_port: +argv['server']
   };
-  
+
   const mainService = new MainService(params);
 
   try {
@@ -97,7 +103,7 @@ async function main() {
   return await mainService.start();
 }
 
-require('dotenv').config();
+dotenv.config();
 
 main()
   .then(() => {
