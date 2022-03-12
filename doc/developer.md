@@ -32,3 +32,5 @@ ssh -p 22121 vps1.ovh.wikigdrive.com
 root@wgd-dev:~# docker exec -it wikigdrive-prod bash
 wikigdrive --service_account /service_account.json  drives
 ```
+
+![Code Diagram](https://user-images.githubusercontent.com/6094599/158036344-677c49b7-7cbb-4888-9b32-c5ad1408d683.svg) [src](https://docs.google.com/drawings/d/1LSveM3s_Fmi9411FW9Z-NA50fbNHHW2y_PQo3NSUPAI/edit)
