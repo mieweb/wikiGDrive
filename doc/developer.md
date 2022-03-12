@@ -25,3 +25,10 @@ The service runs
 ```
 ssh -p 22121 vps1.ovh.wikigdrive.com
 ```
+
+## Production Docker
+
+```
+root@wgd-dev:~# docker exec -it wikigdrive-prod bash
+wikigdrive --service_account /service_account.json  drives
+```
