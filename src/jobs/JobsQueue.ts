@@ -2,11 +2,11 @@
 
 import {EventEmitter} from 'events';
 
-class Job {
-  private readonly starter: any;
-  public readonly promise: Promise<unknown>;
-  private resolve: (value?: unknown) => void;
-  private reject: (reason?: any) => void;
+class Job<T> {
+  private readonly starter: { (): Promise<T> };
+  public readonly promise: Promise<T>;
+  private resolve: (value?: T) => void;
+  private reject: (reason?: Error) => void;
 
   constructor(starter) {
     this.starter = starter;
@@ -18,7 +18,7 @@ class Job {
 
   async execute() {
     try {
-      const result = await this.starter();
+      const result: T = await this.starter();
       this.resolve(result);
     } catch (err) {
       this.reject(err);
@@ -28,7 +28,7 @@ class Job {
 }
 
 export class JobsQueue extends EventEmitter {
-  private jobs: any[];
+  private jobs: Job<any>[];
 
   constructor() {
     super();

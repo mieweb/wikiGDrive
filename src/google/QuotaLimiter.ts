@@ -1,9 +1,12 @@
 'use strict';
 
+import * as EventEmitter from 'events';
+import * as winston from 'winston';
+
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;
 
-interface QuotaJob {
+export interface QuotaJob {
   ts?: number;
   done: boolean;
   func: () => Promise<void>;
@@ -25,12 +28,10 @@ export class QuotaLimiter {
 
   private oldCounter: number;
   private saveHandler: (jobs: QuotaJob[]) => void;
-  private eventBus: any;
-  private logger: any;
+  private eventBus: EventEmitter;
 
-  constructor(initialJobs = [], eventBus, logger) {
+  constructor(initialJobs: QuotaJob[] = [], private readonly logger: winston.Logger, eventBus?) {
     this.eventBus = eventBus;
-    this.logger = logger;
     this.jobs = [].concat((initialJobs || []));
     setInterval(() => {
       this.handleQueue();
@@ -94,7 +95,9 @@ export class QuotaLimiter {
       this.currentLimit = { queries, seconds, ts: 0 }; // Because of DELAY_AFTER_ERROR in handleQueue
     }
 
-    this.eventBus.emit('quota:limit', this.currentLimit);
+    if (this.eventBus) {
+      this.eventBus.emit('quota:limit', this.currentLimit);
+    }
 
     return true;
   }

@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { getDesiredPath } from '../src/storage/LocalPathGenerator';
+import { getDesiredPath } from '../src/containers/transform/LocalFilesGenerator';
 
 describe('DesiredPathTest', () => {
   it('test slugified path', () => {

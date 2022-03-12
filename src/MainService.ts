@@ -1,63 +1,35 @@
 'use strict';
 
 import {EventEmitter} from 'events';
-import * as path from 'path';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
-import {StoragePlugin} from './plugins/StoragePlugin';
-import {SyncPlugin} from './plugins/SyncPlugin';
-import {WatchChangesPlugin} from './plugins/WatchChangesPlugin';
-import {GoogleApiPlugin} from './plugins/GoogleApiPlugin';
-import {DownloadPlugin} from './plugins/DownloadPlugin';
-import {ExternalFilesPlugin} from './plugins/ExternalFilesPlugin';
-import {GitPlugin} from './plugins/GitPlugin';
-import {ListDrivesPlugin} from './plugins/ListDrivesPlugin';
-import {BasePlugin} from './plugins/BasePlugin';
-import {ProgressPlugin} from './progress/ProgressPlugin';
-import {GoogleFilesStorage} from './storage/GoogleFilesStorage';
-import {argsToGoogleFileIds} from './utils/idParsers';
 import {createLogger} from './utils/logger';
-import {TransformPlugin} from './plugins/TransformPlugin';
-import {StatusPlugin} from './plugins/StatusPlugin';
-import {LocalFilesStorage} from './storage/LocalFilesStorage';
-import {ServerPlugin} from './plugins/server/ServerPlugin';
-
-export enum LinkMode {
-  dirURLs = 'dirURLs',
-  mdURLs = 'mdURLs',
-  uglyURLs = 'uglyURLs'
-}
-
-export interface CliParams {
-  config_dir: string;
-  link_mode: LinkMode;
-  dest: string;
-  flat_folder_structure: boolean;
-  drive_id: string;
-  drive: string;
-  command: string;
-  args: string[];
-  watch_mode: string;
-  debug: string[];
-  force: boolean;
-
-  disable_progress: boolean;
-
-  client_id?: string;
-  client_secret?: string;
-  service_account?: string;
-  git_update_delay: number;
-  server_port?: number;
-}
-
+import {ContainerEngine} from './ContainerEngine';
+import {ServerContainer} from './containers/server/ServerContainer';
+import {GoogleFolderContainer} from './containers/google_folder/GoogleFolderContainer';
+import {GoogleApiContainer} from './containers/google_api/GoogleApiContainer';
+import {FileContentService} from './utils/FileContentService';
+import {default as envPaths, Paths} from 'env-paths';
+import * as path from 'path';
+import {urlToFolderId} from './utils/idParsers';
+import {TransformContainer} from './containers/transform/TransformContainer';
+import {CliParams} from './model/CliParams';
+import {AuthConfig} from './model/AccountJson';
+import {loadRunningInstance} from './containers/server/loadRunningInstance';
+import {FolderRegistryContainer} from './containers/folder_registry/FolderRegistryContainer';
+import {JobManagerContainer} from './containers/job/JobManagerContainer';
+import fetch from 'node-fetch';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
   private readonly command: string;
-  private plugins: BasePlugin[];
   private readonly logger: winston.Logger;
   private readonly disable_progress: boolean;
+  private containerEngine: ContainerEngine;
+  private paths: Paths;
+  private mainFileService: FileContentService;
+  private authConfig: AuthConfig;
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
@@ -68,6 +40,7 @@ export class MainService {
       this.attachDebug();
     }
 
+    this.paths = envPaths('wikigdrive', {suffix: null});
     this.logger = createLogger(this.eventBus);
   }
 
@@ -84,30 +57,254 @@ export class MainService {
   }
 
   async init() {
-    this.plugins = [];
-    if (!this.disable_progress) {
-      this.plugins.push(new ProgressPlugin(this.eventBus, this.logger));
+    this.mainFileService = new FileContentService(this.params.workdir || process.cwd());
+    await this.mainFileService.mkdir('/');
+
+    const requireAuth = ['config', 'server', 'drives', 'pull', 'register'];
+
+    if (requireAuth.indexOf(this.command) > -1) {
+      if (this.params.service_account) {
+        const rootFileService = new FileContentService('/');
+        this.authConfig = {
+          service_account: await rootFileService.readJson(path.resolve(this.params.service_account))
+        };
+      } else
+      if (this.params.client_id && this.params.client_secret) {
+        this.authConfig = {
+          user_account: {
+            type: 'user_account',
+            client_id: this.params.client_id,
+            client_secret: this.params.client_secret
+          }
+        };
+      } else {
+        this.authConfig = await this.mainFileService.readJson('auth_config.json');
+      }
+
+      if (!this.authConfig) {
+        throw new Error('No authentication credentials provided');
+      }
+
+      if (this.params.share_email) {
+        this.authConfig.share_email = this.params.share_email;
+      }
     }
-    this.plugins.push(new StatusPlugin(this.eventBus, this.logger));
-    this.plugins.push(new StoragePlugin(this.eventBus, this.logger));
-    this.plugins.push(new ExternalFilesPlugin(this.eventBus, this.logger));
-    this.plugins.push(new GoogleApiPlugin(this.eventBus, this.logger));
-    this.plugins.push(new WatchChangesPlugin(this.eventBus, this.logger));
-    this.plugins.push(new SyncPlugin(this.eventBus, this.logger));
-    this.plugins.push(new DownloadPlugin(this.eventBus, this.logger));
-    this.plugins.push(new TransformPlugin(this.eventBus, this.logger));
-    this.plugins.push(new GitPlugin(this.eventBus, this.logger));
-    this.plugins.push(new ListDrivesPlugin(this.eventBus, this.logger));
-    this.plugins.push(new ServerPlugin(this.eventBus, this.logger));
+
+    this.containerEngine = new ContainerEngine(this.logger, this.mainFileService);
+
+    this.eventBus.on('panic', (error) => {
+      throw error;
+      /*
+      if (error.stack) {
+        this.logger.error(error.stack);
+      } else {
+        this.logger.error(error.message);
+      }
+      if (error.origError) {
+        this.logger.error(error.origError);
+      }
+      console.error(error.message);
+      process.exit(1);
+      */
+    });
   }
 
-  async emitThanAwait(event, params, awaitEvents) {
-    const promises = awaitEvents.map(eventName => new Promise(resolve => this.eventBus.on(eventName, resolve)));
-    this.eventBus.emit(event, params);
-    await Promise.all(promises);
+  async cmdDrives() {
+    const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.containerEngine.getContainer('google_api');
+    const drives = await apiContainer.listDrives();
+    console.log('Available drives:');
+    console.table(drives);
+  }
+
+  async cmdTransform() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    this.logger.info('Transforming');
+
+    const filesIds = this.params.args.slice(1);
+    const transformContainer = new TransformContainer({
+      name: folderId
+    }, { filesIds });
+    await transformContainer.mount2(
+      await this.mainFileService.getSubFileService(folderId, '/'),
+      await this.mainFileService.getSubFileService(folderId + '_transform', '/')
+    );
+    await this.containerEngine.registerContainer(transformContainer);
+
+    await transformContainer.run(folderId);
+
+    await this.containerEngine.unregisterContainer(transformContainer.params.name);
+  }
+
+  async cmdPull() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    this.logger.info('Downloading');
+
+    const filesIds = this.params.args.slice(1);
+    const downloadContainer = new GoogleFolderContainer({
+      cmd: 'pull',
+      name: folderId,
+      folderId: folderId,
+      apiContainer: 'google_api'
+    }, { filesIds });
+    await downloadContainer.mount(await this.mainFileService.getSubFileService(folderId, '/'));
+    await this.containerEngine.registerContainer(downloadContainer);
+    await downloadContainer.run();
+    await this.containerEngine.unregisterContainer(downloadContainer.params.name);
+
+    await this.cmdTransform();
+  }
+
+  async cmdPrune() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    await folderRegistryContainer.pruneFolder(folderId);
+  }
+
+  async cmdRegister() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    const folder = await folderRegistryContainer.registerFolder(folderId);
+    if (folder.new) {
+      await this.cmdPull();
+    }
+  }
+
+  async cmdUnregister() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.containerEngine.getContainer('folder_registry');
+    await folderRegistryContainer.unregisterFolder(folderId);
+  }
+
+  async cmdServer() {
+    const instance = await loadRunningInstance();
+    if (instance) {
+      this.logger.error('WikiGDrive server already running, PID: ' + instance.pid);
+      process.exit(1);
+    }
+
+    const port = parseInt(this.params.args[0]) || 3000;
+    const serverContainer = new ServerContainer({ name: 'server' }, port);
+    await serverContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(serverContainer);
+    await serverContainer.run();
+
+    const containerEnginePromise = this.containerEngine.run();
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    containerEnginePromise.then(() => {
+    });
+
+    await new Promise(resolve => {
+      this.eventBus.on('end', resolve);
+    });
+  }
+
+  async cmdInspect() {
+    const folderId = urlToFolderId(this.params.args[0]);
+    if (!folderId) {
+      throw new Error('No folderId');
+    }
+
+    const instance = await loadRunningInstance();
+    if (!instance) {
+      this.logger.error('WikiGDrive server is not running');
+      process.exit(1);
+    }
+
+    const response = await fetch(`http://localhost:${instance.port}/api/drive/${folderId}/inspect`);
+    const json = await response.json();
+
+    console.log(json);
+  }
+
+  async cmdPs() {
+    const instance = await loadRunningInstance();
+    if (!instance) {
+      this.logger.error('WikiGDrive server is not running');
+      process.exit(1);
+    }
+
+    const response = await fetch(`http://localhost:${instance.port}/api/ps`);
+    const json = await response.json();
+
+    console.table(json);
   }
 
   async start() {
+    if (this.authConfig) {
+      const apiContainer = new GoogleApiContainer({ name: 'google_api' }, this.authConfig);
+      await apiContainer.mount(await this.mainFileService);
+      await this.containerEngine.registerContainer(apiContainer);
+      await apiContainer.run();
+    }
+
+    const folderRegistryContainer = new FolderRegistryContainer({ name: 'folder_registry' });
+    await folderRegistryContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(folderRegistryContainer);
+    await folderRegistryContainer.run();
+
+
+    const jobManagerContainer = new JobManagerContainer({ name: 'job_manager' });
+    await jobManagerContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(jobManagerContainer);
+    await jobManagerContainer.run();
+
+    switch (this.command) {
+      case 'config':
+        if (this.authConfig) {
+          await this.mainFileService.writeJson('auth_config.json', this.authConfig);
+        }
+        break;
+      case 'drives':
+        await this.cmdDrives();
+        break;
+      case 'server':
+        await this.cmdServer();
+        break;
+      case 'pull':
+        await this.cmdPull();
+        break;
+      case 'transform':
+        await this.cmdTransform();
+        break;
+      case 'prune':
+        await this.cmdPrune();
+        break;
+      case 'register':
+        await this.cmdRegister();
+        break;
+      case 'unregister':
+        await this.cmdUnregister();
+        break;
+      case 'ps':
+        await this.cmdPs();
+        break;
+      case 'inspect':
+        await this.cmdInspect();
+        break;
+    }
+
+    await this.containerEngine.flushData();
+/*
     this.eventBus.on('drive_config:loaded', async (drive_config) => {
       const logsDir = path.join(this.params.config_dir, 'logs');
 
@@ -134,164 +331,8 @@ export class MainService {
         filename: '%DATE%-combined.log',
         json: true
       }));
-
-      if (!this.disable_progress) {
-        for (const transport of this.logger.transports) {
-          if (transport instanceof winston.transports.Console) {
-            this.logger.remove(transport);
-          }
-        }
-      }
     });
-
-    this.eventBus.on('panic', (error) => {
-      throw error;
-/*
-      if (error.stack) {
-        this.logger.error(error.stack);
-      } else {
-        this.logger.error(error.message);
-      }
-      if (error.origError) {
-        this.logger.error(error.origError);
-      }
-
-      console.error(error.message);
-      process.exit(1);
 */
-    });
-
-    process.on('SIGINT', async () => {
-      console.log('SIGINT');
-      for (const plugin of this.plugins) {
-        if (plugin.flushData) {
-          await plugin.flushData();
-        }
-      }
-      process.exit();
-    });
-
-    let googleFilesStorage: GoogleFilesStorage;
-    let localFilesStorage: LocalFilesStorage;
-    this.eventBus.on('google_files:initialized', ({ googleFilesStorage: param }) => {
-      googleFilesStorage = param;
-    });
-    this.eventBus.on('local_files:initialized', ({ localFilesStorage: param }) => {
-      localFilesStorage = param;
-    });
-
-    switch (this.command) {
-      case 'init':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
-        break;
-
-      case 'status':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('status:run', {}, [ 'status:done' ]);
-        process.exit(0);
-        break;
-
-      case 'sync':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
-        break;
-
-      case 'download':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        break;
-
-      case 'external':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded', 'google_api:done' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
-        break;
-
-      case 'transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('transform:run', {}, [ 'transform:done', 'git:done' ]);
-        break;
-
-      case 'clear:transform':
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
-        await this.emitThanAwait('transform:clear', {}, [ 'transform:cleared' ]);
-        break;
-
-      case 'pull':
-        this.eventBus.on('transform:dirty', () => {
-          this.eventBus.emit('download:retry');
-        });
-
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
-        this.eventBus.emit('main:set_google_file_ids_filter', argsToGoogleFileIds(this.params.args, googleFilesStorage, localFilesStorage));
-
-        await this.emitThanAwait('sync:run', {}, [ 'sync:done' ]);
-        await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
-        await this.emitThanAwait('transform:run', {}, [ 'git:done' ]);
-
-        break;
-
-      case 'watch':
-        this.eventBus.on('transform:dirty', () => {
-          this.eventBus.emit('download:retry');
-        });
-
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
-
-        if (this.params.watch_mode === 'changes') {
-          await this.emitThanAwait('watch_changes:fetch_token', {}, [ 'watch_changes:token_ready' ]);
-        }
-
-        await this.emitThanAwait('sync:run', {}, ['sync:done']);
-        await this.emitThanAwait('download:run', {}, [ 'download:done' ]);
-        // await this.emitThanAwait('external:run', {}, [ 'external:done' ]);
-        await this.emitThanAwait('transform:run', {}, [ 'transform:done' ]);
-
-        this.eventBus.on('google_files:dirty', async () => {
-          this.eventBus.emit('download:run');
-        });
-        this.eventBus.on('download:complete', async () => {
-          this.eventBus.emit('transform:run');
-        });
-
-        await this.emitThanAwait('watch:run', {}, ['watch:done']);
-
-        break;
-
-      case 'drives':
-        await this.emitThanAwait('main:run', this.params, [ 'google_api:done' ]);
-
-        this.eventBus.on('list_drives:done', (drives) => {
-          console.log('Available drives:');
-          console.table(drives);
-        });
-
-        await this.emitThanAwait('list_drives:run', {}, [ 'list_drives:done' ]);
-        break;
-
-      default:
-        await this.emitThanAwait('main:run', this.params, [ 'drive_config:loaded' ]);
-        this.logger.error('Unknown command: ' + this.command);
-        break;
-    }
-
-    for (const plugin of this.plugins) {
-      if (plugin.flushData) {
-        await plugin.flushData();
-      }
-    }
-
-    this.eventBus.emit('main:done');
   }
 
 }

@@ -12,4 +12,4 @@ VOLUME /data
 
 WORKDIR "/data"
 
-CMD [ "sh", "-c", "wikigdrive-ts watch --server 3000 --disable-progress" ]
+CMD [ "sh", "-c", "wikigdrive-ts --workdir /data server 3000" ]

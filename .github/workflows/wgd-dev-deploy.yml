@@ -28,4 +28,4 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: docker run -d --name wikigdrive-prod -v wikiGDriveExample:/data --publish 127.0.0.1:3000:3000 wikigdrive-prod
+      run: docker run -d --name wikigdrive-prod -v wikiGDriveExample:/data -v /home/githubactions/wikigdrive/service_account.json:/service_account.json --publish 127.0.0.1:3000:3000 wikigdrive-prod wikigdrive-ts --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data server 3000

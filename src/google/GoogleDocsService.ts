@@ -1,19 +1,18 @@
 'use strict';
 
 import { google } from 'googleapis';
-import { Readable } from 'stream';
-import {GoogleFile} from '../storage/GoogleFilesStorage';
+import {Readable, Stream, Writable} from 'stream';
+import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
+import {GoogleFile, SimpleFile} from '../model/GoogleFile';
 
 export class GoogleDocsServiceError extends Error {
-  private file: any;
-  private dest: any;
+  private file: GoogleFile;
   private isQuotaError: boolean;
   private origError: Error;
 
-  constructor(msg, { origError, file, dest, isQuotaError }) {
+  constructor(msg, { origError, file, isQuotaError }) {
     super(msg);
     this.file = file;
-    this.dest = dest;
     this.origError = origError;
     this.isQuotaError = isQuotaError;
   }
@@ -23,7 +22,7 @@ export class GoogleDocsService {
 
   constructor(private logger) {}
 
-  async download(auth, file: GoogleFile, dest) {
+  async download(auth: OAuth2Client, file: SimpleFile, dest: Writable | Writable[]) {
     const docs = google.docs({ version: 'v1', auth });
 
     try {
@@ -31,7 +30,7 @@ export class GoogleDocsService {
       const readable = new Readable();
 
       await new Promise<void>((resolve, reject) => {
-        let stream = readable
+        let stream: Stream = readable
             .on('error', err => {
               this.logger.error('Download stream error', err);
               reject(err);
@@ -59,7 +58,7 @@ export class GoogleDocsService {
       if (!err.isQuotaError) {
         this.logger.error('Download error', err);
       }
-      throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, origError: err, dest, isQuotaError: err.isQuotaError });
+      throw new GoogleDocsServiceError('Error downloading file: ' + file.id, { file, origError: err, isQuotaError: err.isQuotaError });
     }
   }
 

@@ -5,11 +5,11 @@ import {ImageMeta} from '../storage/DownloadFilesStorage';
 import {getImageMeta} from './getImageMeta';
 
 export class UnZipper {
-  private html: string;
+  private xml: string;
   private readonly images: ImageMeta[];
 
   constructor() {
-    this.html = '<html></html>';
+    this.xml = '<?xml version="1.0" encoding="UTF-8">\n<office:document-content></office:document-content>\n';
     this.images = [];
   }
 
@@ -23,22 +23,22 @@ export class UnZipper {
     });
 
     for (const relativePath in files) {
-      if (relativePath.endsWith('.html')) {
-        this.html = await (zip.file(relativePath).async('string'));
+      if (relativePath.endsWith('content.xml')) {
+        this.xml = await (zip.file(relativePath).async('string'));
       }
       if (relativePath.endsWith('.png')) {
         const buffer = await files[relativePath].async('nodebuffer');
-        this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
+        this.images.push(Object.assign({ zipPath: relativePath.replace(/^Pictures\//, '') }, await getImageMeta(buffer)));
       }
       if (relativePath.endsWith('.jpg')) {
         const buffer = await files[relativePath].async('nodebuffer');
-        this.images.push(Object.assign({ zipPath: relativePath.replace(/^images\//, '') }, await getImageMeta(buffer)));
+        this.images.push(Object.assign({ zipPath: relativePath.replace(/^Pictures\//, '') }, await getImageMeta(buffer)));
       }
     }
   }
 
-  getHtml() {
-    return this.html;
+  getXml() {
+    return this.xml;
   }
 
   getImages(): ImageMeta[] {

@@ -1,15 +1,15 @@
 'use strict';
 
-import { FileService } from '../utils/FileService';
-import * as fs from 'fs';
 import * as path from 'path';
+import {FileContentService} from '../utils/FileContentService';
 
 export interface GoogleAuth {
-  access_token: string;
-  refresh_token: string;
-  scope: string;
-  token_type: string;
-  expiry_date: number;
+  refresh_token?: string | null;
+  expiry_date?: number | null;
+  access_token?: string | null;
+  token_type?: string | null;
+  id_token?: string | null;
+  scope?: string;
 }
 
 export interface Config {
@@ -18,12 +18,12 @@ export interface Config {
 
 export class ConfigService {
   private save_needed = false;
-  private fileService: FileService;
+  private fileService: FileContentService;
   private config: Config;
   private readonly authPath: string;
 
   constructor(private config_dir: string) {
-    this.fileService = new FileService();
+    this.fileService = new FileContentService();
     this.authPath = path.join(config_dir, 'google_auth.json');
   }
 
@@ -34,17 +34,8 @@ export class ConfigService {
     }, 500);
   }
 
-  async _loadJson(filePath) {
-    try {
-      const content = await this.fileService.readFile(filePath);
-      return JSON.parse(content);
-    } catch (error) {
-      return {};
-    }
-  }
-
   async loadData() {
-    this.config = await this._loadJson(this.authPath) || {};
+    this.config = await this.fileService.readJson(this.authPath) || {};
   }
 
   async loadGoogleAuth(): Promise<GoogleAuth> {
@@ -61,7 +52,7 @@ export class ConfigService {
       return ;
     }
 
-    fs.writeFileSync(this.authPath, JSON.stringify(this.config, null, 2));
+    await this.fileService.writeJson(this.authPath, this.config);
 
     this.save_needed = false;
   }
