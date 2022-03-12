@@ -166,6 +166,11 @@ const MD_HANDLERS: {[name: string]: Handler} = {
   },
   '/P': async (payload: TagPayload, stateMachine: StateMachine) => {
     // console.log('/P', payload.position, stateMachine.currentLevel.payload.position, innerTxt);
+
+    if (stateMachine.parentLevel?.tag === 'LI') {
+      stateMachine.currentMode = stateMachine.parentLevel.mode;
+    }
+
     stateMachine.markdownChunks.push({ txt: '\n', mode: stateMachine.currentMode, isTag: true });
     const innerTxt = stateMachine.markdownChunks.extractText(stateMachine.currentLevel.payload.position, payload.position);
     switch (innerTxt) {
@@ -208,6 +213,7 @@ const RAW_HANDLERS = {
 };
 
 interface TagLeaf {
+  mode: 'md' | 'html' | 'raw';
   level: number;
   tag: TAG;
   payload: TagPayload;
@@ -217,10 +223,6 @@ const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 const isClosing = (tag: TAG) => tag.startsWith('/');
 
 export class StateMachine {
-  private globalListCounters = {};
-
-  private stack: StackPos[] = [];
-  private top: StackPos = DEFAULT_STACK_POS;
   private readonly tagsTree: TagLeaf[] = [];
   private listLevel = 0;
 
@@ -262,6 +264,7 @@ export class StateMachine {
 
     if (isOpening(tag)) {
       this.tagsTree.push({
+        mode: this.currentMode,
         tag,
         payload,
         level: this.tagsTree.length
