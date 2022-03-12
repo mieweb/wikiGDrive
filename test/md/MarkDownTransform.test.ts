@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 import {compareTexts} from '../utils';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown';
-import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
+import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
 import {UnMarshaller} from '../../src/odt/UnMarshaller';
 import {OdtProcessor} from '../../src/odt/OdtProcessor';
 import {FileContentService} from '../../src/utils/FileContentService';
@@ -74,15 +74,20 @@ async function transformOdt(id: string) {
   if (!processor.getContentXml()) {
     throw Error('No odt processed');
   }
-  return transform(processor.getContentXml());
+  return transform(processor.getContentXml(), processor.getStylesXml());
 }
 
-async function transform(content: string) {
+async function transform(contentXml: string, stylesXml: string) {
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-  const document: DocumentContent = parser.unmarshal(content);
+  const document: DocumentContent = parser.unmarshal(contentXml);
   if (!document) {
     throw Error('No document unmarshalled');
   }
-  const converter = new OdtToMarkdown(document);
+  const parserStyles = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentStyles');
+  const styles: DocumentStyles = parserStyles.unmarshal(stylesXml);
+  if (!styles) {
+    throw Error('No styles unmarshalled');
+  }
+  const converter = new OdtToMarkdown(document, styles);
   return await converter.convert();
 }

@@ -18,17 +18,16 @@
 
 Item before list
 
-1. Some item
-2. Some item
-3. Some item
-4. Some item
-5. Some item
-    1. Some item
-    2. Some item
-        * Some item1
-        * Some itemsss
-        * Some item1
-        * Some item2
-        * Some item3
-
+1. Some item level1
+2. Some item level1
+3. Some item level1
+4. Some item level1
+5. Some item level1
+    1. Some item level2
+    2. Some item level2
+        * Some item level3
+        * Some item level3
+        * Some item level3
+        * Some item level3
+        * Some item level3
 Item after list

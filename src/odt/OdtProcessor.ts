@@ -2,8 +2,9 @@ import {FileContentService} from '../utils/FileContentService';
 import * as JSZip from 'jszip';
 
 export class OdtProcessor {
-  private fileName: string;
+  private readonly fileName: string;
   private contentXml: string;
+  private stylesXml: string;
   private files: { [p: string]: JSZip.JSZipObject };
 
   constructor(private fileSystem: FileContentService, private fileId: string) {
@@ -22,6 +23,9 @@ export class OdtProcessor {
 
     if (this.files['content.xml']) {
       this.contentXml = await this.files['content.xml'].async('string');
+    }
+    if (this.files['styles.xml']) {
+      this.stylesXml = await this.files['styles.xml'].async('string');
     }
   }
 
@@ -44,6 +48,10 @@ export class OdtProcessor {
 
   getContentXml() {
     return this.contentXml;
+  }
+
+  getStylesXml() {
+    return this.stylesXml;
   }
 
 }

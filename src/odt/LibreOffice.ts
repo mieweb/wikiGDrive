@@ -249,6 +249,40 @@ export class DocumentContent {
   automaticStyles: AutomaticStyle;
 }
 
+@XmlElement()
+@XmlAttribute('text:level', 'level')
+export class ListLevelStyleBullet {
+  level = 0;
+}
+
+@XmlElement()
+@XmlAttribute('text:level', 'level')
+export class  ListLevelStyleNumber {
+  level = 0;
+}
+
+@XmlElement()
+@XmlAttribute('style:name', 'name')
+@XmlElementChild('text:list-level-style-bullet', 'listLevelStyleBullet', 'ListLevelStyleBullet', {isArray: true})
+@XmlElementChild('text:list-level-style-number', 'listLevelStyleNumber', 'ListLevelStyleNumber', {isArray: true})
+export class ListStyle {
+  name: string;
+  listLevelStyleBullet: ListLevelStyleBullet[] = [];
+  listLevelStyleNumber: ListLevelStyleNumber[] = [];
+}
+
+@XmlElement()
+@XmlElementChild('text:list-style', 'listStyles', 'ListStyle', {isArray: true})
+export class OfficeStyles {
+  listStyles: ListStyle[] = [];
+}
+
+@XmlRootElement('office:document-styles')
+@XmlElementChild('office:styles', 'styles', 'OfficeStyles')
+export class DocumentStyles {
+  styles: OfficeStyles;
+}
+
 export const LIBREOFFICE_CLASSES = {
   'DocumentContent': DocumentContent,
   'OfficeBody': OfficeBody,
@@ -281,5 +315,11 @@ export const LIBREOFFICE_CLASSES = {
   'TableCell': TableCell,
   'TableColumn': TableColumn,
   'TableRow': TableRow,
-  'TableTable': TableTable
+  'TableTable': TableTable,
+
+  'DocumentStyles': DocumentStyles,
+  'OfficeStyles': OfficeStyles,
+  'ListStyle': ListStyle,
+  'ListLevelStyleNumber': ListLevelStyleNumber,
+  'ListLevelStyleBullet': ListLevelStyleBullet
 };

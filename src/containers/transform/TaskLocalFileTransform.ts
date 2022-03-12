@@ -9,7 +9,7 @@ import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontM
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown';
 import {OdtProcessor} from '../../odt/OdtProcessor';
 import {UnMarshaller} from '../../odt/UnMarshaller';
-import {LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
+import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
 import {googleMimeToExt} from '../google_folder/TaskFetchFolder';
@@ -92,7 +92,13 @@ export class TaskLocalFileTransform extends QueueTask {
     const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
     const document = parser.unmarshal(content);
 
-    const converter = new OdtToMarkdown(document);
+    const parserStyles = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentStyles');
+    const styles: DocumentStyles = parserStyles.unmarshal(processor.getStylesXml());
+    if (!styles) {
+      throw Error('No styles unmarshalled');
+    }
+
+    const converter = new OdtToMarkdown(document, styles);
     const markdown = await converter.convert();
     const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, Array.from(converter.links));
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);

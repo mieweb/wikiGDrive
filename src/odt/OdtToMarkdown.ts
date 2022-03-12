@@ -1,7 +1,7 @@
 import {
-  DocumentContent,
+  DocumentContent, DocumentStyles,
   DrawFrame,
-  DrawRect,
+  DrawRect, ListStyle,
   OfficeText,
   ParagraphProperty,
   Style,
@@ -28,7 +28,7 @@ export class OdtToMarkdown {
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
 
-  constructor(private document: DocumentContent) {
+  constructor(private document: DocumentContent, private documentStyles: DocumentStyles) {
     this.stateMachine = new StateMachine(this.chunks);
   }
 
@@ -43,6 +43,14 @@ export class OdtToMarkdown {
       };
     }
     return this.styles[styleName];
+  }
+
+  getListStyle(listStyleName): ListStyle {
+    if (!this.documentStyles?.styles?.listStyles) {
+      return null;
+    }
+
+    return this.documentStyles.styles.listStyles.find(ls => ls.name === listStyleName) || null;
   }
 
   async convert(): Promise<string> {
@@ -179,8 +187,8 @@ export class OdtToMarkdown {
 
   async paragraphToText(paragraph: TextParagraph): Promise<void> {
     const style = this.getStyle(paragraph.styleName);
-
-    this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style });
+    const listStyle = this.getListStyle(style.listStyleName);
+    this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
 
 /*    switch (this.top.mode) {
       case 'html':
@@ -307,9 +315,11 @@ export class OdtToMarkdown {
   }
 
   async listToText(list: TextList): Promise<void> {
-    this.stateMachine.pushTag('UL', { counterId: list.id });
+    const listStyle = this.getListStyle(list.styleName);
+
+    this.stateMachine.pushTag('UL', { counterId: list.id, listStyle });
     for (const listItem of list.list) {
-      this.stateMachine.pushTag('LI', { counterId: list.id });
+      this.stateMachine.pushTag('LI', { counterId: list.id, listStyle });
       for (const item of listItem.list) {
         if (item.type === 'paragraph') {
           await this.paragraphToText(<TextParagraph>item);

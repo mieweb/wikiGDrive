@@ -1,6 +1,6 @@
 import {MarkdownChunks, OutputMode} from './MarkdownChunks';
 import {fixCharacters, spaces} from './utils';
-import {Style} from './LibreOffice';
+import {Style, ListStyle} from './LibreOffice';
 
 type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'H1' | 'H2' | 'H3' | 'H4' | '/H1' | '/H2' | '/H3' | '/H4' |
@@ -27,6 +27,8 @@ interface TagPayload {
   marginLeft?: number;
   number?: number;
   style?: Style;
+  listStyle?: ListStyle;
+  listLevel?: number;
 }
 
 type Handler = (payload: TagPayload, stateMachine: StateMachine) => Promise<void>;
@@ -150,7 +152,11 @@ const MD_HANDLERS: {[name: string]: Handler} = {
       stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode });
     }
     if (stateMachine.parentLevel?.tag === 'LI') {
-      if ([ 'WWNum2', 'WWNum3' ].indexOf(payload.style?.listStyleName) > -1) {
+      const level = stateMachine.parentLevel.payload.listLevel;
+      const listStyle = stateMachine.parentLevel.payload.listStyle || stateMachine.currentLevel.payload.listStyle;
+      const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
+
+      if (isNumeric) {
         stateMachine.markdownChunks.push({ txt: `${stateMachine.parentLevel.payload.number}. `, mode: stateMachine.currentMode });
       } else {
         stateMachine.markdownChunks.push({ txt: '* ', mode: stateMachine.currentMode });
@@ -198,6 +204,7 @@ export class StateMachine {
   private stack: StackPos[] = [];
   private top: StackPos = DEFAULT_STACK_POS;
   private readonly tagsTree: TagLeaf[] = [];
+  private listLevel = 0;
 
   currentMode: OutputMode = 'md';
   private handlers = {
@@ -222,10 +229,13 @@ export class StateMachine {
 
   pushTag(tag: TAG, payload: TagPayload = {}) {
     if (tag === 'UL') {
+      this.listLevel++;
+      payload.listLevel = this.listLevel;
       payload.number = 1;
     }
     if (tag === 'LI') {
       if (this.currentLevel?.tag === 'UL') {
+        payload.listLevel = this.currentLevel.payload.listLevel;
         payload.number = this.currentLevel.payload.number;
       }
     }
@@ -248,6 +258,9 @@ export class StateMachine {
       if (this.currentLevel?.tag === 'UL') {
         this.currentLevel.payload.number++;
       }
+    }
+    if (tag === '/UL') {
+      this.listLevel--;
     }
   }
 

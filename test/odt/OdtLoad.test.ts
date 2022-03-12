@@ -1,5 +1,5 @@
 import {UnMarshaller} from '../../src/odt/UnMarshaller';
-import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
+import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
 import {OdtProcessor} from '../../src/odt/OdtProcessor';
 import {FileContentService} from '../../src/utils/FileContentService';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown';
@@ -18,7 +18,7 @@ describe('OdtLoad', () => {
 
     // console.log(JSON.stringify(document, null, 2));
 
-    const converter = new OdtToMarkdown(document);
+    const converter = new OdtToMarkdown(document, new DocumentStyles());
     const md = await converter.convert();
     assert.ok(md);
   });
