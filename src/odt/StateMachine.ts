@@ -1,6 +1,7 @@
 import {MarkdownChunks, OutputMode} from './MarkdownChunks';
 import {fixCharacters, spaces} from './utils';
 import {Style, ListStyle} from './LibreOffice';
+import slugify from 'slugify';
 
 type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'H1' | 'H2' | 'H3' | 'H4' | '/H1' | '/H2' | '/H3' | '/H4' |
@@ -30,6 +31,7 @@ interface TagPayload {
   style?: Style;
   listStyle?: ListStyle;
   listLevel?: number;
+  bookmarkName?: string;
 }
 
 type Handler = (payload: TagPayload, stateMachine: StateMachine) => Promise<void>;
@@ -166,16 +168,28 @@ const MD_HANDLERS: {[name: string]: Handler} = {
   },
   '/P': async (payload: TagPayload, stateMachine: StateMachine) => {
     // console.log('/P', payload.position, stateMachine.currentLevel.payload.position, innerTxt);
+    const innerTxt = stateMachine.markdownChunks.extractText(stateMachine.currentLevel.payload.position, payload.position);
+
+    if (stateMachine.currentLevel.payload.bookmarkName) {
+      const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true });
+      if (slug) {
+        stateMachine.headersMap[stateMachine.currentLevel.payload.bookmarkName] = slug;
+      }
+    }
 
     if (stateMachine.parentLevel?.tag === 'LI') {
       stateMachine.currentMode = stateMachine.parentLevel.mode;
     }
 
     stateMachine.markdownChunks.push({ txt: '\n', mode: stateMachine.currentMode, isTag: true });
-    const innerTxt = stateMachine.markdownChunks.extractText(stateMachine.currentLevel.payload.position, payload.position);
     switch (innerTxt) {
       case '{{rawhtml}}':
         stateMachine.currentMode = 'raw';
+        break;
+      case '{{markdown}}':
+      case '{{% markdown %}}':
+        stateMachine.currentMode = 'raw';
+        break;
     }
   },
   'H1': async (payload: TagPayload, stateMachine: StateMachine) => {
@@ -208,6 +222,11 @@ const RAW_HANDLERS = {
     switch (innerTxt) {
       case '{{/rawhtml}}':
         stateMachine.currentMode = 'md';
+        break;
+      case '{{/markdown}}':
+      case '{{% /markdown %}}':
+        stateMachine.currentMode = 'md';
+        break;
     }
   },
 };
@@ -232,6 +251,7 @@ export class StateMachine {
     md: MD_HANDLERS,
     raw: RAW_HANDLERS,
   };
+  headersMap: { [id: string]: string } = {};
 
   constructor(public markdownChunks: MarkdownChunks) {
   }
@@ -274,6 +294,7 @@ export class StateMachine {
     if (this.handlers[this.currentMode][tag]) {
       this.handlers[this.currentMode][tag](payload, this);
     }
+
     if (isClosing(tag)) {
       this.tagsTree.pop();
     }

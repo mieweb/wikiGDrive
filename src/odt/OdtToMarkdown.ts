@@ -60,21 +60,21 @@ export class OdtToMarkdown {
       }
     }
 
-    await this.tocToText(this.document.body.text.tableOfContent);
+    for (const tableOfContent of this.document.body.text.tableOfContent) {
+      await this.tocToText(tableOfContent);
+    }
     await this.officeTextToText(this.document.body.text);
 
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
 
-    return this.chunks.toString();
+    return await this.rewriteHeaders(this.chunks.toString());
   }
 
-  async tocToText(tableOfContents: TableOfContent[]): Promise<void> {
+  async tocToText(tableOfContent: TableOfContent): Promise<void> {
     this.stateMachine.pushTag('TOC');
-    for (const tableOfContent of tableOfContents) {
-      for (const paragraph of tableOfContent.indexBody.list) {
-        await this.paragraphToText(paragraph);
-      }
+    for (const paragraph of tableOfContent.indexBody.list) {
+      await this.paragraphToText(paragraph);
     }
     this.stateMachine.pushTag('/TOC');
   }
@@ -188,7 +188,8 @@ export class OdtToMarkdown {
   async paragraphToText(paragraph: TextParagraph): Promise<void> {
     const style = this.getStyle(paragraph.styleName);
     const listStyle = this.getListStyle(style.listStyleName);
-    this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
+    const bookmarkName = paragraph.bookmark?.name || null;
+    this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
 
 /*    switch (this.top.mode) {
       case 'html':
@@ -332,7 +333,18 @@ export class OdtToMarkdown {
         case 'list':
           await this.listToText(<TextList>child);
           break;
+        case 'toc':
+          await this.tocToText(<TableOfContent>child);
+          break;
       }
     }
+  }
+
+  private async rewriteHeaders(txt: string) {
+    for (const id in this.stateMachine.headersMap) {
+      const slug = this.stateMachine.headersMap[id];
+      txt = txt.replace(new RegExp(id, 'g'), slug);
+    }
+    return txt;
   }
 }

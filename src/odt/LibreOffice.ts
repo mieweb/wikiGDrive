@@ -156,6 +156,7 @@ export class TextIndexBody {
 @XmlElement()
 @XmlElementChild('text:index-body', 'indexBody', 'TextIndexBody')
 export class TableOfContent {
+  type = 'toc';
   indexBody: TextIndexBody;
 }
 
@@ -187,7 +188,7 @@ export class TextList implements TextSection {
 @XmlElementChild('table:table', 'list', 'TableTable', {isArray: true})
 @XmlElementChild('text:table-of-content', 'tableOfContent', 'TableOfContent', {isArray: true})
 export class OfficeText {
-  list: Array<TextParagraph | TableTable | TextList> = [];
+  list: Array<TextParagraph | TableTable | TextList | TableOfContent> = [];
   tableOfContent: TableOfContent[] = [];
 }
 
