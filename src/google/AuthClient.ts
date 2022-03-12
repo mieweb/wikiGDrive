@@ -5,7 +5,11 @@ import {handleGoogleError} from './error';
 import {QuotaLimiter} from './QuotaLimiter';
 import {GaxiosOptions, GaxiosResponse} from 'gaxios';
 
-export class QuotaAuthClient extends google.auth.OAuth2 {
+export interface HasQuotaLimiter {
+  setQuotaLimiter(quotaLimiter: QuotaLimiter);
+}
+
+export class QuotaAuthClient extends google.auth.OAuth2 implements HasQuotaLimiter {
   private quotaLimiter: QuotaLimiter;
 
   constructor(client_id?: string, client_secret?: string, redirect_uri?: string) {
@@ -34,7 +38,7 @@ export class QuotaAuthClient extends google.auth.OAuth2 {
   }
 }
 
-export class QuotaJwtClient extends google.auth.JWT {
+export class QuotaJwtClient extends google.auth.JWT implements HasQuotaLimiter {
   private quotaLimiter: QuotaLimiter;
 
   constructor(optionsOrEmail?: string, keyFile?: string, key?: string, scopes?: string | string[], subject?: string, keyId?: string) {

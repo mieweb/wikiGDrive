@@ -1,15 +1,17 @@
 'use strict';
 
 import * as readline from 'readline';
-import * as fs from 'fs';
 import * as open from 'open';
+import {promisify} from 'util';
 
-import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
-import {ConfigService} from '../storage/ConfigService';
-import {QuotaLimiter} from './QuotaLimiter';
+import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
+import {GoogleAuth} from '../storage/ConfigService';
+import {GetTokenResponse, OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
+import {ServiceAccountJson} from '../model/AccountJson';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.metadata.readonly'
 ];
 
@@ -18,23 +20,13 @@ const SCOPES = [
 
 export class GoogleAuthService {
 
-  constructor(private configService: ConfigService, private quotaLimiter: QuotaLimiter) {
+  async authorizeServiceAccount(service_account_json: ServiceAccountJson): Promise<OAuth2Client & HasQuotaLimiter> {
+    return new QuotaJwtClient(service_account_json.client_email, null, service_account_json.private_key, SCOPES);
   }
 
-  async authorizeServiceAccount(account_json_file_name) {
-    const opts = JSON.parse(fs.readFileSync(account_json_file_name).toString());
-
-    const oAuth2Client = new QuotaJwtClient(opts.client_email, null, opts.private_key, SCOPES);
-    oAuth2Client.setQuotaLimiter(this.quotaLimiter);
-    return oAuth2Client;
-  }
-
-  async authorize(client_id, client_secret) {
+  async authorizeUserAccount(client_id: string, client_secret: string, redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'): Promise<OAuth2Client & HasQuotaLimiter> {
     if (!client_id) throw new Error('Unknown: client_id');
     if (!client_secret) throw new Error('Unknown: client_secret');
-
-    const oAuth2Client = new QuotaAuthClient(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob');
-    oAuth2Client.setQuotaLimiter(this.quotaLimiter);
 
     // Service account
 
@@ -54,17 +46,37 @@ export class GoogleAuthService {
     // Client name: Service Account Unique ID
     // API interfaces: https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly
 
-    const google_auth = await this.configService.loadGoogleAuth();
-
-    if (google_auth) {
-      oAuth2Client.setCredentials(google_auth);
-      return oAuth2Client;
-    } else {
-      return this.getAccessToken(oAuth2Client);
-    }
+    return new QuotaAuthClient(client_id, client_secret, redirect_uri);
   }
 
-  async getAccessToken(oAuth2Client) {
+  async getWebAuthUrl(oAuth2Client: OAuth2Client, redirect_uri: string, state: string): Promise<string> {
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'online',
+      scope: SCOPES,
+      redirect_uri,
+      state
+    });
+
+    return authUrl;
+  }
+
+  async getWebToken(oAuth2Client: OAuth2Client, redirect_uri: string, code: string): Promise<GoogleAuth> {
+    const response = await oAuth2Client.getToken({
+      code,
+      redirect_uri
+    });
+
+    return {
+      access_token: response.tokens.access_token,
+      refresh_token: response.tokens.refresh_token,
+      scope: response.tokens.scope,
+      token_type: response.tokens.token_type,
+      expiry_date: response.tokens.expiry_date,
+      id_token: response.tokens.id_token
+    };
+  }
+
+  async getCliAccessToken(oAuth2Client: OAuth2Client): Promise<GoogleAuth> {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES
@@ -91,19 +103,19 @@ export class GoogleAuthService {
       output: process.stdout
     });
 
-    return new Promise((resolve) => {
-      rl.question('Enter the code from that page here: ', (code) => {
-        rl.close();
-        oAuth2Client.getToken(code, async (err, credentials) => {
-          if (err) return console.error('Error retrieving access token', err);
-          oAuth2Client.setCredentials(credentials);
-          // Store the token to disk for later program executions
+    const question = promisify(rl.question).bind(rl);
+    const code = await question('Enter the code from that page here: ');
+    rl.close();
 
-          await this.configService.saveGoogleAuth(credentials);
+    const credentials: GetTokenResponse = await oAuth2Client.getToken(code);
 
-          resolve(oAuth2Client);
-        });
-      });
-    });
+    return {
+      access_token: credentials.tokens.access_token,
+      refresh_token: credentials.tokens.refresh_token,
+      scope: credentials.tokens.scope,
+      token_type: credentials.tokens.token_type,
+      expiry_date: credentials.tokens.expiry_date,
+      id_token: credentials.tokens.id_token
+    };
   }
 }

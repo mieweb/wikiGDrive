@@ -1,9 +1,14 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {GoogleFile, MimeTypes} from '../storage/GoogleFilesStorage';
 import {Logger} from 'winston';
 import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
+import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
+import {Writable} from 'stream';
+import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
+import Schema$Permission = drive_v3.Schema$Permission;
+import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
+import {FileId} from '../model/model';
 
 export interface Changes {
   token: string;
@@ -27,23 +32,23 @@ interface GoogleDriveServiceErrorParams {
   origError: Error;
   isQuotaError: boolean;
 
-  file?: any;
-  dest?: string;
+  file?: SimpleFile;
+  dest?: Writable;
   folderId?: string;
 }
 
 export interface ListContext {
-  parentId?: string;
+  folderId?: string;
   fileId?: string;
   modifiedTime?: string;
   driveId?: string;
   retries?: number;
-  parentName?: string;
+  // parentName?: string;
 }
 
 export class GoogleDriveServiceError extends Error {
-  private file: any;
-  private dest: any;
+  private file: SimpleFile;
+  private dest: Writable;
   private folderId: string;
   private isQuotaError: boolean;
   private origError: Error;
@@ -76,73 +81,10 @@ function apiFileToGoogleFile(apiFile: drive_v3.Schema$File): GoogleFile {
 
 export class GoogleDriveService {
 
-  constructor(private eventBus, private logger: Logger) {
+  constructor(private logger: Logger) {
   }
 
-  async listRootRecursive(auth, context: ListContext) {
-
-    const files = await this._listFilesRecursive(auth, context);
-
-    if (!context.modifiedTime && files.length === 0) {
-      throw new GoogleDriveServiceError('Empty result for root directory check you auth data or add files');
-    }
-
-    return files;
-  }
-
-  private async _listFilesRecursive(auth, context: ListContext, remotePath = ['']) {
-    this.logger.info('Listening folder: ' + (remotePath.join('/') || '/'));
-    const files: GoogleFile[] = await this.listFiles(auth, context);
-
-    const retVal = [];
-
-    let filesToProcess = [].concat(files);
-    retVal.push(...filesToProcess);
-
-    while (filesToProcess.length > 0) {
-      filesToProcess = [];
-
-      const promises = [];
-
-      for (const file of files) {
-        file.parentId = context.parentId;
-        if (file.mimeType !== MimeTypes.FOLDER_MIME) continue;
-
-        const subContext: ListContext = {
-          parentId: file.id,
-          driveId: context.driveId,
-          fileId: context.fileId
-        };
-        const promise = this._listFilesRecursive(auth, subContext, remotePath.concat(file.name));
-        promises.push(promise);
-
-        promise.catch(() => {
-          filesToProcess.push(file);
-        });
-      }
-
-      await Promise.all(promises)
-        .then(list => {
-          for (const moreFiles of list) {
-            retVal.push(...moreFiles);
-          }
-        })
-        .catch(() => {}); /* eslint-disable-line no-useless-catch, @typescript-eslint/no-empty-function */
-    }
-
-    if (context.modifiedTime) {
-      const filtered = retVal.filter(dir => {
-        const isOldDir = dir.mimeType === MimeTypes.FOLDER_MIME && dir.modifiedTime < context.modifiedTime;
-        return !isOldDir;
-      });
-
-      return removeDuplicates(filtered);
-    }
-
-    return removeDuplicates(retVal);
-  }
-
-  async getStartTrackToken(auth, driveId) {
+  async getStartTrackToken(auth: OAuth2Client, driveId) {
     const drive = google.drive({ version: 'v3', auth });
 
     const params = {
@@ -158,7 +100,7 @@ export class GoogleDriveService {
     return res.data.startPageToken;
   }
 
-  async watchChanges(auth, pageToken, driveId): Promise<Changes> {
+  async watchChanges(auth: OAuth2Client, pageToken, driveId: string): Promise<Changes> {
     const drive = google.drive({ version: 'v3', auth });
 
     try {
@@ -193,13 +135,13 @@ export class GoogleDriveService {
     }
   }
 
-  async listFiles(auth, context: ListContext, nextPageToken?) {
+  async listFiles(auth: OAuth2Client, context: ListContext, pageToken?: string) {
     const drive = google.drive({ version: 'v3', auth });
 
     let query = '';
 
-    if (context.parentId) {
-      query += ' \'' + context.parentId + '\' in parents and trashed = false';
+    if (context.folderId) {
+      query += ' \'' + context.folderId + '\' in parents and trashed = false';
     }
     if (context.fileId) {
       query += ' \'' + context.fileId + '\' = id and trashed = false';
@@ -211,7 +153,7 @@ export class GoogleDriveService {
     const listParams = {
       corpora: context.driveId ? 'drive' : 'allDrives',
       q: query,
-      pageToken: nextPageToken,
+      pageToken: pageToken,
       pageSize: 1000,
       fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents)',
       // fields: 'nextPageToken, files(*)',
@@ -234,22 +176,50 @@ export class GoogleDriveService {
 
       return apiFiles.map(apiFile => apiFileToGoogleFile(apiFile));
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening directory ' + context.parentId, {
+      throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
         origError: err,
-        folderId: context.parentId,
+        folderId: context.folderId,
         isQuotaError: err.isQuotaError
       });
     }
   }
 
-  async getFile(auth, fileId) {
+  async listPermissions(auth: OAuth2Client, fileId: string, pageToken?: string) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    try {
+      const res = await drive.permissions.list({
+        fileId: fileId,
+        supportsAllDrives: true,
+        // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+        fields: '*'
+      });
+
+      const permissions = [];
+
+      if (res.data.nextPageToken) {
+        const nextItems = await this.listPermissions(auth, fileId, res.data.nextPageToken);
+        permissions.push(...nextItems);
+      }
+      permissions.push(...res.data.permissions);
+
+      return permissions;
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error download fileId: ' + fileId, {
+        origError: err, isQuotaError: err.isQuotaError
+      });
+    }
+  }
+
+  async getFile(auth: OAuth2Client, fileId: FileId) {
     const drive = google.drive({ version: 'v3', auth });
 
     try {
       const res = await drive.files.get({
         fileId: fileId,
         supportsAllDrives: true,
-        fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+        // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+        fields: '*'
       });
 
       return apiFileToGoogleFile(res.data);
@@ -260,11 +230,11 @@ export class GoogleDriveService {
     }
   }
 
-  async download(auth, file, dest) {
+  async download(auth: OAuth2Client, file: SimpleFile, dest: Writable) {
     const drive = google.drive({ version: 'v3', auth });
 
     try {
-      const res = <any>await drive.files.get({
+      const res = await drive.files.get({
         fileId: file.id,
         alt: 'media',
         supportsAllDrives: true
@@ -288,13 +258,13 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth, file: { id: string, mimeType: string, name: string }, dest) {
+  async exportDocument(auth: OAuth2Client, file: SimpleFile, dest: Writable) {
     const drive = google.drive({ version: 'v3', auth });
 
-    const ext = file.mimeType === 'image/svg+xml' ? '.svg' : '.zip';
+    const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
-      const res = <any>await drive.files.export({
+      const res = await drive.files.export({
         fileId: file.id,
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
@@ -332,12 +302,27 @@ export class GoogleDriveService {
     }
   }
 
-  async listDrives(auth, nextPageToken?) {
+  async about(auth: OAuth2Client) {
+    try {
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.about.get({
+        fields: '*'
+      });
+      return res.data;
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error about: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
+
+  async listDrives(auth: OAuth2Client, pageToken?: string): Promise<Drive[]> {
     const drive = google.drive({ version: 'v3', auth });
 
     const listParams = {
       pageSize: 100,
-      pageToken: nextPageToken
+      pageToken: pageToken
     };
 
     try {
@@ -357,12 +342,48 @@ export class GoogleDriveService {
         return drives;
       }
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening drives', {
+      throw new GoogleDriveServiceError('Error listening drives: ' + err.response.statusText, {
         origError: err,
         isQuotaError: err.isQuotaError,
       });
     }
-
   }
 
+  async getDrive(auth: OAuth2Client, driveId) {
+    try {
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.drives.get({ driveId });
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
+
+  async shareDrive(auth: OAuth2Client, driveId: string, email: string) {
+    try {
+      const permissions: Schema$Permission = {
+        type: 'user',
+        role: 'reader',
+        emailAddress: email
+      };
+
+      const drive = google.drive({ version: 'v3', auth });
+      const res = await drive.permissions.create({
+        requestBody: permissions,
+        fileId: driveId,
+        fields: 'id',
+      });
+      return res.data;
+    } catch (err) {
+      console.error(err);
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+        origError: err,
+        isQuotaError: err.isQuotaError,
+      });
+    }
+  }
 }

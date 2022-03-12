@@ -14,7 +14,10 @@ Note: use old editor
 
 1. View -> Show manifest file
 2. File -> Project properties -> Scopes
-3. File -> Project properties -> Script properties, set API_URL="https://hostlocation.com:port"
+3. File -> Project properties -> Script properties, set API_URL="https://hostlocation.com:port"  (testing localhost:port)
+
+   For production: https://google-drive-iframe.wikigdrive.com/
+
 
 ## Test Script
 

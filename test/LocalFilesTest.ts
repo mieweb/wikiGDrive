@@ -1,361 +1,166 @@
 import {assert} from 'chai';
-import {LocalFile, LocalFilesStorage} from '../src/storage/LocalFilesStorage';
-import {createTmpDir} from './utils';
+import {LocalFile, LocalFileMap} from '../src/model/LocalFile';
+import {solveConflicts} from '../src/containers/transform/TransformContainer';
+import {compareObjects} from './utils';
+import {MimeTypes} from '../src/model/GoogleFile';
 
-export function compareFiles(files1: LocalFile[], files2: LocalFile[]) {
-  assert.equal(files1.length, files2.length, 'length not equal');
-
-  for (const file1 of files1) {
-    if (files2.filter(file2 => file2.id === file1.id).length !== 1) {
-      assert.ok(false, 'length2 not equal' + file1.id);
-      return false;
-    }
-
-    const file2 = files2.find(file2 => file2.id === file1.id);
-    assert.deepEqual(file1, file2);
+export function compareFiles(files1: LocalFileMap, files2: LocalFileMap) {
+  for (const realFileName in files1) {
+    delete files1[realFileName].modifiedTime;
   }
-}
+  for (const realFileName in files2) {
+    delete files2[realFileName].modifiedTime;
+  }
 
+  assert.ok(compareObjects(files1, files2));
+}
 
 describe('LocalFiles', () => {
   it('test collisions', async () => {
-
-    const localFilesStorage = new LocalFilesStorage(createTmpDir());
-    await localFilesStorage.init();
-
     const files1: LocalFile[] = [
       {
+        type: 'md',
         id: 'id1',
-        name: 'test-file',
-        desiredLocalPath: 'test-file',
+        title: 'test-file',
+        fileName: 'test-file.md',
+        lastAuthor: 'John Smith'
       },
       {
+        type: 'md',
         id: 'id2',
-        name: 'test-file',
-        desiredLocalPath: 'test-file',
+        title: 'test-file',
+        fileName: 'test-file.md',
+        lastAuthor: 'John Smith'
       }
     ];
 
-    await localFilesStorage.commit(files1);
+    const dbFiles = solveConflicts(files1, {});
 
-    const dbFiles = localFilesStorage.findFiles(() => true);
-
-    compareFiles(dbFiles, [
-      {
-        id: 'test-file:conflict',
-        name: 'Conflict: test-file',
-        desiredLocalPath: 'test-file',
-        localPath: 'test-file',
-        mimeType: 'application/vnd.google-apps.document',
-        counter: 3,
-        conflicting: ['id1', 'id2']
+    compareFiles(dbFiles, {
+      'test-file.md': {
+        type: 'conflict',
+        id: 'conflict:test-file.md',
+        title: 'Conflict: test-file',
+        fileName: 'test-file.md',
+        mimeType: MimeTypes.MARKDOWN,
+        conflicting: [
+          {
+            id: 'id1',
+            realFileName: 'test-file_1.md',
+            title: 'test-file'
+          },
+          {
+            id: 'id2',
+            realFileName: 'test-file_2.md',
+            title: 'test-file'
+          }
+        ]
       },
-      {
+      'test-file_1.md': {
+        type: 'md',
         id: 'id1',
-        name: 'test-file',
-        desiredLocalPath: 'test-file',
-        conflictId: "test-file:conflict",
-        localPath: 'test-file_1',
-        counter: 1,
-        mimeType: undefined,
-        modifiedTime: undefined,
-        version: undefined
+        title: 'test-file',
+        fileName: 'test-file.md',
+        lastAuthor: 'John Smith'
       },
-      {
+      'test-file_2.md': {
+        type: 'md',
         id: 'id2',
-        name: 'test-file',
-        desiredLocalPath: 'test-file',
-        conflictId: "test-file:conflict",
-        localPath: 'test-file_2',
-        counter: 2,
-        mimeType: undefined,
-        modifiedTime: undefined,
-        version: undefined
+        title: 'test-file',
+        fileName: 'test-file.md',
+        lastAuthor: 'John Smith'
       }
-    ]);
-
-    await localFilesStorage.destroy();
+    });
   });
-
-  it('test redirects', async () => {
-    const localFilesStorage = new LocalFilesStorage(createTmpDir());
-    await localFilesStorage.init();
-
-    await localFilesStorage.commit([
-      {
-        id: 'id1',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
-      },
-      {
-        id: 'id2',
-        name: 'example-2',
-        desiredLocalPath: 'example-2',
-      }
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      compareFiles(dbFiles, [
-        {
-          id: 'id1',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'id2',
-          name: 'example-2',
-          desiredLocalPath: 'example-2',
-          localPath: 'example-2',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        }
-      ]);
-    }
-
-    await localFilesStorage.commit([
-      {
-        id: 'id1',
-        name: 'example-1-renamed',
-        desiredLocalPath: 'example-1-renamed',
-      },
-      {
-        id: 'id2',
-        name: 'example-2-renamed',
-        desiredLocalPath: 'example-2-renamed',
-      }
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      compareFiles(dbFiles, [
-        {
-          id: 'example-1:redir:id1',
-          redirectTo: 'id1',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1',
-          mimeType: 'application/vnd.google-apps.document',
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'example-2:redir:id2',
-          redirectTo: 'id2',
-          name: 'example-2',
-          desiredLocalPath: 'example-2',
-          localPath: 'example-2',
-          mimeType: 'application/vnd.google-apps.document',
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'id1',
-          name: 'example-1-renamed',
-          desiredLocalPath: 'example-1-renamed',
-          localPath: 'example-1-renamed',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'id2',
-          desiredLocalPath: 'example-2-renamed',
-          name: 'example-2-renamed',
-          localPath: 'example-2-renamed',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        }
-      ]);
-    }
-
-    await localFilesStorage.destroy();
-  });
-
-  it('test rename then trash', async () => {
-    const localFilesStorage = new LocalFilesStorage(createTmpDir());
-    await localFilesStorage.init();
-
-    await localFilesStorage.commit([
-      {
-        id: 'id1',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
-      },
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      assert.equal(Object.keys(dbFiles).length, 1, 'Wrong number of files');
-    }
-
-    await localFilesStorage.commit([
-      {
-        id: 'id1',
-        name: 'renamed-example-1',
-        desiredLocalPath: 'renamed-example-1',
-      },
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      compareFiles(dbFiles, [
-        {
-          id: 'example-1:redir:id1',
-          redirectTo: 'id1',
-          localPath: 'example-1',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          mimeType: 'application/vnd.google-apps.document',
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'id1',
-          desiredLocalPath: 'renamed-example-1',
-          name: 'renamed-example-1',
-          localPath: 'renamed-example-1',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        },
-      ]);
-    }
-
-    await localFilesStorage.commit([
-      // delete id1
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      assert.equal(Object.keys(dbFiles).length, 0, 'Wrong number of files');
-    }
-
-    await localFilesStorage.destroy();
-  });
-
-  it('test create then trash', async () => {
-    const localFilesStorage = new LocalFilesStorage(createTmpDir());
-    await localFilesStorage.init();
-
-    await localFilesStorage.commit([
-      {
-        id: 'id1',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
-      },
-    ]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      assert.equal(Object.keys(dbFiles).length, 1, 'Wrong number of files');
-    }
-
-    await localFilesStorage.commit([]);
-
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      assert.equal(Object.keys(dbFiles).length, 0, 'Wrong number of files');
-    }
-
-    await localFilesStorage.destroy();
-  });
-
 
   it('test collision then trash', async () => {
-    const localFilesStorage = new LocalFilesStorage(createTmpDir());
-    await localFilesStorage.init();
-
-    await localFilesStorage.commit([
+    const files1: LocalFile[] = [
       {
+        type: 'md',
         id: 'id1',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
       },
       {
+        type: 'md',
         id: 'id2',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
       }
-    ]);
+    ];
 
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      compareFiles(dbFiles, [
-        {
-          id: 'example-1:conflict',
-          name: 'Conflict: example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1',
-          mimeType: 'application/vnd.google-apps.document',
-          counter: 3,
-          conflicting: ['id1', 'id2']
-        },
-        {
-          id: 'id1',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1_1',
-          conflictId: 'example-1:conflict',
-          counter: 1,
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'id2',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1_2',
-          conflictId: 'example-1:conflict',
-          counter: 2,
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        }
-      ]);
-    }
-
-    await localFilesStorage.commit([
-      {
-        id: 'id2',
-        name: 'example-1',
-        desiredLocalPath: 'example-1',
+    const dbFiles1 = solveConflicts(files1, {});
+    compareFiles(dbFiles1, {
+      'example-1.md': {
+        type: 'conflict',
+        id: 'conflict:example-1.md',
+        title: 'Conflict: example-1',
+        fileName: 'example-1.md',
+        mimeType: MimeTypes.MARKDOWN,
+        conflicting: [
+          {
+            id: 'id1',
+            realFileName: 'example-1_1.md',
+            title: 'example-1'
+          },
+          {
+            id: 'id2',
+            realFileName: 'example-1_2.md',
+            title: 'example-1'
+          }
+        ]
       },
-    ]);
+      'example-1_1.md': {
+        type: 'md',
+        id: 'id1',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
+      },
+      'example-1_2.md': {
+        type: 'md',
+        id: 'id2',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
+      }
+    });
 
-    {
-      const dbFiles = localFilesStorage.findFiles(() => true);
-      compareFiles(dbFiles, [
-        {
-          id: 'id2',
-          name: 'example-1',
-          desiredLocalPath: 'example-1',
-          localPath: 'example-1',
-          mimeType: undefined,
-          modifiedTime: undefined,
-          version: undefined
-        },
-        {
-          id: 'example-1_2:redir:id2',
-          redirectTo: 'id2',
-          name: 'example-1',
-          desiredLocalPath: 'example-1_2',
-          localPath: 'example-1_2',
-          mimeType: 'application/vnd.google-apps.document',
-          modifiedTime: undefined,
-          version: undefined
-        }
-      ]);
-    }
+    const dbFiles2 = solveConflicts([
+      {
+        type: 'md',
+        id: 'id1',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
+      },
+      {
+        type: 'md',
+        id: 'id2',
+        title: 'example-2',
+        fileName: 'example-2.md',
+        lastAuthor: 'John Smith'
+      },
+    ], dbFiles1);
 
-    await localFilesStorage.destroy();
+    compareFiles(dbFiles2, {
+      'example-1.md': {
+        type: 'md',
+        id: 'id1',
+        title: 'example-1',
+        fileName: 'example-1.md',
+        lastAuthor: 'John Smith'
+      },
+      'example-2.md': {
+        type: 'md',
+        id: 'id2',
+        title: 'example-2',
+        fileName: 'example-2.md',
+        lastAuthor: 'John Smith'
+      }
+    });
   });
 
 });

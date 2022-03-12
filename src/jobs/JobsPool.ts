@@ -5,14 +5,10 @@ import {JobsQueue} from './JobsQueue';
 
 export class JobsPool extends EventEmitter {
   private size: number;
-  private readonly capacity: number;
-  private queue: any;
 
-  constructor(capacity, queue: JobsQueue) {
+  constructor(private readonly capacity: number, private queue: JobsQueue) {
     super();
     this.size = 0;
-    this.capacity = capacity;
-    this.queue = queue;
 
     queue.on('update', () => {
       // this.tryExecute();

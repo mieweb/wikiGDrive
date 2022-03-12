@@ -14,7 +14,8 @@ A new github repo with a node.js script specific to this conversion.
 
 * Scan all of the documents in a Confluence Space
 
-* Make google documents in a shared drive (two passes will be required so links between documents can be known as content is added.
+* Make google documents in a shared drive (two passes will be required so links between documents can be known as content is added).
+    * Parent/Child relationship must be intact.
 
 * Import Confluence "Attachments" to Google Drive so they can be referenced.
 
