@@ -18,7 +18,7 @@ function getRootFolder(fileId) {
 
 function getURL() {
     const scriptProperties = PropertiesService.getScriptProperties();
-    var URL = scriptProperties.getProperty('API_URL');
+    let URL = scriptProperties.getProperty('API_URL');
     if (URL.length) {
         URL = URL.replace(/\/$/, ''); // strip trailing /
         return URL;
@@ -62,6 +62,6 @@ function showSidebar() { // https://developers.google.com/apps-script/guides/htm
 }
 
 function doGet(e) {
-  var params = JSON.stringify(e);
+  const params = JSON.stringify(e);
   return HtmlService.createHtmlOutput("Hellow to wikiGDrive!" + params);
 }
