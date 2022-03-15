@@ -101,17 +101,16 @@
     "@types/xmldoc": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
     "@typescript-eslint/parser": "^5.9.0",
-    "caniuse-lite": "^1.0.30001199",
-    "chai": "^4.2.0",
-    "diff": "^4.0.2",
-    "eslint": "8.6.0",
-    "husky": "^4.3.0",
-    "jshint": "^2.12.0",
-    "mocha": "9.2.0",
-    "raw-loader": "^4.0.1",
-    "sinon": "^9.0.3"
+    "caniuse-lite": "1.0.30001317",
+    "chai": "4.3.6",
+    "diff": "5.0.0",
+    "eslint": "8.11.0",
+    "husky": "7.0.4",
+    "jshint": "2.13.4",
+    "mocha": "9.2.2",
+    "sinon": "13.0.1"
   },
-  "REMOVETHIS-husky": {
+  "husky": {
     "hooks": {
       "pre-commit": "npm run lint -- --quiet",
       "pre-push": "npm run lint -- --quiet && npm run test"
