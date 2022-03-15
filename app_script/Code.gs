@@ -16,9 +16,18 @@ function getRootFolder(fileId) {
     return parentFolder;
 }
 
-function markFileDirty() {
+function getURL() {
     const scriptProperties = PropertiesService.getScriptProperties();
-    const URL = scriptProperties.getProperty('API_URL');
+    let URL = scriptProperties.getProperty('API_URL');
+    if (URL.length) {
+        URL = URL.replace(/\/$/, ''); // strip trailing /
+        return URL;
+    }
+    return "https://google-drive-iframe.wikigdrive.com"
+}
+
+function markFileDirty() {
+    const URL = getURL;
 
     const ui = DocumentApp.getUi();
     const doc = DocumentApp.getActiveDocument();
@@ -37,7 +46,7 @@ function markFileDirty() {
 
 function showSidebar() { // https://developers.google.com/apps-script/guides/html#code.gs
     const scriptProperties = PropertiesService.getScriptProperties();
-    const URL = scriptProperties.getProperty('API_URL');
+    const URL = getURL();
     const doc = DocumentApp.getActiveDocument();
     const rootFolder = getRootFolder(doc.getId())
 
@@ -50,4 +59,9 @@ function showSidebar() { // https://developers.google.com/apps-script/guides/htm
 
 //    var htmlOutput = HtmlService.createHtmlOutputFromFile('Index');
     DocumentApp.getUi().showSidebar(htmlOutput);
+}
+
+function doGet(e) {
+  const params = JSON.stringify(e);
+  return HtmlService.createHtmlOutput("Hellow to wikiGDrive!" + params);
 }
