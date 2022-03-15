@@ -1,4 +1,4 @@
-import * as SimpleGitPromise from 'simple-git/promise';
+import * as SimpleGitPromise from 'simple-git';
 
 import {SimpleGit} from 'simple-git';
 import * as fs from 'fs';
