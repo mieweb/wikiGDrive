@@ -73,7 +73,7 @@
     "htmlparser2": "7.2.0",
     "identify-filetype": "^1.0.0",
     "js-yaml": "4.1.0",
-    "jszip": "^3.7.0",
+    "jszip": "^3.7.1",
     "listr2": "^3.14.0",
     "minimist": "^1.2.5",
     "node-fetch": "2.6.7",
