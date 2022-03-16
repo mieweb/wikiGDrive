@@ -1,4 +1,4 @@
-import * as htmlparser2 from 'htmlparser2';
+import htmlparser2 from 'htmlparser2';
 
 // TODO https://relaxng.org/relaxng.rng
 // TODO namespaces

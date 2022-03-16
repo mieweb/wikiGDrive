@@ -1,5 +1,5 @@
 import {ErrorCallback, queue, QueueObject} from 'async';
-import * as winston from 'winston';
+import winston from 'winston';
 import {QueueTask, QueueTaskError} from '../google_folder/QueueTask';
 
 const CONCURRENCY = 4;

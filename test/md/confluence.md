@@ -57,22 +57,22 @@ confluence2google <path to space> <path to google shared drive>
 1. Use REST API
     1. [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
     2. [Confluence Server REST API](https://docs.atlassian.com/ConfluenceServer/rest/7.0.3/)
-    3. [https://confluence.example.com/rest/api/space/DOCS/content](https://confluence.example.com/rest/api/space/DOCS/content)
-    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TEST/content](https://confluence.example.com/rest/api/space/TEST/content)
+    3. [https://confluence.example.com/rest/api/space/DOCS10/content](https://confluence.example.com/rest/api/space/DOCS10/content)
+    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TES/content](https://confluence.example.com/rest/api/space/TES/content)
 2. Use export file
-    5. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) makes a zipped file with [XML Format](https://confluence.atlassian.com/jirakb/xml-format-for-import-export-files-695108230.html)
-    6. [Example HTML zip file](https://drive.google.com/open?id=abc)
-    7. [Example XML zip file](https://drive.google.com/open?id=abc)
+    1. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) makes a zipped file with [XML Format](https://confluence.atlassian.com/jirakb/xml-format-for-import-export-files-695108230.html)
+    2. [Example HTML zip file](gdoc:abc)
+    3. [Example XML zip file](gdoc:abc)
 3. Use HTML
-    8. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
+    1. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
 
 ## Examples
 
 Simple - [https://confluence.example.com/display/DOCS/Sample](https://confluence.example.com/display/DOCS/Sample)
 
-	API Call: [https://confluence.example.com/rest/api/content/123](https://confluence.example.com/rest/api/content/123)
+	API Call: [https://confluence.example.com/rest/api/content/789](https://confluence.example.com/rest/api/content/789)
 
 Complex - [https://confluence.example.com/pages/viewpage.action?pageId=789](https://confluence.example.com/pages/viewpage.action?pageId=789)
 
-	API Call: [https://confluence.example.com/rest/api/content/456](https://confluence.example.com/rest/api/content/456)
+	API Call: [https://confluence.example.com/rest/api/content/789](https://confluence.example.com/rest/api/content/789)
 

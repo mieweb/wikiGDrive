@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 
 import {
   generateNavigationHierarchy,
@@ -9,7 +9,12 @@ import {LocalFile} from '../../src/model/LocalFile';
 import {UnMarshaller} from '../../src/odt/UnMarshaller';
 import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
 import {compareObjects} from '../utils';
-import * as path from 'path';
+import path from 'path';
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const NODES: NavigationHierarchyNode[] = [
   {

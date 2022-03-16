@@ -1,6 +1,6 @@
 'use strict';
 
-import * as RelateUrl from 'relateurl';
+import RelateUrl from 'relateurl';
 
 import {LinkMode} from './model/model';
 import {DirectoryScanner} from './containers/transform/DirectoryScanner';

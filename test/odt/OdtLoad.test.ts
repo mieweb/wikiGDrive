@@ -5,6 +5,12 @@ import {FileContentService} from '../../src/utils/FileContentService';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown';
 import {assert} from 'chai';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 describe('OdtLoad', () => {
   it('test content.xml transform to object', async () => {
     const fileSystem = new FileContentService(__dirname);

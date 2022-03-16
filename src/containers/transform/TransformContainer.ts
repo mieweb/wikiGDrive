@@ -1,4 +1,4 @@
-import * as winston from 'winston';
+import winston from 'winston';
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import {FileContentService} from '../../utils/FileContentService';
 import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner';

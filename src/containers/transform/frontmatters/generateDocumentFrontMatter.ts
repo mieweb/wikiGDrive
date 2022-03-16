@@ -1,4 +1,4 @@
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 import {NavigationHierarchy} from '../generateNavigationHierarchy';
 import {MdFile} from '../../../model/LocalFile';

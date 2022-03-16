@@ -1,9 +1,9 @@
 'use strict';
 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as crypto from 'crypto';
-import * as winston from 'winston';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+import winston from 'winston';
 import {HttpClient} from '../utils/HttpClient';
 import {FileContentService} from '../utils/FileContentService';
 

@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
-import * as winston from 'winston';
+import winston from 'winston';
 import {GoogleDriveService, ListContext} from '../../google/GoogleDriveService';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';

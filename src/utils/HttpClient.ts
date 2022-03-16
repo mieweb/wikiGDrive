@@ -1,7 +1,7 @@
 'use strict';
 
 import fetch from 'node-fetch';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import {retryAsync} from './retryAsync';
 
 export class HttpError extends Error {

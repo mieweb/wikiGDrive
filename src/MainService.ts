@@ -1,7 +1,7 @@
 'use strict';
 
 import {EventEmitter} from 'events';
-import * as winston from 'winston';
+import winston from 'winston';
 import 'winston-daily-rotate-file';
 
 import {createLogger} from './utils/logger';
@@ -11,7 +11,7 @@ import {GoogleFolderContainer} from './containers/google_folder/GoogleFolderCont
 import {GoogleApiContainer} from './containers/google_api/GoogleApiContainer';
 import {FileContentService} from './utils/FileContentService';
 import {default as envPaths, Paths} from 'env-paths';
-import * as path from 'path';
+import path from 'path';
 import {urlToFolderId} from './utils/idParsers';
 import {TransformContainer} from './containers/transform/TransformContainer';
 import {CliParams} from './model/CliParams';

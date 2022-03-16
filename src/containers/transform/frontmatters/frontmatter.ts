@@ -1,4 +1,4 @@
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 const pattern = /(^-{3}(?:\r\n|\r|\n)([\w\W]*?)-{3}(?:\r\n|\r|\n))?([\w\W]*)*/;
 

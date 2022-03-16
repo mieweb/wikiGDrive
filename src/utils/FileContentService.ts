@@ -1,5 +1,5 @@
 import {FileService, pathResolve} from './FileService';
-import * as identify from 'identify-filetype';
+import identify from 'identify-filetype';
 
 export class FileContentService extends FileService {
   constructor(protected readonly rootPath: string = '/', protected readonly virtualPath: string = '/') {

@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import * as winston from 'winston';
+import winston from 'winston';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {QuotaLimiter} from '../../google/QuotaLimiter';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
@@ -10,6 +10,9 @@ import {GoogleAuth} from '../../storage/ConfigService';
 import {Drive} from '../folder_registry/FolderRegistryContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
+
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
 
 export class GoogleApiContainer extends Container {
   private logger: winston.Logger;
