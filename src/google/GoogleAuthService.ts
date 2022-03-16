@@ -1,7 +1,7 @@
 'use strict';
 
-import * as readline from 'readline';
-import * as open from 'open';
+import readline from 'readline';
+import open from 'open';
 import {promisify} from 'util';
 
 import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';

@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import * as Diff from 'diff';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { diffLines } from 'diff';
 import chalk from 'chalk';
 
 export function createTmpDir() {
@@ -9,7 +9,7 @@ export function createTmpDir() {
 }
 
 export function compareTexts(input, output) {
-  const diff = Diff.diffLines(input, output, {
+  const diff = diffLines(input, output, {
     ignoreWhitespace: true,
   }).filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
 
@@ -29,7 +29,7 @@ export function compareTexts(input, output) {
 }
 
 export function compareTextsWithLines(input, output) {
-  const diff = Diff.diffLines(input, output, {
+  const diff = diffLines(input, output, {
     ignoreWhitespace: true,
   }).filter(row => (row.added || row.removed));
 

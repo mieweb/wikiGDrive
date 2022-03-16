@@ -1,8 +1,8 @@
 'use strict';
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 import {Readable, Writable} from 'stream';
 
 export function pathResolve(rootPath: string, ...args: string[]): string {

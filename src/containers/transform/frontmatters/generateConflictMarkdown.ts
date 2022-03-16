@@ -1,4 +1,4 @@
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 import {ConflictFile} from '../../../model/LocalFile';
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter';

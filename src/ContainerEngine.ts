@@ -1,5 +1,5 @@
-import * as casual from 'casual';
-import * as winston from 'winston';
+import casual from 'casual';
+import winston from 'winston';
 import {FileContentService} from './utils/FileContentService';
 import {QueueObject} from 'async';
 import {QueueTask} from './containers/google_folder/QueueTask';

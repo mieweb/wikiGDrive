@@ -1,5 +1,5 @@
 import {FileContentService} from '../utils/FileContentService';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 
 export class OdtProcessor {
   private readonly fileName: string;

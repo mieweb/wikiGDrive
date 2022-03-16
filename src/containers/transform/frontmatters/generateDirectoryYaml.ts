@@ -1,4 +1,4 @@
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
 import {GoogleFile, MimeTypes} from '../../../model/GoogleFile';

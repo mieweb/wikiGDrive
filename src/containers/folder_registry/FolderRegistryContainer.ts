@@ -1,8 +1,11 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import * as winston from 'winston';
+import winston from 'winston';
 import {FileId} from '../../model/model';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {MimeTypes} from '../../model/GoogleFile';
+
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
 
 export interface Drive {
   id: FileId;

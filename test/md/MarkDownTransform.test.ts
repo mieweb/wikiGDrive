@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import * as fs from 'fs';
+import fs from 'fs';
 
 import {compareTexts} from '../utils';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown';
@@ -7,6 +7,12 @@ import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/od
 import {UnMarshaller} from '../../src/odt/UnMarshaller';
 import {OdtProcessor} from '../../src/odt/OdtProcessor';
 import {FileContentService} from '../../src/utils/FileContentService';
+
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('MarkDownTransformTest', () => {
 
@@ -33,39 +39,39 @@ describe('MarkDownTransformTest', () => {
     const markdown = await transformOdt('curly-braces');
     assert.ok(compareTexts(testMarkdown, markdown));
   });
-/*
 
   it('test ./confluence.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/confluence.md').toString();
     const markdown = await transformOdt('confluence');
     assert.ok(compareTexts(testMarkdown, markdown));
   });
+  /*
 
-  it('test ./block-macro.md.markdown', async () => {
-    const testMarkdown = fs.readFileSync(__dirname + '/block-macro.md').toString();
-    const markdown = await transformOdt('block-macro');
-    assert.ok(compareTexts(testMarkdown, markdown));
-  });
+    it('test ./block-macro.md.markdown', async () => {
+      const testMarkdown = fs.readFileSync(__dirname + '/block-macro.md').toString();
+      const markdown = await transformOdt('block-macro');
+      assert.ok(compareTexts(testMarkdown, markdown));
+    });
 
-  it('test ./project-overview.md.markdown', async () => {
-    const testMarkdown = fs.readFileSync(__dirname + '/project-overview.md').toString();
-    const markdown = await transformOdt('project-overview');
-    console.log(markdown);
-    assert.ok(compareTexts(testMarkdown, markdown));
-  });
+    it('test ./project-overview.md.markdown', async () => {
+      const testMarkdown = fs.readFileSync(__dirname + '/project-overview.md').toString();
+      const markdown = await transformOdt('project-overview');
+      console.log(markdown);
+      assert.ok(compareTexts(testMarkdown, markdown));
+    });
 
-  it('test ./example-document.md.markdown', async () => {
-    const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
-    const markdown = await transformOdt('example-document');
-    assert.ok(compareTexts(testMarkdown, markdown));
-  });
+    it('test ./example-document.md.markdown', async () => {
+      const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
+      const markdown = await transformOdt('example-document');
+      assert.ok(compareTexts(testMarkdown, markdown));
+    });
 
-  it('test ./intro-to-the-system.md.markdown', async () => {
-    const testMarkdown = fs.readFileSync(__dirname + '/intro-to-the-system.md').toString();
-    const markdown = await transformOdt('intro-to-the-system');
-    assert.ok(compareTexts(testMarkdown, markdown));
-  });
-*/
+    it('test ./intro-to-the-system.md.markdown', async () => {
+      const testMarkdown = fs.readFileSync(__dirname + '/intro-to-the-system.md').toString();
+      const markdown = await transformOdt('intro-to-the-system');
+      assert.ok(compareTexts(testMarkdown, markdown));
+    });
+  */
 
 });
 

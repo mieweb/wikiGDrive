@@ -1,8 +1,8 @@
-import * as SimpleGitPromise from 'simple-git';
+import SimpleGitPromise from 'simple-git';
 
 import {SimpleGit} from 'simple-git';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import {spawn} from 'child_process';
 
 async function execAsync(cmd, params: string[] = []) {

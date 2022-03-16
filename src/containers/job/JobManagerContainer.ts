@@ -1,8 +1,11 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import * as winston from 'winston';
+import winston from 'winston';
 import {FileId} from '../../model/model';
 import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
+
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all';
 export type JobState = 'waiting' | 'running';

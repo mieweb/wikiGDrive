@@ -1,5 +1,5 @@
 import {QueueTask} from './QueueTask';
-import * as winston from 'winston';
+import winston from 'winston';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';

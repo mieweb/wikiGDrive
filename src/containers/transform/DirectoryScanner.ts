@@ -3,7 +3,7 @@ import {BinaryFile, ConflictFile, Directory, DrawingFile, LocalFile, MdFile, Red
 import {frontmatter} from './frontmatters/frontmatter';
 import {MimeTypes} from '../../model/GoogleFile';
 import {FileId} from '../../model/model';
-import * as yaml from 'js-yaml';
+import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
 const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];

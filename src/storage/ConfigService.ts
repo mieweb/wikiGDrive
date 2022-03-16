@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'path';
+import path from 'path';
 import {FileContentService} from '../utils/FileContentService';
 
 export interface GoogleAuth {

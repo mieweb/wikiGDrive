@@ -1,6 +1,6 @@
 'use strict';
 
-import * as path from 'path';
+import path from 'path';
 
 import {FileContentService} from '../utils/FileContentService';
 import {GoogleFile, MimeTypes} from '../model/GoogleFile';

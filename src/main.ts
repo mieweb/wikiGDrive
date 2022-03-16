@@ -1,11 +1,11 @@
 'use strict';
 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as minimist from 'minimist';
+import path from 'path';
+import fs from 'fs';
+import minimist from 'minimist';
 import {MainService} from './MainService';
-import * as pkg from '../package.json';
-import * as dotenv from 'dotenv';
+import pkg from '../package.json';
+import dotenv from 'dotenv';
 import {CliParams} from './model/CliParams';
 
 function usage() {

@@ -1,6 +1,6 @@
 'use strict';
 
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import {ImageMeta} from '../storage/DownloadFilesStorage';
 import {getImageMeta} from './getImageMeta';
 

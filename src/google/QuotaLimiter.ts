@@ -1,7 +1,7 @@
 'use strict';
 
-import * as EventEmitter from 'events';
-import * as winston from 'winston';
+import EventEmitter from 'events';
+import winston from 'winston';
 
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;

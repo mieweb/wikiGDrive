@@ -1,5 +1,5 @@
 import {QueueTask} from '../google_folder/QueueTask';
-import * as winston from 'winston';
+import winston from 'winston';
 import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile} from '../../model/GoogleFile';
 import {BinaryFile, DrawingFile, LocalFile, MdFile, RedirFile} from '../../model/LocalFile';

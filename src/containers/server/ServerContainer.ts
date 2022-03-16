@@ -1,9 +1,9 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import * as express from 'express';
-import * as winston from 'winston';
+import express from 'express';
+import winston from 'winston';
 import {Express} from 'express';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
 import {DirectoryScanner} from '../transform/DirectoryScanner';
@@ -16,6 +16,11 @@ import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {GitScanner} from '../../git/GitScanner';
+
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface TreeItem {
   id: FileId;
