@@ -67,7 +67,7 @@
     "dotenv": "^8.6.0",
     "enquirer": "^2.3.6",
     "env-paths": "2.2.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-jwt": "6.1.1",
     "googleapis": "^71.0.0",
     "htmlparser2": "7.2.0",
