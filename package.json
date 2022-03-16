@@ -80,7 +80,7 @@
     "nunjucks": "^3.2.3",
     "open": "^7.4.2",
     "relateurl": "^0.2.7",
-    "sharp": "^0.29.3",
+    "sharp": "^0.30.1",
     "sharp-phash": "^2.0.0",
     "simple-git": "3.3.0",
     "slugify": "1.6.5",
