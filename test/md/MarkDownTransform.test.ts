@@ -63,13 +63,11 @@ describe('MarkDownTransformTest', () => {
     });
 */
 
-/*
     it('test ./example-document.md.markdown', async () => {
       const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
       const markdown = await transformOdt('example-document');
       assert.ok(compareTexts(testMarkdown, markdown));
     });
-*/
 
   it('test ./intro-to-the-system.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/intro-to-the-system.md').toString();
