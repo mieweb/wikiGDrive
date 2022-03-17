@@ -237,7 +237,7 @@ export class Style {
 @XmlElement()
 @XmlElementChild('style:style', 'styles', 'Style', {isArray: true})
 export class AutomaticStyle {
-  styles: Style[];
+  styles: Style[] = [];
 }
 
 @XmlRootElement('office:document-content')
@@ -274,8 +274,10 @@ export class ListStyle {
 
 @XmlElement()
 @XmlElementChild('text:list-style', 'listStyles', 'ListStyle', {isArray: true})
+@XmlElementChild('style:style', 'styles', 'Style', {isArray: true})
 export class OfficeStyles {
   listStyles: ListStyle[] = [];
+  styles: Style[] = [];
 }
 
 @XmlRootElement('office:document-styles')
