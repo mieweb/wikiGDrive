@@ -1,68 +1,72 @@
+* [Wiki G Drive Project Overview](#wiki-g-drive-project-overview)
+  * [Overview](#overview)
+  * [Requirements](#requirements)
+  * [Instructions (proposed)](#instructions-(proposed))
+  * [Renames and Redirecting](#renames-and-redirecting)
+  * [Collisions with Filenames](#collisions-with-filenames)
+  * [Table of Contents and Index](#table-of-contents-and-index)
+    * [Table of Contents](#table-of-contents)
+    * [Index](#_25nwvh7c83vs)
+  * [Markdown Cleanup](#markdown-cleanup)
+  * [Macros to Hugo Shortcodes (issue)](#_m5135xwpqj94)
+  * [Images](#images)
+  * [FAQ](#faq)
+
+
 # Wiki G Drive Project Overview
 
 
 
 * [Wiki G Drive Project Overview](#wiki-g-drive-project-overview)
-* [Overview](#overview)
-* [Links](#links)
-* [Contacts](#contacts)
-* [Requirements](#requirements)
-* [Instructions (proposed)](#instructions-(proposed))
-* [Renames and Redirecting](#renames-and-redirecting)
-* [Collisions with Filenames](#collisions-with-filenames)
-* [Table of Contents and Index](#table-of-contents-and-index)
-* [Table of Contents](#table-of-contents)
-* [Index](#index)
-* [FAQ](#faq)
-
-
+  * [Overview](#overview)
+  * [Requirements](#requirements)
+  * [Instructions (proposed)](#instructions-(proposed))
+  * [Renames and Redirecting](#renames-and-redirecting)
+  * [Collisions with Filenames](#collisions-with-filenames)
+  * [Table of Contents and Index](#table-of-contents-and-index)
+    * [Table of Contents](#table-of-contents) 
+    * [Index](#_25nwvh7c83vs)
+  * [Markdown Cleanup](#markdown-cleanup)
+  * [Macros to Hugo Shortcodes (issue)](#_m5135xwpqj94)
+  * [Images](#images)
+  * [FAQ](#faq)
 
 ## Overview
 
-Develop a node.js script that will use the Google Drive API  ([https://developers.google.com/drive/api/v3/quickstart/nodejs](https://developers.google.com/drive/api/v3/quickstart/nodejs))
+WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
-With a "Shared Drive" as the key:
+With a "Shared Drive" as the key, WikiGDrive:
 
-* Read all the files from a Google "Shared Drive"
+* Reads all the files from a Google "Shared Drive"
 
-* Build a map of the driveId (URL) to the pathname in the "Shared Drive"
+* Builds a map of the driveId (URL) to the pathname in the "Shared Drive"
 
 * For each Google Document:
 
-    * Convert to a Markdown file with the path (instead of the driveId for the file)
+    * Converts to a Markdown file with the path (instead of the driveId for the file)
 
-    * Change driveId to the path  (eg:  12lvdxKgGsD.../edit would be changed to /filename
+    * Changes driveId to the path  (eg:  12lvdxKgGsD.../edit would be changed to /filename
 
     * Support diagrams as SVG (and map the URLs in the diagram)
 
+WikiGDrive scans for changes in the drive and then refresh the local converted files.
 
 
-The script should scan for changes in the drive and then refresh the local converted files.
+![](Pictures/10000201000002BA000001464F317568B8F12696.png)
 
+The WikiGDrive refreshes the "Local Filesystem" with changes from the Google Shared Drive overwriting or deleting any content to bring it into sync.  The Local Filesystem is not preserved (since we will be committing the markdown in github anyway).
 
+WikiGDrive Add-On
+* Validates page
+* Shows hyperlinks (what links here)
 
-![](https://lh5.googleusercontent.com/LCU8gGjdjtQy_Z63Zn1GDRjNnKYygrrGMpXokYelyqYlvub6jYTeCwAh6A_G4WOpUu9TbSzzaH_XGJe-09IA3lDelvY4cSuOLN_AdpNOjauCiFXC-yFQ9bTzk9NlnS9khcFW1FtklezWVJrowQ)
+WikiGDrive GitHub
+* Allows for updates in markdown to update wikigdrive for simple changes. If complex at least a warning is added to the document that it's been modified and should not be updated.
+* [](https://github.com/koppen/redmine_github_hook)
+* [](https://github.com/moneypark/redmine_github_pull_requests_tool)
 
-
-
-The node.js script should refresh the "Local Filesystem" with changes from the Google Shared Drive overwriting or deleting any content to bring it into sync.  The Local Filesystem is not preserved (since we will be committing the markdown in github anyway).
-
-
-
-## Links
-
-* Project [https://github.com/mieweb/wikiGDrive](https://github.com/mieweb/wikiGDrive)
-* Google [Shared Drive Example](https://drive.google.com/drive/u/0/folders/0AB1bEyFsoJ9pUk9PVA)
-* Upwork [posting](https://www.upwork.com/jobs/~01f8c39128e36f1bf0)
-* Example system: [http://wikigrive.gitgis.com/toc.html](http://wikigrive.gitgis.com/toc.html)
-
-## Contacts
-
-* Doug Horner ([example@example.com](mailto:example@example.com)) phone: 123-123-123
 
 ## Requirements
-
-
 
 The app must:
 
@@ -86,9 +90,9 @@ The app must:
 
 8. Construct a [table of contents and an index](#table-of-contents-and-index) from all of the documents in the shared drive.
 
-    3. It should be parsable so Javascript on the client could search and build navigation 
+    1. It should be parsable so Javascript on the client could search and build navigation 
 
-    4. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#index))
+    2. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#_25nwvh7c83vs))
 
 
 
@@ -245,6 +249,17 @@ The table of contents is a layout of the documents and their position in the dri
 
 The index is a listing of all of the defined terms and their references in the documents.  The processing may be passed to another tool to construct the index. Examples: [kramdown](https://meta.stackexchange.com/questions/72395/is-it-possible-to-have-definition-lists-in-markdown), [Asciidoctor](https://asciidoctor.org/docs/user-manual/)
 
+
+## Markdown Cleanup
+* Bold headings: ([issue](https://github.com/mieweb/wikiGDrive/issues/17)) Remove the ** bold markdown from all headings.<img src="Pictures/10000201000001A5000000492C856905A808045C.png" />
+* End of line bold text: ([issue](https://github.com/mieweb/wikiGDrive/issues/15)) The closing ** for bold text at the end of a line is being placed on a newline and not being parsed.<img src="Pictures/10000201000005480000004BB83F3F8B5F0C77BD.png" />
+* Italics/bold in an unordered list: ([issue](https://github.com/mieweb/wikiGDrive/issues/16)) Italics are not being rendered if in a list item.  We may need to find these and replace the */** with em/strong tags. Example is rendered in browser next to [Google Doc](gdoc:108WScoxxGKKKOsGWF7UNZ4rLRanGXu6BPdJ-axjVn5s).<img src="Pictures/1000020100000243000000F28AB7617254FDBB3A.png" />
+
+
+## Images
+Two kinds of images exist within Google Docs:  1) Embedded images stored within the document and 2) images that are referenced to another "Drawing" on the google drive.  WikiGDrive processes images by placing them in a folder named with a similar name to the page.  (eg:  index.md would result in a folder index.images with each embedded image in that folder).
+
+If you make a drawing somewhere in the google drive folder and link it in the google document (WITH A HYPERLINK b/c Google does not expose the internal link via the api) then WikiGDrive will process the drawing as a SVG and place a proper reference to the SVG in the markdown.
 
 ## FAQ
 
