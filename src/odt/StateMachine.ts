@@ -16,7 +16,23 @@ export class StateMachine {
   currentMode: OutputMode = 'md';
   headersMap: { [id: string]: string } = {};
 
+  counters: { [id: string]: number } = {};
+
   constructor(public markdownChunks: MarkdownChunks) {
+  }
+
+  fetchListNo(styleName: string) {
+    if (this.counters[styleName]) {
+      return this.counters[styleName];
+    }
+    return 1;
+  }
+
+  storeListNo(styleName: string, val: number) {
+    if (!styleName) {
+      return;
+    }
+    this.counters[styleName] = val;
   }
 
   get parentLevel() {
@@ -36,7 +52,7 @@ export class StateMachine {
     if (tag === 'UL') {
       this.listLevel++;
       payload.listLevel = this.listLevel;
-      payload.number = 1;
+      payload.number = this.fetchListNo(payload.listStyle?.name);
     }
     if (tag === 'LI') {
       if (this.currentLevel?.tag === 'UL') {
@@ -184,6 +200,7 @@ export class StateMachine {
     if (tag === '/LI') {
       if (this.currentLevel?.tag === 'UL') {
         this.currentLevel.payload.number++;
+        this.storeListNo(this.currentLevel.payload.listStyle?.name, this.currentLevel.payload.number);
       }
     }
     if (tag === '/UL') {
