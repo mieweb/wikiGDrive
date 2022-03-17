@@ -34,6 +34,11 @@ export class OdtToMarkdown {
 
   getStyle(styleName): Style {
     if (!this.styles[styleName]) {
+      const docStyle = this.documentStyles?.styles?.styles.find(a => a.name === styleName);
+      if (docStyle) {
+        return docStyle;
+      }
+
       return {
         name: 'default',
         listStyleName: '',
@@ -185,11 +190,30 @@ export class OdtToMarkdown {
     return false;
   }
 
+  isCourier(styleName: string) {
+    const style = this.getStyle(styleName);
+    if (style.textProperties?.fontName === 'Courier New') {
+      return true;
+    }
+
+    if (style.parentStyleName) {
+      return this.isCourier(style.parentStyleName);
+    }
+
+    return false;
+  }
+
+
   async paragraphToText(paragraph: TextParagraph): Promise<void> {
     const style = this.getStyle(paragraph.styleName);
     const listStyle = this.getListStyle(style.listStyleName);
     const bookmarkName = paragraph.bookmark?.name || null;
-    this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+
+    if (this.isCourier(paragraph.styleName)) {
+      this.stateMachine.pushTag('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    } else {
+      this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    }
 
 /*    switch (this.top.mode) {
       case 'html':
@@ -216,6 +240,7 @@ export class OdtToMarkdown {
     if (this.hasStyle(paragraph, 'Heading_20_4')) {
       this.stateMachine.pushTag('H4');
     }
+
 
     for (const child of paragraph.list) {
       if (typeof child === 'string') {
@@ -268,7 +293,11 @@ export class OdtToMarkdown {
       this.stateMachine.pushTag('/H4');
     }
 
-    this.stateMachine.pushTag('/P');
+    if (this.isCourier(paragraph.styleName)) {
+      this.stateMachine.pushTag('/PRE');
+    } else {
+      this.stateMachine.pushTag('/P');
+    }
   }
 
   async tableCellToText(tableCell: TableCell): Promise<void> {
