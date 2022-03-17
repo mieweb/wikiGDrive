@@ -204,6 +204,19 @@ export class StateMachine {
     for (let position = 0; position < this.markdownChunks.length; position++) {
       const chunk = this.markdownChunks.chunks[position];
 
+
+      if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        const tag2 = chunk.tag.substring(1);
+        if (preChunk.isTag && preChunk.tag === tag2) {
+          this.markdownChunks.removeChunk(position - 1);
+          this.markdownChunks.removeChunk(position);
+          position -= 2;
+          continue;
+        }
+      }
+
+
       if (chunk.isTag && chunk.tag === 'PRE') {
         const preChunk = this.markdownChunks.chunks[position - 1];
         if (preChunk.isTag && preChunk.tag === 'P') {
