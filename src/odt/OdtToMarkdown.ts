@@ -47,7 +47,10 @@ export class OdtToMarkdown {
         textProperties: new TextProperty()
       };
     }
-    return this.styles[styleName];
+
+    const parentStyle = this.getStyle(this.styles[styleName].parentStyleName);
+
+    return Object.assign({}, parentStyle, this.styles[styleName]);
   }
 
   getListStyle(listStyleName): ListStyle {
@@ -65,13 +68,17 @@ export class OdtToMarkdown {
       }
     }
 
-    for (const tableOfContent of this.document.body.text.tableOfContent) {
-      await this.tocToText(tableOfContent);
+    for (const tableOfContent of this.document.body.text.list) {
+      if (tableOfContent.type === 'toc') {
+        await this.tocToText(<TableOfContent>tableOfContent);
+      }
     }
     await this.officeTextToText(this.document.body.text);
 
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
+
+    this.stateMachine.postProcess();
 
     return await this.rewriteHeaders(this.chunks.toString());
   }
@@ -109,7 +116,7 @@ export class OdtToMarkdown {
           this.stateMachine.pushText('\t');
           break;
         case 'space':
-          this.stateMachine.pushText(spaces((<TextSpace>child).chars || 0));
+          this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
           break;
       }
     }
@@ -190,6 +197,21 @@ export class OdtToMarkdown {
     return false;
   }
 
+/*
+  isBold(styleName: string) {
+    const style = this.getStyle(styleName);
+    if (style.textProperties?.fontWeight === 'bold') {
+      return true;
+    }
+
+    if (style.parentStyleName) {
+      return this.isBold(style.parentStyleName);
+    }
+
+    return false;
+  }
+*/
+
   isCourier(styleName: string) {
     const style = this.getStyle(styleName);
     if (style.textProperties?.fontName === 'Courier New') {
@@ -241,6 +263,11 @@ export class OdtToMarkdown {
       this.stateMachine.pushTag('H4');
     }
 
+    if (!this.isCourier(paragraph.styleName)) {
+      if (style.textProperties?.fontWeight === 'bold') {
+        this.stateMachine.pushTag('B');
+      }
+    }
 
     for (const child of paragraph.list) {
       if (typeof child === 'string') {
@@ -253,11 +280,21 @@ export class OdtToMarkdown {
           this.stateMachine.pushText('\t');
           break;
         case 'space':
-          this.stateMachine.pushText(spaces((<TextSpace>child).chars));
+          this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
           break;
         case 'span':
           {
-            await this.spanToText(<TextSpan>child);
+            const span = <TextSpan>child;
+            const spanStyle = this.getStyle(span.styleName);
+            if (spanStyle.textProperties.fontName === 'Courier New' && paragraph.list.length === 1) {
+              this.stateMachine.pushTag('PRE');
+              const span2 = Object.assign({}, span);
+              span2.styleName = '';
+              await this.spanToText(span2);
+              this.stateMachine.pushTag('/PRE');
+            } else {
+              await this.spanToText(span);
+            }
           }
           break;
         case 'link':
@@ -277,6 +314,12 @@ export class OdtToMarkdown {
         case 'draw_frame':
           await this.drawFrameToText(<DrawFrame>child);
           break;
+      }
+    }
+
+    if (!this.isCourier(paragraph.styleName)) {
+      if (style.textProperties?.fontWeight === 'bold') {
+        this.stateMachine.pushTag('/B');
       }
     }
 

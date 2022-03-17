@@ -1,10 +1,9 @@
 import {ListStyle, Style} from './LibreOffice';
-import {StateMachine} from './StateMachine';
 import {spaces} from './utils';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
-export type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
+export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'H1' | 'H2' | 'H3' | 'H4' | '/H1' | '/H2' | '/H3' | '/H4' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
@@ -15,6 +14,7 @@ export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/'
 export const isClosing = (tag: TAG) => tag.startsWith('/');
 
 export interface TagPayload {
+  lang?: string;
   position?: number;
   id?: string;
   counterId?: string;
@@ -54,6 +54,8 @@ function chunkToText(chunk: MarkdownChunk) {
       switch (chunk.tag) {
         case '/P':
           return '\n';
+        case 'BR/':
+          return '\n';
       }
       break;
     case 'md':
@@ -67,8 +69,10 @@ function chunkToText(chunk: MarkdownChunk) {
           break;
         case '/P':
           return '\n';
+        case 'BR/':
+          return '\n';
         case 'PRE':
-          return '```\n';
+          return '\n```'+ (chunk.payload?.lang || '') +'\n';
         case '/PRE':
           return '\n```\n';
         case 'CODE':
@@ -76,9 +80,9 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/CODE':
           return '`';
         case 'I':
-          return '_';
+          return '*';
         case '/I':
-          return '_';
+          return '*';
         case 'BI':
           return  '**_';
         case '/BI':
@@ -101,6 +105,10 @@ function chunkToText(chunk: MarkdownChunk) {
           return '[';
         case '/A':
           return `](${chunk.payload.href})`;
+        case 'SVG/':
+          return `![](${chunk.payload.href})`;
+        case 'IMG/':
+          return `![](${chunk.payload.href})`;
       }
       break;
     case 'html':
@@ -168,25 +176,25 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/A':
           return '</a>';
         case 'TABLE':
-          return '<table>';
+          return '\n<table>\n';
         case '/TABLE':
-          return '</table>';
+          return '\n</table>\n';
         case 'TR':
-          return '<tr>';
+          return '<tr>\n';
         case '/TR':
-          return '</tr>';
+          return '</tr>\n';
         case 'TD':
           return '<td>';
         case '/TD':
-          return '</td>';
+          return '</td>\n';
         case 'TOC':
           break;
         case '/TOC':
           break;
         case 'SVG/':
-          return '<svg />'; // TODO
+          return '<svg src="${chunk.payload.href}" />';
         case 'IMG/':
-          return '<img />'; // TODO
+          return `<img src="${chunk.payload.href}" />`;
       }
       break;
   }
@@ -211,5 +219,15 @@ export class MarkdownChunks {
   extractText(start: number, end: number) {
     const slice = this.chunks.slice(start, end).filter(i => !i.isTag).map(c => chunkToText(c)).join('');
     return slice;
+  }
+
+  removeChunk(startPara: number) {
+    this.chunks.splice(startPara, 1);
+    for (let i = startPara; i < this.chunks.length; i++) {
+      const chunk = this.chunks[i];
+      if (chunk.isTag) {
+        chunk.payload.position--;
+      }
+    }
   }
 }

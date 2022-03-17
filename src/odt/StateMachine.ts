@@ -1,5 +1,5 @@
 import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks';
-import {fixCharacters, spaces} from './utils';
+import {fixCharacters} from './utils';
 import slugify from 'slugify';
 
 interface TagLeaf {
@@ -100,8 +100,43 @@ export class StateMachine {
       }
     }
 
+    if (this.currentMode === 'md' && tag === '/TABLE') {
+      for (let pos = this.currentLevel.payload.position; pos < payload.position + 1; pos++) {
+        const chunk = this.markdownChunks.chunks[pos];
+        chunk.mode = 'html';
+      }
+    }
 
-    if (tag === '/P') {
+
+    if (tag === 'PRE') {
+      const prevTag = this.markdownChunks.chunks[payload.position - 1];
+      if (prevTag.isTag && prevTag.tag === '/PRE') {
+        this.markdownChunks.removeChunk(payload.position - 1);
+        this.markdownChunks.chunks[payload.position] = {
+          isTag: true,
+          mode: this.currentMode,
+          tag: 'BR/',
+          payload: {}
+        };
+      }
+    }
+
+
+    if (tag === 'B' && ['H1', 'H2', 'H3', 'H4', 'BI'].indexOf(this.parentLevel?.tag) > -1) {
+      this.markdownChunks.removeChunk(payload.position);
+    }
+    if (tag === '/B' && ['H1', 'H2', 'H3', 'H4', '/BI'].indexOf(this.parentLevel?.tag) > -1) {
+      this.markdownChunks.removeChunk(payload.position);
+    }
+
+    if (tag === 'P' && this.parentLevel?.tag === 'TD') {
+      this.markdownChunks.removeChunk(payload.position);
+    }
+    if (tag === '/P' && this.parentLevel?.tag === 'TD') {
+      this.markdownChunks.removeChunk(payload.position);
+    }
+
+    if (tag === '/P' || tag === '/PRE') {
       const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
       switch (this.currentMode) {
         case 'raw':
@@ -163,5 +198,68 @@ export class StateMachine {
       mode: this.currentMode,
       text: txt
     });
+  }
+
+  postProcess() {
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+
+      if (chunk.isTag && chunk.tag === 'PRE') {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        if (preChunk.isTag && preChunk.tag === 'P') {
+          this.markdownChunks.removeChunk(position - 1);
+          position--;
+          continue;
+        }
+      }
+
+      if (chunk.isTag && chunk.tag === '/PRE') {
+        const preChunk = this.markdownChunks.chunks[position + 1];
+        if (preChunk?.isTag && preChunk.tag === '/P') {
+          this.markdownChunks.removeChunk(position + 1);
+          position--;
+          continue;
+        }
+      }
+    }
+
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+      if (chunk.isTag === false && chunk.text === '{{% markdown %}}') {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        const postChunk = this.markdownChunks.chunks[position + 1];
+        if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
+          this.markdownChunks.removeChunk(position - 1);
+          postChunk.tag = 'PRE';
+          position--;
+          continue;
+        }
+      }
+
+      if (chunk.isTag === false && chunk.text === '{{% /markdown %}}') {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        const postChunk = this.markdownChunks.chunks[position + 1];
+        if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
+          preChunk.tag = '/PRE';
+          this.markdownChunks.removeChunk(position + 1);
+          position--;
+          continue;
+        }
+      }
+    }
+
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+      if (chunk.isTag === false && chunk.text.startsWith('```') && chunk.text.length > 3) {
+        const preChunk = this.markdownChunks.chunks[position - 2];
+        if (preChunk.isTag && preChunk.tag === 'PRE') {
+          preChunk.payload.lang = chunk.text.substring(3);
+          this.markdownChunks.removeChunk(position);
+          position--;
+          continue;
+        }
+      }
+    }
+
   }
 }

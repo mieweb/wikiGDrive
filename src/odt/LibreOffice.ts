@@ -186,10 +186,9 @@ export class TextList implements TextSection {
 @XmlElementChild('text:p', 'list', 'TextParagraph', {isArray: true})
 @XmlElementChild('text:list', 'list', 'TextList', {isArray: true})
 @XmlElementChild('table:table', 'list', 'TableTable', {isArray: true})
-@XmlElementChild('text:table-of-content', 'tableOfContent', 'TableOfContent', {isArray: true})
+@XmlElementChild('text:table-of-content', 'list', 'TableOfContent', {isArray: true})
 export class OfficeText {
   list: Array<TextParagraph | TableTable | TextList | TableOfContent> = [];
-  tableOfContent: TableOfContent[] = [];
 }
 
 @XmlElement()

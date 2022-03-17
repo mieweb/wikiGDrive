@@ -35,18 +35,24 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
     <td>Cell 1</td>
     <td>Cell 2</td>
     <td>Cell 3</td>
-    <td>Cell 4</td>
+    <td>Cell 4
+<table>
+<tr>
+<td>C1</td>
+<td><strong>C2</strong></td>
+</tr>
+<tr>
+<td>C3</td>
+<td>C4</td>
+</tr>
+</table>
+After subtable</td>
     <td>Cell 5</td>
   </tr>
 </table>
 
 
-
-
-
 ### Heading 3 - a diagram with links
-
-![](https://lh3.googleusercontent.com/l_QXaLeI_2t1wBtL6JUOB5RkEsflE9af7vQpxU2wJ_fL6clcIzocGBuJD_Z1lTPoFlGpoC0MVRNqLL-hVzCaRSkfU-XR2V2AMoL0VDBcDD-EacZzAscT_J7qb9L3O0pFIUGU9stD6coseNurSA)
 
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
@@ -72,9 +78,7 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
 
 ## Image
 
-![](https://lh3.google.com/u/0/d/abc)
-
-![](https://lh6.googleusercontent.com/opCTglJjqHduJb0wdxNn3KLSeCIZwImqdKjDb22pg3wv3ZsmIW8rNPGrbq3kFLeaN3U-WKkvQbV-n93-7bQXJVhKdpltQ60P6GEgtjbWbFLvPPJpOeIdaf6M9xUL-_QJGwV5e0b0BNy0TAYLIA)
+![](Pictures/1000000000000200000001804F9AAE46CD6D0DF2.gif)
 
 ## Preformatted Text
 
@@ -89,7 +93,7 @@ This is monospaced text. This should line up  |
 
 ## Code
 
-Code blocks are part of the Markdown spec, but syntax highlighting isn't. However, many renderers -- like Github's and _Markdown Here_ -- support syntax highlighting. Which languages are supported and how those language names should be written will vary from renderer to renderer. _Markdown Here_ supports highlighting for dozens of languages (and not-really-languages, like diffs and HTTP headers); to see the complete list, and how to write the language names, see the [highlight.js demo page](http://softwaremaniacs.org/media/soft/highlight/test.html).
+Code blocks are part of the Markdown spec, but syntax highlighting isn't. However, many renderers -- like Github's and *Markdown Here* -- support syntax highlighting. Which languages are supported and how those language names should be written will vary from renderer to renderer. *Markdown Here* supports highlighting for dozens of languages (and not-really-languages, like diffs and HTTP headers); to see the complete list, and how to write the language names, see the [highlight.js demo page](http://softwaremaniacs.org/media/soft/highlight/test.html).
 
 
 
@@ -140,8 +144,6 @@ myArray.forEach(() => { }); // fat arrow syntax
 
 From Youtube:
 
-![](https://lh4.googleusercontent.com/Ygzc-fl5xauu67WhE295Prbom-UQaiJpNSM8GxfWUvXHm5-lnPqv5oqPj40yJXWAdy6ld9cv5OUkfejjA6M0eqFrqfJkf1Sz5zBClqWM7IjtyMAKzH_CHtU937l8872AmOKZFEOWKk9tmoIj0A)
-
 [Google Drive, Docs, and Project Management with GSuite](https://www.youtube.com/watch?v=v6QAIWLCz8I&t=1743s)
 
 
@@ -152,7 +154,7 @@ From Youtube:
 This is some text separated by a horizontal line
 
 
-
+___
 
 
 
@@ -175,7 +177,7 @@ This is after the horizontal line.
 
 ## Formatting
 
-Some **bold ****_boldanditalic_**_ italic_ text
+Some **bold ****_boldanditalic_*** italic*  text
 
 
 ## Equations
