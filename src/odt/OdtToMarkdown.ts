@@ -390,7 +390,7 @@ export class OdtToMarkdown {
       }
       this.stateMachine.pushTag('/LI');
     }
-    this.stateMachine.pushTag('/UL');
+    this.stateMachine.pushTag('/UL', { counterId: list.id, listStyle });
   }
 
   async officeTextToText(content: OfficeText): Promise<void> {
