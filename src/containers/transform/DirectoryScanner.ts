@@ -6,7 +6,7 @@ import {FileId} from '../../model/model';
 import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
-const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];
+const RESERVED_NAMES = [LOG_NAME, '.git.json', '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];
 
 export function stripConflict(localPath: string) {
   const parts = localPath.split('.');
@@ -115,40 +115,42 @@ export class DirectoryScanner {
         continue;
       }
 
-      const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
-      const props = yaml.load(yamlContent);
-      const yamlFile = props.fileMap && props.fileMap[realFileName] ? props.fileMap[realFileName] : null;
+      if (await existingDirectory.exists('.wgd-directory.yaml')) {
+        const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
+        const props = yaml.load(yamlContent);
+        const yamlFile = props.fileMap && props.fileMap[realFileName] ? props.fileMap[realFileName] : null;
 
-      if (realFileName.endsWith('.svg')) {
-        const drawingFile: DrawingFile = {
-          type: 'drawing',
-          fileName: stripConflict(realFileName),
-          id: yamlFile ? yamlFile.id : 'TO_FILL',
-          modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
-          version: yamlFile ? yamlFile.version : undefined,
-          mimeType: 'image/svg+xml',
-          title: stripConflict(realFileName)
-        };
-        this.files[realFileName] = drawingFile;
-      } else
-      if (realFileName.endsWith('.md')) {
-        const markdown = (await existingDirectory.readFile(realFileName)).toString();
-        const localPath = existingDirectory.getVirtualPath() + realFileName;
-        const localFile = this.parseMarkdown(markdown, localPath);
-        if (localFile) {
-          this.files[realFileName] = localFile;
+        if (realFileName.endsWith('.svg')) {
+          const drawingFile: DrawingFile = {
+            type: 'drawing',
+            fileName: stripConflict(realFileName),
+            id: yamlFile ? yamlFile.id : 'TO_FILL',
+            modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
+            version: yamlFile ? yamlFile.version : undefined,
+            mimeType: 'image/svg+xml',
+            title: stripConflict(realFileName)
+          };
+          this.files[realFileName] = drawingFile;
+        } else
+        if (realFileName.endsWith('.md')) {
+          const markdown = (await existingDirectory.readFile(realFileName)).toString();
+          const localPath = existingDirectory.getVirtualPath() + realFileName;
+          const localFile = this.parseMarkdown(markdown, localPath);
+          if (localFile) {
+            this.files[realFileName] = localFile;
+          }
+        } else {
+          const binaryFile: BinaryFile = {
+            type: 'binary',
+            fileName: stripConflict(realFileName),
+            id: yamlFile ? yamlFile.id : 'TO_FILL',
+            modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
+            version: yamlFile ? yamlFile.version : undefined,
+            mimeType: 'application/binary',
+            title: stripConflict(realFileName)
+          };
+          this.files[realFileName] = binaryFile;
         }
-      } else {
-        const binaryFile: BinaryFile = {
-          type: 'binary',
-          fileName: stripConflict(realFileName),
-          id: yamlFile ? yamlFile.id : 'TO_FILL',
-          modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
-          version: yamlFile ? yamlFile.version : undefined,
-          mimeType: 'application/binary',
-          title: stripConflict(realFileName)
-        };
-        this.files[realFileName] = binaryFile;
       }
     }
 

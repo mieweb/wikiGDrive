@@ -207,41 +207,71 @@ export class ServerContainer extends Container {
     app.get('/api/drive/:driveId/folder/:folderId', folderHandler);
 
     app.post('/api/drive/:driveId/git/push', async (req, res, next) => {
-      const driveId = req.params.driveId;
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath());
-      await gitScanner.push();
+      try {
+        const driveId = req.params.driveId;
+        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
 
-      res.json({});
+        const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
+        await gitScanner.push(gitConfig.remote_branch || 'master');
+
+        res.json({});
+      } catch (err) {
+        next(err);
+      }
     });
 
     app.post('/api/drive/:driveId/git/commit', async (req, res, next) => {
-      const driveId = req.params.driveId;
-      const fileId = req.body.fileId;
-      const message = req.body.message;
+      try {
+        const driveId = req.params.driveId;
+        const fileId = req.body.fileId;
+        const message = req.body.message;
 
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath());
+        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
 
-      const transformedTree = await transformedFileSystem.readJson('.tree.json');
-      const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
+        const transformedTree = await transformedFileSystem.readJson('.tree.json');
+        const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
 
-      await gitScanner.commit(message, transformPath);
+        let author = '';
+        if (transformPath) {
+          const yamlContent = await transformedFileSystem.readFile(transformPath);
+          const directoryScanner = new DirectoryScanner();
+          const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
+          if (file.type === 'md') {
+            author = file.lastAuthor;
+          }
+        }
 
-      res.json({});
+        await gitScanner.commit(message, transformPath, author);
+
+        res.json({});
+      } catch (err) {
+        next(err);
+      }
     });
 
     app.put('/api/drive/:driveId/git', async (req, res, next) => {
-      const driveId = req.params.driveId;
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      try {
+        const driveId = req.params.driveId;
+        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath());
-      await gitScanner.initialize();
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+        await gitScanner.initialize();
 
-      if (req.body.remote_url) {
-        await gitScanner.setRemoteUrl(req.body.remote_url);
+        if (req.body.remote_branch) {
+          const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
+          gitConfig.remote_branch = req.body.remote_branch || 'master';
+          await transformedFileSystem.writeJson('.git.json', gitConfig);
+        }
+
+        if (req.body.remote_url) {
+          await gitScanner.setRemoteUrl(req.body.remote_url);
+        }
+        res.json({});
+      } catch (err) {
+        next(err);
       }
-      res.json({});
     });
 
     app.get('/api/drive/:driveId/file/:fileId', async (req, res, next) => {
@@ -271,18 +301,21 @@ export class ServerContainer extends Container {
 
         const buffer = await transformedFileSystem.readBuffer(file.name);
 
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath());
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
         const git = {
           initialized: await gitScanner.isRepo(),
           history: null,
           public_key: null,
-          remote_url: null
+          remote_url: null,
+          remote_branch: null
         };
 
         if (git.initialized) {
           git.history = await gitScanner.history(transformPath);
           git.public_key = await gitScanner.getDeployKey();
           git.remote_url = await gitScanner.getRemoteUrl();
+          const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
+          git.remote_branch = gitConfig.remote_branch || 'master';
         }
 
         // parentId = file.parentId || driveId;
@@ -395,19 +428,23 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/share_drive', async (req, res) => {
-      const serverUrl = 'http://localhost:3000';
+    app.post('/api/share_drive', async (req, res, next) => {
+      try {
+        const serverUrl = 'http://localhost:3000';
 
-      const folderUrl = req.body.url;
-      const driveId = urlToFolderId(folderUrl);
+        const folderUrl = req.body.url;
+        const driveId = urlToFolderId(folderUrl);
 
-      // const googleAuthService = new GoogleAuthService();
-      // const authConfig: AuthConfig = this.authContainer['authConfig'];
-      // const auth = await googleAuthService.authorizeUserAccount(authConfig.web_account.client_id, authConfig.web_account.client_secret);
-      // const authUrl = await googleAuthService.getWebAuthUrl(auth, serverUrl + '/api/share_drive', driveId);
-      // console.log('google_auth', authUrl);
+        // const googleAuthService = new GoogleAuthService();
+        // const authConfig: AuthConfig = this.authContainer['authConfig'];
+        // const auth = await googleAuthService.authorizeUserAccount(authConfig.web_account.client_id, authConfig.web_account.client_secret);
+        // const authUrl = await googleAuthService.getWebAuthUrl(auth, serverUrl + '/api/share_drive', driveId);
+        // console.log('google_auth', authUrl);
 
-      res.json({ drive_id: driveId });
+        res.json({ drive_id: driveId });
+      } catch (err) {
+        next(err);
+      }
     });
   }
 
