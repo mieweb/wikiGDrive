@@ -6,6 +6,9 @@ import crypto from 'crypto';
 import winston from 'winston';
 import {HttpClient} from '../utils/HttpClient';
 import {FileContentService} from '../utils/FileContentService';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
 
 function createTempName(tmpdir) {
   const filename = 'temp_' + crypto.randomBytes(4).readUInt32LE(0) + '_ext';

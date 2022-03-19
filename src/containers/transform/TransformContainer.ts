@@ -20,6 +20,9 @@ import {DocumentContent, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {TaskRedirFileTransform} from './TaskRedirFileTransform';
 import {TocGenerator} from './frontmatters/TocGenerator';
 import {FileId} from '../../model/model';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
 
 function doesExistIn(googleFolderFiles: LocalFile[], localFile: LocalFile) {
   return !!googleFolderFiles.find(file => file.id === localFile.id);
@@ -178,7 +181,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({filename: __filename});
+    this.logger = engine.logger.child({ filename: __filename });
   }
 
   async syncDir(googleFolder: FileContentService, destinationDirectory: FileContentService) {

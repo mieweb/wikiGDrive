@@ -219,6 +219,7 @@ export class TaskFetchFolder extends QueueTask {
     for (const localFile of localFiles) {
       if (localFile === '.folder.json') continue;
       if (localFile === '.folder-files.json') continue;
+      if (localFile === '.git.json') continue;
 
       const presentFile = files.find(file => localFile.startsWith(file.id));
       if (presentFile) {

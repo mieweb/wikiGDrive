@@ -1,6 +1,6 @@
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {GoogleDriveService, ListContext} from '../../google/GoogleDriveService';
+import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {QueueDownloader} from './QueueDownloader';
@@ -9,6 +9,9 @@ import {MimeTypes} from '../../model/GoogleFile';
 import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
 import {FileContentService} from '../../utils/FileContentService';
 import {FileId} from '../../model/model';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
 
 export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;

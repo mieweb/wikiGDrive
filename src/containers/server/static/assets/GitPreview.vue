@@ -8,6 +8,9 @@
           <div class="mui-textfield">
             <input size="50" placeholder="git@github.com:[...].git" v-model="remote_url" />
           </div>
+          <div class="mui-textfield">
+            <input size="50" placeholder="remote_branch, eg. gh-pages" v-model="remote_branch" />
+          </div>
 <!--
           <div class="mui-textfield">
             <textarea placeholder="SSH deploy key" v-model="public_key"></textarea>
@@ -50,6 +53,9 @@
           <div class="mui-textfield">
             <input size="50" placeholder="git@github.com:[...].git" v-model="remote_url" />
           </div>
+          <div class="mui-textfield">
+            <input size="50" placeholder="remote_branch, eg: gh-pages" v-model="remote_branch" />
+          </div>
           <button type="button" class="mui-btn mui-btn--primary" @click="setup">Change remote</button>
           <div class="mui-textfield">
             <textarea rows="10" placeholder="Deploy key" readonly v-model="git.public_key" @click="copyEmail"></textarea>
@@ -70,16 +76,19 @@ export default {
   data() {
     return {
       message: '',
-      remote_url: ''
+      remote_url: '',
+      remote_branch: ''
     }
   },
   created() {
     this.remote_url = this.git?.remote_url || '';
+    this.remote_branch = this.git?.remote_branch || '';
   },
   methods: {
     setup() {
       this.$emit('setup', {
-        remote_url: this.remote_url
+        remote_url: this.remote_url,
+        remote_branch: this.remote_branch
       });
     },
     commit() {

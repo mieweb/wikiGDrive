@@ -1,6 +1,9 @@
-import {ErrorCallback, queue, QueueObject} from 'async';
+import {queue, QueueObject} from 'async';
 import winston from 'winston';
 import {QueueTask, QueueTaskError} from './QueueTask';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
 
 const CONCURRENCY = 4;
 
@@ -10,7 +13,7 @@ export class QueueDownloader {
 
   constructor(logger: winston.Logger) {
     this.logger = logger.child({ filename: __filename });
-    this.q = queue<QueueTask, QueueTaskError>(async (queueTask, callback) => this.processQueueTask(queueTask, callback), CONCURRENCY);
+    this.q = queue<QueueTask, QueueTaskError>(async (queueTask) => this.processQueueTask(queueTask), CONCURRENCY);
 
     this.q.error((err: QueueTaskError, queueTask) => {
       this.logger.error(err.message);
@@ -31,17 +34,12 @@ export class QueueDownloader {
     });
   }
 
-  async processQueueTask(task: QueueTask, callback: ErrorCallback<Error>) {
-    try {
-      const subTasks = await task.run();
-      for (const subTask of subTasks) {
-        this.q.push(subTask);
-      }
-      await new Promise(resolve => setTimeout(resolve, 500));
-      callback();
-    } catch (err) {
-      callback(err);
+  async processQueueTask(task: QueueTask) {
+    const subTasks = await task.run();
+    for (const subTask of subTasks) {
+      this.q.push(subTask);
     }
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   async finished() {

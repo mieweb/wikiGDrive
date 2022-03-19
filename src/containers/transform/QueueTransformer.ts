@@ -1,4 +1,4 @@
-import {ErrorCallback, queue, QueueObject} from 'async';
+import {queue, QueueObject} from 'async';
 import winston from 'winston';
 import {QueueTask, QueueTaskError} from '../google_folder/QueueTask';
 
@@ -8,7 +8,7 @@ export class QueueTransformer {
   private q: QueueObject<QueueTask>;
 
   constructor(private logger: winston.Logger) {
-    this.q = queue<QueueTask, QueueTaskError>(async (queueTask, callback) => this.processQueueTask(queueTask, callback), CONCURRENCY);
+    this.q = queue<QueueTask, QueueTaskError>(async (queueTask) => this.processQueueTask(queueTask), CONCURRENCY);
 
     this.q.error((err: QueueTaskError, queueTask) => {
       this.logger.error(err);
@@ -29,17 +29,12 @@ export class QueueTransformer {
     });
   }
 
-  async processQueueTask(task: QueueTask, callback: ErrorCallback<Error>) {
-    try {
-      const subTasks = await task.run();
-      for (const subTask of subTasks) {
-        this.q.push(subTask);
-      }
-      await new Promise(resolve => setTimeout(resolve, 500));
-      callback();
-    } catch (err) {
-      callback(err);
+  async processQueueTask(task: QueueTask) {
+    const subTasks = await task.run();
+    for (const subTask of subTasks) {
+      this.q.push(subTask);
     }
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   async finished() {
