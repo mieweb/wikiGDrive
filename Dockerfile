@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
+RUN apt-get install -y libkrb5-dev
 RUN npm install
 RUN npm link --local
 
