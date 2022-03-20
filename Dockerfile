@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:16.14
 
 WORKDIR /usr/src/app
 
@@ -12,6 +12,6 @@ RUN npm link --local
 EXPOSE 3000
 VOLUME /data
 
-WORKDIR "/data"
+WORKDIR "/usr/src/app"
 
 CMD [ "sh", "-c", "wikigdrive-ts --workdir /data server 3000" ]
