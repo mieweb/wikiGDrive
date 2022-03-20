@@ -255,7 +255,7 @@ export class StateMachine {
 
     for (let position = 0; position < this.markdownChunks.length; position++) {
       const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag === false && chunk.text === '{{% markdown %}}') {
+      if (chunk.isTag === false && (chunk.text === '{{% markdown %}}' || chunk.text === '{{markdown}}')) {
         const preChunk = this.markdownChunks.chunks[position - 1];
         const postChunk = this.markdownChunks.chunks[position + 1];
         if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
@@ -266,7 +266,7 @@ export class StateMachine {
         }
       }
 
-      if (chunk.isTag === false && chunk.text === '{{% /markdown %}}') {
+      if (chunk.isTag === false && (chunk.text === '{{% /markdown %}}' || chunk.text === '{{/markdown}}')) {
         const preChunk = this.markdownChunks.chunks[position - 1];
         const postChunk = this.markdownChunks.chunks[position + 1];
         if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {

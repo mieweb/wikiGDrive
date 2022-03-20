@@ -54,6 +54,8 @@ function chunkToText(chunk: MarkdownChunk) {
       switch (chunk.tag) {
         case '/P':
           return '\n';
+        case '/PRE':
+          return '\n';
         case 'BR/':
           return '\n';
       }
