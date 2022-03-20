@@ -78,7 +78,7 @@ After subtable</td>
 
 ## Image
 
-![](Pictures/1000000000000200000001804F9AAE46CD6D0DF2.gif)
+![](1000000000000200000001804F9AAE46CD6D0DF2.gif)
 
 ## Preformatted Text
 
