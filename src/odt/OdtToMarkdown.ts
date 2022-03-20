@@ -21,12 +21,17 @@ import {MarkdownChunks} from './MarkdownChunks';
 import {StateMachine} from './StateMachine';
 import {inchesToSpaces, spaces} from './utils';
 
+function baseFileName(fileName) {
+  return fileName.replace(/.*\//, '');
+}
+
 export class OdtToMarkdown {
 
   private readonly stateMachine: StateMachine;
   private readonly styles: { [p: string]: Style } = {};
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
+  private picturesDir = '';
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles) {
     this.stateMachine = new StateMachine(this.chunks);
@@ -174,7 +179,7 @@ export class OdtToMarkdown {
       return;
     }
     if (drawFrame.image) {
-      const imageLink = drawFrame.image.href;
+      const imageLink = this.picturesDir + baseFileName(drawFrame.image.href);
       const altText = drawFrame.description?.value || '';
       if (imageLink.endsWith('.svg')) {
         this.stateMachine.pushTag('SVG/', { href: imageLink, alt: altText });
@@ -418,5 +423,9 @@ export class OdtToMarkdown {
       txt = txt.replace(new RegExp(id, 'g'), slug);
     }
     return txt;
+  }
+
+  setPicturesDir(picturesDir: string) {
+    this.picturesDir = picturesDir;
   }
 }
