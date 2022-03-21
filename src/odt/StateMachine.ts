@@ -152,6 +152,14 @@ export class StateMachine {
       this.markdownChunks.removeChunk(payload.position);
     }
 
+    if (tag === '/I') {
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
+        this.markdownChunks.removeChunk(payload.position);
+        this.markdownChunks.removeChunk(this.currentLevel.payload.position);
+      }
+    }
+
     if (tag === '/P' || tag === '/PRE') {
       const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
       switch (this.currentMode) {
@@ -221,7 +229,6 @@ export class StateMachine {
     for (let position = 0; position < this.markdownChunks.length; position++) {
       const chunk = this.markdownChunks.chunks[position];
 
-
       if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
         const preChunk = this.markdownChunks.chunks[position - 1];
         const tag2 = chunk.tag.substring(1);
@@ -284,6 +291,19 @@ export class StateMachine {
         const preChunk = this.markdownChunks.chunks[position - 2];
         if (preChunk.isTag && preChunk.tag === 'PRE') {
           preChunk.payload.lang = chunk.text.substring(3);
+          this.markdownChunks.removeChunk(position);
+          position--;
+          continue;
+        }
+      }
+    }
+
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+      if (chunk.isTag && chunk.tag === '/B') {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        if (preChunk.isTag && preChunk.tag === 'B') {
+          this.markdownChunks.removeChunk(position - 1);
           this.markdownChunks.removeChunk(position);
           position--;
           continue;
