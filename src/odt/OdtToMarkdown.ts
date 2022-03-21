@@ -382,7 +382,9 @@ export class OdtToMarkdown {
   async listToText(list: TextList): Promise<void> {
     const listStyle = this.getListStyle(list.styleName);
 
-    this.stateMachine.pushTag('UL', { counterId: list.id, listStyle });
+    const continueNumbering = list.continueNumbering === 'true';
+
+    this.stateMachine.pushTag('UL', { counterId: list.id, listStyle, continueNumbering });
     for (const listItem of list.list) {
       this.stateMachine.pushTag('LI', { counterId: list.id, listStyle });
       for (const item of listItem.list) {

@@ -25,6 +25,7 @@ export interface TagPayload {
   number?: number;
   style?: Style;
   listStyle?: ListStyle;
+  continueNumbering?: boolean;
   listLevel?: number;
   bookmarkName?: string;
 }

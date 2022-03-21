@@ -17,6 +17,7 @@ export class StateMachine {
   headersMap: { [id: string]: string } = {};
 
   counters: { [id: string]: number } = {};
+  private preserveMinLevel = 999;
 
   constructor(public markdownChunks: MarkdownChunks) {
   }
@@ -25,7 +26,7 @@ export class StateMachine {
     if (this.counters[styleName]) {
       return this.counters[styleName];
     }
-    return 1;
+    return 0;
   }
 
   storeListNo(styleName: string, val: number) {
@@ -33,6 +34,22 @@ export class StateMachine {
       return;
     }
     this.counters[styleName] = val;
+  }
+
+  clearListsNo(styleNamePrefix: string, minLevel) {
+    for (const k in this.counters) {
+      if (!k.startsWith(styleNamePrefix)) {
+        continue;
+      }
+      const level = parseInt(k.substring(styleNamePrefix.length));
+      if (level < minLevel) {
+        continue;
+      }
+      if (level > minLevel + 1) {
+        // continue;
+      }
+      this.counters[k] = 0;
+    }
   }
 
   get parentLevel() {
@@ -47,17 +64,39 @@ export class StateMachine {
     }
   }
 
+  getParentListStyleName(): string {
+    for (let i = this.tagsTree.length - 1; i >=0; i--) {
+      const leaf = this.tagsTree[i];
+      if (leaf.tag === 'UL') {
+        if (leaf.payload.listStyle?.name) {
+          return leaf.payload.listStyle.name;
+        }
+      }
+    }
+    return null;
+  }
+
   pushTag(tag: TAG, payload: TagPayload = {}) {
     payload.position = this.markdownChunks.length;
     if (tag === 'UL') {
       this.listLevel++;
       payload.listLevel = this.listLevel;
-      payload.number = this.fetchListNo(payload.listStyle?.name);
+
+      if (payload.continueNumbering) {
+        this.preserveMinLevel = this.listLevel;
+      }
+
+      if (!(this.preserveMinLevel <= this.listLevel)) {
+        this.clearListsNo((payload.listStyle?.name || this.getParentListStyleName()) + '_', this.listLevel);
+      }
     }
     if (tag === 'LI') {
       if (this.currentLevel?.tag === 'UL') {
         payload.listLevel = this.currentLevel.payload.listLevel;
-        payload.number = this.currentLevel.payload.number;
+        const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
+        payload.number = this.fetchListNo(listStyleName);
+        payload.number++;
+        this.storeListNo(listStyleName, payload.number);
       }
     }
 
@@ -207,12 +246,14 @@ export class StateMachine {
 
     if (tag === '/LI') {
       if (this.currentLevel?.tag === 'UL') {
-        this.currentLevel.payload.number++;
-        this.storeListNo(this.currentLevel.payload.listStyle?.name, this.currentLevel.payload.number);
+        // this.currentLevel.payload.number++;
+        // const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + this.listLevel;
+        // this.storeListNo(listStyleName, this.currentLevel.payload.number);
       }
     }
     if (tag === '/UL') {
       this.listLevel--;
+      this.preserveMinLevel = 999;
     }
   }
 
