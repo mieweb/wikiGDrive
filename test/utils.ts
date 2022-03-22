@@ -8,9 +8,9 @@ export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
 }
 
-export function compareTexts(input, output) {
+export function compareTexts(input, output, ignoreWhitespace = true) {
   const diff = diffLines(input, output, {
-    ignoreWhitespace: true,
+    ignoreWhitespace
   }).filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
 
   for (const part of diff) {

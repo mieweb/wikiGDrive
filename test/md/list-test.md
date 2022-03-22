@@ -26,10 +26,10 @@ Action items that are configured with a Trigger Date of **Prior Action (Complet
       3. llevel3_3
       4. llevel3_4
    10. level2_10
-       1. lllevel3_1
+      1. lllevel3_1
    11. level2_11
    12. level2_12
-       1. llllevel3_1
+      1. llllevel3_1
    13. level2_13
    14. level2_14
 
