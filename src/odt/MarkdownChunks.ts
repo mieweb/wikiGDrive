@@ -45,6 +45,14 @@ export interface MarkdownTagChunk {
 
 type MarkdownChunk = MarkdownTextChunk | MarkdownTagChunk;
 
+function debugChunkToText(chunk: MarkdownChunk) {
+  if (chunk.isTag === false) {
+    return chunk.text;
+  }
+
+  return chunk.tag;
+}
+
 function chunkToText(chunk: MarkdownChunk) {
   if (chunk.isTag === false) {
     return chunk.text;
@@ -216,6 +224,7 @@ export class MarkdownChunks {
   }
 
   toString() {
+    // console.log(this.chunks.map(c => debugChunkToText(c)).join('\n'));
     return this.chunks.map(c => chunkToText(c)).join('');
   }
 
