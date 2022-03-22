@@ -135,6 +135,8 @@ export class StateMachine {
             const listStyle = this.parentLevel.payload.listStyle || this.currentLevel.payload.listStyle;
             const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
 
+            payload.listLevel = level;
+
             if (isNumeric) {
               payload.number = this.parentLevel.payload.number;
             } else {

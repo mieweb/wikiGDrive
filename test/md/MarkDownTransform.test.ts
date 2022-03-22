@@ -74,9 +74,8 @@ describe('MarkDownTransformTest', () => {
   it('test ./list-test.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/list-test.md').toString();
     const markdown = await transformOdt('list-test');
-    assert.ok(compareTexts(testMarkdown, markdown));
+    assert.ok(compareTexts(testMarkdown, markdown, false));
   });
-
 
   it('test ./strong-headers.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/strong-headers.md').toString();
