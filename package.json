@@ -75,7 +75,7 @@
     "js-yaml": "4.1.0",
     "jszip": "^3.7.0",
     "listr2": "^3.14.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "node-fetch": "2.6.7",
     "nunjucks": "^3.2.3",
     "open": "^7.4.2",
