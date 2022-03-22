@@ -343,6 +343,8 @@ export class StateMachine {
       '/I': 'I',
     };
 
+    const double = ['B', 'I', '/B', '/I'];
+
     for (let position = 0; position < this.markdownChunks.length; position++) {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag && Object.keys(matching).indexOf(chunk.tag) > -1) {
@@ -351,6 +353,15 @@ export class StateMachine {
           this.markdownChunks.removeChunk(position);
           this.markdownChunks.removeChunk(position - 1);
           position-=2;
+          continue;
+        }
+      }
+
+      if (chunk.isTag && double.indexOf(chunk.tag) > -1) {
+        const preChunk = this.markdownChunks.chunks[position - 1];
+        if (preChunk.isTag && preChunk.tag == chunk.tag) {
+          this.markdownChunks.removeChunk(position);
+          position--;
           continue;
         }
       }
