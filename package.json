@@ -83,7 +83,7 @@
     "relateurl": "0.2.7",
     "sharp": "^0.29.3",
     "sharp-phash": "^2.0.0",
-    "nodegit": "0.26.1",
+    "nodegit": "0.26.3",
     "slugify": "1.6.5",
     "stream": "^0.0.2",
     "ts-node": "^10.4.0",
