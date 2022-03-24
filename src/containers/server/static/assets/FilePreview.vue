@@ -1,8 +1,8 @@
 <template>
   <div>
     <ul class="mui-tabs__bar">
-      <li :class="{ 'mui--is-active': activeTab === 'markdown' }"><a @click.prevent.stop="activeTab = 'markdown'" data-mui-toggle="tab">Preview</a></li>
-      <li :class="{ 'mui--is-active': activeTab === 'git' }"><a @click.prevent.stop="activeTab = 'git'" data-mui-toggle="tab">Git</a></li>
+      <li :class="{ 'mui--is-active': activeTab === 'markdown' }"><a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab">Preview</a></li>
+      <li :class="{ 'mui--is-active': activeTab === 'git' }"><a @click.prevent.stop="setActiveTab('git')" data-mui-toggle="tab">Git</a></li>
       <button v-if="hasSync" type="button" @click="$emit('sync')" class="mui-btn mui-btn--small mui--pull-right"><i class="fa-solid fa-rotate" :class="{'fa-spin': preview.syncing}"></i> Sync</button>
     </ul>
 
@@ -26,6 +26,9 @@ export default {
     MarkDown,
   },
   props: {
+    activeTab: {
+      type: String
+    },
     hasSync: {
       type: Boolean,
       default: false
@@ -33,10 +36,10 @@ export default {
     preview: Object,
     git: Object
   },
-  data() {
-    return {
-      activeTab: 'markdown',
-    };
+  methods: {
+    setActiveTab(tab) {
+      this.$router.replace({ hash: '#' + tab });
+    }
   }
 }
 </script>

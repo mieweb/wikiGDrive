@@ -3,7 +3,7 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <FilePreview :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>
@@ -26,6 +26,7 @@ export default {
   },
   data() {
     return {
+      activeTab: 'preview',
       file: null,
       preview: {},
       git: {},
@@ -37,6 +38,15 @@ export default {
     setInterval(() => {
       this.runInspect();
     }, 2000);
+  },
+  watch: {
+    async $route() {
+      await this.fetch();
+      this.activeTab = this.$route.hash.replace(/^#/, '');
+    }
+  },
+  mounted() {
+    this.activeTab = this.$route.hash.replace(/^#/, '');
   },
   methods: {
     async fetch() {

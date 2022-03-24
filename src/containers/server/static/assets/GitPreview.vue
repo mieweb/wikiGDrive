@@ -92,6 +92,10 @@ export default {
       });
     },
     commit() {
+      if (!this.message) {
+        alert('No commit message');
+        return;
+      }
       this.$emit('commit', {
         message: this.message
       });
