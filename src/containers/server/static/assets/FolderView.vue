@@ -25,7 +25,7 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :preview="preview" :git="git" @setup="gitSetup" @commit="commit" @push="push" />
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @setup="gitSetup" @commit="commit" @push="push" />
       </div>
     </template>
   </BaseLayout>
@@ -66,9 +66,13 @@ export default {
     }, 2000);
   },
   watch: {
-    $route() {
-      this.fetch();
+    async $route() {
+      await this.fetch();
+      this.activeTab = this.$route.hash.replace(/^#/, '');
     }
+  },
+  mounted() {
+    this.activeTab = this.$route.hash.replace(/^#/, '');
   },
   methods: {
     async fetch() {
