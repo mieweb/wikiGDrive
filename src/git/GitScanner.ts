@@ -91,18 +91,23 @@ export class GitScanner {
       });
 
       const headCommit = await repo.getReferenceCommit('refs/heads/master');
-      const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+      try {
+        const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+        const index = await Merge.commits(repo, headCommit, remoteCommit, {
+          fileFavor: Merge.FILE_FAVOR.OURS
+        });
 
-      const index = await Merge.commits(repo, headCommit, remoteCommit, {
-        fileFavor: Merge.FILE_FAVOR.OURS
-      });
-
-      if (!index.hasConflicts()) {
-        const oid = await index.writeTreeTo(repo);
-        const committer = Signature.now('WikiGDrive', this.email);
-        await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
-        const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
-        await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+        if (!index.hasConflicts()) {
+          const oid = await index.writeTreeTo(repo);
+          const committer = Signature.now('WikiGDrive', this.email);
+          await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
+          const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+          await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+        }
+      } catch (err) {
+        if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
+          throw err;
+        }
       }
 
       const origin = await repo.getRemote('origin');
