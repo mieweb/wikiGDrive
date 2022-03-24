@@ -33,6 +33,7 @@ jobs:
           -v wikiGDriveExample:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           --publish 127.0.0.1:3000:3000 \
+          --restart unless-stopped \
           wikigdrive-prod wikigdrive-ts \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
