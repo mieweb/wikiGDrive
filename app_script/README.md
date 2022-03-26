@@ -29,3 +29,7 @@ Top menu -> Run -> Test as add-on...
 4. Save
 5. Test
 
+
+# Notes for Publishing
+
+* https://console.cloud.google.com/home/dashboard?project=wikigdrive
