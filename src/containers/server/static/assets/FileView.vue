@@ -10,7 +10,7 @@
 </template>
 <script lang="ts">
 import BaseLayout from './BaseLayout.vue';
-import {UiMixin} from './UiMixin.mjs';
+import {DEFAULT_TAB, UiMixin} from './UiMixin.mjs';
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
 import FilePreview from './FilePreview.vue';
@@ -26,7 +26,7 @@ export default {
   },
   data() {
     return {
-      activeTab: 'preview',
+      activeTab: DEFAULT_TAB,
       file: null,
       preview: {},
       git: {},
@@ -42,11 +42,11 @@ export default {
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '');
+      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '');
+    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
   },
   methods: {
     async fetch() {
