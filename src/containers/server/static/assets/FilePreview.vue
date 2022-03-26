@@ -20,6 +20,7 @@ import MarkDown from './MarkDown.vue';
 import GitPreview from './GitPreview.vue';
 
 export default {
+  name: 'FilePreview',
   mixins: [UtilsMixin],
   components: {
     GitPreview,

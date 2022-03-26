@@ -1,3 +1,5 @@
+export const DEFAULT_TAB = 'markdown';
+
 export const UiMixin = {
   data() {
     return {

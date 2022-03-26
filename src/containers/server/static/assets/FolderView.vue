@@ -33,7 +33,7 @@
 <script lang="ts">
 import BaseLayout from './BaseLayout.vue';
 import MarkDown from './MarkDown.vue';
-import {UiMixin} from './UiMixin.mjs';
+import {DEFAULT_TAB, UiMixin} from './UiMixin.mjs';
 import FilesTable from './FilesTable.vue';
 import {UtilsMixin} from './UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
@@ -52,7 +52,7 @@ export default {
   mixins: [ UtilsMixin, UiMixin, GitMixin ],
   data() {
     return {
-      activeTab: 'status',
+      activeTab: DEFAULT_TAB,
       files: [],
       parentId: '',
       preview: {},
@@ -68,11 +68,11 @@ export default {
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '');
+      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '');
+    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
   },
   methods: {
     async fetch() {
