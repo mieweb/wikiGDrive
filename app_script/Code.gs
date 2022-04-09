@@ -1,3 +1,12 @@
+// This is in the script.  Make sure you update this with the next version number before deploying here: https://docs.google.com/document/d/1ICVsTdxvO5fkZe6wZy_Hug_nMZaS71ZLcGcP7K2mwXc/edit#heading=h.rsldzpmzud
+const VERSION=8;
+
+// To manage the deployment of this:
+// Notes on the madness are here:
+//    https://docs.google.com/document/d/1ICVsTdxvO5fkZe6wZy_Hug_nMZaS71ZLcGcP7K2mwXc/edit#
+// Quick link to update Version Number:
+//    https://console.cloud.google.com/apis/api/appsmarket-component.googleapis.com/googleapps_sdk?authuser=0&organizationId=309138717477&project=wikigdrive
+
 function onOpen(e) {
     const menu = DocumentApp.getUi().createAddonMenu(); // Or DocumentApp or SlidesApp or FormApp.
     menu.addItem('Sync', 'markFileDirty');
@@ -9,12 +18,16 @@ function onOpen(e) {
 function getRootFolder(fileId) {
     const file = DriveApp.getFileById(fileId);
     let parentFolder = null;
-    const parents = file.getParents();
+    let parents = file.getParents();
     while (parents.hasNext()) {
         parentFolder = parents.next();
+//        console.log("Parent id:" + parentFolder.getId());  
+        parents = parentFolder.getParents(); 
+
     }
     return parentFolder;
 }
+
 
 function getURL() {
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -53,7 +66,7 @@ function showSidebar() { // https://developers.google.com/apps-script/guides/htm
     const html = `<iframe src="${URL}/drive/${rootFolder.getId()}/file/${doc.getId()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" ></iframe>`;
 
     const htmlOutput = HtmlService.createHtmlOutput(html);
-    htmlOutput.setTitle('wikigdrive');
+    htmlOutput.setTitle('wikigdrive (' + VERSION + ')' );
     htmlOutput.setWidth(350)
     htmlOutput.addMetaTag('viewport', 'width=device-width, initial-scale=1');
 
