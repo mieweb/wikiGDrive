@@ -63,3 +63,36 @@ wikigdrive --service_account /service_account.json  drives
 |-- .tree.json                   # a listin of all the files
 |-- 1KZ45LytrvLZ3Np_EC_x5Uv6fy8xHLhvJyDNfC6i4xtc.odt
 `-- 1wlRv3bZ5Z84TD9Oba4-lEorfV_R9aKhJyRS2iCInA7w.odt
+
+
+/data/0APmwe3yIhGabUk9PVA_transform# tree -a
+|-- .git.json
+|-- .gitignore
+|-- .private
+|   |-- id_rsa
+|   `-- id_rsa.pub
+|-- .tree.json
+|-- .wgd-directory.yaml
+|-- .wgd-local-links.csv
+|-- .wgd-local-log.csv
+|-- example-folder
+|   |-- .wgd-directory.yaml
+|   `-- 1
+|       |-- .wgd-directory.yaml
+|       `-- 2
+|           |-- .wgd-directory.yaml
+|           `-- 3
+|               |-- .wgd-directory.yaml
+|               `-- 4
+|                   |-- .wgd-directory.yaml
+|                   |-- sub-folder-example-file.assets
+|                   |-- sub-folder-example-file.debug.xml
+|                   `-- sub-folder-example-file.md
+|-- index.assets
+|-- index.debug.xml
+|-- index.md
+|-- readme.assets
+|-- readme.debug.xml
+`-- readme.md
+
+```
