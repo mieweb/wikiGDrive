@@ -156,7 +156,7 @@ export class ServerContainer extends Container {
         }
 
         let driveFileSystem = await this.filesService.getSubFileService(driveId);
-        drive = await driveFileSystem.readJson('.drive.json');
+        drive = await driveFileSystem.readJson('.folder.json');
         if (folderId) {
           const driveTree = await driveFileSystem.readJson('.tree.json');
           const [file, drivePath] = generateTreePath(folderId, driveTree, 'id');

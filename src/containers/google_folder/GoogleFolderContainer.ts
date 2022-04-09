@@ -59,7 +59,6 @@ export class GoogleFolderContainer extends Container {
     }
 
     await downloader.finished();
-    await this.filesService.writeJson('.drive.json', await this.googleDriveService.getFile(this.auth, this.params.folderId));
 
     const tree = await this.regenerateTree(this.filesService);
     await this.filesService.writeJson('.tree.json', tree);
