@@ -4,11 +4,16 @@ import path from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
 import {MainService} from './MainService';
-import pkg from '../package.json';
 import dotenv from 'dotenv';
 import {CliParams} from './model/CliParams';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function usage() {
+  const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json')).toString());
+
   console.log(
     `version: ${pkg.version}${`
 Usage:
@@ -26,7 +31,7 @@ Main commands:
     wikigdrive add [folder_id_or_url]
         --drive_id
         --drive [shared drive url]
-        --dest (current working folder)
+        --workdir (current working folder)
         --link_mode [mdURLs|dirURLs|uglyURLs]
         --without-folder-structure
 
@@ -45,7 +50,7 @@ Other commands:
 Options:
     --config_dir (.wgd)
     --disable-progress
-    --dest (current working folder)
+    --workdir (current working folder)
 
 Examples:
     $ wikigdrive init
@@ -64,16 +69,12 @@ async function main() {
   // PWD is null on Windows, so we can set it here
   process.env.PWD = process.cwd();
 
-  const default_wgd_dir = (argv['dest'] && fs.existsSync(path.join(argv['dest'], '.wgd')))
-    ? path.join(argv['dest'], '.wgd')
-    : path.join(process.env.PWD, '.wgd');
-
   const params: CliParams = {
     command: argv._[0],
     args: argv._.slice(1),
     drive: argv['drive'],
-    config_dir: argv['config_dir'] || default_wgd_dir,
-    workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || process.env.PWD,
+    config_dir: argv['config_dir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
+    workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,
