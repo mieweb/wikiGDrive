@@ -3,8 +3,8 @@ import winston from 'winston';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
-import path from 'path';
 import {GoogleFile} from '../../model/GoogleFile';
+import {fileNameToExt} from '../transform/utils';
 
 export class TaskFetchAsset extends QueueTask {
 
@@ -18,7 +18,7 @@ export class TaskFetchAsset extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    const targetPath = this.file.id + path.extname(this.file.name);
+    const targetPath = this.file.id + fileNameToExt(this.file.name);
 
     if (this.file.md5Checksum) {
       const localMd5 = await this.fileService.md5File(targetPath);
