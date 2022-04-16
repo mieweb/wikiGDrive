@@ -128,8 +128,11 @@ export class JobManagerContainer extends Container {
     }, { filesIds });
     await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
     await this.engine.registerContainer(downloadContainer);
-    await downloadContainer.run();
-    await this.engine.unregisterContainer(downloadContainer.params.name);
+    try {
+      await downloadContainer.run();
+    } finally {
+      await this.engine.unregisterContainer(downloadContainer.params.name);
+    }
 
     const transformContainer = new TransformContainer({
       name: folderId
@@ -139,8 +142,11 @@ export class JobManagerContainer extends Container {
       await this.filesService.getSubFileService(folderId + '_transform', '/')
     );
     await this.engine.registerContainer(transformContainer);
-    await transformContainer.run(folderId);
-    await this.engine.unregisterContainer(transformContainer.params.name);
+    try {
+      await transformContainer.run(folderId);
+    } finally {
+      await this.engine.unregisterContainer(transformContainer.params.name);
+    }
   }
 
   private async runJob(folderId: FileId, job: Job) {
