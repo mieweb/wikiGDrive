@@ -149,7 +149,7 @@ export class ServerContainer extends Container {
           const transformedTree = await transformedFileSystem.readJson('.tree.json');
           if (transformedTree) {
             const [file, transformPath] = generateTreePath(folderId, transformedTree, 'name');
-            parentId = file.parentId || driveId;
+            parentId = file?.parentId || driveId;
             if (transformPath) {
               transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath, '');
             }

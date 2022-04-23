@@ -2,9 +2,8 @@
 
 import {EventEmitter} from 'events';
 import winston from 'winston';
-import 'winston-daily-rotate-file';
 
-import {createLogger} from './utils/logger';
+import {createLogger} from './utils/logger/logger';
 import {ContainerEngine} from './ContainerEngine';
 import {ServerContainer} from './containers/server/ServerContainer';
 import {GoogleFolderContainer} from './containers/google_folder/GoogleFolderContainer';
@@ -25,7 +24,6 @@ export class MainService {
   private readonly eventBus: EventEmitter;
   private readonly command: string;
   private readonly logger: winston.Logger;
-  private readonly disable_progress: boolean;
   private containerEngine: ContainerEngine;
   private paths: Paths;
   private mainFileService: FileContentService;
@@ -33,7 +31,6 @@ export class MainService {
 
   constructor(private params: CliParams) {
     this.command = this.params.command;
-    this.disable_progress = !!params.disable_progress || this.command === 'drives' || this.command === 'status';
     this.eventBus = new EventEmitter();
     this.eventBus.setMaxListeners(0);
     if (params.debug.indexOf('main') > -1) {
@@ -41,7 +38,7 @@ export class MainService {
     }
 
     this.paths = envPaths('wikigdrive', {suffix: null});
-    this.logger = createLogger(this.eventBus);
+    this.logger = createLogger(this.eventBus, this.params.workdir);
   }
 
   attachDebug() {
@@ -92,6 +89,13 @@ export class MainService {
 
     this.containerEngine = new ContainerEngine(this.logger, this.mainFileService);
 
+    this.eventBus.on('panic:invalid_grant', (error) => {
+      // if (configService) {
+      //   await configService.saveGoogleAuth(null);
+      //   await configService.flushData();
+      // }
+      process.exit(1);
+    });
     this.eventBus.on('panic', (error) => {
       throw error;
       /*
@@ -304,35 +308,6 @@ export class MainService {
     }
 
     await this.containerEngine.flushData();
-/*
-    this.eventBus.on('drive_config:loaded', async (drive_config) => {
-      const logsDir = path.join(this.params.config_dir, 'logs');
-
-      this.logger.add(new winston.transports.DailyRotateFile({
-        format: winston.format.json(),
-        zippedArchive: true,
-        maxSize: '20m',
-        maxFiles: '14d',
-        dirname: logsDir,
-        createSymlink: true,
-        symlinkName: 'error.log',
-        filename: '%DATE%-error.log',
-        level: 'error',
-        json: true
-      }));
-      this.logger.add(new winston.transports.DailyRotateFile({
-        format: winston.format.json(),
-        zippedArchive: true,
-        maxSize: '20m',
-        maxFiles: '14d',
-        dirname: logsDir,
-        createSymlink: true,
-        symlinkName: 'combined.log',
-        filename: '%DATE%-combined.log',
-        json: true
-      }));
-    });
-*/
   }
 
 }

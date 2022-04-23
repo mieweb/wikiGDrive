@@ -10,6 +10,7 @@ import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
 import {FileContentService} from '../../utils/FileContentService';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
+import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -27,7 +28,8 @@ export class GoogleFolderContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename });
+    const dirname = path.join(this.filesService.getRealPath(), '.logs');
+    this.logger = engine.logger.child({ filename: __filename, dirname });
     this.googleDriveService = new GoogleDriveService(this.logger);
     const googleApiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
     this.auth = googleApiContainer.getAuth();

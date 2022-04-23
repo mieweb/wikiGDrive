@@ -1,4 +1,7 @@
 import winston from 'winston';
+import {EventEmitter} from 'events';
+import path from 'path';
+import {DailyRotateFile} from './DailyRotateFile';
 
 const myFormat = winston.format.printf((params) => {
   const { level, message, timestamp } = params;
@@ -29,12 +32,7 @@ const myFormat = winston.format.printf((params) => {
   }
 });
 
-export function createLogger(eventBus) {
-  let configService;
-  eventBus.on('configService:initialized', (configServiceParam) => {
-    configService = configServiceParam;
-  });
-
+export function createLogger(eventBus: EventEmitter, workdir: string) {
   const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -57,6 +55,31 @@ export function createLogger(eventBus) {
     )
   }));
 
+  const dirname = path.join(workdir, '.logs');
+  logger.add(new DailyRotateFile({
+    format: winston.format.json(),
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+    dirname: dirname,
+    createSymlink: true,
+    symlinkName: 'error.log',
+    filename: '%DATE%-error.log',
+    level: 'error',
+    json: true
+  }));
+  logger.add(new DailyRotateFile({
+    format: winston.format.json(),
+    zippedArchive: true,
+    maxSize: '20m',
+    maxFiles: '14d',
+    dirname: dirname,
+    createSymlink: true,
+    symlinkName: 'combined.log',
+    filename: '%DATE%-combined.log',
+    json: true
+  }));
+
   process
     .on('unhandledRejection', async (reason: any) => {
       console.error(reason);
@@ -67,10 +90,8 @@ export function createLogger(eventBus) {
       }
 
       if (reason?.response?.data?.error === 'invalid_grant') {
-        if (configService) {
-          await configService.saveGoogleAuth(null);
-          await configService.flushData();
-        }
+        eventBus.emit('panic:invalid_grant');
+        return;
       }
       process.exit(1);
     })
