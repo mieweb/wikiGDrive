@@ -10,7 +10,7 @@ export interface GoogleFile extends SimpleFile {
   parentId?: FileId;
   parents: string[];
   size?: number;
-  version: number;
+  version: string;
   trashed?: boolean;
   modifiedTime?: DateISO;
   lastAuthor?: string;

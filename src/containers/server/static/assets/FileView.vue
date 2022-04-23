@@ -73,13 +73,10 @@ export default {
       }
       this.preview.syncing = true;
       const fileId = this.$route.params.fileId;
-      try {
-        await fetch(`/api/drive/${this.driveId}/sync/${fileId}`, {
-          method: 'post'
-        });
-        await this.fetch();
-      } finally {
-      }
+      await fetch(`/api/drive/${this.driveId}/sync/${fileId}`, {
+        method: 'post'
+      });
+      await this.fetch();
     },
     async runInspect() {
       try {
@@ -110,8 +107,9 @@ export default {
         if (oldPreviewSyncing && !this.preview.syncing) {
           await this.fetch();
         }
+        // eslint-disable-next-line no-empty
       } catch (error404) {}
     }
   }
-}
+};
 </script>

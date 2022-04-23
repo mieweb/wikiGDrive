@@ -19,9 +19,7 @@ export default {
   data() {
     return {
       url: ''
-    }
-  },
-  created() {
+    };
   },
   methods: {
     async submit() {
@@ -38,10 +36,7 @@ export default {
       });
       const json = await response.json();
       await this.$router.push({ name: 'drive', params: { driveId: json.drive_id } });
-    },
-    share() {
-
     }
   }
-}
+};
 </script>

@@ -41,7 +41,7 @@ function jsonToErrorMessage(json) {
   }
 }
 
-export async function handleGoogleError(err, reject, context) {
+export async function handleGoogleError(err, reject) {
   if (err.dest) {
     delete err.dest;
   }

@@ -42,5 +42,5 @@ export default {
       this.$router.replace({ hash: '#' + tab });
     }
   }
-}
+};
 </script>

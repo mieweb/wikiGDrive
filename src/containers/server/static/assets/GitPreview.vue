@@ -33,18 +33,18 @@
       </div>
       <table class="mui-table mui-table--bordered" v-if="git.history && git.history.length > 0">
         <thead>
-        <tr>
-          <th>Date</th>
-          <th>Author</th>
-          <th>Message</th>
-        </tr>
+          <tr>
+            <th>Date</th>
+            <th>Author</th>
+            <th>Message</th>
+          </tr>
         </thead>
         <tbody>
-        <tr v-for="item of git.history">
-          <td>{{item.date}}</td>
-          <td>{{item.author_name}}</td>
-          <td>{{item.message}}</td>
-        </tr>
+          <tr v-for="(item, idx) of git.history" :key="idx">
+            <td>{{item.date}}</td>
+            <td>{{item.author_name}}</td>
+            <td>{{item.message}}</td>
+          </tr>
         </tbody>
       </table>
 
@@ -58,7 +58,7 @@
           </div>
           <button type="button" class="mui-btn mui-btn--primary" @click="setup">Change remote</button>
           <div class="mui-textfield">
-            <textarea rows="10" placeholder="Deploy key" readonly v-model="git.public_key" @click="copyEmail"></textarea>
+            <textarea rows="10" placeholder="Deploy key" readonly :value="git.public_key" @click="copyEmail"></textarea>
           </div>
         </form>
       </div>
@@ -78,7 +78,7 @@ export default {
       message: '',
       remote_url: '',
       remote_branch: ''
-    }
+    };
   },
   created() {
     this.remote_url = this.git?.remote_url || '';
@@ -101,5 +101,5 @@ export default {
       });
     }
   }
-}
+};
 </script>

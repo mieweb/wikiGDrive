@@ -27,15 +27,11 @@
       <div v-if="preview.mimeType === 'text/x-markdown'">
         <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @setup="gitSetup" @commit="commit" @push="push" />
       </div>
-      <div v-else>
-        EEE
-      </div>
     </template>
   </BaseLayout>
 </template>
 <script lang="ts">
 import BaseLayout from './BaseLayout.vue';
-import MarkDown from './MarkDown.vue';
 import {DEFAULT_TAB, UiMixin} from './UiMixin.mjs';
 import FilesTable from './FilesTable.vue';
 import {UtilsMixin} from './UtilsMixin.mjs';
@@ -48,7 +44,6 @@ export default {
   components: {
     NotRegistered,
     FilesTable,
-    MarkDown,
     BaseLayout,
     FilePreview
   },
@@ -86,10 +81,9 @@ export default {
 
       const folderId = this.$route.params.folderId;
       const fileId = this.$route.params.fileId;
-      console.log('fffffffffff');
       const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
       const json = await response.json();
-      console.log('fffffffffff2', json);
+      console.log('Folder fetch', json);
 
       this.notRegistered = !!json.not_registered;
       if (this.notRegistered) {
@@ -112,12 +106,9 @@ export default {
     },
     async syncAll() {
       this.rootFolder.syncing = true;
-      try {
-        await fetch(`/api/drive/${this.driveId}/sync`, {
-          method: 'post'
-        });
-      } finally {
-      }
+      await fetch(`/api/drive/${this.driveId}/sync`, {
+        method: 'post'
+      });
     },
     async runInspect() {
       try {
@@ -146,8 +137,9 @@ export default {
         if (oldRootSyncing && !this.rootFolder.syncing) {
           this.refresh();
         }
+        // eslint-disable-next-line no-empty
       } catch (error404) {}
     }
   }
-}
+};
 </script>

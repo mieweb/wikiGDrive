@@ -15,19 +15,6 @@ export interface Changes {
   files: GoogleFile[];
 }
 
-function removeDuplicates(files) {
-  const retVal = [];
-
-  for (const file of files) {
-    if (retVal.find(entry => entry.id === file.id)) {
-      continue;
-    }
-    retVal.push(file);
-  }
-
-  return retVal;
-}
-
 interface GoogleDriveServiceErrorParams {
   origError: Error;
   isQuotaError: boolean;
@@ -67,7 +54,7 @@ export class GoogleDriveServiceError extends Error {
 }
 
 function apiFileToGoogleFile(apiFile: drive_v3.Schema$File): GoogleFile {
-  const googleFile: GoogleFile = <any>Object.assign({}, apiFile, {
+  const googleFile: GoogleFile = <GoogleFile>Object.assign({}, apiFile, {
     parentId: (apiFile.parents && apiFile.parents.length > 0) ? apiFile.parents[0] : undefined,
     size: apiFile.size ? +apiFile.size : undefined
   });
@@ -192,7 +179,8 @@ export class GoogleDriveService {
         fileId: fileId,
         supportsAllDrives: true,
         // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
-        fields: '*'
+        fields: '*',
+        pageToken: pageToken
       });
 
       const permissions = [];

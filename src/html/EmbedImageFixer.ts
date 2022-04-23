@@ -1,13 +1,22 @@
 import {docs_v1} from 'googleapis';
-import Schema$Document = docs_v1.Schema$Document;
 import {DownloadFile, DownloadFileImage} from '../storage/DownloadFilesStorage';
 import {getImageDistance} from '../utils/getImageMeta';
-import {MimeTypes} from '../model/GoogleFile';
+import Schema$Document = docs_v1.Schema$Document;
 
 const TOLERANCE = 5;
 
+interface ContentRow {
+  paragraph: {
+    elements: ContentRow[];
+  };
+  inlineObjectElement: {
+    src: string;
+    inlineObjectId: string;
+  };
+}
+
 export class EmbedImageFixer {
-  private readonly images: any[];
+  private readonly images: DownloadFileImage[];
   private diagrams: DownloadFile[];
 
   constructor(images: DownloadFileImage[], private imagesDirPath: string) {
@@ -47,13 +56,11 @@ export class EmbedImageFixer {
     return image.pngUrl;
   }
 
-  private async fixEmbedImages(content: any, inlineObjects: {[key: string]: any}, currentNo = 0) {
+  async fixEmbedImages(content: ContentRow[], inlineObjects: {[key: string]: string}, currentNo = 0) {
     for (const item of content) {
       if (item.inlineObjectElement && item.inlineObjectElement.inlineObjectId) {
         const image: DownloadFileImage = this.images[currentNo];
-        const src = await this.fixUrl(image);
-
-        item.inlineObjectElement.src = src;
+        item.inlineObjectElement.src = await this.fixUrl(image);
 
         currentNo++;
       }
