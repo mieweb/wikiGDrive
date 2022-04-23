@@ -147,12 +147,14 @@ export class ServerContainer extends Container {
         let markdownPath = '';
         if (folderId) {
           const transformedTree = await transformedFileSystem.readJson('.tree.json');
-          const [file, transformPath] = generateTreePath(folderId, transformedTree, 'name');
-          parentId = file.parentId || driveId;
-          if (transformPath) {
-            transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath, '');
+          if (transformedTree) {
+            const [file, transformPath] = generateTreePath(folderId, transformedTree, 'name');
+            parentId = file?.parentId || driveId;
+            if (transformPath) {
+              transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath, '');
+            }
+            markdownPath = transformPath;
           }
-          markdownPath = transformPath;
         }
 
         let driveFileSystem = await this.filesService.getSubFileService(driveId);

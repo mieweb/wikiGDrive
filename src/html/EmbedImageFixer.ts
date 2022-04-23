@@ -1,6 +1,6 @@
 import {docs_v1} from 'googleapis';
 import Schema$Document = docs_v1.Schema$Document;
-import {DownloadFile, DownloadFileImage, DownloadFilesStorage} from '../storage/DownloadFilesStorage';
+import {DownloadFile, DownloadFileImage} from '../storage/DownloadFilesStorage';
 import {getImageDistance} from '../utils/getImageMeta';
 import {MimeTypes} from '../model/GoogleFile';
 
@@ -10,7 +10,7 @@ export class EmbedImageFixer {
   private readonly images: any[];
   private diagrams: DownloadFile[];
 
-  constructor(private downloadFilesStorage: DownloadFilesStorage, images: DownloadFileImage[], private imagesDirPath: string) {
+  constructor(images: DownloadFileImage[], private imagesDirPath: string) {
     this.images = images;
   }
 
@@ -67,8 +67,8 @@ export class EmbedImageFixer {
   }
 
   async process(document: Schema$Document) {
-    this.diagrams = await this.downloadFilesStorage.findFiles(file => file.mimeType === MimeTypes.DRAWING_MIME);
-    await this.fixEmbedImages(document.body.content, document.inlineObjects);
+    // this.diagrams = await this.downloadFilesStorage.findFiles(file => file.mimeType === MimeTypes.DRAWING_MIME);
+    // await this.fixEmbedImages(document.body.content, document.inlineObjects);
     return document;
   }
 }

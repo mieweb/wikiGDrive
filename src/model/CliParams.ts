@@ -1,7 +1,6 @@
 import {LinkMode} from './model';
 
 export interface CliParams {
-  config_dir: string;
   link_mode: LinkMode;
   workdir: string;
   drive_id: string;
@@ -10,8 +9,6 @@ export interface CliParams {
   args: string[];
   debug: string[];
   force: boolean;
-
-  disable_progress: boolean;
 
   client_id?: string;
   client_secret?: string;

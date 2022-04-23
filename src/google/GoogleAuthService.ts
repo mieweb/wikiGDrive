@@ -5,7 +5,7 @@ import open from 'open';
 import {promisify} from 'util';
 
 import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
-import {GoogleAuth} from '../storage/ConfigService';
+import {GoogleAuth} from '../model/GoogleAuth';
 import {GetTokenResponse, OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {ServiceAccountJson} from '../model/AccountJson';
 

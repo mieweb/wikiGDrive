@@ -27,6 +27,9 @@
       <div v-if="preview.mimeType === 'text/x-markdown'">
         <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @setup="gitSetup" @commit="commit" @push="push" />
       </div>
+      <div v-else>
+        EEE
+      </div>
     </template>
   </BaseLayout>
 </template>
@@ -83,8 +86,10 @@ export default {
 
       const folderId = this.$route.params.folderId;
       const fileId = this.$route.params.fileId;
+      console.log('fffffffffff');
       const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
       const json = await response.json();
+      console.log('fffffffffff2', json);
 
       this.notRegistered = !!json.not_registered;
       if (this.notRegistered) {
@@ -101,6 +106,7 @@ export default {
       if (fileId) {
         const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
         this.preview = await response.json();
+        console.log('preview', this.preview);
         this.git = this.preview.git;
       }
     },

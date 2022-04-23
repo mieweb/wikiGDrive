@@ -6,7 +6,7 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';
-import {GoogleAuth} from '../../storage/ConfigService';
+import {GoogleAuth} from '../../model/GoogleAuth';
 import {Drive} from '../folder_registry/FolderRegistryContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
