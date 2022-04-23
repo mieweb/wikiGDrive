@@ -1,7 +1,7 @@
 import {QueueTask} from '../google_folder/QueueTask';
 import winston from 'winston';
 import {FileContentService} from '../../utils/FileContentService';
-import {GoogleFile} from '../../model/GoogleFile';
+import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 import {BinaryFile, DrawingFile, LocalFile, MdFile, RedirFile} from '../../model/LocalFile';
 import {SvgTransform} from '../../SvgTransform';
 import {NavigationHierarchy} from './generateNavigationHierarchy';
@@ -12,7 +12,23 @@ import {UnMarshaller} from '../../odt/UnMarshaller';
 import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
-import {googleMimeToExt} from '../google_folder/TaskFetchFolder';
+import {fileNameToExt} from './utils';
+
+export function googleMimeToExt(mimeType: string, fileName: string) {
+  switch (mimeType) {
+    case MimeTypes.APPS_SCRIPT:
+      return 'gs';
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/png':
+      return 'png';
+  }
+
+  if (fileName.indexOf('.') > -1) {
+    return '';
+  }
+  return 'bin';
+}
 
 export class TaskLocalFileTransform extends QueueTask {
   constructor(protected logger: winston.Logger,
@@ -41,20 +57,24 @@ export class TaskLocalFileTransform extends QueueTask {
     const dest = this.destinationDirectory.createWriteStream(this.realFileName);
 
     await new Promise<void>((resolve, reject) => {
-      dest.on('error', err => {
-        reject(err);
-      });
+      try {
+        dest.on('error', err => {
+          reject(err);
+        });
 
-      const ext = googleMimeToExt(this.googleFile.mimeType, this.googleFile.name);
-      const stream = this.googleFolder.createReadStream(`${binaryFile.id}${ext ? '.' + ext : ''}`)
-        .pipe(dest);
+        const ext = fileNameToExt(this.googleFile.name);
+        const stream = this.googleFolder.createReadStream(`${binaryFile.id}${ext ? '.' + ext : ''}`)
+          .pipe(dest);
 
-      stream.on('finish', () => {
-        resolve();
-      });
-      stream.on('error', err => {
+        stream.on('finish', () => {
+          resolve();
+        });
+        stream.on('error', err => {
+          reject(err);
+        });
+      } catch (err) {
         reject(err);
-      });
+      }
     });
   }
 
@@ -65,20 +85,24 @@ export class TaskLocalFileTransform extends QueueTask {
     // const svgPath = this.googleScanner.getFilePathPrefix(drawingFile.id) + '.svg';
 
     await new Promise<void>((resolve, reject) => {
-      dest.on('error', err => {
-        reject(err);
-      });
+      try {
+        dest.on('error', err => {
+          reject(err);
+        });
 
-      const stream = this.googleFolder.createReadStream(`${drawingFile.id}.svg`)
-        .pipe(svgTransform)
-        .pipe(dest);
+        const stream = this.googleFolder.createReadStream(`${drawingFile.id}.svg`)
+          .pipe(svgTransform)
+          .pipe(dest);
 
-      stream.on('finish', () => {
-        resolve();
-      });
-      stream.on('error', err => {
+        stream.on('finish', () => {
+          resolve();
+        });
+        stream.on('error', err => {
+          reject(err);
+        });
+      } catch (err) {
         reject(err);
-      });
+      }
     });
   }
 
