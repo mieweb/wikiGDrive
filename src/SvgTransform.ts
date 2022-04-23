@@ -2,11 +2,9 @@
 
 import { XmlDocument } from 'xmldoc';
 import { Transform } from 'stream';
-import { LinkTranslator } from './LinkTranslator';
 import {urlToFolderId} from './utils/idParsers';
 
 export class SvgTransform extends Transform {
-  private linkTranslator: LinkTranslator;
   private readonly localPath: string;
   private content: string;
 
@@ -49,22 +47,6 @@ export class SvgTransform extends Transform {
     document.eachChild((child) => {
       findLinkInChild(child);
     });
-/*
-    for (let url in urlToRelativePath) {
-      const id = urlToFolderId(url);
-
-      if (id) {
-        const localPath = await this.linkTranslator.urlToDestUrl(id);
-        if (localPath !== id) {
-          urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
-        }
-      } else {
-        const localPath = await this.linkTranslator.urlToDestUrl(url);
-        if (localPath !== url) {
-          urlToRelativePath[url] = this.linkTranslator.convertToRelativeSvgPath(localPath, this.localPath);
-        }
-      }
-    }*/
 
     const replaceLinkInChild = (child) => {
       if (child.attr['xlink:href']) {

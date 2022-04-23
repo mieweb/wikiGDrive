@@ -57,12 +57,12 @@ export default {
   methods: {
     selectFile(googleFile) {
       const folderId = this.$route.params.folderId;
-      console.log('bbb', googleFile, googleFile.mimeType, googleFile.id);
       if (this.isFolder(googleFile)) {
-        console.log('ccc', googleFile.id);
+        console.log('FOLDER', googleFile, googleFile.mimeType, googleFile.id);
         this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: googleFile.id } });
       } else
       if (this.isDocument(googleFile)) {
+        console.log('DOC', { driveId: this.driveId, folderId: folderId || this.driveId, fileId: googleFile.id });
         this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: googleFile.id } });
       }
     }

@@ -48,8 +48,6 @@ Other commands:
     wikigdrive transform
 
 Options:
-    --config_dir (.wgd)
-    --disable-progress
     --workdir (current working folder)
 
 Examples:
@@ -73,7 +71,6 @@ async function main() {
     command: argv._[0],
     args: argv._.slice(1),
     drive: argv['drive'],
-    config_dir: argv['config_dir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
     workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
@@ -88,7 +85,6 @@ async function main() {
     share_email: argv['share_email'] || null,
     git_update_delay: argv['git_update_delay'] || 60,
     force: !!argv['force'],
-    disable_progress: !!argv['disable-progress'],
     server_port: +argv['server']
   };
 
