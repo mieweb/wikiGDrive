@@ -8,7 +8,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
-  'TOC' | '/TOC' | 'SVG/' | 'IMG/';
+  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
@@ -121,6 +121,10 @@ function chunkToText(chunk: MarkdownChunk) {
           return `![](${chunk.payload.href})`;
         case 'IMG/':
           return `![](${chunk.payload.href})`;
+        case 'EMB_SVG':
+          return '<svg>';
+        case '/EMB_SVG':
+          return '</svg>';
       }
       break;
     case 'html':
@@ -207,6 +211,10 @@ function chunkToText(chunk: MarkdownChunk) {
           return '<svg src="${chunk.payload.href}" />';
         case 'IMG/':
           return `<img src="${chunk.payload.href}" />`;
+        case 'EMB_SVG':
+          return '<svg>';
+        case '/EMB_SVG':
+          return '</svg>';
       }
       break;
   }

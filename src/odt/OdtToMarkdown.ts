@@ -1,6 +1,6 @@
 import {
   DocumentContent, DocumentStyles,
-  DrawFrame,
+  DrawFrame, DrawG,
   DrawRect, ListStyle,
   OfficeText,
   ParagraphProperty,
@@ -174,6 +174,11 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('/A', { href: href });
   }
 
+  async drawGToText(drawG: DrawG) {
+    this.stateMachine.pushTag('EMB_SVG');
+    this.stateMachine.pushTag('/EMB_SVG');
+  }
+
   async drawFrameToText(drawFrame: DrawFrame) {
     if (drawFrame.object) { // TODO: MathML
       return;
@@ -318,6 +323,9 @@ export class OdtToMarkdown {
           break;
         case 'draw_frame':
           await this.drawFrameToText(<DrawFrame>child);
+          break;
+        case 'draw_g':
+          await this.drawGToText(<DrawG>child);
           break;
       }
     }
