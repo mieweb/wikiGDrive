@@ -8,7 +8,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
-  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG';
+  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
@@ -28,6 +28,7 @@ export interface TagPayload {
   continueNumbering?: boolean;
   listLevel?: number;
   bookmarkName?: string;
+  pathD?: string;
 }
 
 export interface MarkdownTextChunk {
@@ -122,9 +123,15 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
-          return '<svg>';
+          return '<svg>\n';
         case '/EMB_SVG':
           return '</svg>';
+        case 'EMB_SVG_G':
+          return '<g>\n';
+        case '/EMB_SVG_G':
+          return '</g>\n';
+        case 'EMB_SVG_P/':
+          return `<path d="${chunk.payload.pathD}" />\n`;
       }
       break;
     case 'html':
@@ -212,9 +219,15 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `<img src="${chunk.payload.href}" />`;
         case 'EMB_SVG':
-          return '<svg>';
+          return '<svg>\n';
         case '/EMB_SVG':
           return '</svg>';
+        case 'EMB_SVG_G':
+          return '<g>\n';
+        case '/EMB_SVG_G':
+          return '</g>\n';
+        case 'EMB_SVG_P/':
+          return `<path d="${chunk.payload.pathD}" />\n`;
       }
       break;
   }

@@ -123,10 +123,33 @@ export class DrawFrame implements ParagraphSection {
   description?: SvgDesc;
 }
 
+@XmlElement()
+@XmlAttribute('draw:name', 'name')
+@XmlAttribute('draw:formula', 'formula')
+export class DrawEquation {
+  name: string;
+  formula: string;
+}
 
 @XmlElement()
+@XmlElementChild('draw:equation', 'equations', 'DrawEquation', {isArray: true})
+@XmlAttribute('draw:enhanced-path', 'path')
+export class DrawEnhancedGeometry {
+  equations?: DrawEquation[];
+  path: string;
+}
+
+@XmlElement()
+@XmlElementChild('draw:enhanced-geometry', 'list', 'DrawEnhancedGeometry', {isArray: true})
+export class DrawCustomShape {
+  list: DrawEnhancedGeometry[] = [];
+}
+
+@XmlElement()
+@XmlElementChild('draw:custom-shape', 'list', 'DrawCustomShape', {isArray: true})
 export class DrawG {
   type = 'draw_g';
+  list: DrawCustomShape[] = [];
 }
 
 @XmlElement()
@@ -322,6 +345,9 @@ export const LIBREOFFICE_CLASSES = {
   'DrawObject': DrawObject,
   'DrawImage': DrawImage,
   'DrawG': DrawG,
+  'DrawCustomShape': DrawCustomShape,
+  'DrawEnhancedGeometry': DrawEnhancedGeometry,
+  'DrawEquation': DrawEquation,
   'SvgDesc': SvgDesc,
 
   'TableCell': TableCell,

@@ -1,5 +1,5 @@
 import {
-  DocumentContent, DocumentStyles,
+  DocumentContent, DocumentStyles, DrawEnhancedGeometry,
   DrawFrame, DrawG,
   DrawRect, ListStyle,
   OfficeText,
@@ -20,6 +20,7 @@ import {urlToFolderId} from '../utils/idParsers';
 import {MarkdownChunks} from './MarkdownChunks';
 import {StateMachine} from './StateMachine';
 import {inchesToSpaces, spaces} from './utils';
+import {extractPath} from './extractPath';
 
 function baseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -176,6 +177,17 @@ export class OdtToMarkdown {
 
   async drawGToText(drawG: DrawG) {
     this.stateMachine.pushTag('EMB_SVG');
+
+    for (const group of drawG.list) {
+      this.stateMachine.pushTag('EMB_SVG_G');
+      for (const enhancedGeometry of group.list) {
+        this.stateMachine.pushTag('EMB_SVG_P/', {
+          pathD: extractPath(enhancedGeometry.path, enhancedGeometry.equations)
+        });
+      }
+      this.stateMachine.pushTag('/EMB_SVG_G');
+    }
+
     this.stateMachine.pushTag('/EMB_SVG');
   }
 
