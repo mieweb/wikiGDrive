@@ -1,5 +1,13 @@
 import {FileContentService} from '../../utils/FileContentService';
 
+export function fileNameToExt(fileName: string) {
+  const idx = fileName.lastIndexOf('.');
+  if (idx > -1) {
+    return fileName.substring(idx + 1);
+  }
+  return 'bin';
+}
+
 export function getFileDir(filePath) {
   const parts = filePath.split('/');
   if (parts.length < 2) {

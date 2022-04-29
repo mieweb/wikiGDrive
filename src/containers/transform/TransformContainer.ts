@@ -285,13 +285,13 @@ export class TransformContainer extends Container {
     for (const realFileName in files) {
       const file = files[realFileName];
       if (file.mimeType === MimeTypes.FOLDER_MIME) {
-        filesService = await filesService.getSubFileService(realFileName);
+        const subFilesService = await filesService.getSubFileService(realFileName);
         const item = {
           id: file.id,
           name: file.fileName,
           mimeType: file.mimeType,
           parentId,
-          children: await this.regenerateTree(filesService, file.id)
+          children: await this.regenerateTree(subFilesService, file.id)
         };
         retVal.push(item);
       } else {

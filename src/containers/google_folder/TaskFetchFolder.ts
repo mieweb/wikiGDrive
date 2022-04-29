@@ -15,22 +15,6 @@ interface Filters {
   filterFilesIds: FileId[];
 }
 
-export function googleMimeToExt(mimeType: string, fileName: string) {
-  switch (mimeType) {
-    case MimeTypes.APPS_SCRIPT:
-      return 'gs';
-    case 'image/jpeg':
-      return 'jpg';
-    case 'image/png':
-      return 'png';
-  }
-
-  if (fileName.indexOf('.') > -1) {
-    return '';
-  }
-  return 'bin';
-}
-
 export class TaskFetchFolder extends QueueTask {
 
   constructor(protected logger: winston.Logger,
@@ -192,7 +176,7 @@ export class TaskFetchFolder extends QueueTask {
               await this.fileService,
               file,
               oldFile?.version !== file.version,
-              'application/vnd.google-apps.script+json', googleMimeToExt(file.mimeType, file.name)
+              'application/vnd.google-apps.script+json', 'gs'
             ));
             break;
 

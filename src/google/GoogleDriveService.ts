@@ -60,7 +60,9 @@ function apiFileToGoogleFile(apiFile: drive_v3.Schema$File): GoogleFile {
   });
 
   if (googleFile['lastModifyingUser']) {
-    googleFile.lastAuthor = `${apiFile['lastModifyingUser'].displayName} <${apiFile['lastModifyingUser'].emailAddress}>`;
+    googleFile.lastAuthor = apiFile['lastModifyingUser'].emailAddress
+      ? `${apiFile['lastModifyingUser'].displayName} <${apiFile['lastModifyingUser'].emailAddress}>`
+      : apiFile['lastModifyingUser'].displayName;
   }
 
   return googleFile;
