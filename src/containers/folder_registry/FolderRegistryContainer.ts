@@ -86,4 +86,10 @@ export class FolderRegistryContainer extends Container {
   async destroy(): Promise<void> {
   }
 
+  async rename(folderId: string, name: string) {
+    if (this.folders[folderId]) {
+      this.folders[folderId].name = name;
+      await this.flushData();
+    }
+  }
 }
