@@ -33,7 +33,7 @@
           <i class="fa-solid fa-rotate" :class="{'fa-spin': file.syncing}"></i>
         </td>
         <td>{{ file.google.modifiedTime }}</td>
-        <td @click.stop="goToGDrive(file.google)"><i class="fa-brands fa-google-drive"></i></td>
+        <td @click.stop="goToGDocs(file.google.id)"><i class="fa-brands fa-google-drive"></i></td>
       </tr>
     </tbody>
   </table>

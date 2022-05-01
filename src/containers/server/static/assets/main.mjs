@@ -34,31 +34,31 @@ const router = new VueRouter.createRouter({
     {
       path: '/drive/:driveId',
       name: 'drive',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/FolderView.vue', options)),
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options)),
     },
     {
       path: '/drive/:driveId/folder/:folderId/:fileId?',
       name: 'folder',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/FolderView.vue', options)),
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options)),
     },
     {
       path: '/drive/:driveId/file/:fileId',
       name: 'file',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/FileView.vue', options))
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FileView.vue', options))
     },
     {
       path: '/logs',
       name: 'logs',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/LogsView.vue', options))
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/LogsView.vue', options))
     },
     {
       path: '/',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/MainView.vue', options))
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/MainView.vue', options))
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/NotFound.vue', options))
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/NotFound.vue', options))
     }
   ]
 });

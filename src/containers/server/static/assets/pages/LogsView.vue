@@ -29,7 +29,7 @@
   </BaseLayout>
 </template>
 <script lang="ts">
-import BaseLayout from './BaseLayout.vue';
+import BaseLayout from '../layout/BaseLayout.vue';
 export default {
   name: 'FileView',
   components: {BaseLayout},

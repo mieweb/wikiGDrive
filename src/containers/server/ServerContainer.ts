@@ -321,13 +321,14 @@ export class ServerContainer extends Container {
           git.remote_branch = gitConfig.remote_branch || 'master';
         }
 
-        // parentId = file.parentId || driveId;
+        const folderId = file.parentId || driveId;
         // if (transformPath) {
         //   transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath);
         // }
         // markdownPath = transformPath;
         res.json({
           driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
+          folderId,
           git
         });
       } catch (err) {

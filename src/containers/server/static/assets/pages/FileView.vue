@@ -9,11 +9,11 @@
   </BaseLayout>
 </template>
 <script lang="ts">
-import BaseLayout from './BaseLayout.vue';
-import {DEFAULT_TAB, UiMixin} from './UiMixin.mjs';
-import {UtilsMixin} from './UtilsMixin.mjs';
-import {GitMixin} from './GitMixin.mjs';
-import FilePreview from './FilePreview.vue';
+import BaseLayout from '../layout/BaseLayout.vue';
+import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
+import {UtilsMixin} from '../components/UtilsMixin.mjs';
+import {GitMixin} from '../components/GitMixin.mjs';
+import FilePreview from '../components/FilePreview.vue';
 import NotRegistered from './NotRegistered.vue';
 
 export default {
@@ -50,33 +50,7 @@ export default {
   },
   methods: {
     async fetch() {
-      this.preview = {};
-      this.git = {};
-
-      const fileId = this.$route.params.fileId;
-
-      if (fileId) {
-        const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
-        this.preview = await response.json();
-        this.git = this.preview.git;
-
-        this.notRegistered = !!this.preview.not_registered;
-        if (this.notRegistered) {
-          this.shareEmail = this.preview.share_email;
-          return;
-        }
-      }
-    },
-    async syncSingle() {
-      if (this.preview.syncing) {
-        return;
-      }
-      this.preview.syncing = true;
-      const fileId = this.$route.params.fileId;
-      await fetch(`/api/drive/${this.driveId}/sync/${fileId}`, {
-        method: 'post'
-      });
-      await this.fetch();
+      await this.fetchFile();
     },
     async runInspect() {
       try {

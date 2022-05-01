@@ -22,8 +22,11 @@ export const UtilsMixin = {
       }
       return false;
     },
-    goToGDrive(google) {
-      window.open('https://drive.google.com/open?id=' + google.id);
+    goToGDocs(fileId) {
+      window.open('https://drive.google.com/open?id=' + fileId);
+    },
+    goToGDrive(folderId) {
+      window.open('https://drive.google.com/drive/u/0/folders/' + folderId);
     },
     refresh() {
       window.location.reload();
@@ -40,6 +43,23 @@ export const UtilsMixin = {
         // eslint-disable-next-line no-empty
       } finally {
       }
-    }
+    },
+    async fetchFile() {
+      this.preview = {};
+      this.git = {};
+
+      const fileId = this.$route.params.fileId;
+
+      if (fileId) {
+        const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
+        this.preview = await response.json();
+        this.git = this.preview.git;
+
+        this.notRegistered = !!this.preview.not_registered;
+        if (this.notRegistered) {
+          this.shareEmail = this.preview.share_email;
+        }
+      }
+    },
   }
 };
