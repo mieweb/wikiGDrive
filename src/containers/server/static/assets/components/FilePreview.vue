@@ -18,9 +18,9 @@
         <a @click.prevent.stop="setActiveTab('git_log')" data-mui-toggle="tab">Git</a>
         <ul class="mui-dropdown__menu">
           <li v-if="github_url"><a @click.prevent.stop="open(github_url)">GitHub</a></li>
-          <li><a @click.prevent.stop="alert('TODO')">Commit @TODO</a></li>
+          <li v-if="git.initialized"><a @click.prevent.stop="alert('TODO')">Commit @TODO</a></li>
           <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_log')">History</a></li>
-          <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_settings')">Settings</a></li>
+          <li><a @click.prevent.stop="setActiveTab('git_settings')">Settings</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab === 'sync' }" class="mui-tab__dropdown">
