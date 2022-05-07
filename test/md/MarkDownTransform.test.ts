@@ -83,6 +83,12 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown));
   });
 
+  it('test ./embedded-diagram-example', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/embedded-diagram-example.md').toString();
+    const markdown = await transformOdt('embedded-diagram-example');
+    assert.ok(compareTexts(testMarkdown, markdown));
+  });
+
 });
 
 async function transformOdt(id: string) {

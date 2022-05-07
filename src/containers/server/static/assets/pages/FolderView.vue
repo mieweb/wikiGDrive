@@ -25,30 +25,25 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @setup="gitSetup" @commit="commit" @push="push" />
-      </div>
-      <div v-else>
-        EEE
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>
 </template>
 <script lang="ts">
-import BaseLayout from './BaseLayout.vue';
-import MarkDown from './MarkDown.vue';
-import {DEFAULT_TAB, UiMixin} from './UiMixin.mjs';
-import FilesTable from './FilesTable.vue';
-import {UtilsMixin} from './UtilsMixin.mjs';
+import BaseLayout from '../layout/BaseLayout.vue';
+import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
+import FilesTable from '../components/FilesTable.vue';
+import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
-import {GitMixin} from './GitMixin.mjs';
-import FilePreview from './FilePreview.vue';
+import {GitMixin} from '../components/GitMixin.mjs';
+import FilePreview from '../components/FilePreview.vue';
 
 export default {
   name: 'FolderView',
   components: {
     NotRegistered,
     FilesTable,
-    MarkDown,
     BaseLayout,
     FilePreview
   },
@@ -85,11 +80,10 @@ export default {
       this.git = {};
 
       const folderId = this.$route.params.folderId;
-      const fileId = this.$route.params.fileId;
-      console.log('fffffffffff');
+
       const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
       const json = await response.json();
-      console.log('fffffffffff2', json);
+      console.log('Folder fetch', json);
 
       this.notRegistered = !!json.not_registered;
       if (this.notRegistered) {
@@ -103,21 +97,13 @@ export default {
       this.preview = {};
       this.git = {};
 
-      if (fileId) {
-        const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
-        this.preview = await response.json();
-        console.log('preview', this.preview);
-        this.git = this.preview.git;
-      }
+      await this.fetchFile();
     },
     async syncAll() {
       this.rootFolder.syncing = true;
-      try {
-        await fetch(`/api/drive/${this.driveId}/sync`, {
-          method: 'post'
-        });
-      } finally {
-      }
+      await fetch(`/api/drive/${this.driveId}/sync`, {
+        method: 'post'
+      });
     },
     async runInspect() {
       try {
@@ -146,8 +132,9 @@ export default {
         if (oldRootSyncing && !this.rootFolder.syncing) {
           this.refresh();
         }
+        // eslint-disable-next-line no-empty
       } catch (error404) {}
     }
   }
-}
+};
 </script>

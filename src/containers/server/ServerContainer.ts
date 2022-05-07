@@ -1,7 +1,6 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express from 'express';
+import express, {Express} from 'express';
 import winston from 'winston';
-import {Express} from 'express';
 import path from 'path';
 import fs from 'fs';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
@@ -17,7 +16,7 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {GitScanner} from '../../git/GitScanner';
 
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,10 +52,10 @@ function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, 
     }
   }
 
-  return '';
+  return [];
 }
 
-const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
+export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
 const extToMime = {
   '.js': 'application/javascript',
   '.mjs': 'application/javascript',
@@ -100,7 +99,7 @@ export class ServerContainer extends Container {
 
     this.initRouter(app);
 
-    const indexHandler = (req, res, next) => {
+    const indexHandler = (req, res) => {
       const indexHtml = fs.readFileSync(__dirname + '/static/index.html');
       res.header('Content-type', 'text/html').end(indexHtml);
     };
@@ -108,7 +107,7 @@ export class ServerContainer extends Container {
     app.get('/drive/:driveId', indexHandler);
     app.get('/drive/:driveId/file/:fileId', indexHandler);
 
-    app.use((req, res, next) => {
+    app.use((req, res) => {
       const indexHtml = fs.readFileSync(__dirname + '/static/index.html');
       res.status(404).header('Content-type', 'text/html').end(indexHtml);
       // res.status(404).send('Sorry can\'t find that!');
@@ -161,9 +160,11 @@ export class ServerContainer extends Container {
         drive = await driveFileSystem.readJson('.folder.json');
         if (folderId) {
           const driveTree = await driveFileSystem.readJson('.tree.json');
-          const [file, drivePath] = generateTreePath(folderId, driveTree, 'id');
-          if (drivePath) {
-            driveFileSystem = await driveFileSystem.getSubFileService(drivePath);
+          if (driveTree) {
+            const [file, drivePath] = generateTreePath(folderId, driveTree, 'id');
+            if (file && drivePath) {
+              driveFileSystem = await driveFileSystem.getSubFileService(drivePath);
+            }
           }
         }
 
@@ -236,7 +237,7 @@ export class ServerContainer extends Container {
         const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
 
         let author = '';
-        if (transformPath) {
+        if (file && transformPath) {
           const yamlContent = await transformedFileSystem.readFile(transformPath);
           const directoryScanner = new DirectoryScanner();
           const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
@@ -282,7 +283,7 @@ export class ServerContainer extends Container {
         const fileId = req.params.fileId;
 
         const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
-        const drive = await folderRegistryContainer.registerFolder(driveId);
+        await folderRegistryContainer.registerFolder(driveId);
 
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
         const transformedTree = await transformedFileSystem.readJson('.tree.json');
@@ -320,13 +321,14 @@ export class ServerContainer extends Container {
           git.remote_branch = gitConfig.remote_branch || 'master';
         }
 
-        // parentId = file.parentId || driveId;
+        const folderId = file.parentId || driveId;
         // if (transformPath) {
         //   transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath);
         // }
         // markdownPath = transformPath;
         res.json({
           driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
+          folderId,
           git
         });
       } catch (err) {
@@ -386,8 +388,7 @@ export class ServerContainer extends Container {
 
         const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
         const folders = await folderRegistryContainer.getFolders();
-        const folder = folders[driveId];
-        inspected['folder'] = folder;
+        inspected['folder'] = folders[driveId];
 
         res.json(inspected);
       } catch (err) {
@@ -423,8 +424,11 @@ export class ServerContainer extends Container {
         auth.setCredentials(google_auth);
 
         const googleDriveService = new GoogleDriveService(this.logger);
+        await googleDriveService.shareDrive(auth, driveId, authConfig.share_email);
 
-        const result = await googleDriveService.shareDrive(auth, driveId, authConfig.share_email);
+        res.json({
+          driveId
+        });
       } catch (err) {
         console.error(err);
       }
@@ -432,8 +436,6 @@ export class ServerContainer extends Container {
 
     app.post('/api/share_drive', async (req, res, next) => {
       try {
-        const serverUrl = 'http://localhost:3000';
-
         const folderUrl = req.body.url;
         const driveId = urlToFolderId(folderUrl);
 

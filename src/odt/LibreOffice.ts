@@ -124,6 +124,35 @@ export class DrawFrame implements ParagraphSection {
 }
 
 @XmlElement()
+@XmlAttribute('draw:name', 'name')
+@XmlAttribute('draw:formula', 'formula')
+export class DrawEquation {
+  name: string;
+  formula: string;
+}
+
+@XmlElement()
+@XmlElementChild('draw:equation', 'equations', 'DrawEquation', {isArray: true})
+@XmlAttribute('draw:enhanced-path', 'path')
+export class DrawEnhancedGeometry {
+  equations?: DrawEquation[];
+  path: string;
+}
+
+@XmlElement()
+@XmlElementChild('draw:enhanced-geometry', 'list', 'DrawEnhancedGeometry', {isArray: true})
+export class DrawCustomShape {
+  list: DrawEnhancedGeometry[] = [];
+}
+
+@XmlElement()
+@XmlElementChild('draw:custom-shape', 'list', 'DrawCustomShape', {isArray: true})
+export class DrawG {
+  type = 'draw_g';
+  list: DrawCustomShape[] = [];
+}
+
+@XmlElement()
 export class TextTab implements ParagraphSection {
   type = 'tab';
 }
@@ -136,13 +165,14 @@ export class TextTab implements ParagraphSection {
 @XmlElementChild('text:span', 'list', 'TextSpan', {isArray: true})
 @XmlElementChild('draw:rect', 'list', 'DrawRect', {isArray: true})
 @XmlElementChild('draw:frame', 'list', 'DrawFrame', {isArray: true})
+@XmlElementChild('draw:g', 'list', 'DrawG', {isArray: true})
 @XmlElementChild('text:tab', 'list', 'TextTab', {isArray: true})
 @XmlElementChild('text:s', 'list', 'TextSpace', {isArray: true})
 @XmlElementChild('office:annotation', 'annotations', 'OfficeAnnotation', {isArray: true})
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextSpace> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextSpace| DrawG> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }
@@ -314,6 +344,10 @@ export const LIBREOFFICE_CLASSES = {
   'DrawFrame': DrawFrame,
   'DrawObject': DrawObject,
   'DrawImage': DrawImage,
+  'DrawG': DrawG,
+  'DrawCustomShape': DrawCustomShape,
+  'DrawEnhancedGeometry': DrawEnhancedGeometry,
+  'DrawEquation': DrawEquation,
   'SvgDesc': SvgDesc,
 
   'TableCell': TableCell,

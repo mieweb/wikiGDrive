@@ -14,7 +14,7 @@
   </div>
 </template>
 <script>
-import {UtilsMixin} from './UtilsMixin.mjs';
+import {UtilsMixin} from '../components/UtilsMixin.mjs';
 
 export default {
   mixins: [ UtilsMixin ],

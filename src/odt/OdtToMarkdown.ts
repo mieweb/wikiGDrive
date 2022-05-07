@@ -1,6 +1,6 @@
 import {
-  DocumentContent, DocumentStyles,
-  DrawFrame,
+  DocumentContent, DocumentStyles, DrawEnhancedGeometry,
+  DrawFrame, DrawG,
   DrawRect, ListStyle,
   OfficeText,
   ParagraphProperty,
@@ -20,6 +20,7 @@ import {urlToFolderId} from '../utils/idParsers';
 import {MarkdownChunks} from './MarkdownChunks';
 import {StateMachine} from './StateMachine';
 import {inchesToSpaces, spaces} from './utils';
+import {extractPath} from './extractPath';
 
 function baseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -174,6 +175,22 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('/A', { href: href });
   }
 
+  async drawGToText(drawG: DrawG) {
+    this.stateMachine.pushTag('EMB_SVG');
+
+    for (const group of drawG.list) {
+      this.stateMachine.pushTag('EMB_SVG_G');
+      for (const enhancedGeometry of group.list) {
+        this.stateMachine.pushTag('EMB_SVG_P/', {
+          pathD: extractPath(enhancedGeometry.path, enhancedGeometry.equations)
+        });
+      }
+      this.stateMachine.pushTag('/EMB_SVG_G');
+    }
+
+    this.stateMachine.pushTag('/EMB_SVG');
+  }
+
   async drawFrameToText(drawFrame: DrawFrame) {
     if (drawFrame.object) { // TODO: MathML
       return;
@@ -318,6 +335,9 @@ export class OdtToMarkdown {
           break;
         case 'draw_frame':
           await this.drawFrameToText(<DrawFrame>child);
+          break;
+        case 'draw_g':
+          await this.drawGToText(<DrawG>child);
           break;
       }
     }

@@ -2,11 +2,11 @@
   <pre><code class="language-markdown line-numbers" ref="code"><slot></slot></code></pre>
 </template>
 <script lang="ts">
-import Prism from './prism.js';
+import Prism from '../prism.js';
 
 const url = /\b([a-z]{3,7}:\/\/|tel:)[\w\-+%~/.:=&@]+(?:\?[\w\-+%~/.:=?&!$'()*,;@]*)?(?:#[\w\-+%~/.:#=?&!$'()*,;@]*)?/;
 const email = /\b\S+@[\w.]+[a-z]{2}/;
-const linkMd = /\[([^\]]+)\]\(([^)]+)\)/;
+const linkMd = /\[([^\]]+)]\(([^)]+)\)/;
 
 // Tokens that may contain URLs and emails
 const candidates = ['comment', 'url', 'attr-value', 'string', 'ssfsdfsd'];
@@ -82,5 +82,5 @@ export default {
   mounted() {
     Prism.highlightElement(this.$refs.code);
   }
-}
+};
 </script>

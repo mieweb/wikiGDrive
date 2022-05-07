@@ -1,6 +1,5 @@
 <template>
   <aside id="sidebarMenu">
-    <slot>
-    </slot>
+    <slot/>
   </aside>
 </template>

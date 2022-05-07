@@ -11,6 +11,7 @@ import {FileContentService} from '../../utils/FileContentService';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import path from 'path';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -18,7 +19,6 @@ export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;
   private googleDriveService: GoogleDriveService;
   private auth: OAuth2Client;
-  private drive_id: string;
   private filterFilesIds: FileId[];
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
@@ -63,6 +63,13 @@ export class GoogleFolderContainer extends Container {
     await downloader.finished();
 
     const tree = await this.regenerateTree(this.filesService);
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+    const folderData = await this.filesService.readJson('.folder.json');
+    if (folderData?.name) {
+      await folderRegistryContainer.rename(this.params.folderId, folderData.name);
+    }
+
     await this.filesService.writeJson('.tree.json', tree);
   }
 
