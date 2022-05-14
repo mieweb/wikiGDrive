@@ -68,5 +68,5 @@ export function extractPath(pathSource: string, equations: DrawEquation[]): stri
       console.error('loopLimit is out, looks like you have got an infinite loop here');
     }
   }
-  return path;
+  return path.replace(/ N$/, '');
 }

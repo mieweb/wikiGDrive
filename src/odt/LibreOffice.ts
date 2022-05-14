@@ -134,10 +134,12 @@ export class DrawEquation {
 @XmlElement()
 @XmlElementChild('draw:equation', 'equations', 'DrawEquation', {isArray: true})
 @XmlAttribute('draw:enhanced-path', 'path')
+@XmlAttribute('drawooo:enhanced-path', 'path2')
 export class DrawEnhancedGeometry {
   type = 'draw_enhanced_geometry';
   equations?: DrawEquation[];
   path: string;
+  path2?: string;
 }
 
 @XmlElement()
