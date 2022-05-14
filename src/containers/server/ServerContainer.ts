@@ -220,33 +220,60 @@ export class ServerContainer extends Container {
 
         res.json({});
       } catch (err) {
+        if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+          res.json({ error: 'Failed to authenticate' });
+          return;
+        }
         next(err);
       }
     });
 
+    app.get('/api/drive/:driveId/git/commit', async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+
+        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+
+        const changes = await gitScanner.changes();
+
+        res.json({ changes });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+
     app.post('/api/drive/:driveId/git/commit', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
-        const fileId = req.body.fileId;
+        const filePaths: string[] = Array.isArray(req.body.filePath) ? req.body.filePath : [req.body.filePath];
         const message = req.body.message;
 
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
 
         const transformedTree = await transformedFileSystem.readJson('.tree.json');
-        const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
 
-        let author = '';
-        if (file && transformPath) {
-          const yamlContent = await transformedFileSystem.readFile(transformPath);
-          const directoryScanner = new DirectoryScanner();
-          const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
-          if (file.type === 'md') {
-            author = file.lastAuthor;
+        const transformPaths = [];
+
+        for (const filePath of filePaths) {
+/*
+          const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
+          let author = '';
+          if (file && transformPath) {
+            const yamlContent = await transformedFileSystem.readFile(transformPath);
+            const directoryScanner = new DirectoryScanner();
+            const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
+            if (file.type === 'md') {
+              author = file.lastAuthor;
+            }
           }
+*/
+          transformPaths.push(filePath);
         }
 
-        await gitScanner.commit(message, transformPath, author);
+        await gitScanner.commit(message, transformPaths, 'WikiGDrive');
 
         res.json({});
       } catch (err) {

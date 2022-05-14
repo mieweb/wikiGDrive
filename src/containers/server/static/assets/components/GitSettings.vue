@@ -32,6 +32,10 @@ export default {
       remote_branch: ''
     };
   },
+  created() {
+    this.remote_url = this.git?.remote_url || '';
+    this.remote_branch = this.git?.remote_branch || '';
+  },
   watch: {
     git() {
       this.remote_url = this.git?.remote_url || '';

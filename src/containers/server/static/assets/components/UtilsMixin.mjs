@@ -22,6 +22,9 @@ export const UtilsMixin = {
       }
       return false;
     },
+    openWindow(url, tab = '_blank') {
+      window.open(url, tab);
+    },
     goToGDocs(fileId) {
       window.open('https://drive.google.com/open?id=' + fileId);
     },
