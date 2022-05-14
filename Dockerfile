@@ -1,12 +1,14 @@
-FROM node:16.14
+FROM node:16.15
 
 WORKDIR /usr/src/app
 
-COPY . .
-
 RUN apt-get install -y libkrb5-dev
+
+COPY package.json ./
 RUN npm install
 RUN npm install -g ts-node
+
+COPY . ./
 RUN npm link --local
 
 EXPOSE 3000
