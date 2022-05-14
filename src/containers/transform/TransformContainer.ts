@@ -348,6 +348,9 @@ export class TransformContainer extends Container {
           const fileName = parts.pop();
           const dirName = parts.join('/');
 
+          if (!await destinationDirectory.exists(lastLog.filePath)) {
+            continue;
+          }
           const localFileContent = await destinationDirectory.readFile(lastLog.filePath);
           const localFile = markDownScanner.parseMarkdown(localFileContent, lastLog.filePath);
           if (!localFile) {

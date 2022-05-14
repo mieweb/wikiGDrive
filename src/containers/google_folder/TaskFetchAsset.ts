@@ -18,7 +18,7 @@ export class TaskFetchAsset extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    const targetPath = this.file.id + fileNameToExt(this.file.name);
+    const targetPath = this.file.id + '.' + fileNameToExt(this.file.name);
 
     if (this.file.md5Checksum) {
       const localMd5 = await this.fileService.md5File(targetPath);
