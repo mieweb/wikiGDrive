@@ -1,0 +1,100 @@
+<template>
+  <div class="mui-container">
+    <form>
+      <div v-if="changes && changes.length > 0">
+        <h2>Changes</h2>
+        <table class="mui-table mui-table--bordered">
+          <thead>
+          <tr>
+            <th></th>
+            <th>Path</th>
+            <th>Stater</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="(item, idx) of changes" :key="idx" @click="toggle(item.path)">
+            <td><input name="filePath" type="checkbox" :value="item.path" :checked="filePath.indexOf(item.path) > -1" /></td>
+            <td>{{item.path}}</td>
+            <td>
+              <span v-if="item.state.isNew">New</span>
+              <span v-else-if="item.state.isModified">Modified</span>
+              <span v-else-if="item.state.isRenamed">Renamed</span>
+              <span v-else-if="item.state.isDeleted">Deleted</span>
+              <span v-else>{{item.state}}</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mui-panel">
+          <div class="mui-textfield">
+            <textarea placeholder="Commit message" v-model="message"></textarea>
+          </div>
+          <button type="button" class="mui-btn mui-btn--primary" @click="commit">Commit</button>
+          <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--danger" @click="push">Commit and Push</button>
+      </div>
+    </form>
+  </div>
+</template>
+<script>
+import {UtilsMixin} from './UtilsMixin.mjs';
+
+export default {
+  mixins: [UtilsMixin],
+  props: {
+    git: Object
+  },
+  data() {
+    return {
+      changes: [],
+      filePath: [],
+      message: ''
+    };
+  },
+  computed: {
+    git_remote_url() {
+      return this.git?.remote_url || '';
+    }
+  },
+  async created() {
+    await this.fetch();
+  },
+  methods: {
+    async fetch() {
+      const response = await fetch(`/api/drive/${this.driveId}/git/commit`);
+      const json = await response.json();
+      this.changes = json.changes;
+      // this.filePath = this.changes.map(item => item.path);
+    },
+    open(url) {
+      window.open(url, '_blank');
+    },
+    async commit() {
+      if (!this.message) {
+        alert('No commit message');
+        return;
+      }
+      await this.$emit('commit', {
+        message: this.message,
+        filePath: this.filePath
+      });
+
+    },
+    push() {
+      this.$emit('push', {
+        message: this.message,
+        filePath: this.filePath
+      });
+    },
+    toggle(path) {
+      const idx = this.filePath.indexOf(path);
+      if (idx === -1) {
+        this.filePath.push(path);
+      } else {
+        this.filePath.splice(idx, 1);
+      }
+    }
+
+  }
+};
+</script>

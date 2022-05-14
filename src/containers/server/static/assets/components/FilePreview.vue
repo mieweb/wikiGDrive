@@ -20,8 +20,8 @@
       <li :class="{ 'mui--is-active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
         <a @click.prevent.stop="setActiveTab('git_log')" data-mui-toggle="tab">Git</a>
         <ul class="mui-dropdown__menu">
-          <li v-if="github_url"><a @click.prevent.stop="open(github_url)">GitHub</a></li>
-          <li v-if="git.initialized"><a @click.prevent.stop="alert('TODO')">Commit @TODO</a></li>
+          <li v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
+          <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_commit')">Commit</a></li>
           <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_log')">History</a></li>
           <li><a @click.prevent.stop="setActiveTab('git_settings')">Settings</a></li>
         </ul>
@@ -46,14 +46,14 @@
 
     <GitLog v-if="activeTab === 'git_log'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
     <GitSettings v-if="activeTab === 'git_settings'" :git="git" @setup="$emit('setup', $event)" />
-    <GitPreview v-if="activeTab === 'git'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
+    <GitCommit v-if="activeTab === 'git_commit'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
 import MarkDown from './MarkDown.vue';
-import GitPreview from './GitPreview.vue';
+import GitCommit from './GitCommit.vue';
 import GitSettings from './GitSettings.vue';
 import GitLog from './GitLog.vue';
 
@@ -62,7 +62,7 @@ export default {
   mixins: [UtilsMixin, UiMixin],
   components: {
     GitLog,
-    GitPreview,
+    GitCommit,
     GitSettings,
     MarkDown,
   },
