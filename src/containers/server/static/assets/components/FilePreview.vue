@@ -3,13 +3,16 @@
     <ul class="mui-tabs__bar">
       <li :class="{ 'mui--is-active': activeTab === 'markdown' }" class="mui-tab__dropdown">
         <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab">Preview</a>
+        <ul class="mui-dropdown__menu">
+          <li v-if="preview.fileId"><a @click.prevent.stop="downloadOdt(preview.fileId)">Download odt</a></li>
+        </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab === 'drive' }" class="mui-tab__dropdown">
         <a>Drive</a>
         <ul class="mui-dropdown__menu">
           <li v-if="isSinglePreview"><a @click.prevent.stop="gotoFolder(preview.folderId)">WikiGDrive Folder</a></li>
-          <li v-if="preview.folderId"><a  @click.prevent.stop="goToGDrive(preview.folderId)">Google Drive</a></li>
-          <li v-if="preview.fileId"><a  @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
+          <li v-if="preview.folderId"><a @click.prevent.stop="goToGDrive(preview.folderId)">Google Drive</a></li>
+          <li v-if="preview.fileId"><a @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
           <li><a @click.prevent.stop="alert('TODO')">Links @TODO</a></li>
           <li><a @click.prevent.stop="alert('TODO')">TOC @TODO</a></li>
         </ul>
@@ -86,6 +89,10 @@ export default {
     gotoFolder(folderId) {
       const routeUrl = this.$router.resolve({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: this.$route.params.fileId } });
       window.open(routeUrl.href, '_blank');
+    },
+    downloadOdt(fileId) {
+      const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
+      window.open(odtPath, '_blank');
     }
   }
 };

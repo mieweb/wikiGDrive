@@ -277,6 +277,35 @@ export class ServerContainer extends Container {
       }
     });
 
+    app.get('/api/drive/:driveId/file/(:fileId).odt', async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+        const fileId = req.params.fileId;
+
+        const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const driveTree = await driveFileSystem.readJson('.tree.json');
+        if (driveTree) {
+          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
+          if (file && drivePath) {
+            const odtPath = drivePath + '.odt';
+            if (await driveFileSystem.exists(odtPath)) {
+              driveFileSystem.createReadStream(odtPath).pipe(res);
+              return;
+            }
+          }
+        }
+
+        res.status(404).json({});
+      } catch (err) {
+        if (err.message === 'Drive not shared with wikigdrive') {
+          const authConfig: AuthConfig = this.authContainer['authConfig'];
+          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
+          return;
+        }
+        next(err);
+      }
+    });
+
     app.get('/api/drive/:driveId/file/:fileId', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
