@@ -115,7 +115,7 @@ export class SvgDesc {
 @XmlElement()
 @XmlElementChild('draw:object', 'object', 'DrawObject')
 @XmlElementChild('draw:image', 'image', 'DrawImage')
-@XmlElementChild('svg:desc', 'desc', 'SvgDesc')
+@XmlElementChild('svg:desc', 'description', 'SvgDesc')
 export class DrawFrame implements ParagraphSection {
   type = 'draw_frame';
   object?: DrawObject;
@@ -135,14 +135,24 @@ export class DrawEquation {
 @XmlElementChild('draw:equation', 'equations', 'DrawEquation', {isArray: true})
 @XmlAttribute('draw:enhanced-path', 'path')
 export class DrawEnhancedGeometry {
+  type = 'draw_enhanced_geometry';
   equations?: DrawEquation[];
   path: string;
 }
 
 @XmlElement()
 @XmlElementChild('draw:enhanced-geometry', 'list', 'DrawEnhancedGeometry', {isArray: true})
+@XmlElementChild('text:p', 'list', 'TextParagraph', {isArray: true})
+@XmlAttribute('svg:width', 'width')
+@XmlAttribute('svg:height', 'height')
+@XmlAttribute('svg:x', 'x')
+@XmlAttribute('svg:y', 'y')
 export class DrawCustomShape {
-  list: DrawEnhancedGeometry[] = [];
+  x = '';
+  y = '';
+  width = '';
+  height = '';
+  list: Array<DrawEnhancedGeometry | TextParagraph> = [];
 }
 
 @XmlElement()
