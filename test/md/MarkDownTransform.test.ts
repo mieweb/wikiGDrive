@@ -77,6 +77,12 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown, false));
   });
 
+  it('test ./list-indent.md.markdown', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/list-indent.md').toString();
+    const markdown = await transformOdt('list-indent');
+    assert.ok(compareTexts(testMarkdown, markdown, false));
+  });
+
   it('test ./strong-headers.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/strong-headers.md').toString();
     const markdown = await transformOdt('strong-headers');

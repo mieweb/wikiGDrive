@@ -376,5 +376,23 @@ export class StateMachine {
       }
     }
 
+    let nextPara = null;
+    for (let position = this.markdownChunks.length - 1; position >= 0; position--) {
+      const chunk = this.markdownChunks.chunks[position];
+      if (chunk.isTag && chunk.tag === 'P') {
+        const origNum = chunk.payload?.number;
+        if (nextPara) {
+          const origNextNum = nextPara.payload?.number;
+          if (nextPara.payload?.listLevel && !chunk.payload?.listLevel) {
+            chunk.payload.listLevel = nextPara?.payload?.listLevel;
+          }
+          if (!chunk.payload?.bullet && nextPara.payload?.number === chunk.payload?.number && nextPara.payload?.listLevel === chunk.payload?.listLevel) {
+            delete nextPara.payload.number;
+          }
+        }
+        nextPara = chunk;
+      }
+    }
+
   }
 }
