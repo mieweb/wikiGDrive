@@ -128,7 +128,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
-          return '<svg width="100" height="100" viewBox="0 0 100 100">\n';
+          return '<svg width="100%" viewBox="0 0 1000 1000" fill="none" stroke="none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n';
       }
       break;
     case 'html':
@@ -212,7 +212,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/TOC':
           break;
         case 'SVG/':
-          return '<svg width="100" height="100" viewBox="0 0 100 100" src="${chunk.payload.href}" />';
+          return '<svg width="100%" viewBox="0 0 1000 1000" src="${chunk.payload.href}" />';
         case 'IMG/':
           return `<img src="${chunk.payload.href}" />`;
         case 'EMB_SVG':
@@ -230,9 +230,9 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/EMB_SVG_G':
           return '</g>\n';
         case 'EMB_SVG_P/':
-          return `<path d="${chunk.payload.pathD}" />\n`;
+          return `<path fill="none" stroke="black" d="${chunk.payload.pathD}" />\n`;
         case 'EMB_SVG_TEXT':
-          return '<text>';
+          return '<text fill="black" x="0" dy="1em" font-size="1em">';
         case '/EMB_SVG_TEXT':
           return '</text>\n';
       }
