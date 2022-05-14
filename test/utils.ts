@@ -9,6 +9,10 @@ export function createTmpDir() {
 }
 
 export function compareTexts(input, output, ignoreWhitespace = true) {
+  if (!ignoreWhitespace) {
+    input = input.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
+    output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
+  }
   const diff = diffLines(input, output, {
     ignoreWhitespace
   }).filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);

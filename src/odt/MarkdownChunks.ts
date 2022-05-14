@@ -75,7 +75,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'P':
           {
             const level = (chunk.payload.listLevel || 1) - 1;
-            const indent = spaces(level * 3);
+            const indent = spaces(level * 4);
             const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
             return indent + listStr + '';
           }

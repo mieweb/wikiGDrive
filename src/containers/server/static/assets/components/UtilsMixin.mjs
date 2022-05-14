@@ -53,6 +53,7 @@ export const UtilsMixin = {
       if (fileId) {
         const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
         this.preview = await response.json();
+        console.log('File fetch', this.preview);
         this.git = this.preview.git;
 
         this.notRegistered = !!this.preview.not_registered;
