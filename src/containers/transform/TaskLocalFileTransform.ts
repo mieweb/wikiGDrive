@@ -104,6 +104,7 @@ export class TaskLocalFileTransform extends QueueTask {
           .pipe(dest);
 
         stream.on('finish', () => {
+          this.localLinks.append(drawingFile.id, drawingFile.fileName, Array.from(svgTransform.links));
           resolve();
         });
         stream.on('error', err => {
