@@ -17,6 +17,7 @@ import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {GitScanner} from '../../git/GitScanner';
 
 import {fileURLToPath} from 'url';
+import {LocalLinks} from '../transform/LocalLinks';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,27 @@ interface TreeItem {
   name: string;
   mimeType: string;
   children?: TreeItem[];
+}
+
+function findInTree(fileId: FileId, files: TreeItem[], folderId: string) {
+  for (const file of files) {
+    if (file.id === fileId) {
+      return {file, folderId};
+    }
+  }
+
+  for (const file of files) {
+    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
+      continue;
+    }
+
+    if (file.children) {
+      const result = findInTree(fileId, file.children, file.id);
+      if (result) {
+        return result;
+      }
+    }
+  }
 }
 
 function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
@@ -104,6 +126,7 @@ export class ServerContainer extends Container {
       res.header('Content-type', 'text/html').end(indexHtml);
     };
 
+    app.get('/drive', indexHandler);
     app.get('/drive/:driveId', indexHandler);
     app.get('/drive/:driveId/file/:fileId', indexHandler);
 
@@ -169,7 +192,8 @@ export class ServerContainer extends Container {
         }
 
         const directoryScanner = new DirectoryScanner();
-        const localFiles = Object.values(await directoryScanner.scan(transformedFileSystem));
+        const localFiles = Object.values(await directoryScanner.scan(transformedFileSystem))
+          .filter(lf => !lf.fileName.endsWith('.debug.xml'));
 
         const scanner = new GoogleFilesScanner();
         const googleFiles = await scanner.scan(driveFileSystem);
@@ -184,13 +208,35 @@ export class ServerContainer extends Container {
           return file1.name.toLocaleLowerCase().localeCompare(file2.name.toLocaleLowerCase());
         });
 
+        localFiles.sort((file1, file2) => {
+          if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
+            return -1;
+          }
+          if (!(MimeTypes.FOLDER_MIME === file1.mimeType) && (MimeTypes.FOLDER_MIME === file2.mimeType)) {
+            return 1;
+          }
+          return file1.fileName.toLocaleLowerCase().localeCompare(file2.fileName.toLocaleLowerCase());
+        });
+
         const retVal = {};
-        for (const file of googleFiles) {
+        for (const local of localFiles) {
+          if (local.fileName === 'toc.md' && !local.id) {
+            local.id = 'toc.md';
+          }
+          if (!local.id) {
+            continue;
+          }
+          retVal[local.id] = {
+            google: googleFiles.find(gf => gf.id === local.id),
+            local
+          };
+        }
+/*        for (const file of googleFiles) {
           retVal[file.id] = {
             google: file,
             local: localFiles.find(lf => lf.id === file.id),
           };
-        }
+        }*/
 
         const files = Object.values(retVal);
 
@@ -253,7 +299,7 @@ export class ServerContainer extends Container {
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
 
-        const transformedTree = await transformedFileSystem.readJson('.tree.json');
+        // const transformedTree = await transformedFileSystem.readJson('.tree.json');
 
         const transformPaths = [];
 
@@ -349,7 +395,18 @@ export class ServerContainer extends Container {
           });
           return;
         }
-        const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
+        let [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
+
+        if (fileId === 'toc.md') {
+          file = transformedTree.find(item => item.name === '/toc.md');
+          if (!file) {
+            res.json({
+              not_synced: true
+            });
+            return;
+          }
+          transformPath = '/toc.md';
+        }
 
         if (!file?.name) {
           res.json({
@@ -357,8 +414,6 @@ export class ServerContainer extends Container {
           });
           return;
         }
-
-        const buffer = await transformedFileSystem.readBuffer(file.name);
 
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
         const git = {
@@ -377,20 +432,45 @@ export class ServerContainer extends Container {
           git.remote_branch = gitConfig.remote_branch || 'master';
         }
 
-        const tocFile = transformedTree.find(item => item.name === '/.navigation.md');
-        const tocFileId = tocFile ? tocFile.id : null;
+        const tocFile = transformedTree.find(item => item.name === '/toc.md');
+        const tocFileId = tocFile ? 'toc.md' : null;
+
+        const localLinks = new LocalLinks(transformedFileSystem);
+        await localLinks.load();
+
+        const backLinkFileIds = localLinks.getBackLinks(fileId);
+        const backlinks = [];
+        for (const backLinkFileId of backLinkFileIds) {
+          const obj = findInTree(backLinkFileId, transformedTree, driveId);
+          if (obj) {
+            backlinks.push({
+              folderId: obj.folderId, fileId: backLinkFileId, name: obj.file.name
+            });
+          }
+        }
 
         const folderId = file.parentId || driveId;
         // if (transformPath) {
         //   transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath);
         // }
         // markdownPath = transformPath;
-        res.json({
-          driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
-          folderId,
-          tocFileId,
-          git
-        });
+
+        try {
+          const buffer = await transformedFileSystem.readBuffer(file.name);
+
+          res.json({
+            driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
+            folderId,
+            tocFileId,
+            backlinks,
+            git
+          });
+        } catch (err) {
+          res.json({
+            not_found: true
+          });
+          return;
+        }
       } catch (err) {
         if (err.message === 'Drive not shared with wikigdrive') {
           const authConfig: AuthConfig = this.authContainer['authConfig'];

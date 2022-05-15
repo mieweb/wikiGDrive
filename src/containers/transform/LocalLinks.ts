@@ -2,6 +2,7 @@ import {FileContentService} from '../../utils/FileContentService';
 
 interface Link {
   fileId: string;
+  fileName: string;
   links: string[];
 }
 
@@ -26,31 +27,45 @@ export class LocalLinks {
       if (!groups[cells[0]]) {
         groups[cells[0]] = {
           fileId: cells[0],
+          fileName: cells[1],
           links: []
         };
       }
-      groups[cells[0]].links.push(cells[1]);
+      groups[cells[0]].links.push(cells[2]);
     }
     this.links = Object.values(groups);
   }
 
-  append(fileId: string, links: string[]) {
+  append(fileId: string, fileName: string, links: string[]) {
     const link = this.links.find(l => l.fileId === fileId);
     if (link) {
+      link.fileName = fileName;
       link.links = links;
     } else {
       this.links.push({
-        fileId, links
+        fileId, fileName, links
       });
     }
   }
 
+  getBackLinks(fileId) {
+    const retVal = new Set<string>();
+    for (const link of this.links) {
+      for (const targetLink of link.links) {
+        if (targetLink === 'gdoc:' + fileId) {
+          retVal.add(link.fileId);
+        }
+      }
+    }
+    return retVal;
+  }
+
   async save() {
-    const content = 'source;dest';
+    const content = 'source;name;dest';
 
     const rowsContent = this.links.map(row => {
       return row.links.map(dest => {
-        return `${row.fileId};${dest}`;
+        return `${row.fileId};${row.fileName};${dest}`;
       }).join('\n').trim();
     }).join('\n');
 

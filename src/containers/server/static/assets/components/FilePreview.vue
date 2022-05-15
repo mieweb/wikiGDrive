@@ -13,7 +13,7 @@
           <li v-if="isSinglePreview"><a @click.prevent.stop="gotoFolder(preview.folderId)">WikiGDrive Folder</a></li>
           <li v-if="preview.folderId"><a @click.prevent.stop="goToGDrive(preview.folderId)">Google Drive</a></li>
           <li v-if="preview.fileId"><a @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
-          <li><a @click.prevent.stop="alert('TODO')">Links @TODO</a></li>
+          <li><a @click.prevent.stop="setActiveTab('drive_backlinks')">BackLinks</a></li>
           <li v-if="preview.tocFileId"><a @click.prevent.stop="goToToc(preview.tocFileId)">TOC</a></li>
         </ul>
       </li>
@@ -44,6 +44,7 @@
       <MarkDown>{{preview.content}}</MarkDown>
     </div>
 
+    <BackLinks v-if="activeTab === 'drive_backlinks'" :backlinks="preview.backlinks" />
     <GitLog v-if="activeTab === 'git_log'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
     <GitSettings v-if="activeTab === 'git_settings'" :git="git" @setup="$emit('setup', $event)" />
     <GitCommit v-if="activeTab === 'git_commit'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
@@ -56,6 +57,7 @@ import MarkDown from './MarkDown.vue';
 import GitCommit from './GitCommit.vue';
 import GitSettings from './GitSettings.vue';
 import GitLog from './GitLog.vue';
+import BackLinks from './BackLinks.vue';
 
 export default {
   name: 'FilePreview',
@@ -65,6 +67,7 @@ export default {
     GitCommit,
     GitSettings,
     MarkDown,
+    BackLinks
   },
   props: {
     activeTab: {
