@@ -32,6 +32,11 @@ const router = new VueRouter.createRouter({
   history: VueRouter.createWebHistory(),
   routes: [
     {
+      path: '/drive',
+      name: 'drives',
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/DrivesView.vue', options)),
+    },
+    {
       path: '/drive/:driveId',
       name: 'drive',
       component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options)),

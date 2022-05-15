@@ -151,13 +151,17 @@ export class JobManagerContainer extends Container {
 
   private async runJob(folderId: FileId, job: Job) {
     this.logger.info('runJob ' + folderId + ' ' + JSON.stringify(job));
-    switch (job.type) {
-      case 'sync':
-        await this.sync(folderId, [ job.payload ]);
-        break;
-      case 'sync_all':
-        await this.sync(folderId);
-        break;
+    try {
+      switch (job.type) {
+        case 'sync':
+          await this.sync(folderId, [ job.payload ]);
+          break;
+        case 'sync_all':
+          await this.sync(folderId);
+          break;
+      }
+    } catch (err) {
+      console.error('Job failed', err);
     }
   }
 

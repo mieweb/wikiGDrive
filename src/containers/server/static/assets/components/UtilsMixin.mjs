@@ -7,12 +7,19 @@ export const UtilsMixin = {
   },
   methods: {
     isFolder(google) {
+      if (!google) return false;
       return google.mimeType === 'application/vnd.google-apps.folder';
     },
     isDocument(google) {
+      if (!google) return false;
       return google.mimeType === 'application/vnd.google-apps.document';
     },
+    isMarkdown(local) {
+      if (!local) return false;
+      return local.mimeType === 'text/x-markdown';
+    },
     isImage(google) {
+      if (!google) return false;
       switch (google.mimeType) {
         case 'application/vnd.google-apps.drawing':
         case 'image/png':
