@@ -377,6 +377,9 @@ export class ServerContainer extends Container {
           git.remote_branch = gitConfig.remote_branch || 'master';
         }
 
+        const tocFile = transformedTree.find(item => item.name === '/.navigation.md');
+        const tocFileId = tocFile ? tocFile.id : null;
+
         const folderId = file.parentId || driveId;
         // if (transformPath) {
         //   transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath);
@@ -385,6 +388,7 @@ export class ServerContainer extends Container {
         res.json({
           driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
           folderId,
+          tocFileId,
           git
         });
       } catch (err) {
