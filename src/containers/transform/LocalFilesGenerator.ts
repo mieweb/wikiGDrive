@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 import {BinaryFile, DrawingFile, Directory, LocalFile, MdFile} from '../../model/LocalFile';
 import { GoogleFile, MimeTypes } from '../../model/GoogleFile';
+import {googleMimeToExt} from './TaskLocalFileTransform';
 
 const MAX_PATH_LENGTH = 2000;
 const MAX_FILENAME_LENGTH = 200;
@@ -12,6 +13,7 @@ export function getDesiredPath(name: string, mimeType?: string) {
   name = slugify(name, { replacement: '-', lower: true });
 
   if (mimeType) {
+    const ext = googleMimeToExt(mimeType, name);
     switch (mimeType) {
       case MimeTypes.DOCUMENT_MIME:
         name += '.md';
@@ -23,7 +25,7 @@ export function getDesiredPath(name: string, mimeType?: string) {
         break;
       default:
         if (name.indexOf('.') === -1) {
-          name += '.bin';
+          name += '.' + ext;
         }
     }
   }
@@ -45,7 +47,7 @@ export class LocalFilesGenerator {
               id: googleFile.id,
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
-              version: googleFile.version,
+              version: +googleFile.version,
               mimeType: googleFile.mimeType,
               fileName: desiredLocalPath,
             };
@@ -59,7 +61,7 @@ export class LocalFilesGenerator {
               id: googleFile.id,
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
-              version: googleFile.version,
+              version: +googleFile.version,
               mimeType: 'text/x-markdown',
               lastAuthor: googleFile.lastAuthor,
               fileName: desiredLocalPath,
@@ -74,7 +76,7 @@ export class LocalFilesGenerator {
               id: googleFile.id,
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
-              version: googleFile.version,
+              version: +googleFile.version,
               mimeType: 'image/svg+xml',
               fileName: desiredLocalPath,
             };
@@ -88,7 +90,7 @@ export class LocalFilesGenerator {
               id: googleFile.id,
               title: googleFile.name,
               modifiedTime: googleFile.modifiedTime,
-              version: googleFile.version,
+              version: +googleFile.version,
               mimeType: googleFile.mimeType,
               fileName: desiredLocalPath,
             };

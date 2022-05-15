@@ -12,6 +12,17 @@ export function inchesToSpaces(value): number {
   return 0;
 }
 
+
+export function inchesToPixels(value): number {
+  if (!value) {
+    return 0;
+  }
+  if (value.endsWith('in')) {
+    return  Math.floor(300 * parseFloat(value.substring(0, value.length - 2)));
+  }
+  return 0;
+}
+
 export function fixCharacters(text) {
   return text
     .replace(/’/g, '\'')

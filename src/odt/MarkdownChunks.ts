@@ -1,5 +1,5 @@
 import {ListStyle, Style} from './LibreOffice';
-import {spaces} from './utils';
+import {inchesToPixels, spaces} from './utils';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
@@ -8,7 +8,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
-  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/';
+  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
@@ -29,6 +29,11 @@ export interface TagPayload {
   listLevel?: number;
   bookmarkName?: string;
   pathD?: string;
+
+  x?: string;
+  y?: string;
+  width?: string;
+  height?: string;
 }
 
 export interface MarkdownTextChunk {
@@ -123,15 +128,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
-          return '<svg>\n';
-        case '/EMB_SVG':
-          return '</svg>';
-        case 'EMB_SVG_G':
-          return '<g>\n';
-        case '/EMB_SVG_G':
-          return '</g>\n';
-        case 'EMB_SVG_P/':
-          return `<path d="${chunk.payload.pathD}" />\n`;
+          return '<svg width="100%" viewBox="0 0 1000 1000" fill="none" stroke="none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n';
       }
       break;
     case 'html':
@@ -215,7 +212,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/TOC':
           break;
         case 'SVG/':
-          return '<svg src="${chunk.payload.href}" />';
+          return '<svg width="100%" viewBox="0 0 1000 1000" src="${chunk.payload.href}" />';
         case 'IMG/':
           return `<img src="${chunk.payload.href}" />`;
         case 'EMB_SVG':
@@ -223,11 +220,21 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/EMB_SVG':
           return '</svg>';
         case 'EMB_SVG_G':
-          return '<g>\n';
+          {
+            if (chunk.payload.x && chunk.payload.y) {
+              const transformStr = `transform="translate(${inchesToPixels(chunk.payload.x)}, ${inchesToPixels(chunk.payload.y)})"`;
+              return `<g ${transformStr}>\n`;
+            }
+            return '<g>\n';
+          }
         case '/EMB_SVG_G':
           return '</g>\n';
         case 'EMB_SVG_P/':
-          return `<path d="${chunk.payload.pathD}" />\n`;
+          return `<path fill="none" stroke="black" d="${chunk.payload.pathD}" />\n`;
+        case 'EMB_SVG_TEXT':
+          return '<text fill="black" x="0" dy="1em" font-size="1em">';
+        case '/EMB_SVG_TEXT':
+          return '</text>\n';
       }
       break;
   }

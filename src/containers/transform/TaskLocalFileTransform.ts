@@ -2,7 +2,7 @@ import {QueueTask} from '../google_folder/QueueTask';
 import winston from 'winston';
 import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
-import {BinaryFile, DrawingFile, LocalFile, MdFile, RedirFile} from '../../model/LocalFile';
+import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile';
 import {SvgTransform} from '../../SvgTransform';
 import {NavigationHierarchy} from './generateNavigationHierarchy';
 import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter';
@@ -12,7 +12,6 @@ import {UnMarshaller} from '../../odt/UnMarshaller';
 import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
-import {fileNameToExt} from './utils';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -22,6 +21,10 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
       return 'jpg';
     case 'image/png':
       return 'png';
+    case 'application/vnd.google-apps.drawing':
+      return 'svg';
+    case 'application/vnd.google-apps.document':
+      return 'odt';
   }
 
   if (fileName.indexOf('.') > -1) {
@@ -54,16 +57,19 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async generateBinary(binaryFile: BinaryFile) {
-    const dest = this.destinationDirectory.createWriteStream(this.realFileName);
-
     await new Promise<void>((resolve, reject) => {
       try {
+        const dest = this.destinationDirectory.createWriteStream(this.realFileName);
+
         dest.on('error', err => {
           reject(err);
         });
 
-        const ext = fileNameToExt(this.googleFile.name);
+        const ext = googleMimeToExt(this.googleFile.mimeType, this.googleFile.name);
         const stream = this.googleFolder.createReadStream(`${binaryFile.id}${ext ? '.' + ext : ''}`)
+          .on('error', err => {
+            reject(err);
+          })
           .pipe(dest);
 
         stream.on('finish', () => {
@@ -79,18 +85,21 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async generateDrawing(drawingFile: DrawingFile) {
-    // await this.destinationDirectory.mkdir(getFileDir(targetPath));
-    const dest = this.destinationDirectory.createWriteStream(this.realFileName);
-    const svgTransform = new SvgTransform(drawingFile.fileName);
-    // const svgPath = this.googleScanner.getFilePathPrefix(drawingFile.id) + '.svg';
-
     await new Promise<void>((resolve, reject) => {
       try {
+        // await this.destinationDirectory.mkdir(getFileDir(targetPath));
+        const dest = this.destinationDirectory.createWriteStream(this.realFileName);
+        const svgTransform = new SvgTransform(drawingFile.fileName);
+        // const svgPath = this.googleScanner.getFilePathPrefix(drawingFile.id) + '.svg';
+
         dest.on('error', err => {
           reject(err);
         });
 
         const stream = this.googleFolder.createReadStream(`${drawingFile.id}.svg`)
+          .on('error', err => {
+            reject(err);
+          })
           .pipe(svgTransform)
           .pipe(dest);
 
@@ -128,41 +137,46 @@ export class TaskLocalFileTransform extends QueueTask {
     const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, Array.from(converter.links));
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
     await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
-    this.localLinks.append(localFile.id, Array.from(converter.links));
+    this.localLinks.append(localFile.id, localFile.fileName, Array.from(converter.links));
   }
 
   async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
-    this.logger.info('Transforming: ' + this.localFile.fileName);
-
-    if (localFile.type === 'conflict') {
-      const conflictingFiles: Array<RedirFile | MdFile> = [];
-      const md = generateConflictMarkdown(localFile);
-      // await this.destinationDirectory.mkdir(getFileDir(targetPath));
-      await this.destinationDirectory.writeFile(this.realFileName, md);
-      // await this.generatedScanner.update(targetPath, md);
-    } else if (localFile.type === 'redir') { // TODO
-      // const redirectToFile = this.toGenerate.find(f => f.id === localFile.redirectTo);
-      // const redirectToFile = this.generatedScanner.getFileById(localFile.redirectTo);
-      // const md = generateRedirectMarkdown(localFile, redirectToFile, this.linkTranslator);
-      // await this.destinationDirectory.mkdir(getFileDir(targetPath));
-      // await this.destinationDirectory.writeFile(targetPath, md);
-      // await this.generatedScanner.update(targetPath, md);
-    } else if (localFile.type === 'md') {
-      // const googleFile = await this.googleScanner.getFileById(localFile.id);
-      // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
-      if (this.googleFile) { // && downloadFile
-        await this.generateDocument(localFile, this.googleFile, hierarchy);
+    try {
+      if (localFile.type === 'conflict') {
+        this.logger.info('Transforming conflict: ' + this.localFile.fileName);
+        const md = generateConflictMarkdown(localFile);
+        await this.destinationDirectory.writeFile(this.realFileName, md);
+      } else if (localFile.type === 'redir') { // TODO
+        this.logger.info('Transforming redir: ' + this.localFile.fileName);
+        // const redirectToFile = this.toGenerate.find(f => f.id === localFile.redirectTo);
+        // const redirectToFile = this.generatedScanner.getFileById(localFile.redirectTo);
+        // const md = generateRedirectMarkdown(localFile, redirectToFile, this.linkTranslator);
+        // await this.destinationDirectory.mkdir(getFileDir(targetPath));
+        // await this.destinationDirectory.writeFile(targetPath, md);
+        // await this.generatedScanner.update(targetPath, md);
+      } else if (localFile.type === 'md') {
+        this.logger.info('Transforming markdown: ' + this.localFile.fileName);
+        // const googleFile = await this.googleScanner.getFileById(localFile.id);
+        // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
+        if (this.googleFile) { // && downloadFile
+          await this.generateDocument(localFile, this.googleFile, hierarchy);
+        }
+      } else if (localFile.type === 'drawing') {
+        this.logger.info('Transforming drawing: ' + this.localFile.fileName);
+        // const googleFile = await this.googleScanner.getFileById(localFile.id);
+        // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
+        if (this.googleFile) { // && downloadFile
+          await this.generateDrawing(localFile);
+        }
+      } else if (localFile.type === 'binary') {
+        this.logger.info('Transforming binary: ' + this.localFile.fileName);
+        if (this.googleFile) { // && downloadFile
+          await this.generateBinary(localFile);
+        }
       }
-    } else if (localFile.type === 'drawing') {
-      // const googleFile = await this.googleScanner.getFileById(localFile.id);
-      // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
-      if (this.googleFile) { // && downloadFile
-        await this.generateDrawing(localFile);
-      }
-    } else if (localFile.type === 'binary') {
-      if (this.googleFile) { // && downloadFile
-        await this.generateBinary(localFile);
-      }
+      this.logger.info('Transformed: ' + this.localFile.fileName);
+    } catch (err) {
+      this.logger.error('Error transforming ' + localFile.fileName, err);
     }
   }
 

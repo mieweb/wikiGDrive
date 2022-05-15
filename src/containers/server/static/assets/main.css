@@ -138,8 +138,12 @@ ul.mui-tabs__bar>li>a {
   top: 32px;
 }
 
-.mui-table--hover tr:hover {
+.mui-table--hover tbody tr:hover {
   background: #BDBDBD;
+}
+
+tr.mui-tr--selected  {
+  background: #f5f2f0;
 }
 
 .mui-table--clickable tbody tr {

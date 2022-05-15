@@ -13,28 +13,44 @@ export const GitMixin = {
       });
       await this.fetch();
     },
-    async commit({ message }) {
-      const fileId = this.$route.params.fileId;
+    async commit({ message, filePath }) {
       await fetch(`/api/drive/${this.driveId}/git/commit`, {
         method: 'post',
         headers: {
           'Content-type': 'application/json'
         },
         body: JSON.stringify({
-          fileId,
+          filePath,
           message: message
         })
       });
       await this.fetch();
     },
-    async push() {
-      await fetch(`/api/drive/${this.driveId}/git/push`, {
+    async push({ message, filePath }) {
+      if (message) {
+        await fetch(`/api/drive/${this.driveId}/git/commit`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            filePath,
+            message: message
+          })
+        });
+      }
+
+      const response = await fetch(`/api/drive/${this.driveId}/git/push`, {
         method: 'post',
         headers: {
           'Content-type': 'application/json'
         },
         body: JSON.stringify({})
       });
+      const json = await response.json();
+      if (json.error) {
+        alert(json.error);
+      }
       await this.fetch();
     }
   }

@@ -7,12 +7,19 @@ export const UtilsMixin = {
   },
   methods: {
     isFolder(google) {
+      if (!google) return false;
       return google.mimeType === 'application/vnd.google-apps.folder';
     },
     isDocument(google) {
+      if (!google) return false;
       return google.mimeType === 'application/vnd.google-apps.document';
     },
+    isMarkdown(local) {
+      if (!local) return false;
+      return local.mimeType === 'text/x-markdown';
+    },
     isImage(google) {
+      if (!google) return false;
       switch (google.mimeType) {
         case 'application/vnd.google-apps.drawing':
         case 'image/png':
@@ -21,6 +28,9 @@ export const UtilsMixin = {
           return true;
       }
       return false;
+    },
+    openWindow(url, tab = '_blank') {
+      window.open(url, tab);
     },
     goToGDocs(fileId) {
       window.open('https://drive.google.com/open?id=' + fileId);

@@ -200,6 +200,13 @@ export class StateMachine {
       }
     }
 
+    if (tag === 'EMB_SVG') {
+      this.currentMode = 'html';
+    }
+    if (tag === '/EMB_SVG') {
+      this.currentMode = 'md';
+    }
+
     if (tag === '/P' || tag === '/PRE') {
       const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
       switch (this.currentMode) {

@@ -179,11 +179,54 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('EMB_SVG');
 
     for (const group of drawG.list) {
-      this.stateMachine.pushTag('EMB_SVG_G');
-      for (const enhancedGeometry of group.list) {
-        this.stateMachine.pushTag('EMB_SVG_P/', {
-          pathD: extractPath(enhancedGeometry.path, enhancedGeometry.equations)
-        });
+      this.stateMachine.pushTag('EMB_SVG_G', {
+        x: group.x, y: group.y
+      });
+      for (const item of group.list) {
+        if (item.type === 'paragraph') {
+          const paragraph = <TextParagraph>item;
+
+          if (paragraph.list.length === 0) {
+            continue;
+          }
+
+          this.stateMachine.pushTag('EMB_SVG_TEXT');
+          for (const child of paragraph.list) {
+            if (typeof child === 'string') {
+              this.stateMachine.pushText(child);
+              continue;
+            }
+            switch (child.type) {
+              case 'span':
+                {
+                  const span = <TextSpan>child;
+                  for (const child of span.list) {
+                    if (typeof child === 'string') {
+                      this.stateMachine.pushText(child);
+                      continue;
+                    }
+                    switch (child.type) {
+                      case 'tab':
+                        this.stateMachine.pushText('\t');
+                        break;
+                      case 'space':
+                        this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
+                        break;
+                    }
+                  }
+                }
+                break;
+            }
+          }
+          this.stateMachine.pushTag('/EMB_SVG_TEXT');
+        }
+        if (item.type === 'draw_enhanced_geometry') {
+          const enhancedGeometry = <DrawEnhancedGeometry>item;
+          this.stateMachine.pushTag('EMB_SVG_P/', {
+            pathD: extractPath(enhancedGeometry.path, enhancedGeometry.equations)
+          });
+        }
+
       }
       this.stateMachine.pushTag('/EMB_SVG_G');
     }
@@ -198,6 +241,11 @@ export class OdtToMarkdown {
     if (drawFrame.image) {
       const imageLink = this.picturesDir + baseFileName(drawFrame.image.href);
       const altText = drawFrame.description?.value || '';
+      const svgId = urlToFolderId(altText);
+
+      if (svgId) {
+        this.stateMachine.pushTag('SVG/', { href: 'gdoc:' + svgId });
+      } else
       if (imageLink.endsWith('.svg')) {
         this.stateMachine.pushTag('SVG/', { href: imageLink, alt: altText });
         // this.stateMachine.pushTag(`<object type="image/svg+xml" data="${imageLink}"><img src="${imageLink}" /></object>`);

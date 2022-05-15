@@ -259,6 +259,7 @@ export class TransformContainer extends Container {
   }
 
   async run(rootFolderId: FileId) {
+    this.logger.info('Start transforming: ' + rootFolderId);
     this.localLog = new LocalLog(this.generatedFileService);
     await this.localLog.load();
     this.localLinks = new LocalLinks(this.generatedFileService);
@@ -274,6 +275,7 @@ export class TransformContainer extends Container {
     await this.localLog.save();
     await this.localLinks.save();
 
+    this.logger.info('Regenerate tree: ' + rootFolderId);
     const tree = await this.regenerateTree(this.generatedFileService, rootFolderId);
     await this.generatedFileService.writeJson('.tree.json', tree);
   }
@@ -348,6 +350,9 @@ export class TransformContainer extends Container {
           const fileName = parts.pop();
           const dirName = parts.join('/');
 
+          if (!await destinationDirectory.exists(lastLog.filePath)) {
+            continue;
+          }
           const localFileContent = await destinationDirectory.readFile(lastLog.filePath);
           const localFile = markDownScanner.parseMarkdown(localFileContent, lastLog.filePath);
           if (!localFile) {

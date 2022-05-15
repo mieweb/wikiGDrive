@@ -1,8 +1,9 @@
-import fs from 'fs';
+import fs, {stat} from 'fs';
 import path from 'path';
 import {spawn} from 'child_process';
 
 import NodeGit from 'nodegit';
+import {StatusFile} from 'nodegit/status-file';
 const { Cred, Remote, Repository, Revwalk, Signature, Merge } = NodeGit;
 
 async function execAsync(cmd, params: string[] = []) {
@@ -42,25 +43,48 @@ export class GitScanner {
     }
   }
 
-  async commit(message: string, fileName: string, author_str: string): Promise<string> {
-    if (fileName.startsWith('/')) {
-      fileName = fileName.substring(1);
+  async changes(): Promise<any> {
+    const repo = await Repository.open(this.rootPath);
+
+    const status: StatusFile[] = await repo.getStatus();
+    const retVal = [];
+    for (const item of status) {
+      const row = {
+        path: item.path(),
+        state: {
+          isNew: !!item.isNew(),
+          isModified: !!item.isModified(),
+          isDeleted: !!item.isDeleted(),
+          isRenamed: !!item.isRenamed()
+        }
+      };
+      retVal.push(row);
     }
+    return retVal;
+  }
+
+  async commit(message: string, fileNames: string[], author_str: string): Promise<string> {
     const repo = await Repository.open(this.rootPath);
     const index = await repo.refreshIndex();
-    if (fileName) {
-      await index.addByPath(fileName);
-    } else {
-      await index.addAll();
+
+    for (let fileName of fileNames) {
+      if (fileName.startsWith('/')) {
+        fileName = fileName.substring(1);
+      }
+      if (fileName) {
+        await index.addByPath(fileName);
+      }
     }
+
     await index.write();
 
     const oid = await index.writeTree();
     const parent = await repo.getHeadCommit();
 
     const parts = author_str.split(/[<>]+/);
+
     const author_name = parts[0].trim();
-    const author_email = parts[1].trim();
+    const author_email = (parts[1] || '').trim() || this.email;
 
     const author = Signature.now(author_name, author_email);
     const committer = Signature.now('WikiGDrive', this.email);
@@ -121,6 +145,7 @@ export class GitScanner {
       });
     } catch (err) {
       console.warn(err.message);
+      throw err;
     }
   }
 
@@ -218,7 +243,7 @@ export class GitScanner {
 
   async initialize() {
     if (!await this.isRepo()) {
-      fs.writeFileSync(path.join(this.rootPath, '.gitignore'), '.private\n');
+      fs.writeFileSync(path.join(this.rootPath, '.gitignore'), '.private\n.git.json\n.wgd-directory.yaml\n*.debug.xml\n');
       await Repository.init(this.rootPath, 0);
       await this.genKeys();
     }

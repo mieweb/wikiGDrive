@@ -4,7 +4,7 @@ import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile} from '../../model/GoogleFile';
-import {fileNameToExt} from '../transform/utils';
+import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
 
 export class TaskFetchAsset extends QueueTask {
 
@@ -18,7 +18,7 @@ export class TaskFetchAsset extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    const targetPath = this.file.id + fileNameToExt(this.file.name);
+    const targetPath = this.file.id + '.' + googleMimeToExt(this.file.mimeType, this.file.name);
 
     if (this.file.md5Checksum) {
       const localMd5 = await this.fileService.md5File(targetPath);

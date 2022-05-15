@@ -14,8 +14,10 @@ function cleanUpFormula(formula: string) {
 
 export function extractPath(pathSource: string, equations: DrawEquation[]): string {
   const variables = {};
-  for (const equation of equations) {
-    variables[equation.name] = cleanUpFormula(equation.formula);
+  if (Array.isArray(equations)) {
+    for (const equation of equations) {
+      variables[equation.name] = cleanUpFormula(equation.formula);
+    }
   }
 
   variables['logwidth'] = 100;
@@ -30,7 +32,6 @@ export function extractPath(pathSource: string, equations: DrawEquation[]): stri
         if (nevValue !== variables[k]) {
           variables[k] = nevValue;
           change = true;
-          continue;
         }
         // eslint-disable-next-line no-empty
       } catch (ignore) {}
@@ -68,5 +69,5 @@ export function extractPath(pathSource: string, equations: DrawEquation[]): stri
       console.error('loopLimit is out, looks like you have got an infinite loop here');
     }
   }
-  return path;
+  return path.replace(/ N$/, '');
 }
