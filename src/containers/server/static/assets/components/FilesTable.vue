@@ -6,6 +6,7 @@
         <th>File</th>
         <th>Ver</th>
         <th>Modified</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -17,7 +18,7 @@
         <td></td>
         <td></td>
       </tr>
-      <tr v-for="file in files" :key="file.google.id" @click="selectFile(file.google)">
+      <tr v-for="file in files" :key="file.google.id" @click="selectFile(file.google)" :class="{'mui-tr--selected': file.google.id === $route.params.fileId}">
         <td>
           <i class="fa-solid fa-folder" v-if="isFolder(file.google)"></i>
           <i class="fa-solid fa-file-image" v-else-if="isImage(file.google)"></i>

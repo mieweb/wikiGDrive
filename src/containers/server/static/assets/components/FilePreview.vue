@@ -14,7 +14,7 @@
           <li v-if="preview.folderId"><a @click.prevent.stop="goToGDrive(preview.folderId)">Google Drive</a></li>
           <li v-if="preview.fileId"><a @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
           <li><a @click.prevent.stop="alert('TODO')">Links @TODO</a></li>
-          <li><a @click.prevent.stop="alert('TODO')">TOC @TODO</a></li>
+          <li v-if="preview.tocFileId"><a @click.prevent.stop="goToToc(preview.tocFileId)">TOC</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
@@ -93,6 +93,9 @@ export default {
     downloadOdt(fileId) {
       const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
       window.open(odtPath, '_blank');
+    },
+    goToToc(tocFileId) {
+      this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: this.driveId, fileId: tocFileId } });
     }
   }
 };
