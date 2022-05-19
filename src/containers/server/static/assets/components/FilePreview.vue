@@ -15,6 +15,7 @@
           <li v-if="preview.fileId"><a @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
           <li><a @click.prevent.stop="setActiveTab('drive_backlinks')">BackLinks</a></li>
           <li v-if="preview.tocFileId"><a @click.prevent.stop="goToToc(preview.tocFileId)">TOC</a></li>
+          <li v-if="preview.navFileId"><a @click.prevent.stop="goToToc(preview.navFileId)">Navigation</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
@@ -97,8 +98,8 @@ export default {
       const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
       window.open(odtPath, '_blank');
     },
-    goToToc(tocFileId) {
-      this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: this.driveId, fileId: tocFileId } });
+    goToToc(fileId) {
+      this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: this.driveId, fileId: fileId } });
     }
   }
 };

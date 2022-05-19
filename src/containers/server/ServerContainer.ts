@@ -435,6 +435,9 @@ export class ServerContainer extends Container {
         const tocFile = transformedTree.find(item => item.name === '/toc.md');
         const tocFileId = tocFile ? 'toc.md' : null;
 
+        const navFile = transformedTree.find(item => item.name === '/.navigation.md');
+        const navFileId = navFile ? navFile.id : null;
+
         const localLinks = new LocalLinks(transformedFileSystem);
         await localLinks.load();
 
@@ -461,7 +464,7 @@ export class ServerContainer extends Container {
           res.json({
             driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
             folderId,
-            tocFileId,
+            tocFileId, navFileId,
             backlinks,
             git
           });
