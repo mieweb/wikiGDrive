@@ -18,6 +18,7 @@ import {GitScanner} from '../../git/GitScanner';
 
 import {fileURLToPath} from 'url';
 import {LocalLinks} from '../transform/LocalLinks';
+import {UserConfigService} from '../google_folder/UserConfigService';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -272,8 +273,18 @@ export class ServerContainer extends Container {
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
 
-        const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
-        await gitScanner.push(gitConfig.remote_branch || 'master');
+
+        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const userConfigService = new UserConfigService(googleFileSystem);
+        const userConfig = await userConfigService.load();
+
+        const publicKey = await userConfigService.getDeployKey();
+        const privateKey = await userConfigService.getDeployPrivateKey();
+        const passphrase = 'sekret';
+
+        await gitScanner.pushBranch(userConfig.remote_branch || 'master', {
+          publicKey, privateKey, passphrase
+        });
 
         res.json({});
       } catch (err) {
@@ -338,7 +349,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.put('/api/drive/:driveId/git', async (req, res, next) => {
+    app.get('/api/drive/:driveId/user_config', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
@@ -346,11 +357,38 @@ export class ServerContainer extends Container {
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
         await gitScanner.initialize();
 
+        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const userConfigService = new UserConfigService(googleFileSystem);
+        await userConfigService.load();
+
+        res.json(Object.assign({}, userConfigService.config, {
+          remote_url: await gitScanner.getRemoteUrl()
+        }));
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.put('/api/drive/:driveId/user_config', async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+
+        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+        await gitScanner.initialize();
+
+        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const userConfigService = new UserConfigService(googleFileSystem);
+        await userConfigService.load();
+
         if (req.body.remote_branch) {
-          const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
-          gitConfig.remote_branch = req.body.remote_branch || 'master';
-          await transformedFileSystem.writeJson('.git.json', gitConfig);
+          userConfigService.config.remote_branch = req.body.remote_branch || 'master';
         }
+        if (req.body.hugo_theme) {
+          userConfigService.config.hugo_theme = req.body.hugo_theme;
+        }
+
+        await userConfigService.save();
 
         if (req.body.remote_url) {
           await gitScanner.setRemoteUrl(req.body.remote_url);
@@ -426,21 +464,22 @@ export class ServerContainer extends Container {
           return;
         }
 
+        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const userConfigService = new UserConfigService(googleFileSystem);
+        const userConfig = await userConfigService.load();
+
         const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
         const git = {
           initialized: await gitScanner.isRepo(),
-          history: null,
-          public_key: null,
+          public_key: await userConfigService.getDeployKey(),
+          remote_branch: userConfig.remote_branch,
           remote_url: null,
-          remote_branch: null
+          history: null
         };
 
         if (git.initialized) {
-          git.history = await gitScanner.history(transformPath);
-          git.public_key = await gitScanner.getDeployKey();
           git.remote_url = await gitScanner.getRemoteUrl();
-          const gitConfig = (await transformedFileSystem.readJson('.git.json')) || {};
-          git.remote_branch = gitConfig.remote_branch || 'master';
+          git.history = await gitScanner.history(transformPath);
         }
 
         const tocFile = transformedTree.find(item => item.name === '/toc.md');

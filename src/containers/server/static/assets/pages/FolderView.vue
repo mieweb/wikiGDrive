@@ -25,7 +25,7 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>

@@ -6,7 +6,7 @@ import {FileId} from '../../model/model';
 import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
-const RESERVED_NAMES = [LOG_NAME, '.git.json', '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];
+const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];
 
 export function stripConflict(localPath: string) {
   const parts = localPath.split('.');

@@ -1,33 +1,9 @@
-import fs, {stat} from 'fs';
+import fs from 'fs';
 import path from 'path';
-import {spawn} from 'child_process';
 
 import NodeGit from 'nodegit';
 import {StatusFile} from 'nodegit/status-file';
 const { Cred, Remote, Repository, Revwalk, Signature, Merge } = NodeGit;
-
-async function execAsync(cmd, params: string[] = []) {
-  const process = spawn(cmd, params);
-
-  process.stdout.on('data', (data) => {
-    console.log(data.toString());
-  });
-
-  process.stderr.on('data', (data) => {
-    console.error(data.toString());
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    process.on('exit', (code) => {
-      if (code) {
-        reject(code);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
 
 export class GitScanner {
 
@@ -98,13 +74,9 @@ export class GitScanner {
     return commitId.tostrS();
   }
 
-  async push(branch) {
+  async pushBranch(branch, {publicKey, privateKey, passphrase}) {
     try {
       const repo = await Repository.open(this.rootPath);
-
-      const publicKey = await this.getDeployKey();
-      const privateKey = await this.getDeployPrivateKey();
-      const passphrase = 'sekret';
 
       await repo.fetch('origin', {
         callbacks: {
@@ -161,28 +133,11 @@ export class GitScanner {
 
   async setRemoteUrl(url) {
     const repo = await Repository.open(this.rootPath);
-    await this.genKeys();
     try {
       await Remote.delete(repo, 'origin');
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
     await Remote.create(repo, 'origin', url);
-  }
-
-  async getDeployPrivateKey() {
-    const privatePath = path.join(this.rootPath, '.private');
-    if (fs.existsSync(`${privatePath}/id_rsa`)) {
-      return fs.readFileSync(`${privatePath}/id_rsa`).toString('utf-8');
-    }
-    return null;
-  }
-
-  async getDeployKey() {
-    const privatePath = path.join(this.rootPath, '.private');
-    if (fs.existsSync(`${privatePath}/id_rsa.pub`)) {
-      return fs.readFileSync(`${privatePath}/id_rsa.pub`).toString('utf-8');
-    }
-    return null;
   }
 
   async history(fileName: string) {
@@ -227,25 +182,10 @@ export class GitScanner {
     }
   }
 
-  async genKeys() {
-    const privatePath = path.join(this.rootPath, '.private');
-    if (!fs.existsSync(privatePath)) {
-      fs.mkdirSync(privatePath);
-      if (fs.existsSync(`${privatePath}/id_rsa`)) {
-        fs.unlinkSync(`${privatePath}/id_rsa`);
-      }
-      if (fs.existsSync(`${privatePath}/id_rsa.pub`)) {
-        fs.unlinkSync(`${privatePath}/id_rsa.pub`);
-      }
-      await execAsync('ssh-keygen', ['-t', 'ecdsa', '-b', '521', '-f', `${privatePath}/id_rsa`, '-q',  '-N', 'sekret']);
-    }
-  }
-
   async initialize() {
     if (!await this.isRepo()) {
       fs.writeFileSync(path.join(this.rootPath, '.gitignore'), '.private\n.git.json\n.wgd-directory.yaml\n*.debug.xml\n');
       await Repository.init(this.rootPath, 0);
-      await this.genKeys();
     }
   }
 }
