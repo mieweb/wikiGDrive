@@ -14,7 +14,8 @@ export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarc
     mimeType: localFile.mimeType,
     links,
     // url: htmlPath,
-    source: 'https://drive.google.com/open?id=' + localFile.id
+    source: 'https://drive.google.com/open?id=' + localFile.id,
+    wikigdrive: process.env.GIT_SHA
   };
 
   if (navigationHierarchy[localFile.id]) {

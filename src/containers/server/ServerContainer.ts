@@ -121,8 +121,16 @@ export class ServerContainer extends Container {
 
     this.initRouter(app);
 
+    app.use((req, res, next) => {
+      res.header('GIT_SHA', process.env.GIT_SHA);
+      next();
+    });
+
     const indexHandler = (req, res) => {
-      const indexHtml = fs.readFileSync(__dirname + '/static/index.html');
+      const indexHtml = fs.readFileSync(__dirname + '/static/index.html')
+        .toString()
+        .replace(/GIT_SHA/g, process.env.GIT_SHA);
+
       res.header('Content-type', 'text/html').end(indexHtml);
     };
 
@@ -131,7 +139,10 @@ export class ServerContainer extends Container {
     app.get('/drive/:driveId/file/:fileId', indexHandler);
 
     app.use((req, res) => {
-      const indexHtml = fs.readFileSync(__dirname + '/static/index.html');
+      const indexHtml = fs.readFileSync(__dirname + '/static/index.html')
+        .toString()
+        .replace(/GIT_SHA/g, process.env.GIT_SHA);
+
       res.status(404).header('Content-type', 'text/html').end(indexHtml);
       // res.status(404).send('Sorry can\'t find that!');
     });

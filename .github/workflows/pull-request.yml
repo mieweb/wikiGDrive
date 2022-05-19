@@ -38,7 +38,7 @@ jobs:
         cache: npm
 
     - name: Build
-      run: docker build -t wikigdrive-test .
+      run: docker build -t wikigdrive-test --build-arg "GIT_SHA=${GITHUB_SHA}" .
 
     - name: Stop
       run: docker stop wikigdrive-test

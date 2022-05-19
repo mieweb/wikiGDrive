@@ -48,7 +48,8 @@ export class TocGenerator {
     const markdown = await this.dirToMd(generatedFileService, 0);
 
     const fmt = yaml.dump({
-      type: 'page'
+      type: 'page',
+      wikigdrive: process.env.GIT_SHA
     }, FRONTMATTER_DUMP_OPTS);
 
     const frontMatter = '---\n' + fmt + '---\n';

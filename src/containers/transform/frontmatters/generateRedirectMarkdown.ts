@@ -14,7 +14,8 @@ export function generateRedirectMarkdown(redirFile: RedirFile, redirectTo: Local
     date: redirFile.modifiedTime,
     source: 'https://drive.google.com/open?id=' + redirFile.id,
     mimeType: redirFile.mimeType,
-    url: 'gdoc:' + redirFile.redirectTo
+    url: 'gdoc:' + redirFile.redirectTo,
+    wikigdrive: process.env.GIT_SHA
   };
 
   const fmt = yaml.dump(obj, FRONTMATTER_DUMP_OPTS);
