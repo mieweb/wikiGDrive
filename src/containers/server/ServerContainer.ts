@@ -1,5 +1,7 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import express, {Express} from 'express';
+import http from 'http';
+import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
@@ -148,7 +150,16 @@ export class ServerContainer extends Container {
       // res.status(404).send('Sorry can\'t find that!');
     });
 
-    app.listen(port, () => {
+    const server = http.createServer(app);
+
+    const wss = new WebSocketServer({ server });
+    wss.on('connection', (ws, req) => {
+      ws.on('message', (data) => {
+        ws.send('test_response:' + req.url + ':' + data);
+      });
+    });
+
+    server.listen(port, () => {
       this.logger.info('Started server on port: ' + port);
     });
   }
