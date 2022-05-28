@@ -10,7 +10,8 @@ export function generateConflictMarkdown(conflictFile: ConflictFile): string {
     conflicting: conflictFile.conflicting,
     fileName: conflictFile.fileName,
     mimeType: conflictFile.mimeType,
-    date: conflictFile.modifiedTime
+    date: conflictFile.modifiedTime,
+    wikigdrive: process.env.GIT_SHA
   }, FRONTMATTER_DUMP_OPTS);
 
   const frontmatter = '---\n' + fmt + '---\n';

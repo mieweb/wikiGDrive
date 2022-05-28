@@ -4,6 +4,7 @@
       <li :class="{ 'mui--is-active': activeTab === 'markdown' }" class="mui-tab__dropdown">
         <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab">Preview</a>
         <ul class="mui-dropdown__menu">
+          <li><a @click.prevent.stop="setActiveTab('user_config')">Settings</a></li>
           <li v-if="preview.fileId"><a @click.prevent.stop="downloadOdt(preview.fileId)">Download odt</a></li>
         </ul>
       </li>
@@ -15,6 +16,7 @@
           <li v-if="preview.fileId"><a @click.prevent.stop="goToGDocs(preview.fileId)">Google Docs</a></li>
           <li><a @click.prevent.stop="setActiveTab('drive_backlinks')">BackLinks</a></li>
           <li v-if="preview.tocFileId"><a @click.prevent.stop="goToToc(preview.tocFileId)">TOC</a></li>
+          <li v-if="preview.navFileId"><a @click.prevent.stop="goToToc(preview.navFileId)">Navigation</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
@@ -23,7 +25,6 @@
           <li v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
           <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_commit')">Commit</a></li>
           <li v-if="git.initialized"><a @click.prevent.stop="setActiveTab('git_log')">History</a></li>
-          <li><a @click.prevent.stop="setActiveTab('git_settings')">Settings</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab === 'sync' }" class="mui-tab__dropdown">
@@ -46,7 +47,7 @@
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :backlinks="preview.backlinks" />
     <GitLog v-if="activeTab === 'git_log'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
-    <GitSettings v-if="activeTab === 'git_settings'" :git="git" @setup="$emit('setup', $event)" />
+    <UserConfig v-if="activeTab === 'user_config'" :git="git" />
     <GitCommit v-if="activeTab === 'git_commit'" :git="git" @commit="$emit('commit', $event)" @push="$emit('push', $event)" />
   </div>
 </template>
@@ -55,7 +56,7 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
 import MarkDown from './MarkDown.vue';
 import GitCommit from './GitCommit.vue';
-import GitSettings from './GitSettings.vue';
+import UserConfig from './UserConfig.vue';
 import GitLog from './GitLog.vue';
 import BackLinks from './BackLinks.vue';
 
@@ -65,7 +66,7 @@ export default {
   components: {
     GitLog,
     GitCommit,
-    GitSettings,
+    UserConfig,
     MarkDown,
     BackLinks
   },
@@ -97,8 +98,8 @@ export default {
       const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
       window.open(odtPath, '_blank');
     },
-    goToToc(tocFileId) {
-      this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: this.driveId, fileId: tocFileId } });
+    goToToc(fileId) {
+      this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: this.driveId, fileId: fileId } });
     }
   }
 };

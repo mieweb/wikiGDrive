@@ -25,7 +25,7 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>
@@ -54,11 +54,21 @@ export default {
       files: [],
       parentId: '',
       preview: {},
-      git: {}
+      git: {},
+      socket: null
     };
   },
   created() {
     this.fetch();
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws:';
+    this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/${this.driveId}`);
+    this.socket.onopen = () => {
+      setInterval(() => {
+        this.socket.send('inspect');
+      }, 2000);
+    };
+
     setInterval(() => {
       this.runInspect();
     }, 2000);
