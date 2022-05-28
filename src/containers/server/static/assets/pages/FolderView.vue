@@ -61,7 +61,7 @@ export default {
   created() {
     this.fetch();
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws:';
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/${this.driveId}`);
     this.socket.onopen = () => {
       setInterval(() => {
