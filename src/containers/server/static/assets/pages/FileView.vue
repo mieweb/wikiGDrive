@@ -3,7 +3,7 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @setup="gitSetup" @commit="commit" @push="push" :has-sync="true" />
+        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>
@@ -54,35 +54,38 @@ export default {
     },
     async runInspect() {
       try {
-        const fileId = this.$route.params.fileId;
-
         const response = await fetch(`/api/drive/${this.driveId}/inspect`);
         const inspected = await response.json();
 
         inspected.jobs = inspected.jobs || [];
 
-        let runningJob = {
-          type: ''
-        };
-        if (inspected.jobs?.length) {
-          if (inspected.jobs[0].state === 'running') {
-            runningJob = inspected.jobs[0];
-          }
-        }
-
-        const oldPreviewSyncing = this.preview.syncing;
-        this.preview.syncing = (runningJob.type === 'sync_all');
-
-        if (!this.preview.syncing) {
-          const job = inspected.jobs.find(job => job.payload === fileId);
-          this.preview.syncing = !!job || (runningJob.type === 'sync_all');
-        }
-
-        if (oldPreviewSyncing && !this.preview.syncing) {
-          await this.fetch();
-        }
+        await this.onInspectResponse(inspected);
         // eslint-disable-next-line no-empty
       } catch (error404) {}
+    },
+    async onInspectResponse(inspected) {
+      const fileId = this.$route.params.fileId;
+
+      let runningJob = {
+        type: ''
+      };
+      if (inspected.jobs?.length) {
+        if (inspected.jobs[0].state === 'running') {
+          runningJob = inspected.jobs[0];
+        }
+      }
+
+      const oldPreviewSyncing = this.preview.syncing;
+      this.preview.syncing = (runningJob.type === 'sync_all');
+
+      if (!this.preview.syncing) {
+        const job = inspected.jobs.find(job => job.payload === fileId);
+        this.preview.syncing = !!job || (runningJob.type === 'sync_all');
+      }
+
+      if (oldPreviewSyncing && !this.preview.syncing) {
+        await this.fetch();
+      }
     }
   }
 };

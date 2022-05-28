@@ -11,11 +11,13 @@ import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+process.env.GIT_SHA = process.env.GIT_SHA || 'development';
+
 function usage() {
   const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json')).toString());
 
   console.log(
-    `version: ${pkg.version}${`
+    `version: ${pkg.version}, ${process.env.GIT_SHA}${`
 Usage:
     $ wikigdrive <command> [args] [<options>]
 

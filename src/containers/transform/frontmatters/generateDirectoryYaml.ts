@@ -13,7 +13,8 @@ export function generateDirectoryYaml(fileName: string, directory: GoogleFile, r
     mimeType: MimeTypes.FOLDER_MIME,
     date: directory.modifiedTime,
     version: directory.version,
-    fileMap: realFileNameToGenerated
+    fileMap: realFileNameToGenerated,
+    wikigdrive: process.env.GIT_SHA
   }, FRONTMATTER_DUMP_OPTS);
 }
 
