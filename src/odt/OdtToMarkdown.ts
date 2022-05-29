@@ -387,6 +387,12 @@ export class OdtToMarkdown {
         case 'draw_g':
           await this.drawGToText(<DrawG>child);
           break;
+        case 'change_start':
+          this.stateMachine.pushTag('CHANGE');
+          break;
+        case 'change_end':
+          this.stateMachine.pushTag('/CHANGE');
+          break;
       }
     }
 

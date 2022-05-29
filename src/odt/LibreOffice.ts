@@ -170,6 +170,20 @@ export class TextTab implements ParagraphSection {
 }
 
 @XmlElement()
+@XmlAttribute('text:change-id', 'changeId')
+export class TextChangeStart {
+  type = 'change_start';
+  changeId: string;
+}
+
+@XmlElement()
+@XmlAttribute('text:change-id', 'changeId')
+export class TextChangeEnd {
+  type = 'change_end';
+  changeId: string;
+}
+
+@XmlElement()
 @XmlText('list', {isArray: true})
 @XmlAttribute('text:style-name', 'styleName')
 @XmlElementChild('text:bookmark', 'bookmark', 'TextBookmark')
@@ -181,10 +195,12 @@ export class TextTab implements ParagraphSection {
 @XmlElementChild('text:tab', 'list', 'TextTab', {isArray: true})
 @XmlElementChild('text:s', 'list', 'TextSpace', {isArray: true})
 @XmlElementChild('office:annotation', 'annotations', 'OfficeAnnotation', {isArray: true})
+@XmlElementChild('text:change-start', 'list', 'TextChangeStart', {isArray: true})
+@XmlElementChild('text:change-end', 'list', 'TextChangeEnd', {isArray: true})
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextSpace| DrawG> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextSpace| DrawG | TextChangeStart | TextChangeEnd> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }
@@ -371,5 +387,8 @@ export const LIBREOFFICE_CLASSES = {
   'OfficeStyles': OfficeStyles,
   'ListStyle': ListStyle,
   'ListLevelStyleNumber': ListLevelStyleNumber,
-  'ListLevelStyleBullet': ListLevelStyleBullet
+  'ListLevelStyleBullet': ListLevelStyleBullet,
+
+  'TextChangeStart': TextChangeStart,
+  'TextChangeEnd': TextChangeEnd
 };

@@ -394,5 +394,27 @@ export class StateMachine {
       }
     }
 
+    let inChange = false;
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+      if (chunk.isTag && chunk.tag === 'CHANGE') {
+        inChange = true;
+        this.markdownChunks.removeChunk(position);
+        position--;
+        continue;
+      }
+      if (chunk.isTag && chunk.tag === '/CHANGE') {
+        inChange = false;
+        this.markdownChunks.removeChunk(position);
+        position--;
+        continue;
+      }
+
+      if (inChange) {
+        this.markdownChunks.removeChunk(position);
+        position--;
+      }
+    }
+
   }
 }
