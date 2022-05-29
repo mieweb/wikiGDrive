@@ -56,16 +56,6 @@ WikiGDrive scans for changes in the drive and then refresh the local converted f
 
 The WikiGDrive refreshes the "Local Filesystem" with changes from the Google Shared Drive overwriting or deleting any content to bring it into sync.  The Local Filesystem is not preserved (since we will be committing the markdown in github anyway).
 
-WikiGDrive Add-On
-* Validates page
-* Shows hyperlinks (what links here)
-
-WikiGDrive GitHub
-* Allows for updates in markdown to update wikigdrive for simple changes. If complex at least a warning is added to the document that it's been modified and should not be updated.
-* [](https://github.com/koppen/redmine_github_hook)
-* [](https://github.com/moneypark/redmine_github_pull_requests_tool)
-
-
 ## Requirements
 
 The app must:
