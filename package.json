@@ -84,7 +84,7 @@
     "nunjucks": "^3.2.3",
     "open": "^7.4.2",
     "relateurl": "0.2.7",
-    "sharp": "0.30.3",
+    "sharp": "0.30.5",
     "sharp-phash": "^2.0.0",
     "slugify": "1.6.5",
     "stream": "^0.0.2",
