@@ -71,7 +71,7 @@ function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, 
 
     if (file.children) {
       const tuple = generateTreePath(fileId, file.children, fieldName, curPath ? curPath + '/' + part : part);
-      if (tuple) {
+      if (tuple?.length > 0) {
         return tuple;
       }
     }
@@ -451,7 +451,8 @@ export class ServerContainer extends Container {
         const transformedTree = await transformedFileSystem.readJson('.tree.json');
         if (!Array.isArray(transformedTree)) {
           res.json({
-            not_synced: true
+            not_synced: true,
+            debug_msg: 'Not found in .tree.json'
           });
           return;
         }
@@ -461,7 +462,8 @@ export class ServerContainer extends Container {
           file = transformedTree.find(item => item.name === '/toc.md');
           if (!file) {
             res.json({
-              not_synced: true
+              not_synced: true,
+              debug_msg: '/toc.md not found'
             });
             return;
           }
@@ -470,7 +472,8 @@ export class ServerContainer extends Container {
 
         if (!file?.name) {
           res.json({
-            not_synced: true
+            not_synced: true,
+            debug_msg: 'No file.name'
           });
           return;
         }

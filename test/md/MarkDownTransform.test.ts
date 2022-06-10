@@ -95,6 +95,12 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown));
   });
 
+  it('test ./suggest', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/suggest.md').toString();
+    const markdown = await transformOdt('suggest');
+    assert.ok(compareTexts(testMarkdown, markdown));
+  });
+
 });
 
 async function transformOdt(id: string) {

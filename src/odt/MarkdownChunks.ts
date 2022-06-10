@@ -8,7 +8,9 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
-  'TOC' | '/TOC' | 'SVG/' | 'IMG/' | 'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT';
+  'TOC' | '/TOC' | 'SVG/' | 'IMG/' |
+  'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT' |
+  'CHANGE' | '/CHANGE';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
