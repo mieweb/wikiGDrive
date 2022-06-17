@@ -22,6 +22,7 @@ export const UtilsMixin = {
       if (!google) return false;
       switch (google.mimeType) {
         case 'application/vnd.google-apps.drawing':
+        case 'image/svg+xml':
         case 'image/png':
         case 'image/jpg':
         case 'image/jpeg':

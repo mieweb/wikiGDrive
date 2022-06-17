@@ -21,6 +21,7 @@ import {GitScanner} from '../../git/GitScanner';
 import {fileURLToPath} from 'url';
 import {LocalLinks} from '../transform/LocalLinks';
 import {UserConfigService} from '../google_folder/UserConfigService';
+import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -423,6 +424,38 @@ export class ServerContainer extends Container {
             const odtPath = drivePath + '.odt';
             if (await driveFileSystem.exists(odtPath)) {
               driveFileSystem.createReadStream(odtPath).pipe(res);
+              return;
+            }
+          }
+        }
+
+        res.status(404).json({});
+      } catch (err) {
+        if (err.message === 'Drive not shared with wikigdrive') {
+          const authConfig: AuthConfig = this.authContainer['authConfig'];
+          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
+          return;
+        }
+        next(err);
+      }
+    });
+
+    app.get('/api/drive/:driveId/transformed/(:fileId)', async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+        const fileId = req.params.fileId;
+
+        const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const driveTree = await driveFileSystem.readJson('.tree.json');
+        if (driveTree) {
+          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
+
+          if (file && drivePath) {
+            const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
+            if (await driveFileSystem.exists(filePath)) {
+              console.log('1z111', file, drivePath);
+              res.header('Content-Disposition', `attachment; filename="${file.name}.${googleMimeToExt(file.mimeType, '')}"`);
+              driveFileSystem.createReadStream(filePath).pipe(res);
               return;
             }
           }

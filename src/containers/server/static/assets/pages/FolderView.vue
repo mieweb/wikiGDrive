@@ -27,6 +27,9 @@
       <div v-if="preview.mimeType === 'text/x-markdown'">
         <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
       </div>
+      <div v-if="preview.mimeType === 'image/svg+xml'">
+        <ImagePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
+      </div>
     </template>
   </BaseLayout>
 </template>
@@ -38,6 +41,7 @@ import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
 import {GitMixin} from '../components/GitMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
+import ImagePreview from '../components/ImagePreview.vue';
 
 export default {
   name: 'FolderView',
@@ -45,7 +49,8 @@ export default {
     NotRegistered,
     FilesTable,
     BaseLayout,
-    FilePreview
+    FilePreview,
+    ImagePreview
   },
   mixins: [ UtilsMixin, UiMixin, GitMixin ],
   data() {
