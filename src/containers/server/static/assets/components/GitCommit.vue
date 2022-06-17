@@ -6,7 +6,7 @@
         <table class="mui-table mui-table--bordered">
           <thead>
           <tr>
-            <th></th>
+            <th><input type="checkbox" :checked="isCheckedAll" @click="toggleCheckAll" /></th>
             <th>Path</th>
             <th>Stater</th>
           </tr>
@@ -54,6 +54,9 @@ export default {
   computed: {
     git_remote_url() {
       return this.git?.remote_url || '';
+    },
+    isCheckedAll() {
+      return this.filePath.length === this.changes.length;
     }
   },
   async created() {
@@ -93,8 +96,18 @@ export default {
       } else {
         this.filePath.splice(idx, 1);
       }
+    },
+    toggleCheckAll() {
+      if (this.isCheckedAll) {
+        this.filePath.splice(0, this.filePath.length);
+      } else {
+        for (const item of this.changes) {
+          if (this.filePath.indexOf(item.path) === -1) {
+            this.filePath.push(item.path);
+          }
+        }
+      }
     }
-
   }
 };
 </script>
