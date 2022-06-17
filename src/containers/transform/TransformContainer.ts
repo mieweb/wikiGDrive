@@ -372,7 +372,7 @@ export class TransformContainer extends Container {
           const task = new TaskRedirFileTransform(
             this.logger,
             fileName,
-            await destinationDirectory.getSubFileService(dirName),
+            dirName ? await destinationDirectory.getSubFileService(dirName) : destinationDirectory,
             redirFile,
             localFile
           );
