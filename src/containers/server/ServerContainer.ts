@@ -453,7 +453,6 @@ export class ServerContainer extends Container {
           if (file && drivePath) {
             const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
             if (await driveFileSystem.exists(filePath)) {
-              console.log('1z111', file, drivePath);
               res.header('Content-Disposition', `attachment; filename="${file.name}.${googleMimeToExt(file.mimeType, '')}"`);
               driveFileSystem.createReadStream(filePath).pipe(res);
               return;
