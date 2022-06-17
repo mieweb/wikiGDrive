@@ -18,7 +18,7 @@ jobs:
         cache: npm
 
     - name: Build
-      run: docker build -t wikigdrive-prod --build-arg "GIT_SHA=${GITHUB_SHA}" .
+      run: docker build -t "wikigdrive-develop:${GITHUB_SHA}" --build-arg "GIT_SHA=${GITHUB_SHA}" .
 
     - name: Stop
       run: docker stop wikigdrive-develop
@@ -35,7 +35,7 @@ jobs:
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           --publish 127.0.0.1:4000:3000 \
           --restart unless-stopped \
-          wikigdrive-develop wikigdrive-ts \
+          "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
