@@ -66,6 +66,9 @@ export default {
       if (this.isMarkdown(localFile)) {
         console.log('DOC', { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id });
         this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id } });
+      } else
+      if (this.isImage(localFile)) {
+        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id } });
       }
     }
   }
