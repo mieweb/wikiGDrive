@@ -31,7 +31,7 @@ jobs:
     - name: Start
       run: |
         docker run -d --name wikigdrive-prod \
-          -v wikiGDriveExample:/data \
+          -v wikiGDriveProd:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
