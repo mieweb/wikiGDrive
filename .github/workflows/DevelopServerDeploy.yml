@@ -56,5 +56,5 @@ jobs:
           -v /var/www/preview-develop:/preview \
           -e VOLUME_DATA=wikiGDriveDevelop \
           -e VOLUME_PREVIEW=/var/www/preview-develop \
-          -e RENDER_IMAGE=hugo-render:develop
+          -e RENDER_IMAGE=hugo-render:develop \
           transform-watch:develop
