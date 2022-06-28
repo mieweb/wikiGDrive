@@ -26,9 +26,14 @@ jobs:
     - name: Build
       run: docker build -t "hugo-render:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
 
+    - name: Stop and remove
+      run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
+      continue-on-error: true
+
     - name: Start
       run: |
-        docker run -d --rm --name wikigdrive-develop \
+        docker run -d --name wikigdrive-develop \
+          --restart unless-stopped \
           -v wikiGDriveDevelop:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           --publish 127.0.0.1:4000:3000 \
@@ -38,9 +43,14 @@ jobs:
           --workdir /data \
           server 3000
 
+    - name: Stop and remove
+      run: docker stop transform-preview-develop ; docker rm transform-preview-develop
+      continue-on-error: true
+
     - name: Start
       run: |
-        docker run -d --rm --name transform-preview-develop \
+        docker run -d --name transform-preview-develop \
+          --restart unless-stopped \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v wikiGDriveDevelop:/data \
           -v /var/www/preview-develop:/preview \
