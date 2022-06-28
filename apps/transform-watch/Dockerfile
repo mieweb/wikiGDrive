@@ -7,6 +7,7 @@ VOLUME ["/preview"]
 ENV VOLUME_DATA=/data
 ENV VOLUME_PREVIEW=/preview
 ENV RENDER_IMAGE=hugo-render
+ENV DOMAIN=https://dev.wikigdrive
 
 RUN apk add --no-cache inotify-tools docker-cli
 

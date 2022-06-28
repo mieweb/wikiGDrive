@@ -47,17 +47,9 @@ jobs:
           --workdir /data \
           server 3000
 
-    - name: Stop transform-preview-develop
-      run: docker stop transform-preview-develop
-      continue-on-error: true
-
-    - name: Remove transform-preview-develop
-      run: docker rm transform-preview-develop
-      continue-on-error: true
-
     - name: Start
       run: |
-        docker run -d --name transform-preview-develop \
+        docker run -d --rm --name transform-preview-develop \
           --restart unless-stopped \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v wikiGDriveDevelop:/data \
@@ -65,4 +57,5 @@ jobs:
           -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveDevelop/_data \
           -e VOLUME_PREVIEW=/var/www/preview-develop \
           -e RENDER_IMAGE=hugo-render:develop \
+          -e DOMAIN=https://dev.wikigdrive.com \
           transform-watch:develop

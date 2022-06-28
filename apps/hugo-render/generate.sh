@@ -6,4 +6,6 @@ git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git theme
 
 cp config.toml.example config.toml
 
+echo "baseURL=\"$BASE_URL\"" >> config.toml
+
 hugo

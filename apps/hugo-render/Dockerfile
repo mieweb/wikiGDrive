@@ -3,6 +3,8 @@ MAINTAINER Grzegorz Godlewski <gg@gitgis.com>
 
 ADD site/ /site
 
+ENV BASE_URL=http://example.com/
+
 VOLUME ["/site/content"]
 VOLUME ["/site/public"]
 
