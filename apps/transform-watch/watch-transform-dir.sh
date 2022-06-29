@@ -27,5 +27,6 @@ do
     then
         render $1
         chown www-data:www-data -R "/preview/$1"
+        date "+%s" > "/data/$1/.rendered_preview_time"
     fi
 done
