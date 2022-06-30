@@ -1,11 +1,11 @@
 <template>
   <div>
     <ul class="mui-tabs__bar">
-      <li :class="{ 'mui--is-active': activeTab === 'markdown' }" class="mui-tab__dropdown">
-        <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
+      <li :class="{ 'mui--is-active': activeTab === 'html' }" class="mui-tab__dropdown">
+        <a @click.prevent.stop="setActiveTab('html')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
         <ul class="mui-dropdown__menu">
           <li><a @click.prevent.stop="setActiveTab('user_config')">Settings</a></li>
-          <li v-if="htmlUrl"><a @click.prevent.stop="setActiveTab('html')">Html</a></li>
+          <li v-if="htmlUrl"><a @click.prevent.stop="setActiveTab('markdown')">Markdown</a></li>
           <li v-if="selectedFile.fileId"><a @click.prevent.stop="downloadOdt(selectedFile.fileId)">Download odt</a></li>
         </ul>
       </li>
@@ -119,7 +119,10 @@ export default {
         const fullUrl = '/' + this.driveId + this.folderPath + this.selectedFile.fileName;
         const file = await this.FileClientService.getFile(fullUrl);
         this.fileContent = file.content;
-        this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' + fullUrl.replace(/.md$/, '');
+        this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' +
+            fullUrl
+                .replace(/.md$/, '')
+                .replace(/_index$/, '');
       }
     },
     setActiveTab(tab) {

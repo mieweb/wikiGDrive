@@ -1,8 +1,8 @@
 <template>
   <div>
     <ul class="mui-tabs__bar">
-      <li :class="{ 'mui--is-active': activeTab === 'markdown' }" class="mui-tab__dropdown">
-        <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
+      <li :class="{ 'mui--is-active': activeTab === 'html' }" class="mui-tab__dropdown">
+        <a @click.prevent.stop="setActiveTab('html')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
         <ul class="mui-dropdown__menu">
           <li><a @click.prevent.stop="setActiveTab('user_config')">Settings</a></li>
           <li v-if="selectedFile.fileId"><a @click.prevent.stop="downloadImage(selectedFile.fileId)">Download file</a></li>
