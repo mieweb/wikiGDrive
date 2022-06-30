@@ -2,14 +2,14 @@
   <div>
     <ul class="mui-tabs__bar">
       <li :class="{ 'mui--is-active': activeTab === 'markdown' }" class="mui-tab__dropdown">
-        <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab">Preview</a>
+        <a @click.prevent.stop="setActiveTab('markdown')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
         <ul class="mui-dropdown__menu">
           <li><a @click.prevent.stop="setActiveTab('user_config')">Settings</a></li>
           <li v-if="selectedFile.fileId"><a @click.prevent.stop="downloadImage(selectedFile.fileId)">Download file</a></li>
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab === 'drive' }" class="mui-tab__dropdown">
-        <a>Drive</a>
+        <a><i class="fa-brands fa-google-drive"></i></a>
         <ul class="mui-dropdown__menu">
           <li v-if="isSinglePreview"><a @click.prevent.stop="goToPath(folderPath, '_blank')">WikiGDrive Folder</a></li>
           <li v-if="selectedFile.folderId"><a @click.prevent.stop="goToGDrive(selectedFile.folderId)">Google Drive</a></li>
@@ -20,7 +20,9 @@
         </ul>
       </li>
       <li :class="{ 'mui--is-active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
-        <a @click.prevent.stop="setActiveTab('git_log')" data-mui-toggle="tab">Git</a>
+        <a @click.prevent.stop="setActiveTab('git_log')" data-mui-toggle="tab">
+          <i class="fa-brands fa-git-square"></i>
+        </a>
         <ul class="mui-dropdown__menu">
           <li v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
           <li v-if="gitInitialized"><a @click.prevent.stop="setActiveTab('git_commit')">Commit</a></li>
@@ -30,10 +32,9 @@
       <li :class="{ 'mui--is-active': activeTab === 'sync' }" class="mui-tab__dropdown">
         <a v-if="selectedFile.syncing">
           <i class="fa-solid fa-rotate fa-spin"></i>
-          Syncing
         </a>
         <a v-else>
-          Last synced: @TODO
+          <i class="fa-solid fa-rotate"></i>
         </a>
         <ul class="mui-dropdown__menu">
           <li><a @click.prevent="$emit('sync')">Sync single</a></li>
