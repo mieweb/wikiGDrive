@@ -48,7 +48,7 @@
     </div>
 
     <div v-if="activeTab === 'html' && htmlUrl">
-      <iframe :src="htmlUrl" style="width: 100%; border: 0;; height: 100vh;"></iframe>
+      <iframe :src="htmlUrl" style="width: 100%; border: 0; height: 100vh;"></iframe>
     </div>
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />

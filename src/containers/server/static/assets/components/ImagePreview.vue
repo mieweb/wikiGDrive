@@ -46,6 +46,10 @@
       <img v-else :src="imagePath" />
     </div>
 
+    <div v-if="activeTab === 'html' && htmlUrl">
+      <iframe :src="htmlUrl" style="width: 100%; border: 0; height: 100vh;"></iframe>
+    </div>
+
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />
     <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" />
     <UserConfig v-if="activeTab === 'user_config'" />
@@ -84,6 +88,7 @@ export default {
   },
   data() {
     return {
+      htmlUrl: '',
       svgContent: ''
     };
   },
@@ -109,11 +114,16 @@ export default {
   },
   methods: {
     async fetchImage() {
+      this.svgContent = '';
+      this.htmlUrl = '';
       if ('image/svg+xml' === this.selectedFile.mimeType) {
         const fullUrl = '/' + this.driveId + this.folderPath + this.selectedFile.fileName;
         const file = await this.FileClientService.getFile(fullUrl);
         this.svgContent = file.content;
-      }
+        this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' +
+            fullUrl
+                .replace(/.md$/, '')
+                .replace(/_index$/, '');      }
     },
     setActiveTab(tab) {
       this.$router.replace({ hash: '#' + tab });
