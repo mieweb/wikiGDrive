@@ -30,20 +30,19 @@
           <div class="mui-textfield">
             <textarea placeholder="Commit message" v-model="message"></textarea>
           </div>
-          <button type="button" class="mui-btn mui-btn--primary" @click="commit">Commit</button>
+          <button type="button" class="mui-btn mui-btn--primary" @click="submitCommit">Commit</button>
           <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--danger" @click="push">Commit and Push</button>
+          <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--secondary" @click="pull">Pull</button>
       </div>
     </form>
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
+import {GitMixin} from '../components/GitMixin.mjs';
 
 export default {
-  mixins: [UtilsMixin],
-  props: {
-    git: Object
-  },
+  mixins: [UtilsMixin, GitMixin],
   data() {
     return {
       changes: [],
@@ -64,7 +63,7 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch(`/api/drive/${this.driveId}/git/commit`);
+      const response = await fetch(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
       // this.filePath = this.changes.map(item => item.path);
@@ -72,22 +71,16 @@ export default {
     open(url) {
       window.open(url, '_blank');
     },
-    async commit() {
+    async submitCommit() {
       if (!this.message) {
         alert('No commit message');
         return;
       }
-      await this.$emit('commit', {
+      await this.commit({
         message: this.message,
         filePath: this.filePath
       });
-
-    },
-    push() {
-      this.$emit('push', {
-        message: this.message,
-        filePath: this.filePath
-      });
+      this.message = '';
     },
     toggle(path) {
       const idx = this.filePath.indexOf(path);

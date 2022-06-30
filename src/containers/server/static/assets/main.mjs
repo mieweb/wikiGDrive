@@ -1,5 +1,9 @@
 'use strict';
 
+import {FileClientService} from './services/FileClientService.mjs';
+import {DriveClientService} from './services/DriveClientService.mjs';
+import {GitClientService} from './services/GitClientService.mjs';
+
 const {loadModule} = window['vue3-sfc-loader'];
 
 const options = {
@@ -22,10 +26,28 @@ const options = {
 };
 
 const app = Vue.createApp({
+  data: {
+    drive: {}
+  },
   components: {
     'App': Vue.defineAsyncComponent(() => loadModule('/assets/App.vue', options))
   },
-  template: '<App />'
+  template: '<App />',
+  methods: {
+    async changeDrive(toDriveId) {
+      this.drive = await vm.DriveClientService.changeDrive(toDriveId);
+    }
+  }
+});
+
+app.mixin({
+  data() {
+    return {
+      DriveClientService: new DriveClientService(),
+      FileClientService: new FileClientService(),
+      GitClientService: new GitClientService()
+    }
+  }
 });
 
 const router = new VueRouter.createRouter({
@@ -37,19 +59,14 @@ const router = new VueRouter.createRouter({
       component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/DrivesView.vue', options)),
     },
     {
-      path: '/drive/:driveId',
+      path: '/drive/:driveId*',
       name: 'drive',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options)),
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options))
     },
     {
-      path: '/drive/:driveId/folder/:folderId/:fileId?',
-      name: 'folder',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options)),
-    },
-    {
-      path: '/drive/:driveId/file/:fileId',
-      name: 'file',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FileView.vue', options))
+      path: '/gdocs/:driveId/:fileId',
+      name: 'gdocs',
+      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/GDocsView.vue', options))
     },
     {
       path: '/logs',
@@ -68,6 +85,15 @@ const router = new VueRouter.createRouter({
   ]
 });
 
+
 app.use(router);
 
 const vm = app.mount('#app');
+
+router.beforeEach(async (to, from) => {
+  const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
+  const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
+  if (toDriveId !== fromDriveId) {
+    await vm.changeDrive(toDriveId);
+  }
+});

@@ -74,6 +74,43 @@ export class GitScanner {
     return commitId.tostrS();
   }
 
+  async pullBranch(branch, {publicKey, privateKey, passphrase}) {
+    try {
+      const repo = await Repository.open(this.rootPath);
+
+      await repo.fetch('origin', {
+        callbacks: {
+          credentials: (url, username) => {
+            return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
+          }
+        }
+      });
+
+      const headCommit = await repo.getReferenceCommit('refs/heads/master');
+      try {
+        const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+        const index = await Merge.commits(repo, headCommit, remoteCommit, {
+          fileFavor: Merge.FILE_FAVOR.OURS
+        });
+
+        if (!index.hasConflicts()) {
+          const oid = await index.writeTreeTo(repo);
+          const committer = Signature.now('WikiGDrive', this.email);
+          await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
+          const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+          await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+        }
+      } catch (err) {
+        if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
+          throw err;
+        }
+      }
+    } catch (err) {
+      console.warn(err.message);
+      throw err;
+    }
+  }
+
   async pushBranch(branch, {publicKey, privateKey, passphrase}) {
     try {
       const repo = await Repository.open(this.rootPath);

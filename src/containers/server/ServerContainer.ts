@@ -22,6 +22,14 @@ import {fileURLToPath} from 'url';
 import {LocalLinks} from '../transform/LocalLinks';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
+import {boolean} from 'casual';
+import {Controller, useController} from './routes/Controller';
+import GitController from './routes/GitController';
+import FolderController from './routes/FolderController';
+import {ConfigController} from './routes/ConfigController';
+import {DriveController} from './routes/DriveController';
+import {BackLinksController} from './routes/BackLinksController';
+import {GoogleDriveController} from './routes/GoogleDriveController';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,27 +39,6 @@ interface TreeItem {
   name: string;
   mimeType: string;
   children?: TreeItem[];
-}
-
-function findInTree(fileId: FileId, files: TreeItem[], folderId: string) {
-  for (const file of files) {
-    if (file.id === fileId) {
-      return {file, folderId};
-    }
-  }
-
-  for (const file of files) {
-    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
-      continue;
-    }
-
-    if (file.children) {
-      const result = findInTree(fileId, file.children, file.id);
-      if (result) {
-        return result;
-      }
-    }
-  }
 }
 
 function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
@@ -80,6 +67,37 @@ function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, 
 
   return [];
 }
+
+
+type CallBack = (treeItem: TreeItem) => boolean;
+
+function generateTreePathCallback(callBack: CallBack, files: TreeItem[], fieldName: string, curPath = '') {
+  for (const file of files) {
+    const part = file[fieldName];
+
+    if (callBack(file)) {
+      return [ file, curPath ? curPath + '/' + part : part ];
+    }
+  }
+
+  for (const file of files) {
+    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
+      continue;
+    }
+
+    const part = file[fieldName];
+
+    if (file.children) {
+      const tuple = generateTreePathCallback(callBack, file.children, fieldName, curPath ? curPath + '/' + part : part);
+      if (tuple?.length > 0) {
+        return tuple;
+      }
+    }
+  }
+
+  return [];
+}
+
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
 const extToMime = {
@@ -112,35 +130,21 @@ export class ServerContainer extends Container {
     // TODO
   }
 
-  private startServer(port) {
+  private async startServer(port) {
     const app = this.app = express();
     app.use(express.json());
 
-/*    const env = nunjucks.configure([__dirname + '/templates/'], { // set folders with templates
-      autoescape: true,
-      express: app
-    });*/
-
     app.use(express.static(__dirname + '/static'));
 
-    this.initRouter(app);
+    await this.initRouter(app);
 
     app.use((req, res, next) => {
       res.header('GIT_SHA', process.env.GIT_SHA);
       next();
     });
 
-    const indexHandler = (req, res) => {
-      const indexHtml = fs.readFileSync(__dirname + '/static/index.html')
-        .toString()
-        .replace(/GIT_SHA/g, process.env.GIT_SHA);
-
-      res.header('Content-type', 'text/html').end(indexHtml);
-    };
-
-    app.get('/drive', indexHandler);
-    app.get('/drive/:driveId', indexHandler);
-    app.get('/drive/:driveId/file/:fileId', indexHandler);
+    await useController(app, '/drive', import('./routes/HtmlController'));
+    await useController(app, '/gdocs', import('./routes/HtmlController'));
 
     app.use((req, res) => {
       const indexHtml = fs.readFileSync(__dirname + '/static/index.html')
@@ -165,251 +169,24 @@ export class ServerContainer extends Container {
     });
   }
 
-  tryOutput(res, filename) {
-    if (fs.existsSync(filename)) {
-      console.log(filename);
-      const stat = fs.statSync(filename);
-      if (stat.isFile()) {
-        res.setHeader('content-type', extToMime[path.extname(filename)] || 'text/plain');
-        fs.createReadStream(filename).pipe(res);
-        return true;
-      }
-    }
-  }
+  async initRouter(app) {
+    const driveController = new DriveController('/api/drive', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
+    app.use('/api/drive', await driveController.getRouter());
 
-  initRouter(app) {
-    const folderHandler = async (req, res, next) => {
-      let drive;
-      let rootFolder;
-      try {
-        const driveId = req.params.driveId;
-        const folderId = req.params.folderId;
+    const gitController = new GitController('/api/git', this.filesService);
+    app.use('/api/git', await gitController.getRouter());
 
-        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
-        rootFolder = await folderRegistryContainer.registerFolder(driveId);
+    const folderController = new FolderController('/api/file', this.filesService, this.authContainer);
+    app.use('/api/file', await folderController.getRouter());
 
-        let transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-        let parentId = '';
-        let markdownPath = '';
-        if (folderId) {
-          const transformedTree = await transformedFileSystem.readJson('.tree.json');
-          if (transformedTree) {
-            const [file, transformPath] = generateTreePath(folderId, transformedTree, 'name');
-            parentId = file?.parentId || driveId;
-            if (transformPath) {
-              transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath, '');
-            }
-            markdownPath = transformPath;
-          }
-        }
+    const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);
+    app.use('/api/gdrive', await googleDriveController.getRouter());
 
-        let driveFileSystem = await this.filesService.getSubFileService(driveId);
-        drive = await driveFileSystem.readJson('.folder.json');
-        if (folderId) {
-          const driveTree = await driveFileSystem.readJson('.tree.json');
-          if (driveTree) {
-            const [file, drivePath] = generateTreePath(folderId, driveTree, 'id');
-            if (file && drivePath) {
-              driveFileSystem = await driveFileSystem.getSubFileService(drivePath);
-            }
-          }
-        }
+    const backlinksController = new BackLinksController('/api/backlinks', this.filesService, this.authContainer);
+    app.use('/api/backlinks', await backlinksController.getRouter());
 
-        const directoryScanner = new DirectoryScanner();
-        const localFiles = Object.values(await directoryScanner.scan(transformedFileSystem))
-          .filter(lf => !lf.fileName.endsWith('.debug.xml'));
-
-        const scanner = new GoogleFilesScanner();
-        const googleFiles = await scanner.scan(driveFileSystem);
-
-        googleFiles.sort((file1, file2) => {
-          if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
-            return -1;
-          }
-          if (!(MimeTypes.FOLDER_MIME === file1.mimeType) && (MimeTypes.FOLDER_MIME === file2.mimeType)) {
-            return 1;
-          }
-          return file1.name.toLocaleLowerCase().localeCompare(file2.name.toLocaleLowerCase());
-        });
-
-        localFiles.sort((file1, file2) => {
-          if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
-            return -1;
-          }
-          if (!(MimeTypes.FOLDER_MIME === file1.mimeType) && (MimeTypes.FOLDER_MIME === file2.mimeType)) {
-            return 1;
-          }
-          return file1.fileName.toLocaleLowerCase().localeCompare(file2.fileName.toLocaleLowerCase());
-        });
-
-        const retVal = {};
-        for (const local of localFiles) {
-          if (local.fileName === 'toc.md' && !local.id) {
-            local.id = 'toc.md';
-          }
-          if (!local.id) {
-            continue;
-          }
-          retVal[local.id] = {
-            google: googleFiles.find(gf => gf.id === local.id),
-            local
-          };
-        }
-/*        for (const file of googleFiles) {
-          retVal[file.id] = {
-            google: file,
-            local: localFiles.find(lf => lf.id === file.id),
-          };
-        }*/
-
-        const files = Object.values(retVal);
-
-        // const files = await driveFileSystem.list();
-        res.json({ rootFolder, drive, driveId, folderId, files, parentId, markdownPath });
-      } catch (err) {
-        if (err.message === 'Drive not shared with wikigdrive' || err.message.indexOf('Error download fileId') === 0) {
-          const authConfig: AuthConfig = this.authContainer['authConfig'];
-          res.status(404).json({ not_registered: true, share_email: authConfig.share_email, rootFolder });
-          return;
-        }
-        next(err);
-      }
-    };
-
-    app.get('/api/drive/:driveId', folderHandler);
-    app.get('/api/drive/:driveId/folder/:folderId', folderHandler);
-
-    app.post('/api/drive/:driveId/git/push', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-
-
-        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const userConfigService = new UserConfigService(googleFileSystem);
-        const userConfig = await userConfigService.load();
-
-        const publicKey = await userConfigService.getDeployKey();
-        const privateKey = await userConfigService.getDeployPrivateKey();
-        const passphrase = 'sekret';
-
-        await gitScanner.pushBranch(userConfig.remote_branch || 'master', {
-          publicKey, privateKey, passphrase
-        });
-
-        res.json({});
-      } catch (err) {
-        if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
-          res.json({ error: 'Failed to authenticate' });
-          return;
-        }
-        next(err);
-      }
-    });
-
-    app.get('/api/drive/:driveId/git/commit', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-
-        const changes = await gitScanner.changes();
-
-        res.json({ changes });
-      } catch (err) {
-        next(err);
-      }
-    });
-
-
-    app.post('/api/drive/:driveId/git/commit', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const filePaths: string[] = Array.isArray(req.body.filePath) ? req.body.filePath : [req.body.filePath];
-        const message = req.body.message;
-
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-
-        // const transformedTree = await transformedFileSystem.readJson('.tree.json');
-
-        const transformPaths = [];
-
-        for (const filePath of filePaths) {
-/*
-          const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
-          let author = '';
-          if (file && transformPath) {
-            const yamlContent = await transformedFileSystem.readFile(transformPath);
-            const directoryScanner = new DirectoryScanner();
-            const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
-            if (file.type === 'md') {
-              author = file.lastAuthor;
-            }
-          }
-*/
-          transformPaths.push(filePath);
-        }
-
-        await gitScanner.commit(message, transformPaths, 'WikiGDrive');
-
-        res.json({});
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.get('/api/drive/:driveId/user_config', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-        await gitScanner.initialize();
-
-        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const userConfigService = new UserConfigService(googleFileSystem);
-        await userConfigService.load();
-
-        res.json(Object.assign({}, userConfigService.config, {
-          remote_url: await gitScanner.getRemoteUrl()
-        }));
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.put('/api/drive/:driveId/user_config', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-        await gitScanner.initialize();
-
-        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const userConfigService = new UserConfigService(googleFileSystem);
-        await userConfigService.load();
-
-        if (req.body.remote_branch) {
-          userConfigService.config.remote_branch = req.body.remote_branch || 'master';
-        }
-        if (req.body.hugo_theme) {
-          userConfigService.config.hugo_theme = req.body.hugo_theme;
-        }
-
-        await userConfigService.save();
-
-        if (req.body.remote_url) {
-          await gitScanner.setRemoteUrl(req.body.remote_url);
-        }
-        res.json({});
-      } catch (err) {
-        next(err);
-      }
-    });
+    const configController = new ConfigController('/api/config', this.filesService);
+    app.use('/api/config', await configController.getRouter());
 
     app.get('/api/drive/:driveId/file/(:fileId).odt', async (req, res, next) => {
       try {
@@ -471,114 +248,6 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/drive/:driveId/file/:fileId', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const fileId = req.params.fileId;
-
-        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
-        await folderRegistryContainer.registerFolder(driveId);
-
-        const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-        const transformedTree = await transformedFileSystem.readJson('.tree.json');
-        if (!Array.isArray(transformedTree)) {
-          res.json({
-            not_synced: true,
-            debug_msg: 'Not found in .tree.json'
-          });
-          return;
-        }
-        let [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
-
-        if (fileId === 'toc.md') {
-          file = transformedTree.find(item => item.name === '/toc.md');
-          if (!file) {
-            res.json({
-              not_synced: true,
-              debug_msg: '/toc.md not found'
-            });
-            return;
-          }
-          transformPath = '/toc.md';
-        }
-
-        if (!file?.name) {
-          res.json({
-            not_synced: true,
-            debug_msg: 'No file.name'
-          });
-          return;
-        }
-
-        const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const userConfigService = new UserConfigService(googleFileSystem);
-        const userConfig = await userConfigService.load();
-
-        const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-        const git = {
-          initialized: await gitScanner.isRepo(),
-          public_key: await userConfigService.getDeployKey(),
-          remote_branch: userConfig.remote_branch,
-          remote_url: null,
-          history: null
-        };
-
-        if (git.initialized) {
-          git.remote_url = await gitScanner.getRemoteUrl();
-          git.history = await gitScanner.history(transformPath);
-        }
-
-        const tocFile = transformedTree.find(item => item.name === '/toc.md');
-        const tocFileId = tocFile ? 'toc.md' : null;
-
-        const navFile = transformedTree.find(item => item.name === '/.navigation.md');
-        const navFileId = navFile ? navFile.id : null;
-
-        const localLinks = new LocalLinks(transformedFileSystem);
-        await localLinks.load();
-
-        const backLinkFileIds = localLinks.getBackLinks(fileId);
-        const backlinks = [];
-        for (const backLinkFileId of backLinkFileIds) {
-          const obj = findInTree(backLinkFileId, transformedTree, driveId);
-          if (obj) {
-            backlinks.push({
-              folderId: obj.folderId, fileId: backLinkFileId, name: obj.file.name
-            });
-          }
-        }
-
-        const folderId = file.parentId || driveId;
-        // if (transformPath) {
-        //   transformedFileSystem = await transformedFileSystem.getSubFileService(transformPath);
-        // }
-        // markdownPath = transformPath;
-
-        try {
-          const buffer = await transformedFileSystem.readBuffer(file.name);
-
-          res.json({
-            driveId, fileId, mimeType: file.mimeType, transformPath, content: buffer.toString(),
-            folderId,
-            tocFileId, navFileId,
-            backlinks,
-            git
-          });
-        } catch (err) {
-          res.json({
-            not_found: true
-          });
-          return;
-        }
-      } catch (err) {
-        if (err.message === 'Drive not shared with wikigdrive') {
-          const authConfig: AuthConfig = this.authContainer['authConfig'];
-          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
-          return;
-        }
-        next(err);
-      }
-    });
 
     app.get('/api/ps', async (req, res, next) => {
       try {
@@ -603,7 +272,22 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/drive/:driveId/sync/:fileId', async (req, res, next) => {
+    app.post('/api/sync/:driveId', async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        await jobManagerContainer.schedule(driveId, {
+          type: 'sync_all'
+        });
+
+        res.json({ driveId });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.post('/api/sync/:driveId/:fileId', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -619,7 +303,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/drive/:driveId/inspect', async (req, res, next) => {
+    app.get('/api/inspect/:driveId', async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
@@ -630,21 +314,6 @@ export class ServerContainer extends Container {
         inspected['folder'] = folders[driveId];
 
         res.json(inspected);
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.post('/api/drive/:driveId/sync', async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-
-        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
-        await jobManagerContainer.schedule(driveId, {
-          type: 'sync_all'
-        });
-
-        res.json({ driveId });
       } catch (err) {
         next(err);
       }

@@ -6,17 +6,18 @@ import {FileId} from '../../model/model';
 import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
-const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-log.csv'];
+export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
+  '.tree.json', '.gitignore'];
 
 export function stripConflict(localPath: string) {
   const parts = localPath.split('.');
-  parts[0] = parts[0].replace(/_[0-9]+$/, '');
+  parts[0] = parts[0].replace(/@[0-9]+$/, '');
   return parts.join('.');
 }
 
 export function appendConflict(localPath: string, no: number) {
   const parts = localPath.split('.');
-  parts[0] = parts[0] + `_${no}`;
+  parts[0] = parts[0] + `@${no}`;
   return parts.join('.');
 }
 
@@ -134,8 +135,8 @@ export class DirectoryScanner {
         } else
         if (realFileName.endsWith('.md')) {
           const markdown = (await existingDirectory.readFile(realFileName)).toString();
-          const localPath = existingDirectory.getVirtualPath() + realFileName;
-          const localFile = this.parseMarkdown(markdown, localPath);
+          // const localPath = existingDirectory.getVirtualPath() + realFileName;
+          const localFile = this.parseMarkdown(markdown, realFileName);
           if (localFile) {
             this.files[realFileName] = localFile;
           }
@@ -164,17 +165,5 @@ export class DirectoryScanner {
   getFileById(fileId: FileId): LocalFile {
     const entry = Object.entries(this.files).find(f => f[1].id === fileId);
     return entry ? entry[1] : null;
-  }
-
-  async update(realFileName: string, markdown: string) {
-    const props = this.parseMarkdown(markdown, realFileName);
-    if (!props) {
-      return;
-    }
-
-    if (!realFileName) {
-      throw new Error(`Cannot update without localPath: ${markdown}`);
-    }
-    this.files[realFileName] = props;
   }
 }

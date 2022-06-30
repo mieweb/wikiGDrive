@@ -10,7 +10,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-if="parentId" @click="selectFile({ id: parentId, mimeType: 'application/vnd.google-apps.folder' })">
+      <tr v-if="folderPath !== '/'" @click="selectFile('..')">
         <td><i class="fa-solid fa-folder"></i></td>
         <td>
           ..
@@ -18,7 +18,7 @@
         <td></td>
         <td></td>
       </tr>
-      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.local)" :class="{'mui-tr--selected': file.google && file.google.id === $route.params.fileId}">
+      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.local.fileName)" :class="{'mui-tr--selected': file.local && file.local.fileName === selectedName}">
         <td>
           <i class="fa-solid fa-folder" v-if="isFolder(file.google)"></i>
           <i class="fa-solid fa-file-image" v-else-if="isImage(file.google)"></i>
@@ -30,10 +30,10 @@
           {{ file.local ? file.local.fileName : '' }}
         </td>
         <td @click.stop="sync(file)">
-          #{{ file.local ? file.local.version : '' }}
+          #{{ file.local.version }}
           <i class="fa-solid fa-rotate" :class="{'fa-spin': file.syncing}"></i>
         </td>
-        <td>{{ file.google ? file.google.modifiedTime : '' }}</td>
+        <td>{{ file.local.modifiedTime }}</td>
         <td v-if="file.google" @click.stop="goToGDocs(file.google.id)"><i class="fa-brands fa-google-drive"></i></td>
       </tr>
     </tbody>
@@ -45,7 +45,7 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 export default {
   mixins: [ UtilsMixin ],
   props: {
-    parentId: {
+    folderPath: {
       type: String
     },
     files: {
@@ -55,21 +55,24 @@ export default {
       type: Boolean
     }
   },
-  methods: {
-    selectFile(localFile) {
-      console.log('localFile', localFile);
-      const folderId = this.$route.params.folderId;
-      if (this.isFolder(localFile)) {
-        console.log('FOLDER', localFile, localFile.mimeType, localFile.id);
-        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: localFile.id } });
-      } else
-      if (this.isMarkdown(localFile)) {
-        console.log('DOC', { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id });
-        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id } });
-      } else
-      if (this.isImage(localFile)) {
-        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id } });
+  computed: {
+    selectedName() {
+      const driveId = this.$root.drive.id;
+      if (this.folderPath === '/') {
+        return this.$route.path.replace(`/drive/${driveId}${this.folderPath}`, '');
       }
+      return this.$route.path.replace(`/drive/${driveId}${this.folderPath}/`, '');
+    }
+  },
+  methods: {
+    selectFile(fileName) {
+      const parts = this.folderPath.split('/').filter(s => s.length > 0);
+      if (fileName === '..') {
+        parts.pop();
+      } else  {
+        parts.push(fileName);
+      }
+      this.goToPath(`/${parts.join('/')}`);
     }
   }
 };

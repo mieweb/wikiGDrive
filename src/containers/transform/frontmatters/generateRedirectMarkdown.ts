@@ -15,6 +15,7 @@ export function generateRedirectMarkdown(redirFile: RedirFile, redirectTo: Local
     source: 'https://drive.google.com/open?id=' + redirFile.id,
     mimeType: redirFile.mimeType,
     url: 'gdoc:' + redirFile.redirectTo,
+    redirectTo: redirFile.redirectTo,
     wikigdrive: process.env.GIT_SHA
   };
 

@@ -1,7 +1,7 @@
 import winston from 'winston';
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import {FileContentService} from '../../utils/FileContentService';
-import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner';
+import {appendConflict, DirectoryScanner, RESERVED_NAMES, stripConflict} from './DirectoryScanner';
 import {GoogleFilesScanner} from './GoogleFilesScanner';
 import {convertToRelativeMarkDownPath} from '../../LinkTranslator';
 import {LocalFilesGenerator} from './LocalFilesGenerator';
@@ -283,14 +283,23 @@ export class TransformContainer extends Container {
   async regenerateTree(filesService: FileContentService, parentId?: string) {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(filesService);
+    console.log('regenerateTree', files);
     const retVal = [];
     for (const realFileName in files) {
+      if (RESERVED_NAMES.includes(realFileName)) {
+        continue;
+      }
+      if (realFileName.endsWith('.debug.xml')) {
+        continue;
+      }
+
       const file = files[realFileName];
       if (file.mimeType === MimeTypes.FOLDER_MIME) {
         const subFilesService = await filesService.getSubFileService(realFileName);
         const item = {
           id: file.id,
-          name: file.fileName,
+          path: filesService.getVirtualPath() + realFileName,
+          fileName: realFileName,
           mimeType: file.mimeType,
           parentId,
           children: await this.regenerateTree(subFilesService, file.id)
@@ -298,8 +307,10 @@ export class TransformContainer extends Container {
         retVal.push(item);
       } else {
         const item = {
-          id: file.id,
+          id: file['redirectTo'] ? file.fileName : file.id,
+          path: filesService.getVirtualPath() + realFileName,
           name: file.fileName,
+          fileName: realFileName,
           mimeType: file.mimeType,
           parentId
         };

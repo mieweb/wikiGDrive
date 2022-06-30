@@ -14,8 +14,8 @@
 
         <button class="mui-btn mui-btn--primary" type="button" @click="save">Save</button>
 
-        <div class="mui-textfield" v-if="git.initialized">
-          <textarea rows="10" placeholder="Deploy key" readonly :value="git.public_key" @click="copyEmail"></textarea>
+        <div class="mui-textfield" v-if="gitInitialized">
+          <textarea rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
         </div>
       </form>
     </div>
@@ -26,9 +26,6 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 
 export default {
   mixins: [UtilsMixin],
-  props: {
-    git: Object
-  },
   data() {
     return {
       user_config: {
@@ -41,16 +38,17 @@ export default {
   async created() {
     await this.fetch();
   },
+  computed: {
+    public_key() {
+      return this.$root.drive?.git?.public_key || '';
+    }
+  },
   methods: {
     async fetch() {
-      const response = await fetch(`/api/drive/${this.driveId}/user_config`);
-      const config = await response.json();
-      this.user_config.remote_url = config?.remote_url || '';
-      this.user_config.remote_branch = config?.remote_branch || '';
-      this.user_config.hugo_theme = config?.hugo_theme || '';
+      this.user_config = { ...this.$root.drive?.git || {}, hugo_theme: this.$root.drive.hugo_theme };
     },
     async save() {
-      await fetch(`/api/drive/${this.driveId}/user_config`, {
+      await fetch(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'
