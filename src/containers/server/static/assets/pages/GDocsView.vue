@@ -3,33 +3,38 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
+        <div v-if="selectedFile.mimeType === 'text/x-markdown'">
+          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+        </div>
+        <div v-if="selectedFile.mimeType === 'image/svg+xml'">
+          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+        </div>
       </div>
     </template>
   </BaseLayout>
 </template>
-<script lang="ts">
+<script lang="js">
 import BaseLayout from '../layout/BaseLayout.vue';
 import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
 import {UtilsMixin} from '../components/UtilsMixin.mjs';
-import {GitMixin} from '../components/GitMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
+import ImagePreview from '../components/ImagePreview.vue';
 import NotRegistered from './NotRegistered.vue';
 
 export default {
-  name: 'FileView',
-  mixins: [UtilsMixin, UiMixin, GitMixin],
+  name: 'GDocsView',
+  mixins: [UtilsMixin, UiMixin],
   components: {
     FilePreview,
+    ImagePreview,
     BaseLayout,
     NotRegistered
   },
   data() {
     return {
       activeTab: DEFAULT_TAB,
-      file: null,
-      preview: {},
-      git: {},
+      folderPath: '',
+      selectedFile: {},
       notRegistered: false
     };
   },
@@ -50,9 +55,33 @@ export default {
   },
   methods: {
     async fetch() {
-      await this.fetchFile();
+      await this.fetchFileById();
+    },
+    async fetchFileById() {
+      const fileId = this.$route.params.fileId;
+
+      if (fileId) {
+        const response = await fetch(`/api/gdrive/${this.driveId}/${fileId}`);
+
+        const path = response.headers.get('wgd-path') || '';
+        const fileName = response.headers.get('wgd-file-name') || '';
+        this.folderPath = path.substring(0, path.length - fileName.length);
+        this.selectedFile = {
+          fileName,
+          folderId: response.headers.get('wgd-google-parent-id'),
+          fileId: response.headers.get('wgd-google-id'),
+          mimeType: response.headers.get('wgd-mime-type')
+        };
+        console.log('selectedFile', this.selectedFile);
+
+/*        this.notRegistered = !!this.preview.not_registered;
+        if (this.notRegistered) {
+          this.shareEmail = this.preview.share_email;
+        }*/
+      }
     },
     async runInspect() {
+      return;
       try {
         const response = await fetch(`/api/drive/${this.driveId}/inspect`);
         const inspected = await response.json();

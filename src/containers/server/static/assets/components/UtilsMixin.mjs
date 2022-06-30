@@ -1,11 +1,28 @@
 export const UtilsMixin = {
   computed: {
     driveId() {
-      return this.$route.params.driveId;
+      return this.$root.drive.id;
     },
-    // folderPath
+    gitInitialized() {
+      return this.$root.drive?.git?.initialized || false;
+    },
+    github_url() {
+      const remote_url = this.$root.drive?.git?.remote_url || '';
+      if (remote_url.startsWith('git@github.com:')) {
+        return remote_url.replace('git@github.com:', 'https://github.com/')
+          .replace(/.git$/, '');
+      }
+      return '';
+    }
   },
   methods: {
+    goToPath(path, target) {
+      if (target) {
+        window.open('/drive/' + this.driveId + path, target);
+      } else {
+        this.$router.push('/drive/' + this.driveId + path);
+      }
+    },
     isFolder(google) {
       if (!google) return false;
       return google.mimeType === 'application/vnd.google-apps.folder';
@@ -33,7 +50,7 @@ export const UtilsMixin = {
     openWindow(url, tab = '_blank') {
       window.open(url, tab);
     },
-    goToGDocs(fileId) {
+    goToGDocs(fileId, target) {
       window.open('https://drive.google.com/open?id=' + fileId);
     },
     goToGDrive(folderId) {
@@ -48,30 +65,12 @@ export const UtilsMixin = {
     async sync(file) {
       file.syncing = true;
       try {
-        await fetch(`/api/drive/${this.driveId}/sync/${file.google.id}`, {
+        await fetch(`/api/sync/${this.driveId}/${file.id}`, {
           method: 'post'
         });
         // eslint-disable-next-line no-empty
       } finally {
       }
-    },
-    async fetchFile() {
-      this.preview = {};
-      this.git = {};
-
-      const fileId = this.$route.params.fileId;
-
-      if (fileId) {
-        const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
-        this.preview = await response.json();
-        console.log('File fetch', this.preview);
-        this.git = this.preview.git;
-
-        this.notRegistered = !!this.preview.not_registered;
-        if (this.notRegistered) {
-          this.shareEmail = this.preview.share_email;
-        }
-      }
-    },
+    }
   }
 };

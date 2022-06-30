@@ -19,16 +19,16 @@
     </template>
 
     <template v-slot:sidebar>
-      <FilesTable :parent-id="parentId" :files="files" :not-registered="notRegistered" />
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
 
-      <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
+      <div v-if="selectedFile.mimeType === 'text/x-markdown'">
+        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
       </div>
-      <div v-if="preview.mimeType === 'image/svg+xml'">
-        <ImagePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
+      <div v-if="selectedFile.mimeType === 'image/svg+xml'">
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
       </div>
     </template>
   </BaseLayout>
@@ -39,7 +39,6 @@ import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
 import FilesTable from '../components/FilesTable.vue';
 import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
-import {GitMixin} from '../components/GitMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 
@@ -52,27 +51,20 @@ export default {
     FilePreview,
     ImagePreview
   },
-  mixins: [ UtilsMixin, UiMixin, GitMixin ],
+  mixins: [ UtilsMixin, UiMixin ],
   data() {
     return {
+      rootFolder: {},
+      folderPath: '',
       activeTab: DEFAULT_TAB,
       files: [],
-      parentId: '',
-      preview: {},
-      git: {},
-      socket: null
+      selectedFile: {}
     };
   },
   created() {
     this.fetch();
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/${this.driveId}`);
-    this.socket.onopen = () => {
-      setInterval(() => {
-        this.socket.send('inspect');
-      }, 2000);
-    };
+    this.rootFolder = this.$root.drive;
 
     setInterval(() => {
       this.runInspect();
@@ -88,12 +80,29 @@ export default {
     this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
   },
   methods: {
+    async fetchFolder(driveId, filePath) {
+      const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
+      this.folderPath = filePath;
+      this.files = pathContent.files;
+    },
     async fetch() {
-      this.files = [];
-      this.parentId = '';
-      this.preview = {};
-      this.git = {};
+      const filePath = this.$route.path.substring('/drive'.length);
 
+      const parts = filePath.split('/').filter(s => s.length > 0);
+      const driveId = parts.shift();
+      const baseName = parts.pop() || '';
+      if (baseName.indexOf('.') > -1) {
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
+        const file = this.files.find(f => f.local?.fileName === baseName) || {};
+        this.selectedFile = file.local || {};
+      } else {
+        parts.push(baseName);
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
+        this.selectedFile = {};
+      }
+/*
       const folderId = this.$route.params.folderId;
 
       const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
@@ -105,22 +114,16 @@ export default {
         this.shareEmail = json.share_email;
         return;
       }
-
-      this.files = json.files || [];
-      this.parentId = json.parentId;
-      this.rootFolder = json.rootFolder || {};
-      this.preview = {};
-      this.git = {};
-
-      await this.fetchFile();
+*/
     },
     async syncAll() {
       this.rootFolder.syncing = true;
-      await fetch(`/api/drive/${this.driveId}/sync`, {
+      await fetch(`/api/sync/${this.driveId}`, {
         method: 'post'
       });
     },
     async runInspect() {
+      return;
       try {
         const response = await fetch(`/api/drive/${this.driveId}/inspect`);
         const inspected = await response.json();
