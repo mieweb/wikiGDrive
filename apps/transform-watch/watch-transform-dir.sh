@@ -11,7 +11,9 @@ then
 fi
 
 render() {
-    echo docker run -v "$VOLUME_DATA/$1_transform:/site/content" -v "$VOLUME_PREVIEW/$1/$THEME_ID:/site/public" hugo-render
+    echo docker run -v "$VOLUME_DATA/$1_transform:/site/content" -v "$VOLUME_PREVIEW/$1/$THEME_ID:/site/public" \
+      --env THEME_ID=$THEME_ID \
+      --env THEME_URL=$THEME_URL hugo-render
     docker run \
         --env BASE_URL=$DOMAIN/preview/$THEME_ID/$1/ \
         --env THEME_ID=$THEME_ID \
