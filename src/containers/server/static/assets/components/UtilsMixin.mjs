@@ -16,6 +16,9 @@ export const UtilsMixin = {
     }
   },
   methods: {
+    setActiveTab(tab) {
+      this.$router.replace({ hash: '#' + tab });
+    },
     goToPath(path, target) {
       if (target) {
         window.open('/drive/' + this.driveId + path, target);

@@ -1,0 +1,40 @@
+.nav-tabs {
+  align-self: end;
+  height: 40px;
+  flex: 1;
+  display: flex;
+  justify-content: end;
+}
+
+.nav-tab--active > a {
+  background: #FFF;
+}
+
+ul.mui-tabs__bar {
+  overflow: initial;
+}
+
+ul.mui-tabs__bar > li > a {
+  border-top-left-radius: 50%;
+  border-top-right-radius: 50%;
+  cursor: pointer;
+}
+ul.mui-tabs__bar>li>a {
+  cursor: pointer;
+  text-underline: none !important;
+}
+
+.mui-tab__dropdown {
+  position: relative;
+}
+
+.mui-tab__dropdown:hover > a {
+  background: #FFF;
+  opacity: 0.5;
+}
+
+.mui-tab__dropdown:hover .mui-dropdown__menu {
+  display: block;
+  top: 40px;
+  right: 0;
+}
