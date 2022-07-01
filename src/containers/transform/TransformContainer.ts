@@ -283,7 +283,6 @@ export class TransformContainer extends Container {
   async regenerateTree(filesService: FileContentService, parentId?: string) {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(filesService);
-    console.log('regenerateTree', files);
     const retVal = [];
     for (const realFileName in files) {
       if (RESERVED_NAMES.includes(realFileName)) {
