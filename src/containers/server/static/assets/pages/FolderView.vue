@@ -114,7 +114,7 @@ export default {
 */
     },
     async runInspect() {
-      return;
+/*
       try {
         const response = await fetch(`/api/drive/${this.driveId}/inspect`);
         const inspected = await response.json();
@@ -143,6 +143,7 @@ export default {
         }
         // eslint-disable-next-line no-empty
       } catch (error404) {}
+*/
     }
   }
 };

@@ -89,7 +89,7 @@ export default {
       }
     },
     async runInspect() {
-      return;
+/*
       try {
         const response = await fetch(`/api/drive/${this.driveId}/inspect`);
         const inspected = await response.json();
@@ -99,6 +99,7 @@ export default {
         await this.onInspectResponse(inspected);
         // eslint-disable-next-line no-empty
       } catch (error404) {}
+*/
     },
     async onInspectResponse(inspected) {
       const fileId = this.$route.params.fileId;
