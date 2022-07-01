@@ -54,7 +54,7 @@ const router = new VueRouter.createRouter({
   history: VueRouter.createWebHistory(),
   routes: [
     {
-      path: '/drive',
+      path: '/drive/',
       name: 'drives',
       component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/DrivesView.vue', options)),
     },
