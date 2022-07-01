@@ -117,7 +117,8 @@ export default {
       this.svgContent = '';
       this.htmlUrl = '';
       if ('image/svg+xml' === this.selectedFile.mimeType) {
-        const fullUrl = '/' + this.driveId + this.folderPath + this.selectedFile.fileName;
+        const folderPath = this.folderPath.endsWith('/') ? folderPath : folderPath + '/';
+        const fullUrl = '/' + this.driveId + folderPath + this.selectedFile.fileName;
         const file = await this.FileClientService.getFile(fullUrl);
         this.svgContent = file.content;
         this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' +
