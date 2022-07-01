@@ -6,7 +6,15 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 interface ConfigBody {
   remote_branch: string;
   remote_url: string;
-  hugo_theme: string;
+  hugo_theme: HugoTheme;
+  hugo_themes: HugoTheme[];
+}
+
+export interface HugoTheme {
+  id: string;
+  name: string;
+  url: string;
+  preview_img: string;
 }
 
 export class ConfigController extends Controller {

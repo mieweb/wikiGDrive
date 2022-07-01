@@ -2,17 +2,22 @@
 
 set -u
 
-if [[ ! -d "/preview/$1" ]]
+THEME_ID=$(cat "/data/$1/.user_config.json" 2>/dev/null | jq --raw-output .hugo_theme.id || "anake")
+THEME_URL=$(cat "/data/$1/.user_config.json" 2>/dev/null | jq --raw-output .hugo_theme.url || "https://github.com/budparr/gohugo-theme-ananke.git")
+
+if [[ ! -d "/preview/$1/$THEME_ID" ]]
 then
-    mkdir "/preview/$1"
+    mkdir -p "/preview/$1/$THEME_ID"
 fi
 
 render() {
-    echo docker run -v "$VOLUME_DATA/$1_transform:/site/content" -v "$VOLUME_PREVIEW/$1:/site/public" hugo-render
+    echo docker run -v "$VOLUME_DATA/$1_transform:/site/content" -v "$VOLUME_PREVIEW/$1/$THEME_ID:/site/public" hugo-render
     docker run \
-        --env BASE_URL=$DOMAIN/preview/$1/ \
+        --env BASE_URL=$DOMAIN/preview/$THEME_ID/$1/ \
+        --env THEME_ID=$THEME_ID \
+        --env THEME_URL=$THEME_URL \
         --mount type=bind,source="$VOLUME_DATA/$1_transform",target=/site/content \
-        --mount type=bind,source="$VOLUME_PREVIEW/$1",target=/site/public \
+        --mount type=bind,source="$VOLUME_PREVIEW/$1/$THEME_ID",target=/site/public \
         $RENDER_IMAGE
 }
 

@@ -9,7 +9,7 @@ ENV VOLUME_PREVIEW=/preview
 ENV RENDER_IMAGE=hugo-render
 ENV DOMAIN=https://dev.wikigdrive
 
-RUN apk add --no-cache inotify-tools docker-cli
+RUN apk add --no-cache inotify-tools docker-cli jq
 
 COPY watch-main-dir.sh /watch-main-dir.sh
 COPY watch-transform-dir.sh /watch-transform-dir.sh
