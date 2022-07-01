@@ -15,7 +15,7 @@ render() {
       --env THEME_ID=$THEME_ID \
       --env THEME_URL=$THEME_URL hugo-render
     docker run \
-        --env BASE_URL=$DOMAIN/preview/$THEME_ID/$1/ \
+        --env BASE_URL=$DOMAIN/preview/$1/$THEME_ID/ \
         --env THEME_ID=$THEME_ID \
         --env THEME_URL=$THEME_URL \
         --mount type=bind,source="$VOLUME_DATA/$1_transform",target=/site/content \
