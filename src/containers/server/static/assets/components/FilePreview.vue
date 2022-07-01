@@ -116,7 +116,8 @@ export default {
       this.fileContent = '';
       this.htmlUrl = '';
       if (this.selectedFile.mimeType.startsWith('text/')) {
-        const fullUrl = '/' + this.driveId + this.folderPath + this.selectedFile.fileName;
+        const folderPath = this.folderPath.endsWith('/') ? folderPath : folderPath + '/';
+        const fullUrl = '/' + this.driveId + folderPath + this.selectedFile.fileName;
         const file = await this.FileClientService.getFile(fullUrl);
         this.fileContent = file.content;
         this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' +
