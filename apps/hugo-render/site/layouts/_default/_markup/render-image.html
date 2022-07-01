@@ -1,3 +1,9 @@
 <p class="md__image">
+  {{ if in (.Destination) ".svg" }}
+  <object type="image/svg+xml" data="{{ .Destination | absURL }}">
+    <img src="{{ .Destination | absURL }}" alt="{{ .Text }}" {{ with .Title}} title="{{ . }}"{{ end }} />
+  </object>
+  {{ else }}
   <img src="{{ .Destination | absURL }}" alt="{{ .Text }}" {{ with .Title}} title="{{ . }}"{{ end }} />
+  {{ end }}
 </p>
