@@ -4,6 +4,18 @@ import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryConta
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
 
+async function loadHugoThemes(filesService: FileContentService) {
+  if (!await filesService.exists('hugo_themes.json')) {
+    await filesService.writeJson('hugo_themes.json', [{
+      id: 'ananke',
+      name: 'Anake',
+      url: 'https://github.com/budparr/gohugo-theme-ananke.git',
+      preview_img: 'https://raw.githubusercontent.com/budparr/gohugo-theme-ananke/master/images/screenshot.png'
+    }]);
+  }
+  return await filesService.readJson('hugo_themes.json');
+}
+
 export class DriveController extends Controller {
   constructor(subPath: string,
               private readonly filesService: FileContentService,
@@ -49,6 +61,8 @@ export class DriveController extends Controller {
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');
 
+    const hugo_themes = await loadHugoThemes(this.filesService);
+
     return {
       ...drive,
       git: {
@@ -59,7 +73,8 @@ export class DriveController extends Controller {
       },
       tocFilePath: tocFile ? tocFile.path : null,
       navFilePath: navFile ? navFile.path : null,
-      hugo_theme: userConfig.hugo_theme,
+      hugo_theme: userConfig.hugo_theme || {},
+      hugo_themes
     };
   }
 

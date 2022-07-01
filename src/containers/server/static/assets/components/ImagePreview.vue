@@ -74,6 +74,7 @@ export default {
         const file = await this.FileClientService.getFile(fullUrl);
         this.svgContent = file.content;
         this.htmlUrl = window.location.protocol + '//' + window.location.hostname + '/preview' +
+            this.drive.hugo_theme?.id ? `/${this.drive.hugo_theme?.id}` : '' +
             fullUrl
                 .replace(/.md$/, '')
                 .replace(/_index$/, '');      }

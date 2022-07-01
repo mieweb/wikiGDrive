@@ -1,9 +1,8 @@
-import yaml from 'js-yaml';
 import path from 'path';
 import fs from 'fs';
 import {spawn} from 'child_process';
 import {FileContentService} from '../../utils/FileContentService';
-import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter';
+import {HugoTheme} from '../server/routes/ConfigController';
 
 async function execAsync(cmd, params: string[] = []) {
   const process = spawn(cmd, params);
@@ -29,7 +28,7 @@ async function execAsync(cmd, params: string[] = []) {
 
 export class UserConfig {
   remote_branch: string;
-  hugo_theme?: string;
+  hugo_theme?: HugoTheme;
 }
 
 export class UserConfigService {
@@ -39,9 +38,9 @@ export class UserConfigService {
   constructor(private fileService: FileContentService) {}
 
   async load(): Promise<UserConfig> {
-    if (await this.fileService.exists('.user_config.yaml')) {
-      const yamlContent = await this.fileService.readFile('.user_config.yaml');
-      this.config = yaml.load(yamlContent);
+    if (await this.fileService.exists('.user_config.json')) {
+      const json = await this.fileService.readJson('.user_config.json');
+      this.config = json || {};
     } else {
       this.config = {
         remote_branch: 'master'
@@ -52,8 +51,7 @@ export class UserConfigService {
   }
 
   async save(): Promise<void> {
-    const fmt = yaml.dump(this.config, FRONTMATTER_DUMP_OPTS);
-    await this.fileService.writeFile('.user_config.yaml', fmt);
+    await this.fileService.writeJson('.user_config.json', this.config);
     await this.genKeys();
   }
 
