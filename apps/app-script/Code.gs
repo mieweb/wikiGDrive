@@ -40,7 +40,7 @@ function getURL() {
 }
 
 function markFileDirty() {
-    const URL = getURL;
+    const URL = getURL();
 
     const ui = DocumentApp.getUi();
     const doc = DocumentApp.getActiveDocument();
