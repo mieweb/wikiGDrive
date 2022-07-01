@@ -1,5 +1,5 @@
 // This is in the script.  Make sure you update this with the next version number before deploying here: https://docs.google.com/document/d/1ICVsTdxvO5fkZe6wZy_Hug_nMZaS71ZLcGcP7K2mwXc/edit#heading=h.rsldzpmzud
-const VERSION=8;
+const VERSION=10;
 
 // To manage the deployment of this:
 // Notes on the madness are here:
@@ -10,7 +10,7 @@ const VERSION=8;
 function onOpen(e) {
     const menu = DocumentApp.getUi().createAddonMenu(); // Or DocumentApp or SlidesApp or FormApp.
     menu.addItem('Sync', 'markFileDirty');
-    menu.addItem('Sidebar', 'showSidebar');
+    menu.addItem('Sidebar (ver:'+VERSION+')', 'showSidebar');
     menu.addToUi();
     Logger.log('onOpen ' + e.user.nickname); // e.user.email
 }
