@@ -1,13 +1,19 @@
 <template>
-  <BaseLayout :navbar="false">
+  <BaseLayout :sidebar="false" :share-email="shareEmail">
+    <template v-slot:navbar>
+      <nav>
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+      </nav>
+    </template>
+
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
         <div v-if="selectedFile.mimeType === 'text/x-markdown'">
-          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
         </div>
         <div v-if="selectedFile.mimeType === 'image/svg+xml'">
-          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
         </div>
       </div>
     </template>
@@ -20,11 +26,13 @@ import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import NotRegistered from './NotRegistered.vue';
+import NavTabs from '../components/NavTabs.vue';
 
 export default {
   name: 'GDocsView',
   mixins: [UtilsMixin, UiMixin],
   components: {
+    NavTabs,
     FilePreview,
     ImagePreview,
     BaseLayout,

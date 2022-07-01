@@ -1,21 +1,16 @@
 <template>
   <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
-      <div class="mui-container-fluid">
-        <table style="width: 100%;">
-          <tr class="mui--appbar-height">
-            <td class="mui--text-title" v-if="rootFolder.name">
-              {{ rootFolder.name }}
-            </td>
-            <td class="mui--text-title" v-else>
-              WikiGDrive
-            </td>
-            <td v-if="rootFolder.name">
-              <button type="button" @click="syncAll" class="mui-btn mui-btn--small mui--pull-right"><i class="fa-solid fa-rotate" :class="{'fa-spin': rootFolder.syncing}"></i> Sync All</button>
-            </td>
-          </tr>
-        </table>
-      </div>
+      <nav>
+        <span class="mui--text-title" v-if="rootFolder.name">
+          {{ rootFolder.name }}
+        </span>
+        <span class="mui--text-title" v-else>
+          WikiGDrive
+        </span>
+
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+      </nav>
     </template>
 
     <template v-slot:sidebar>
@@ -25,10 +20,10 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </div>
       <div v-if="selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" :has-sync="true" />
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </div>
     </template>
   </BaseLayout>
@@ -41,10 +36,12 @@ import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
+import NavTabs from '../components/NavTabs.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    NavTabs,
     NotRegistered,
     FilesTable,
     BaseLayout,
@@ -115,12 +112,6 @@ export default {
         return;
       }
 */
-    },
-    async syncAll() {
-      this.rootFolder.syncing = true;
-      await fetch(`/api/sync/${this.driveId}`, {
-        method: 'post'
-      });
     },
     async runInspect() {
       return;

@@ -298,20 +298,24 @@ export class TransformContainer extends Container {
         const subFilesService = await filesService.getSubFileService(realFileName);
         const item = {
           id: file.id,
+          fileId: file.id,
           path: filesService.getVirtualPath() + realFileName,
           fileName: realFileName,
           mimeType: file.mimeType,
           parentId,
+          folderId: parentId,
           children: await this.regenerateTree(subFilesService, file.id)
         };
         retVal.push(item);
       } else {
         const item = {
           id: file['redirectTo'] ? file.fileName : file.id,
+          fileId: file['redirectTo'] ? null : file.id,
           path: filesService.getVirtualPath() + realFileName,
           name: file.fileName,
           fileName: realFileName,
           mimeType: file.mimeType,
+          folderId: parentId,
           parentId
         };
         retVal.push(item);
