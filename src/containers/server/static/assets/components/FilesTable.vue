@@ -18,23 +18,23 @@
         <td></td>
         <td></td>
       </tr>
-      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.local.fileName)" :class="{'mui-tr--selected': file.local && file.local.fileName === selectedName}">
+      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName)" :class="{'mui-tr--selected': file.fileName === selectedName}">
         <td>
-          <i class="fa-solid fa-folder" v-if="isFolder(file.google)"></i>
-          <i class="fa-solid fa-file-image" v-else-if="isImage(file.google)"></i>
-          <i class="fa-solid fa-file-lines" v-else-if="isDocument(file.google) || isMarkdown(file.local)"></i>
+          <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
+          <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
+          <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
           <i v-else class="fa-solid fa-file"></i>
         </td>
         <td>
-          {{ file.google ? file.google.name : '' }}<br/>
-          {{ file.local ? file.local.fileName : '' }}
+          {{ file.title }}<br/>
+          {{ file.fileName }}
         </td>
-        <td @click.stop="sync(file)">
-          #{{ file.local.version }}
+        <td @click.stop="syncSingle(file)">
+          #{{ file.version }}
           <i class="fa-solid fa-rotate" :class="{'fa-spin': file.syncing}"></i>
         </td>
-        <td>{{ file.local.modifiedTime }}</td>
-        <td v-if="file.google" @click.stop="goToGDocs(file.google.id)"><i class="fa-brands fa-google-drive"></i></td>
+        <td>{{ file.modifiedTime }}</td>
+        <td v-if="file.id" @click.stop="goToGDocs(file.id)"><i class="fa-brands fa-google-drive"></i></td>
       </tr>
     </tbody>
   </table>

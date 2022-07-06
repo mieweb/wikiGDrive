@@ -26,21 +26,21 @@ export const UtilsMixin = {
         this.$router.push('/drive/' + this.driveId + path);
       }
     },
-    isFolder(google) {
-      if (!google) return false;
-      return google.mimeType === 'application/vnd.google-apps.folder';
+    isFolder(file) {
+      if (!file) return false;
+      return file.mimeType === 'application/vnd.google-apps.folder';
     },
-    isDocument(google) {
-      if (!google) return false;
-      return google.mimeType === 'application/vnd.google-apps.document';
+    isDocument(file) {
+      if (!file) return false;
+      return file.mimeType === 'application/vnd.google-apps.document';
     },
-    isMarkdown(local) {
-      if (!local) return false;
-      return local.mimeType === 'text/x-markdown';
+    isMarkdown(file) {
+      if (!file) return false;
+      return file.mimeType === 'text/x-markdown';
     },
-    isImage(google) {
-      if (!google) return false;
-      switch (google.mimeType) {
+    isImage(file) {
+      if (!file) return false;
+      switch (file.mimeType) {
         case 'application/vnd.google-apps.drawing':
         case 'image/svg+xml':
         case 'image/png':
@@ -65,10 +65,13 @@ export const UtilsMixin = {
     copyEmail(event) {
       event.target.select();
     },
-    async sync(file) {
-      file.syncing = true;
+    async syncSingle(selectedFile) {
+      if (selectedFile.syncing) {
+        return;
+      }
+      selectedFile.syncing = true;
       try {
-        await fetch(`/api/sync/${this.driveId}/${file.id}`, {
+        await fetch(`/api/sync/${this.driveId}/${selectedFile.id}`, {
           method: 'post'
         });
         // eslint-disable-next-line no-empty

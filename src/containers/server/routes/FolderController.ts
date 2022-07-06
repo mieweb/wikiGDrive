@@ -5,12 +5,12 @@ import {
   RouteResponse,
   RouteUse
 } from './Controller';
-import {GoogleFilesScanner} from '../../transform/GoogleFilesScanner';
 import {MimeTypes} from '../../../model/GoogleFile';
 import {AuthConfig} from '../../../model/AccountJson';
 import {FileContentService} from '../../../utils/FileContentService';
 import {FileId} from '../../../model/model';
 import express from 'express';
+import {TreeItem} from '../../../model/TreeItem';
 
 export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
   if (!Array.isArray(files)) {
@@ -42,20 +42,12 @@ export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: s
   return [];
 }
 
-export interface TreeItem {
-  id: FileId;
-  name: string;
-  path: string;
-  mimeType: string;
-  children?: TreeItem[];
-}
-
 type CallBack = (treeItem: TreeItem) => boolean;
 
-export function findInTree(callBack: CallBack, files: TreeItem[], folderId: string) {
-  for (const child of files) {
-    if (callBack(child)) {
-      return {child, folderId};
+export function findInTree(callBack: CallBack, files: TreeItem[]) {
+  for (const treeItem of files) {
+    if (callBack(treeItem)) {
+      return treeItem;
     }
   }
 
@@ -65,7 +57,7 @@ export function findInTree(callBack: CallBack, files: TreeItem[], folderId: stri
     }
 
     if (file.children) {
-      const result = findInTree(callBack, file.children, file.id);
+      const result = findInTree(callBack, file.children);
       if (result) {
         return result;
       }
@@ -87,37 +79,20 @@ export class ShareErrorHandler extends ErrorHandler {
   }
 }
 
-export async function outputDirectory(res: express.Response, treeItem: TreeItem, folderFileSystem: FileContentService, googleFolderFileSystem: FileContentService) {
-  const scanner = new GoogleFilesScanner();
-  const googleFiles = await scanner.scan(googleFolderFileSystem);
-
-  const localFiles = [].concat(treeItem.children);
-  localFiles.sort((file1, file2) => {
+export async function outputDirectory(res: express.Response, treeItem: TreeItem) {
+  const treeItems = [].concat(treeItem.children);
+  treeItems.sort((file1: TreeItem, file2: TreeItem) => {
     if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
       return -1;
     }
     if (!(MimeTypes.FOLDER_MIME === file1.mimeType) && (MimeTypes.FOLDER_MIME === file2.mimeType)) {
       return 1;
     }
-    return file1.name.toLocaleLowerCase().localeCompare(file2.name.toLocaleLowerCase());
+    return file1.fileName.toLocaleLowerCase().localeCompare(file2.fileName.toLocaleLowerCase());
   });
 
-  const retVal = [];
-  for (const local of localFiles) {
-    if (local.id) {
-      retVal.push({
-        google: googleFiles.find(gf => gf.id === local.id),
-        local
-      });
-    } else {
-      retVal.push({
-        local
-      });
-    }
-  }
-
   res.setHeader('content-type', MimeTypes.FOLDER_MIME);
-  res.send(JSON.stringify(retVal));
+  res.send(JSON.stringify(treeItems));
 }
 
 export default class FolderController extends Controller {
@@ -135,40 +110,31 @@ export default class FolderController extends Controller {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const transformedTree = await transformedFileSystem.readJson('.tree.json');
 
-    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-    const driveTree = await googleFileSystem.readJson('.tree.json');
+    const treeItem = filePath === '/'
+      ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }
+      : findInTree(treeItem => treeItem.path === filePath, transformedTree);
 
-    const { child: local, folderId: parentFolderId } = filePath === '/'
-      ? { child: { id: driveId, children: transformedTree }, folderId: driveId }
-      : findInTree(treeItem => treeItem.path === filePath, transformedTree, driveId);
-
-    if (!local) {
+    if (!treeItem) {
       this.res.status(404).send('No local');
       return;
     }
 
-    this.res.setHeader('wgd-google-parent-id', parentFolderId || '');
-    this.res.setHeader('wgd-google-id', local.id || '');
-    this.res.setHeader('wgd-path', local.path || '');
-    this.res.setHeader('wgd-file-name', local.fileName || '');
+    this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
+    this.res.setHeader('wgd-google-id', treeItem.id || '');
+    this.res.setHeader('wgd-path', treeItem.path || '');
+    this.res.setHeader('wgd-file-name', treeItem.fileName || '');
+    this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');
       return;
     }
     if (await transformedFileSystem.isDirectory(filePath)) {
-      let googleFolderFileSystem = googleFileSystem;
-      const [file, drivePath] = generateTreePath(local.id, driveTree, 'id');
-      if (file && drivePath) {
-        googleFolderFileSystem = await googleFolderFileSystem.getSubFileService(drivePath);
-      }
-
-      await outputDirectory(this.res, local, await transformedFileSystem.getSubFileService(filePath), googleFolderFileSystem);
-
+      await outputDirectory(this.res, treeItem);
       return;
     } else {
-      if (local.mimeType) {
-        this.res.setHeader('Content-type', local.mimeType);
+      if (treeItem.mimeType) {
+        this.res.setHeader('Content-type', treeItem.mimeType);
       }
 
       const buffer = await transformedFileSystem.readBuffer(filePath);

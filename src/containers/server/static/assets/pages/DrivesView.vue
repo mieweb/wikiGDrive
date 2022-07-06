@@ -17,10 +17,10 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(item, idx) of drives" :key="idx" @click="selectDrive(item.folderId)">
+          <tr v-for="(item, idx) of drives" :key="idx" @click="selectDrive(item.parentId)">
             <td>{{item.name}}</td>
-            <td>{{item.folderId}}</td>
-            <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
+            <td>{{item.parentId}}</td>
+            <td @click.stop="goToGDrive(item.parentId)"><i class="fa-brands fa-google-drive"></i></td>
           </tr>
           </tbody>
         </table>

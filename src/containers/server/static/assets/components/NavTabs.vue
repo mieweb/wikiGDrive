@@ -16,8 +16,8 @@
       <a><i class="fa-brands fa-google-drive"></i></a>
       <ul class="mui-dropdown__menu">
         <li v-if="isSinglePreview"><a @click.prevent.stop="goToPath(folderPath, '_blank')">WikiGDrive Folder</a></li>
-        <li v-if="selectedFile.folderId"><a @click.prevent.stop="goToGDrive(selectedFile.folderId)">Google Drive</a></li>
-        <li v-if="selectedFile.fileId"><a @click.prevent.stop="goToGDocs(selectedFile.fileId)">Google Docs</a></li>
+        <li v-if="selectedFile.parentId"><a @click.prevent.stop="goToGDrive(selectedFile.parentId)">Google Drive</a></li>
+        <li v-if="selectedFile.id"><a @click.prevent.stop="goToGDocs(selectedFile.id)">Google Docs</a></li>
       </ul>
     </li>
     <li :class="{ 'nav-tab--active': activeTab.startsWith('git_') }" class="mui-tab__dropdown">
@@ -35,7 +35,7 @@
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
       </a>
       <ul class="mui-dropdown__menu" v-if="!syncing">
-        <li>
+        <li v-if="selectedFile.id">
           <a @click.prevent="$emit('sync')">Sync single</a>
         </li>
         <li v-if="drive.name">

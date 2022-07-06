@@ -29,7 +29,7 @@ export class GoogleFolderContainer extends Container {
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     const dirname = path.join(this.filesService.getRealPath(), '.logs');
-    this.logger = engine.logger.child({ filename: __filename, dirname });
+    this.logger = engine.logger.child({ filename: __filename, dirname, driveId: this.params.name });
     this.googleDriveService = new GoogleDriveService(this.logger);
     const googleApiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
     this.auth = googleApiContainer.getAuth();

@@ -10,10 +10,10 @@
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
         <div v-if="selectedFile.mimeType === 'text/x-markdown'">
-          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
         </div>
         <div v-if="selectedFile.mimeType === 'image/svg+xml'">
-          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
         </div>
       </div>
     </template>

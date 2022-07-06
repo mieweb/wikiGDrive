@@ -21,6 +21,7 @@ import {TaskRedirFileTransform} from './TaskRedirFileTransform';
 import {TocGenerator} from './frontmatters/TocGenerator';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
+import {TreeItem} from '../../model/TreeItem';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -181,7 +182,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
   }
 
   async syncDir(googleFolder: FileContentService, destinationDirectory: FileContentService) {
@@ -280,7 +281,7 @@ export class TransformContainer extends Container {
     await this.generatedFileService.writeJson('.tree.json', tree);
   }
 
-  async regenerateTree(filesService: FileContentService, parentId?: string) {
+  async regenerateTree(filesService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(filesService);
     const retVal = [];
@@ -295,26 +296,25 @@ export class TransformContainer extends Container {
       const file = files[realFileName];
       if (file.mimeType === MimeTypes.FOLDER_MIME) {
         const subFilesService = await filesService.getSubFileService(realFileName);
-        const item = {
+        const item: TreeItem = {
           id: file.id,
-          fileId: file.id,
+          title: file.title,
           path: filesService.getVirtualPath() + realFileName,
-          fileName: realFileName,
+          realFileName: realFileName,
+          fileName: file.fileName,
           mimeType: file.mimeType,
           parentId,
-          folderId: parentId,
           children: await this.regenerateTree(subFilesService, file.id)
         };
         retVal.push(item);
       } else {
-        const item = {
-          id: file['redirectTo'] ? file.fileName : file.id,
-          fileId: file['redirectTo'] ? null : file.id,
+        const item: TreeItem = {
+          id: file.id,
+          title: file.title,
           path: filesService.getVirtualPath() + realFileName,
-          name: file.fileName,
-          fileName: realFileName,
+          fileName: file.fileName,
+          realFileName: realFileName,
           mimeType: file.mimeType,
-          folderId: parentId,
           parentId
         };
         retVal.push(item);

@@ -20,10 +20,10 @@
       <NotRegistered v-if="notRegistered" />
 
       <div v-if="selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
       <div v-if="selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
     </template>
   </BaseLayout>
@@ -91,8 +91,8 @@ export default {
       if (baseName.indexOf('.') > -1) {
         const dirPath = '/' + parts.join('/');
         await this.fetchFolder(driveId, dirPath);
-        const file = this.files.find(f => f.local?.fileName === baseName) || {};
-        this.selectedFile = file.local || {};
+        const file = this.files.find(f => f.fileName === baseName) || {};
+        this.selectedFile = file || {};
       } else {
         parts.push(baseName);
         const dirPath = '/' + parts.join('/');
@@ -100,9 +100,9 @@ export default {
         this.selectedFile = {};
       }
 /*
-      const folderId = this.$route.params.folderId;
+      const parentId = this.$route.params.parentId;
 
-      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
+      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + parentId : ''));
       const json = await response.json();
       console.log('Folder fetch', json);
 
