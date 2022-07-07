@@ -4,6 +4,7 @@
       <a @click.prevent.stop="setActiveTab('html')" data-mui-toggle="tab"><i class="fa-solid fa-eye"></i></a>
       <ul class="mui-dropdown__menu">
         <li><a @click.prevent.stop="setActiveTab('user_config')">Settings</a></li>
+        <li><a @click.prevent.stop="setActiveTab('logs')">Logs</a></li>
         <li><a @click.prevent.stop="setActiveTab('markdown')">Markdown</a></li>
         <li v-if="selectedFile.id"><a @click.prevent.stop="downloadOdt(selectedFile.id)">Download odt</a></li>
         <li v-if="selectedFile.id"><a @click.prevent.stop="downloadImage(selectedFile.id)">Download image</a></li>
@@ -36,7 +37,7 @@
       </a>
       <ul class="mui-dropdown__menu" v-if="!syncing">
         <li v-if="selectedFile.id">
-          <a @click.prevent="$emit('sync')">Sync single</a>
+          <a @click.prevent="$emit('sync', selectedFile)">Sync single</a>
         </li>
         <li v-if="drive.name">
           <a @click.prevent="syncAll">Sync All</a>

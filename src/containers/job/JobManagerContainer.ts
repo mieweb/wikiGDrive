@@ -27,7 +27,7 @@ export interface DriveJobsMap {
 }
 
 export class JobManagerContainer extends Container {
-  private logger: winston.Logger;
+  // private logger: winston.Logger;
 
   private driveJobsMap: DriveJobsMap = {};
 
@@ -37,7 +37,6 @@ export class JobManagerContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename });
   }
 
   async schedule(driveId: FileId, job: Job) {
@@ -112,7 +111,8 @@ export class JobManagerContainer extends Container {
             driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'waiting');
           })
           .catch(err => {
-            this.logger.error(err);
+            const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+            logger.error(err);
             driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'waiting');
           });
       }
@@ -149,18 +149,20 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async runJob(folderId: FileId, job: Job) {
-    this.logger.info('runJob ' + folderId + ' ' + JSON.stringify(job));
+  private async runJob(driveId: FileId, job: Job) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+    logger.info('runJob ' + driveId + ' ' + JSON.stringify(job));
     try {
       switch (job.type) {
         case 'sync':
-          await this.sync(folderId, [ job.payload ]);
+          await this.sync(driveId, [ job.payload ]);
           break;
         case 'sync_all':
-          await this.sync(folderId);
+          await this.sync(driveId);
           break;
       }
     } catch (err) {
+      logger.error(err.message);
       console.error('Job failed', err);
     }
   }

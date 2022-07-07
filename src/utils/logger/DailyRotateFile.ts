@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, {ReadStream} from 'fs';
 import os from 'os';
 import path from 'path';
 import zlib from 'zlib';
@@ -7,9 +7,7 @@ import Transport, {TransportStreamOptions} from 'winston-transport';
 import {FileStreamRotator} from './FileStreamRotator';
 import crypto from 'crypto';
 import {DailyRotateFileProcessor} from './DailyRotateFileProcessor';
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
+import {StreamOptions} from 'stream';
 
 const MESSAGE = 'message';
 
@@ -62,7 +60,7 @@ function isValidDirName(dirname) {
 
 interface RotateStreamOptions extends TransportStreamOptions {
   json?: boolean;
-  options?: any;
+  file_options?: StreamOptions<ReadStream>;
   datePattern?: string;
   zippedArchive?: boolean;
   maxSize?: string;
@@ -83,7 +81,9 @@ export class DailyRotateFile extends Transport {
 
   private dirname: string;
   private filename: string;
-  private logStream: any;
+  private logStreamMap: {
+    [driveId: string]: FileStreamRotator;
+  };
   private options: RotateStreamOptions;
 
   constructor(options: RotateStreamOptions = {}) {
@@ -98,31 +98,45 @@ export class DailyRotateFile extends Transport {
       throw new Error('Your path or filename contain an invalid character.');
     }
 
-    this.logStream = new FileStreamRotator({
-      filename: path.join(this.dirname, this.filename),
+    this.logStreamMap = {};
+  }
+
+  getLogStream(driveId: string) {
+    driveId = driveId || '';
+
+    if (this.logStreamMap[driveId]) {
+      return this.logStreamMap[driveId];
+    }
+
+    const options = this.options;
+
+    const dirname = this.dirname.replace('%driveId%', driveId).replace('//', '/');
+
+    const logStream = new FileStreamRotator({
+      filename: path.join(dirname, this.filename),
       frequency: options.frequency ? options.frequency : 'custom',
       date_format: options.datePattern ? options.datePattern : 'YYYY-MM-DD',
       verbose: false,
       size: getMaxSize(options.maxSize),
       max_logs: options.maxFiles,
       end_stream: true,
-      audit_file: options.auditFile ? options.auditFile : path.join(this.dirname, '.' + hash(options) + '-audit.json'),
-      file_options: options.options ? options.options : {flags: 'a'},
+      audit_file: options.auditFile ? options.auditFile : path.join(dirname, '.' + hash(options) + '-audit.json'),
+      file_options: options.file_options ? options.file_options : {flags: 'a'},
       utc: options.utc ? options.utc : false,
       extension: options.extension ? options.extension : '',
       create_symlink: options.createSymlink ? options.createSymlink : false,
       symlink_name: options.symlinkName ? options.symlinkName : 'current.log'
     });
 
-    this.logStream.on('new', (newFile) => {
+    logStream.on('new', (newFile) => {
       this.emit('new', newFile);
     });
 
-    this.logStream.on('rotate', (oldFile, newFile) => {
+    logStream.on('rotate', (oldFile, newFile) => {
       this.emit('rotate', oldFile, newFile);
     });
 
-    this.logStream.on('logRemoved', (params) => {
+    logStream.on('logRemoved', (params) => {
       if (options.zippedArchive) {
         const gzName = params.name + '.gz';
         if (fs.existsSync(gzName)) {
@@ -144,7 +158,7 @@ export class DailyRotateFile extends Transport {
     });
 
     if (options.zippedArchive) {
-      this.logStream.on('rotate', (oldFile) => {
+      logStream.on('rotate', (oldFile) => {
         const oldFileExist = fs.existsSync(oldFile);
         const gzExist = fs.existsSync(oldFile + '.gz');
         if (!oldFileExist || gzExist) {
@@ -162,30 +176,34 @@ export class DailyRotateFile extends Transport {
         });
       });
     }
+
+    this.logStreamMap[driveId] = logStream;
+
+    return logStream;
   }
 
   log(info, callback) {
-    callback = callback || noop;
-
-    this.logStream.write(info[MESSAGE] + this.options.eol);
+    const logStream = this.getLogStream(info.driveId);
+    // logStream.write(info[MESSAGE] + this.options.eol);
+    logStream.write(JSON.stringify(info) + this.options.eol);
     this.emit('logged', info);
-    callback(null, true);
-  }
 
-  close() {
-    if (this.logStream) {
-      this.logStream.end(() => {
-        this.emit('finish');
-      });
+    if (callback) {
+      callback(null, true);
     }
   }
 
-  query(options, callback) {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
-    }
+  async close() {
+    const promises = Object.values(this.logStreamMap)
+      .map(logStream => new Promise(resolve => logStream.end(resolve)));
 
+    this.logStreamMap = {};
+
+    await Promise.all(promises);
+    this.emit('finish');
+  }
+
+  async query(options, callback) {
     if (!this.options.json) {
       throw new Error('query() may not be used without the json option being set to true');
     }
@@ -218,19 +236,35 @@ export class DailyRotateFile extends Transport {
     options.order = options.order || 'desc';
 
     const fileRegex = new RegExp(this.filename.replace('%DATE%', '.*'), 'i');
-    const logFiles = fs.readdirSync(this.dirname)
-      .filter((file) => {
-        return path.basename(file).match(fileRegex);
-      })
-      .map(file => path.join(this.dirname, file));
 
-    if (logFiles.length === 0 && callback) {
+    const driveId = options.driveId || '';
+    const dirname = this.dirname.replace('%driveId%', driveId).replace('//', '/');
+
+    if (fs.existsSync(dirname)) {
+      const logFiles = fs.readdirSync(dirname)
+        .filter((file) => {
+          return path.basename(file).match(fileRegex);
+        })
+        .map(file => path.join(dirname, file));
+
+      if (logFiles.length === 0) {
+        callback(null, []);
+        return [];
+      }
+
+      try {
+        const processor = new DailyRotateFileProcessor(logFiles, options);
+        const results = await processor.query();
+        callback(null, results);
+        return results;
+      } catch (err) {
+        callback(err);
+        throw err;
+      }
+    } else {
       callback(null, []);
-      return;
+      return [];
     }
-
-    const processor = new DailyRotateFileProcessor(logFiles, options);
-    processor.query(callback);
   }
 
 }

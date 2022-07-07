@@ -11,6 +11,7 @@
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />
     <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" />
     <UserConfig v-if="activeTab === 'user_config'" />
+    <LogsViewer v-if="activeTab === 'logs'" />
     <GitCommit v-if="activeTab === 'git_commit'" />
   </div>
 </template>
@@ -22,6 +23,7 @@ import GitCommit from './GitCommit.vue';
 import UserConfig from './UserConfig.vue';
 import GitLog from './GitLog.vue';
 import BackLinks from './BackLinks.vue';
+import LogsViewer from './LogsViewer.vue';
 
 export default {
   name: 'FilePreview',
@@ -30,6 +32,7 @@ export default {
     GitLog,
     GitCommit,
     UserConfig,
+    LogsViewer,
     MarkDown,
     BackLinks
   },

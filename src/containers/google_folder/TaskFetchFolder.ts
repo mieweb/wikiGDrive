@@ -201,6 +201,7 @@ export class TaskFetchFolder extends QueueTask {
   private async deleteUnused(files: SimpleFile[]): Promise<void> {
     const localFiles = await this.fileService.list();
     for (const localFile of localFiles) {
+      if (localFile === '.logs') continue;
       if (localFile === '.private') continue;
       if (localFile === '.folder.json') continue;
       if (localFile === '.folder-files.json') continue;

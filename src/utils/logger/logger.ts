@@ -55,7 +55,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
     )
   }));
 
-  const dirname = path.join(workdir, '.logs');
+  const dirname = path.join(workdir, '%driveId%', '.logs');
   logger.add(new DailyRotateFile({
     format: winston.format.json(),
     zippedArchive: true,

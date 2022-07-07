@@ -6,8 +6,6 @@ import winston from 'winston';
 import path from 'path';
 import fs from 'fs';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
-import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
-import {DirectoryScanner} from '../transform/DirectoryScanner';
 import {FileId} from '../../model/model';
 import {MimeTypes} from '../../model/GoogleFile';
 import {saveRunningInstance} from './loadRunningInstance';
@@ -16,20 +14,17 @@ import {urlToFolderId} from '../../utils/idParsers';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
-import {GitScanner} from '../../git/GitScanner';
 
 import {fileURLToPath} from 'url';
-import {LocalLinks} from '../transform/LocalLinks';
-import {UserConfigService} from '../google_folder/UserConfigService';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
-import {boolean} from 'casual';
-import {Controller, useController} from './routes/Controller';
+import {useController} from './routes/Controller';
 import GitController from './routes/GitController';
 import FolderController from './routes/FolderController';
 import {ConfigController} from './routes/ConfigController';
 import {DriveController} from './routes/DriveController';
 import {BackLinksController} from './routes/BackLinksController';
 import {GoogleDriveController} from './routes/GoogleDriveController';
+import {LogsController} from './routes/LogsController';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -187,6 +182,9 @@ export class ServerContainer extends Container {
 
     const configController = new ConfigController('/api/config', this.filesService);
     app.use('/api/config', await configController.getRouter());
+
+    const logsController = new LogsController('/api/logs', this.logger);
+    app.use('/api/logs', await logsController.getRouter());
 
     app.get('/api/drive/:driveId/file/(:fileId).odt', async (req, res, next) => {
       try {
@@ -359,30 +357,6 @@ export class ServerContainer extends Container {
       }
     });
   }
-
- /*
-    app.get('/logs', (req, res, next) => {
-      if (isHtml(req)) {
-        return res.render('index.html', { title: 'wikigdrive' });
-      }
-
-      const options: QueryOptions = {
-        from: new Date(+new Date() - (24 * 60 * 60 * 1000)),
-        until: new Date(),
-        limit: 100,
-        start: 0,
-        order: 'desc',
-        fields: undefined//['message']
-      };
-
-      this.logger.query(options, (err, results) => {
-        if (err) {
-          return next(err);
-        }
-        res.json(results);
-      });
-    });
-*/
 
   async run() {
     await this.startServer(this.port);
