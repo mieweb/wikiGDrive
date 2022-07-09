@@ -2,11 +2,11 @@
   <div>
     <div v-if="activeTab === 'markdown' && imagePath">
       <div v-if="svgContent" v-html="svgContent" ></div>
-      <img v-else :src="imagePath" />
+      <img v-else :src="imagePath" :alt="selectedFile.name" />
     </div>
 
     <div v-if="activeTab === 'html' && htmlUrl">
-      <iframe :src="htmlUrl" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
+      <iframe :src="htmlUrl + '?' + selectedFile.version" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
     </div>
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />
@@ -63,8 +63,7 @@ export default {
       return this.$root.drive || {};
     },
     imagePath() {
-      const fullUrl = '/api/file/' + this.driveId + this.folderPath + this.selectedFile.fileName;
-      return fullUrl;
+      return '/api/file/' + this.driveId + this.folderPath + this.selectedFile.fileName;
     }
   },
   methods: {

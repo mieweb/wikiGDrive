@@ -5,5 +5,6 @@ export interface TreeItem extends CommonFileData {
   parentId: FileId;
   realFileName: string;
   path: string;
+  version?: number;
   children?: TreeItem[];
 }

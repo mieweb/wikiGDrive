@@ -29,9 +29,11 @@
           {{ file.title }}<br/>
           {{ file.fileName }}
         </td>
-        <td @click.stop="syncSingle(file)">
-          #{{ file.version }}
-          <i class="fa-solid fa-rotate" :class="{'fa-spin': file.syncing}"></i>
+        <td>
+          <a v-if="file.id && file.version" @click.prevent.stop="syncSingle(file)">
+            #{{ file.version }}
+            <i class="fa-solid fa-rotate" :class="{'fa-spin': isSyncing(file.id)}"></i>
+          </a>
         </td>
         <td>{{ file.modifiedTime }}</td>
         <td v-if="file.id" @click.stop="goToGDocs(file.id)"><i class="fa-brands fa-google-drive"></i></td>
@@ -62,6 +64,12 @@ export default {
         return this.$route.path.replace(`/drive/${driveId}${this.folderPath}`, '');
       }
       return this.$route.path.replace(`/drive/${driveId}${this.folderPath}/`, '');
+    },
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
     }
   },
   methods: {
@@ -73,6 +81,9 @@ export default {
         parts.push(fileName);
       }
       this.goToPath(`/${parts.join('/')}`);
+    },
+    isSyncing(id) {
+      return !!this.active_jobs.find(job => (job.type === 'sync' && job.payload === id) || job.type === 'sync_all');
     }
   }
 };

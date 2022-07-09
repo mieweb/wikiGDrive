@@ -25,6 +25,7 @@ import {DriveController} from './routes/DriveController';
 import {BackLinksController} from './routes/BackLinksController';
 import {GoogleDriveController} from './routes/GoogleDriveController';
 import {LogsController} from './routes/LogsController';
+import {SocketManager} from './SocketManager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,37 +64,6 @@ function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, 
   return [];
 }
 
-
-type CallBack = (treeItem: TreeItem) => boolean;
-
-function generateTreePathCallback(callBack: CallBack, files: TreeItem[], fieldName: string, curPath = '') {
-  for (const file of files) {
-    const part = file[fieldName];
-
-    if (callBack(file)) {
-      return [ file, curPath ? curPath + '/' + part : part ];
-    }
-  }
-
-  for (const file of files) {
-    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
-      continue;
-    }
-
-    const part = file[fieldName];
-
-    if (file.children) {
-      const tuple = generateTreePathCallback(callBack, file.children, fieldName, curPath ? curPath + '/' + part : part);
-      if (tuple?.length > 0) {
-        return tuple;
-      }
-    }
-  }
-
-  return [];
-}
-
-
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
 const extToMime = {
   '.js': 'application/javascript',
@@ -109,6 +79,7 @@ export class ServerContainer extends Container {
   private logger: winston.Logger;
   private app: Express;
   private authContainer: Container;
+  private socketManager: SocketManager;
 
   constructor(params: ContainerConfig, private port: number) {
     super(params);
@@ -118,6 +89,7 @@ export class ServerContainer extends Container {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename });
     this.authContainer = engine.getContainer('google_api');
+    this.socketManager = new SocketManager(this.engine);
     await saveRunningInstance(this.port);
   }
 
@@ -154,9 +126,14 @@ export class ServerContainer extends Container {
 
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws, req) => {
-      ws.on('message', (data) => {
-        ws.send('test_response:' + req.url + ':' + data);
-      });
+      if (!req.url || !req.url.startsWith('/api/')) {
+        return;
+      }
+      const parts = req.url.split('/');
+      if (!parts[2]) {
+        return;
+      }
+      this.socketManager.addSocketConnection(ws, parts[2]);
     });
 
     server.listen(port, () => {
@@ -177,7 +154,7 @@ export class ServerContainer extends Container {
     const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);
     app.use('/api/gdrive', await googleDriveController.getRouter());
 
-    const backlinksController = new BackLinksController('/api/backlinks', this.filesService, this.authContainer);
+    const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', await backlinksController.getRouter());
 
     const configController = new ConfigController('/api/config', this.filesService);
@@ -276,7 +253,8 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
-          type: 'sync_all'
+          type: 'sync_all',
+          title: 'Syncing all'
         });
 
         res.json({ driveId });
@@ -290,9 +268,22 @@ export class ServerContainer extends Container {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
 
+        let fileTitle = '#' + fileId;
+
+        const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+        const driveTree = await driveFileSystem.readJson('.tree.json');
+        if (driveTree) {
+          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
+          if (file && drivePath) {
+            fileTitle = file.name;
+          }
+        }
+
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
-          type: 'sync', payload: fileId
+          type: 'sync',
+          payload: fileId,
+          title: 'Syncing file: ' + fileTitle
         });
 
         res.json({ driveId, fileId });
@@ -362,7 +353,4 @@ export class ServerContainer extends Container {
     await this.startServer(this.port);
   }
 
-  getServer() {
-    return this.app;
-  }
 }

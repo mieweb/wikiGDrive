@@ -42,6 +42,14 @@
         <li v-if="drive.name">
           <a @click.prevent="syncAll">Sync All</a>
         </li>
+        <li v-if="last_job">
+          <a @click.prevent>{{ last_job }}</a>
+        </li>
+      </ul>
+      <ul class="mui-dropdown__menu" v-else>
+        <li v-for="(job, idx) of active_jobs" :key="idx">
+          <a>{{ job.title }}</a>
+        </li>
       </ul>
     </li>
   </ul>
@@ -64,7 +72,28 @@ export default {
   },
   computed: {
     syncing() {
-      return this.drive.syncing || this.selectedFile.syncing;
+      return this.active_jobs.length > 0;
+    },
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    },
+    last_job() {
+      if (this.selectedFile) {
+        const fileJob = this.jobs.find(job => job.type === 'sync' && job.payload === this.selectedFile.id && ['done', 'failed'].includes(job.state));
+        if (fileJob?.finished) {
+          return 'Last file sync attempt ' + new Date(fileJob.finished).toISOString();
+        }
+      }
+
+      const syncAllJob = this.jobs.find(job => job.type === 'sync_all' && ['done', 'failed'].includes(job.state));
+      if (syncAllJob?.finished) {
+        return 'Last full sync attempt ' + new Date(syncAllJob.finished).toISOString();
+      }
+
+      return '';
     },
     drive() {
       return this.$root.drive || {};

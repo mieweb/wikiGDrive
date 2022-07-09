@@ -48,14 +48,22 @@ export default {
   },
   created() {
     this.fetch();
-    setInterval(() => {
-      this.runInspect();
-    }, 2000);
+  },
+  computed: {
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    }
   },
   watch: {
     async $route() {
       await this.fetch();
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    },
+    async active_jobs() {
+      await this.fetch();
     }
   },
   mounted() {
@@ -86,43 +94,6 @@ export default {
         if (this.notRegistered) {
           this.shareEmail = this.preview.share_email;
         }*/
-      }
-    },
-    async runInspect() {
-/*
-      try {
-        const response = await fetch(`/api/drive/${this.driveId}/inspect`);
-        const inspected = await response.json();
-
-        inspected.jobs = inspected.jobs || [];
-
-        await this.onInspectResponse(inspected);
-        // eslint-disable-next-line no-empty
-      } catch (error404) {}
-*/
-    },
-    async onInspectResponse(inspected) {
-      const fileId = this.$route.params.fileId;
-
-      let runningJob = {
-        type: ''
-      };
-      if (inspected.jobs?.length) {
-        if (inspected.jobs[0].state === 'running') {
-          runningJob = inspected.jobs[0];
-        }
-      }
-
-      const oldPreviewSyncing = this.preview.syncing;
-      this.preview.syncing = (runningJob.type === 'sync_all');
-
-      if (!this.preview.syncing) {
-        const job = inspected.jobs.find(job => job.payload === fileId);
-        this.preview.syncing = !!job || (runningJob.type === 'sync_all');
-      }
-
-      if (oldPreviewSyncing && !this.preview.syncing) {
-        await this.fetch();
       }
     }
   }

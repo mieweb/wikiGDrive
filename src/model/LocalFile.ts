@@ -6,6 +6,7 @@ export interface CommonFileData {
   modifiedTime?: DateISO;
   fileName: string;
   mimeType?: string;
+  version?: number;
 }
 
 export interface ConflictData {
@@ -27,22 +28,18 @@ export interface RedirFile extends CommonFileData {
 export interface MdFile extends CommonFileData {
   lastAuthor: string;
   type: 'md';
-  version?: number;
 }
 
 export interface DrawingFile extends CommonFileData {
   type: 'drawing';
-  version?: number;
 }
 
 export interface BinaryFile extends CommonFileData { // TODO md5?
   type: 'binary';
-  version?: number;
 }
 
 export interface Directory extends CommonFileData {
   type: 'directory';
-  version?: number;
 }
 
 export type LocalFile = MdFile | RedirFile | ConflictFile | Directory | DrawingFile | BinaryFile;

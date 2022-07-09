@@ -3,6 +3,7 @@ import winston from 'winston';
 import {FileContentService} from './utils/FileContentService';
 import {QueueObject} from 'async';
 import {QueueTask} from './containers/google_folder/QueueTask';
+import {FileId} from './model/model';
 
 export interface ContainerConfig {
   name?: string;
@@ -12,6 +13,8 @@ export interface ContainerConfig {
 export interface ContainerConfigArr {
   [key: string]: string[];
 }
+
+type EventCallback = (driveId: FileId, payload) => void;
 
 export class Container {
   protected engine: ContainerEngine;
@@ -67,6 +70,9 @@ export class ContainerEngine {
   }
 
   private readonly containers: { [name: string]: Container } = {};
+  private listeners: {
+    [eventName: string]: Set<EventCallback>;
+  } = {};
 
   async registerContainer(container: Container): Promise<Container> {
     if (this.containers[container.params.name]) {
@@ -107,5 +113,21 @@ export class ContainerEngine {
     for (const container of Object.values(this.containers)) {
       await container.flushData();
     }
+  }
+
+  emit(driveId: FileId, eventName: string, payload) {
+    if (!this.listeners[eventName]) {
+      return;
+    }
+    for (const listener of this.listeners[eventName]) {
+      listener(driveId, payload);
+    }
+  }
+
+  subscribe(eventName: string, callback: EventCallback) {
+    if (!this.listeners[eventName]) {
+      this.listeners[eventName] = new Set();
+    }
+    this.listeners[eventName].add(callback);
   }
 }

@@ -303,6 +303,8 @@ export class TransformContainer extends Container {
           realFileName: realFileName,
           fileName: file.fileName,
           mimeType: file.mimeType,
+          modifiedTime: file.modifiedTime,
+          version: file.version,
           parentId,
           children: await this.regenerateTree(subFilesService, file.id)
         };
@@ -315,6 +317,8 @@ export class TransformContainer extends Container {
           fileName: file.fileName,
           realFileName: realFileName,
           mimeType: file.mimeType,
+          modifiedTime: file.modifiedTime,
+          version: file.version,
           parentId
         };
         retVal.push(item);

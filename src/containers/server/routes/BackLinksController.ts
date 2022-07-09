@@ -1,11 +1,11 @@
 import {Controller, RouteGet, RouteParamPath} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {LocalLinks} from '../../transform/LocalLinks';
-import {findInTree, TreeItem} from './FolderController';
+import {findInTree} from './FolderController';
 
 export class BackLinksController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService, private readonly authContainer) {
+  constructor(subPath: string, private readonly filesService: FileContentService) {
     super(subPath);
   }
 
@@ -20,7 +20,7 @@ export class BackLinksController extends Controller {
     const backLinkFileIds = localLinks.getBackLinks(fileId);
     const backlinks = [];
     for (const backLinkFileId of backLinkFileIds) {
-      const obj = findInTree(node => node.id === backLinkFileId, transformedTree, driveId);
+      const obj = findInTree(node => node.id === backLinkFileId, transformedTree);
       if (obj) {
         backlinks.push({
           folderId: obj.folderId,

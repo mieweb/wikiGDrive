@@ -5,7 +5,8 @@ export class DriveClientService {
     return response.json();
   }
 
-  async changeDrive(driveId) {
+  async changeDrive(driveId, vm) {
+    this.vm = vm;
     const oldDrive = this.driveId;
     this.driveId = driveId;
     if (oldDrive !== driveId) {
@@ -19,7 +20,6 @@ export class DriveClientService {
   }
 
   connectSocket(driveId) {
-    console.log('connectSocket', driveId);
     if (this.socket) {
       this.socket.close();
       this.socket = null;
@@ -33,12 +33,30 @@ export class DriveClientService {
     this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/api/${driveId}`);
     this.socket.onopen = () => {
       setInterval(() => {
-        this.socket.send('inspect');
+        this.socket.send(JSON.stringify({
+          cmd: 'inspect'
+        }));
       }, 2000);
     };
 
+    this.socket.onmessage = (event) => {
+      const json = JSON.parse(event.data);
+
+      if (!this.vm) {
+        return;
+      }
+
+      switch (json.cmd) {
+        case 'jobs:changed':
+          this.vm.setJobs(json.payload?.jobs || []);
+          break;
+      }
+    }
+
     this.socket.onclose = () => {
-      this.connectSocket(this.driveId);
+      setTimeout(() => {
+        this.connectSocket(this.driveId);
+      }, 1000);
     }
   }
 

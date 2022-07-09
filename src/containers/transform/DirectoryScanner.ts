@@ -105,7 +105,7 @@ export class DirectoryScanner {
               fileName: stripConflict(realFileName),
               id: props.id,
               mimeType: MimeTypes.FOLDER_MIME,
-              modifiedTime: props.modifiedTime,
+              modifiedTime: props.date,
               title: props.title,
               version: props.version
             };

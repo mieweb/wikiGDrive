@@ -53,7 +53,7 @@ export const UtilsMixin = {
     openWindow(url, tab = '_blank') {
       window.open(url, tab);
     },
-    goToGDocs(fileId, target) {
+    goToGDocs(fileId) {
       window.open('https://drive.google.com/open?id=' + fileId);
     },
     goToGDrive(folderId) {
@@ -66,10 +66,6 @@ export const UtilsMixin = {
       event.target.select();
     },
     async syncSingle(selectedFile) {
-      if (selectedFile.syncing) {
-        return;
-      }
-      selectedFile.syncing = true;
       try {
         await fetch(`/api/sync/${this.driveId}/${selectedFile.id}`, {
           method: 'post'

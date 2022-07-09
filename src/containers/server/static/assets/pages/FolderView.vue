@@ -58,19 +58,25 @@ export default {
       selectedFile: {}
     };
   },
+  computed: {
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    },
+  },
   created() {
     this.fetch();
-
     this.rootFolder = this.$root.drive;
-
-    setInterval(() => {
-      this.runInspect();
-    }, 2000);
   },
   watch: {
     async $route() {
       await this.fetch();
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    },
+    async active_jobs() {
+      await this.fetch();
     }
   },
   mounted() {
@@ -111,38 +117,6 @@ export default {
         this.shareEmail = json.share_email;
         return;
       }
-*/
-    },
-    async runInspect() {
-/*
-      try {
-        const response = await fetch(`/api/drive/${this.driveId}/inspect`);
-        const inspected = await response.json();
-
-        inspected.jobs = inspected.jobs || [];
-
-        let runningJob = {
-          type: ''
-        };
-        if (inspected.jobs?.length) {
-          if (inspected.jobs[0].state === 'running') {
-            runningJob = inspected.jobs[0];
-          }
-        }
-
-        const oldRootSyncing = this.rootFolder.syncing;
-        this.rootFolder.syncing = (runningJob.type === 'sync_all');
-
-        for (const file of this.files) {
-          const job = inspected.jobs.find(job => job.payload === file.id);
-          file.syncing = !!job || (runningJob.type === 'sync_all');
-        }
-
-        if (oldRootSyncing && !this.rootFolder.syncing) {
-          this.refresh();
-        }
-        // eslint-disable-next-line no-empty
-      } catch (error404) {}
 */
     }
   }

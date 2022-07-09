@@ -5,7 +5,7 @@
     </div>
 
     <div v-if="activeTab === 'html' && htmlUrl">
-      <iframe :src="htmlUrl" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
+      <iframe :src="htmlUrl + '?' + selectedFile.version" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
     </div>
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />

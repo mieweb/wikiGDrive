@@ -27,7 +27,8 @@ const options = {
 
 const app = Vue.createApp({
   data: {
-    drive: {}
+    drive: {},
+    jobs: []
   },
   components: {
     'App': Vue.defineAsyncComponent(() => loadModule('/assets/App.vue', options))
@@ -35,7 +36,10 @@ const app = Vue.createApp({
   template: '<App />',
   methods: {
     async changeDrive(toDriveId) {
-      this.drive = await vm.DriveClientService.changeDrive(toDriveId);
+      this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
+    },
+    setJobs(jobs) {
+      this.jobs = jobs;
     }
   }
 });
