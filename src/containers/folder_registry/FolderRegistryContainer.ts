@@ -2,7 +2,7 @@ import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine
 import winston from 'winston';
 import {FileId} from '../../model/model';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {MimeTypes} from '../../model/GoogleFile';
+import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -18,10 +18,19 @@ export interface Folder {
   id: FileId;
   name: string;
   new?: boolean;
+  driveId?: FileId;
 }
 
 export interface FoldersMap {
   [id: string]: Folder;
+}
+
+function folderToDrive(folder: GoogleFile) {
+  return {
+    id: folder.id,
+    name: folder.name,
+    driveId: folder.driveId,
+  };
 }
 
 export class FolderRegistryContainer extends Container {
@@ -36,7 +45,14 @@ export class FolderRegistryContainer extends Container {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename });
 
-    this.folders = await this.filesService.readJson('folders.json') || {};
+    const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
+
+    this.folders = {};
+    const folders = await this.filesService.readJson('folders.json') || {};
+    for (const folderId in folders) {
+      const folder = await apiContainer.getFolder(folderId);
+      this.folders[folderId] = folderToDrive(folder);
+    }
   }
 
   async registerFolder(folderId: FileId): Promise<Folder> {
@@ -50,16 +66,19 @@ export class FolderRegistryContainer extends Container {
       throw new Error('Folder not shared with wikigdrive');
     }
 
-    this.folders[folderId] = {
-      id: folder.id,
-      name: folder.name
-    };
+    this.folders[folderId] = folderToDrive(folder);
+
+    this.engine.emit(folderId, 'drive:register', this.folders[folderId]);
+
     await this.flushData();
     return Object.assign({}, folder, { new: true });
   }
 
   async unregisterFolder(folderId: FileId) {
     delete this.folders[folderId];
+
+    this.engine.emit(folderId, 'drive:unregister', this.folders[folderId]);
+
     await this.flushData();
   }
 

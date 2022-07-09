@@ -31,6 +31,16 @@
         <li v-if="gitInitialized"><a @click.prevent.stop="setActiveTab('git_log')">History</a></li>
       </ul>
     </li>
+    <li v-if="changes.length" class="mui-tab__dropdown">
+      <a>
+        <i class="fa-solid fa-bell"></i>
+      </a>
+      <ul class="mui-dropdown__menu">
+        <li v-for="(file, idx) of changes" :key="idx">
+          <a>changed: {{ file.name }} #{{ file.version }}</a>
+        </li>
+      </ul>
+    </li>
     <li :class="{ 'nav-tab--active': activeTab === 'sync' }" class="mui-tab__dropdown">
       <a>
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
@@ -73,6 +83,9 @@ export default {
   computed: {
     syncing() {
       return this.active_jobs.length > 0;
+    },
+    changes() {
+      return this.$root.changes || [];
     },
     jobs() {
       return this.$root.jobs || [];

@@ -10,10 +10,18 @@ import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
 import {FileContentService} from '../../utils/FileContentService';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
-import path from 'path';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 
 const __filename = fileURLToPath(import.meta.url);
+
+export interface GoogleTreeItem {
+  id: FileId;
+  name: string;
+  mimeType: string;
+  parentId: FileId;
+  version: string;
+  children?: GoogleTreeItem[];
+}
 
 export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;
@@ -70,28 +78,31 @@ export class GoogleFolderContainer extends Container {
     }
 
     await this.filesService.writeJson('.tree.json', tree);
+    this.engine.emit(this.params.folderId, 'gdrive:changed', tree);
   }
 
-  async regenerateTree(filesService: FileContentService, parentId?: string) {
+  async regenerateTree(filesService: FileContentService, parentId?: string): Promise<Array<GoogleTreeItem>> {
     const scanner = new GoogleFilesScanner();
     const files = await scanner.scan(filesService);
     const retVal = [];
     for (const file of files) {
       if (file.mimeType === MimeTypes.FOLDER_MIME) {
         const subFileService = await filesService.getSubFileService(file.id);
-        const item = {
+        const item: GoogleTreeItem = {
           id: file.id,
           name: file.name,
           mimeType: file.mimeType,
+          version: file.version,
           parentId,
           children: await this.regenerateTree(subFileService, file.id)
         };
         retVal.push(item);
       } else {
-        const item = {
+        const item: GoogleTreeItem = {
           id: file.id,
           name: file.name,
           mimeType: file.mimeType,
+          version: file.version,
           parentId
         };
         retVal.push(item);

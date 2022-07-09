@@ -6,7 +6,12 @@ export interface SimpleFile {
   mimeType: string;
 }
 
-export interface GoogleFile extends SimpleFile {
+export interface DriveData {
+  shared?: boolean;
+  driveId?: FileId;
+}
+
+export interface GoogleFile extends SimpleFile, DriveData {
   parentId?: FileId;
   parents: string[];
   size?: number;

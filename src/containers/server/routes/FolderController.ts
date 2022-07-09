@@ -42,9 +42,14 @@ export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: s
   return [];
 }
 
-type CallBack = (treeItem: TreeItem) => boolean;
+export interface BaseTreeItem {
+  mimeType: string;
+  children?: Array<BaseTreeItem>;
+}
 
-export function findInTree(callBack: CallBack, files: TreeItem[]) {
+type CallBack<K> = (treeItem: K) => boolean;
+
+export function findInTree(callBack: CallBack<BaseTreeItem>, files: Array<BaseTreeItem>) {
   for (const treeItem of files) {
     if (callBack(treeItem)) {
       return treeItem;
@@ -112,7 +117,7 @@ export default class FolderController extends Controller {
 
     const treeItem = filePath === '/'
       ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }
-      : findInTree(treeItem => treeItem.path === filePath, transformedTree);
+      : findInTree(treeItem => treeItem['path'] === filePath, transformedTree);
 
     if (!treeItem) {
       this.res.status(404).send('No local');

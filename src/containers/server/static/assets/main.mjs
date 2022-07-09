@@ -28,7 +28,8 @@ const options = {
 const app = Vue.createApp({
   data: {
     drive: {},
-    jobs: []
+    jobs: [],
+    changes: []
   },
   components: {
     'App': Vue.defineAsyncComponent(() => loadModule('/assets/App.vue', options))
@@ -40,6 +41,9 @@ const app = Vue.createApp({
     },
     setJobs(jobs) {
       this.jobs = jobs;
+    },
+    setChanges(jobs) {
+      this.changes = jobs;
     }
   }
 });

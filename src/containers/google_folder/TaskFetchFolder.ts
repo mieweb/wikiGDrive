@@ -203,6 +203,7 @@ export class TaskFetchFolder extends QueueTask {
     for (const localFile of localFiles) {
       if (localFile === '.logs') continue;
       if (localFile === '.jobs.json') continue;
+      if (localFile === '.changes.json') continue;
       if (localFile === '.private') continue;
       if (localFile === '.folder.json') continue;
       if (localFile === '.folder-files.json') continue;

@@ -50,6 +50,9 @@ export class DriveClientService {
         case 'jobs:changed':
           this.vm.setJobs(json.payload?.jobs || []);
           break;
+        case 'changes:changed':
+          this.vm.setChanges(json.payload || []);
+          break;
       }
     }
 
