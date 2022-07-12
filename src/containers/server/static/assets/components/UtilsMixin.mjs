@@ -1,5 +1,45 @@
 export const UtilsMixin = {
   computed: {
+    isSinglePreview() {
+      return this.$route.name === 'gdocs';
+    },
+    syncing() {
+      return this.active_jobs.length > 0;
+    },
+    changes() {
+      return this.$root.changes || [];
+    },
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    },
+    last_job() {
+      let kind = 'none';
+      let dateStr = null;
+
+      if (this.selectedFile) {
+        const fileJob = this.jobs.find(job => job.type === 'sync' && job.payload === this.selectedFile.id && ['done', 'failed'].includes(job.state));
+        if (fileJob?.finished) {
+          kind = 'single';
+          dateStr = new Date(fileJob.finished).toISOString();
+        }
+      }
+
+      const syncAllJob = this.jobs.find(job => job.type === 'sync_all' && ['done', 'failed'].includes(job.state));
+      if (syncAllJob?.finished) {
+        kind = 'full';
+        dateStr = new Date(syncAllJob.finished).toISOString();
+      }
+
+      return {
+        kind, dateStr
+      };
+    },
+    drive() {
+      return this.$root.drive || {};
+    },
     driveId() {
       return this.$root.drive.id;
     },
@@ -16,8 +56,12 @@ export const UtilsMixin = {
     }
   },
   methods: {
-    setActiveTab(tab) {
-      this.$router.replace({ hash: '#' + tab });
+    setActiveTab(tab, selectedFilePath) {
+      if ('undefined' !== typeof selectedFilePath) {
+        // this.$router.replace('/' + this.driveId + selectedFilePath + '#' + tab);
+      } else {
+        this.$router.replace({ hash: '#' + tab });
+      }
     },
     goToPath(path, target) {
       if (target) {
@@ -73,6 +117,19 @@ export const UtilsMixin = {
         // eslint-disable-next-line no-empty
       } finally {
       }
+    },
+    async syncAll() {
+      await fetch(`/api/sync/${this.driveId}`, {
+        method: 'post'
+      });
+    },
+    downloadOdt(fileId) {
+      const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
+      window.open(odtPath, '_blank');
+    },
+    downloadImage(fileId) {
+      const odtPath = `/api/drive/${this.driveId}/transformed/${fileId}`;
+      window.open(odtPath, '_blank');
     }
   }
 };

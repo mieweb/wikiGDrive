@@ -1,9 +1,20 @@
 <template>
-  <div class="mui-container">
+  <div class="container">
+
+    <ul class="list-group">
+      <li class="list-group-item" v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_log' }">
+        <a @click.prevent.stop="setActiveTab('git_log')">History</a>
+      </li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_commit' }">
+        <a @click.prevent.stop="setActiveTab('git_commit')">Commit</a>
+      </li>
+    </ul>
+
     <form>
       <div v-if="changes && changes.length > 0">
         <h2>Changes</h2>
-        <table class="mui-table mui-table--bordered">
+        <table class="table table-bordered">
           <thead>
           <tr>
             <th><input type="checkbox" :checked="isCheckedAll" @click="toggleCheckAll" /></th>
@@ -26,13 +37,15 @@
           </tbody>
         </table>
       </div>
-      <div class="mui-panel">
-          <div class="mui-textfield">
-            <textarea placeholder="Commit message" v-model="message"></textarea>
+      <div class="card">
+        <div class="card-body">
+          <div class="input-groups">
+            <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
-          <button type="button" class="mui-btn mui-btn--primary" @click="submitCommit">Commit</button>
-          <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--danger" @click="push">Commit and Push</button>
-          <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--secondary" @click="pull">Pull</button>
+          <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
+          <button v-if="git_remote_url" type="button" class="btn btn-danger" @click="push">Commit and Push</button>
+          <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull">Pull</button>
+        </div>
       </div>
     </form>
   </div>
@@ -43,6 +56,15 @@ import {GitMixin} from '../components/GitMixin.mjs';
 
 export default {
   mixins: [UtilsMixin, GitMixin],
+  props: {
+    activeTab: {
+      type: String
+    },
+    folderPath: {
+      type: String
+    },
+    selectedFile: Object
+  },
   data() {
     return {
       changes: [],
@@ -66,7 +88,12 @@ export default {
       const response = await fetch(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
-      // this.filePath = this.changes.map(item => item.path);
+      this.filePath = [];
+
+      const fileName = (this.folderPath + this.selectedFile.fileName).substring(1);
+      if (this.changes.find(item => item.path === fileName)) {
+        this.filePath.push(fileName);
+      }
     },
     open(url) {
       window.open(url, '_blank');

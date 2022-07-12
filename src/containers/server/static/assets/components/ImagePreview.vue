@@ -1,5 +1,7 @@
 <template>
   <div>
+    <PreviewHeader :selected-file="selectedFile" :active-tab="activeTab" :folder-path="folderPath" />
+
     <div v-if="activeTab === 'markdown' && imagePath">
       <div v-if="svgContent" v-html="svgContent" ></div>
       <img v-else :src="imagePath" :alt="selectedFile.name" />
@@ -10,30 +12,20 @@
     </div>
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />
-    <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" />
-    <UserConfig v-if="activeTab === 'user_config'" />
-    <LogsViewer v-if="activeTab === 'logs'" />
-    <GitCommit v-if="activeTab === 'git_commit'" />
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
-import GitCommit from './GitCommit.vue';
-import UserConfig from './UserConfig.vue';
-import GitLog from './GitLog.vue';
 import BackLinks from './BackLinks.vue';
-import LogsViewer from './LogsViewer.vue';
+import PreviewHeader from './PreviewHeader.vue';
 
 export default {
   name: 'ImagePreview',
   mixins: [UtilsMixin, UiMixin],
   components: {
-    GitLog,
-    GitCommit,
-    UserConfig,
-    LogsViewer,
-    BackLinks
+    BackLinks,
+    PreviewHeader
   },
   props: {
     activeTab: {

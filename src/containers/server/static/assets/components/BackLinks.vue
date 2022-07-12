@@ -1,6 +1,6 @@
 <template>
-  <div class="mui-container">
-    <table class="mui-table mui-table--bordered mui-table--hover mui-table--clickable" v-if="backlinks && backlinks.length > 0">
+  <div class="container">
+    <table class="table table-hover table-clickable table-bordered" v-if="backlinks && backlinks.length > 0">
       <thead>
       <tr>
         <th>File</th>

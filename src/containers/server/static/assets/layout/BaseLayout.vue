@@ -1,10 +1,10 @@
 <template>
   <div id="main" :class="{'hide-sidedrawer': !sidebar}">
     <slot name="navbar">
-      <nav></nav>
+      <nav class="bg-primary"></nav>
     </slot>
     <div id="content-wrapper">
-      <div id="sidedrawer" class="mui--no-user-select">
+      <div id="sidedrawer" class="">
         <Sidebar>
           <slot name="sidebar"></slot>
         </Sidebar>

@@ -1,7 +1,7 @@
 <template>
   <BaseLayout :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
-      <nav>
+      <nav class="bg-primary navbar-dark">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </nav>
     </template>
@@ -9,10 +9,18 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <div v-if="selectedFile.mimeType === 'text/x-markdown'">
+        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" />
+        <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+        <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+
+        <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+        <LogsViewer v-if="activeTab === 'drive_logs'" />
+        <UserConfig v-if="activeTab === 'drive_config'" />
+
+        <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
           <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
         </div>
-        <div v-if="selectedFile.mimeType === 'image/svg+xml'">
+        <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
           <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
         </div>
       </div>
@@ -27,6 +35,12 @@ import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import NotRegistered from './NotRegistered.vue';
 import NavTabs from '../components/NavTabs.vue';
+import DriveTools from '../components/DriveTools.vue';
+import LogsViewer from '../components/LogsViewer.vue';
+import ChangesViewer from '../components/ChangesViewer.vue';
+import UserConfig from '../components/UserConfig.vue';
+import GitLog from '../components/GitLog.vue';
+import GitCommit from '../components/GitCommit.vue';
 
 export default {
   name: 'GDocsView',
@@ -36,7 +50,13 @@ export default {
     FilePreview,
     ImagePreview,
     BaseLayout,
-    NotRegistered
+    NotRegistered,
+    DriveTools,
+    LogsViewer,
+    ChangesViewer,
+    UserConfig,
+    GitLog,
+    GitCommit
   },
   data() {
     return {

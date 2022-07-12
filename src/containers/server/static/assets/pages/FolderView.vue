@@ -1,14 +1,11 @@
 <template>
   <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
-      <nav>
-        <span class="mui--text-title" v-if="rootFolder.name">
-          {{ rootFolder.name }}
-        </span>
-        <span class="mui--text-title" v-else>
+      <nav class="bg-primary navbar-dark">
+        <router-link v-if="rootFolder.name" class="navbar-brand" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
+        <span class="navbar-brand" v-else>
           WikiGDrive
         </span>
-
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </nav>
     </template>
@@ -19,10 +16,18 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
 
-      <div v-if="selectedFile.mimeType === 'text/x-markdown'">
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" />
+      <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+
+      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <LogsViewer v-if="activeTab === 'drive_logs'" />
+      <UserConfig v-if="activeTab === 'drive_config'" />
+
+      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
-      <div v-if="selectedFile.mimeType === 'image/svg+xml'">
+      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
         <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
     </template>
@@ -37,16 +42,28 @@ import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import NavTabs from '../components/NavTabs.vue';
+import LogsViewer from '../components/LogsViewer.vue';
+import ChangesViewer from '../components/ChangesViewer.vue';
+import UserConfig from '../components/UserConfig.vue';
+import GitLog from '../components/GitLog.vue';
+import GitCommit from '../components/GitCommit.vue';
+import DriveTools from '../components/DriveTools.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    DriveTools,
     NavTabs,
     NotRegistered,
     FilesTable,
     BaseLayout,
     FilePreview,
-    ImagePreview
+    ImagePreview,
+    LogsViewer,
+    ChangesViewer,
+    UserConfig,
+    GitLog,
+    GitCommit
   },
   mixins: [ UtilsMixin, UiMixin ],
   data() {
@@ -94,15 +111,19 @@ export default {
       const parts = filePath.split('/').filter(s => s.length > 0);
       const driveId = parts.shift();
       const baseName = parts.pop() || '';
-      if (baseName.indexOf('.') > -1) {
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
-        const file = this.files.find(f => f.fileName === baseName) || {};
-        this.selectedFile = file || {};
+      if (this.files.length > 0) {
+        if (baseName.indexOf('.') > -1) {
+          const dirPath = '/' + parts.join('/');
+          await this.fetchFolder(driveId, dirPath);
+          const file = this.files.find(f => f.fileName === baseName) || {};
+          this.selectedFile = file || {};
+        } else {
+          parts.push(baseName);
+          const dirPath = '/' + parts.join('/');
+          await this.fetchFolder(driveId, dirPath);
+          this.selectedFile = {};
+        }
       } else {
-        parts.push(baseName);
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
         this.selectedFile = {};
       }
 /*

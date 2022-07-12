@@ -113,7 +113,7 @@ export default class FolderController extends Controller {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const transformedTree = await transformedFileSystem.readJson('.tree.json');
+    const transformedTree = await transformedFileSystem.readJson('.tree.json') || [];
 
     const treeItem = filePath === '/'
       ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }

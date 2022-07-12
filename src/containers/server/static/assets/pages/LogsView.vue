@@ -6,7 +6,7 @@
 
     <template v-slot:default>
       <div class="table-responsive">
-        <table class="mui-table mui-table--bordered">
+        <table class="table table-hover table-bordered">
           <thead>
             <tr>
               <th scope="col">#</th>

@@ -1,14 +1,14 @@
 <template>
   <BaseLayout :sidebar="false">
     <template v-slot:navbar>
-      <nav>
-        WikiGDrive
+      <nav class="bg-primary">
+        <span class="navbar-brand">WikiGDrive</span>
       </nav>
     </template>
 
     <template v-slot:default>
-      <div class="mui-container">
-        <table class="mui-table mui-table--bordered mui-table--hover mui-table--clickable" v-if="drives && drives.length > 0">
+      <div class="container">
+        <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">
           <thead>
           <tr>
             <th>Name</th>
@@ -17,10 +17,10 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(item, idx) of drives" :key="idx" @click="selectDrive(item.parentId)">
+          <tr v-for="(item, idx) of drives" :key="idx" @click="selectDrive(item.folderId)">
             <td>{{item.name}}</td>
-            <td>{{item.parentId}}</td>
-            <td @click.stop="goToGDrive(item.parentId)"><i class="fa-brands fa-google-drive"></i></td>
+            <td>{{item.folderId}}</td>
+            <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
           </tr>
           </tbody>
         </table>

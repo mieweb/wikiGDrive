@@ -1,6 +1,6 @@
 <template>
-  <div class="mui-container">
-    <table class="mui-table mui-table--bordered" v-if="logs && logs.length > 0">
+  <div class="container">
+    <table class="table table-bordered" v-if="logs && logs.length > 0">
       <thead>
       <tr>
         <th>Level</th>

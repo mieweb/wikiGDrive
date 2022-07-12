@@ -1,6 +1,17 @@
 <template>
-  <div class="mui-container">
-    <table class="mui-table mui-table--bordered" v-if="history && history.length > 0">
+  <div class="container">
+
+    <ul class="list-group">
+      <li class="list-group-item" v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_log' }">
+        <a @click.prevent.stop="setActiveTab('git_log')">History</a>
+      </li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_commit' }">
+        <a @click.prevent.stop="setActiveTab('git_commit')">Commit</a>
+      </li>
+    </ul>
+
+    <table class="table table-bordered" v-if="history && history.length > 0">
       <thead>
       <tr>
         <th>Date</th>
@@ -28,6 +39,9 @@ export default {
   name: 'GitLog',
   mixins: [UtilsMixin],
   props: {
+    activeTab: {
+      type: String
+    },
     folderPath: {
       type: String
     },

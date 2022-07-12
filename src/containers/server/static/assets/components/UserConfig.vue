@@ -1,35 +1,37 @@
 <template>
-  <div class="mui-container">
-    <div class="mui-panel">
-      <form>
-        <div class="mui-textfield">
-          <input size="50" placeholder="git@github.com:[...].git" v-model="user_config.remote_url" />
-        </div>
-        <div class="mui-textfield">
-          <input size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
-        </div>
-        <div class="mui-textfield">
-          Theme
-          <select @change="changeTheme($event.target.value)">
-            <option></option>
-            <option
-                :selected="user_config.hugo_theme.id === theme.id"
-                :value="theme.id"
-                :key="theme.id"
-                v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
-          </select>
-        </div>
+  <div class="container">
+    <div class="card">
+      <div class="card-body">
+        <form>
+          <div class="input-group">
+            <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="user_config.remote_url" />
+          </div>
+          <div class="input-group">
+            <input class="form-control" size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
+          </div>
+          <div class="input-group">
+            <label>Theme</label>
+            <select class="form-control" @change="changeTheme($event.target.value)">
+              <option></option>
+              <option
+                  :selected="user_config.hugo_theme.id === theme.id"
+                  :value="theme.id"
+                  :key="theme.id"
+                  v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
+            </select>
+          </div>
 
-        <div>
-          <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" />
-        </div>
+          <div>
+            <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" />
+          </div>
 
-        <button class="mui-btn mui-btn--primary" type="button" @click="save">Save</button>
+          <button class="btn btn-primary" type="button" @click="save">Save</button>
 
-        <div class="mui-textfield" v-if="gitInitialized">
-          <textarea rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
-        </div>
-      </form>
+          <div class="input-group" v-if="gitInitialized">
+            <textarea class="form-control" rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>

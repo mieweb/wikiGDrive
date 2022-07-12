@@ -1,5 +1,5 @@
 <template>
-  <table class="mui-table mui-table--bordered mui-table--hover mui-table--clickable" v-if="!notRegistered && files.length > 0">
+  <table class="table table-hover table-clickable table-sm" v-if="!notRegistered && files.length > 0">
     <thead>
       <tr>
         <th></th>
@@ -18,7 +18,7 @@
         <td></td>
         <td></td>
       </tr>
-      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName)" :class="{'mui-tr--selected': file.fileName === selectedName}">
+      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName)" :class="{'table-active': file.fileName === selectedName}">
         <td>
           <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
           <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
