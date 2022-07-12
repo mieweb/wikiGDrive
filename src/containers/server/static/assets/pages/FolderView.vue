@@ -111,19 +111,15 @@ export default {
       const parts = filePath.split('/').filter(s => s.length > 0);
       const driveId = parts.shift();
       const baseName = parts.pop() || '';
-      if (this.files.length > 0) {
-        if (baseName.indexOf('.') > -1) {
-          const dirPath = '/' + parts.join('/');
-          await this.fetchFolder(driveId, dirPath);
-          const file = this.files.find(f => f.fileName === baseName) || {};
-          this.selectedFile = file || {};
-        } else {
-          parts.push(baseName);
-          const dirPath = '/' + parts.join('/');
-          await this.fetchFolder(driveId, dirPath);
-          this.selectedFile = {};
-        }
+      if (baseName.indexOf('.') > -1) {
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
+        const file = this.files.find(f => f.fileName === baseName) || {};
+        this.selectedFile = file || {};
       } else {
+        parts.push(baseName);
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
         this.selectedFile = {};
       }
 /*
