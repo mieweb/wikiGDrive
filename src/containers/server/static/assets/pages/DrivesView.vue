@@ -1,20 +1,14 @@
 <template>
   <BaseLayout :sidebar="false">
     <template v-slot:navbar>
-      <div class="mui-container-fluid">
-        <table style="width: 100%;">
-          <tr class="mui--appbar-height">
-            <td class="mui--text-title">
-              WikiGDrive
-            </td>
-          </tr>
-        </table>
-      </div>
+      <nav class="bg-primary">
+        <span class="navbar-brand">WikiGDrive</span>
+      </nav>
     </template>
 
     <template v-slot:default>
-      <div class="mui-container">
-        <table class="mui-table mui-table--bordered mui-table--hover mui-table--clickable" v-if="drives && drives.length > 0">
+      <div class="container">
+        <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">
           <thead>
           <tr>
             <th>Name</th>
@@ -59,7 +53,7 @@ export default {
       window.open(url, '_blank');
     },
     selectDrive(driveId) {
-      this.$router.push({ name: 'folder', params: { driveId: driveId, folderId: driveId } });
+      this.$router.push('/drive/' + driveId);
     },
     goToGDrive(folderId) {
       window.open('https://drive.google.com/drive/u/0/folders/' + folderId);

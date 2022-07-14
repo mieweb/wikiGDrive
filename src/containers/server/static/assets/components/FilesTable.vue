@@ -1,5 +1,5 @@
 <template>
-  <table class="mui-table mui-table--bordered mui-table--hover mui-table--clickable" v-if="!notRegistered && files.length > 0">
+  <table class="table table-hover table-clickable table-sm" v-if="!notRegistered && files.length > 0">
     <thead>
       <tr>
         <th></th>
@@ -10,7 +10,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-if="parentId" @click="selectFile({ id: parentId, mimeType: 'application/vnd.google-apps.folder' })">
+      <tr v-if="folderPath !== '/'" @click="selectFile('..')">
         <td><i class="fa-solid fa-folder"></i></td>
         <td>
           ..
@@ -18,23 +18,25 @@
         <td></td>
         <td></td>
       </tr>
-      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.local)" :class="{'mui-tr--selected': file.google && file.google.id === $route.params.fileId}">
+      <tr v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName)" :class="{'table-active': file.fileName === selectedName}">
         <td>
-          <i class="fa-solid fa-folder" v-if="isFolder(file.google)"></i>
-          <i class="fa-solid fa-file-image" v-else-if="isImage(file.google)"></i>
-          <i class="fa-solid fa-file-lines" v-else-if="isDocument(file.google) || isMarkdown(file.local)"></i>
+          <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
+          <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
+          <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
           <i v-else class="fa-solid fa-file"></i>
         </td>
         <td>
-          {{ file.google ? file.google.name : '' }}<br/>
-          {{ file.local ? file.local.fileName : '' }}
+          {{ file.title }}<br/>
+          {{ file.fileName }}
         </td>
-        <td @click.stop="sync(file)">
-          #{{ file.local ? file.local.version : '' }}
-          <i class="fa-solid fa-rotate" :class="{'fa-spin': file.syncing}"></i>
+        <td>
+          <a v-if="file.id && file.version" @click.prevent.stop="syncSingle(file)">
+            #{{ file.version }}
+            <i class="fa-solid fa-rotate" :class="{'fa-spin': isSyncing(file.id)}"></i>
+          </a>
         </td>
-        <td>{{ file.google ? file.google.modifiedTime : '' }}</td>
-        <td v-if="file.google" @click.stop="goToGDocs(file.google.id)"><i class="fa-brands fa-google-drive"></i></td>
+        <td>{{ file.modifiedTime }}</td>
+        <td v-if="file.id" @click.stop="goToGDocs(file.id)"><i class="fa-brands fa-google-drive"></i></td>
       </tr>
     </tbody>
   </table>
@@ -45,7 +47,7 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 export default {
   mixins: [ UtilsMixin ],
   props: {
-    parentId: {
+    folderPath: {
       type: String
     },
     files: {
@@ -55,18 +57,33 @@ export default {
       type: Boolean
     }
   },
-  methods: {
-    selectFile(localFile) {
-      console.log('localFile', localFile);
-      const folderId = this.$route.params.folderId;
-      if (this.isFolder(localFile)) {
-        console.log('FOLDER', localFile, localFile.mimeType, localFile.id);
-        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: localFile.id } });
-      } else
-      if (this.isMarkdown(localFile)) {
-        console.log('DOC', { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id });
-        this.$router.push({ name: 'folder', params: { driveId: this.driveId, folderId: folderId || this.driveId, fileId: localFile.id } });
+  computed: {
+    selectedName() {
+      const driveId = this.$root.drive.id;
+      if (this.folderPath === '/') {
+        return this.$route.path.replace(`/drive/${driveId}${this.folderPath}`, '');
       }
+      return this.$route.path.replace(`/drive/${driveId}${this.folderPath}/`, '');
+    },
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    }
+  },
+  methods: {
+    selectFile(fileName) {
+      const parts = this.folderPath.split('/').filter(s => s.length > 0);
+      if (fileName === '..') {
+        parts.pop();
+      } else  {
+        parts.push(fileName);
+      }
+      this.goToPath(`/${parts.join('/')}`);
+    },
+    isSyncing(id) {
+      return !!this.active_jobs.find(job => (job.type === 'sync' && job.payload === id) || job.type === 'sync_all');
     }
   }
 };

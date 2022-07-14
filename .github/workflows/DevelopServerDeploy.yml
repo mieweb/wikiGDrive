@@ -1,0 +1,61 @@
+name: Develop Server Deploy
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: wgd-dev
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        cache: npm
+
+    - name: Build
+      run: docker build -t "wikigdrive-develop:${GITHUB_SHA}" --build-arg "GIT_SHA=${GITHUB_SHA}" .
+
+    - name: Build
+      run: docker build -t "transform-watch:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/transform-watch
+
+    - name: Build
+      run: docker build -t "hugo-render:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
+
+    - name: Stop and remove
+      run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
+      continue-on-error: true
+
+    - name: Start
+      run: |
+        docker run -d --name wikigdrive-develop \
+          --restart unless-stopped \
+          -v wikiGDriveDevelop:/data \
+          -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
+          --publish 127.0.0.1:4000:3000 \
+          "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
+          --service_account /service_account.json \
+          --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
+          --workdir /data \
+          server 3000
+
+    - name: Stop and remove
+      run: docker stop transform-preview-develop ; docker rm transform-preview-develop
+      continue-on-error: true
+
+    - name: Start
+      run: |
+        docker run -d --name transform-preview-develop \
+          --restart unless-stopped \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v wikiGDriveDevelop:/data \
+          -v /var/www/preview-develop:/preview \
+          -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveDevelop/_data \
+          -e VOLUME_PREVIEW=/var/www/preview-develop \
+          -e RENDER_IMAGE=hugo-render:develop \
+          -e DOMAIN=https://dev.wikigdrive.com \
+          transform-watch:develop

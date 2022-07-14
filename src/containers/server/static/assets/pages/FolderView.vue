@@ -1,31 +1,34 @@
 <template>
   <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
-      <div class="mui-container-fluid">
-        <table style="width: 100%;">
-          <tr class="mui--appbar-height">
-            <td class="mui--text-title" v-if="rootFolder.name">
-              {{ rootFolder.name }}
-            </td>
-            <td class="mui--text-title" v-else>
-              WikiGDrive
-            </td>
-            <td v-if="rootFolder.name">
-              <button type="button" @click="syncAll" class="mui-btn mui-btn--small mui--pull-right"><i class="fa-solid fa-rotate" :class="{'fa-spin': rootFolder.syncing}"></i> Sync All</button>
-            </td>
-          </tr>
-        </table>
-      </div>
+      <nav class="bg-primary navbar-dark">
+        <router-link v-if="rootFolder.name" class="navbar-brand" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
+        <span class="navbar-brand" v-else>
+          WikiGDrive
+        </span>
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+      </nav>
     </template>
 
     <template v-slot:sidebar>
-      <FilesTable :parent-id="parentId" :files="files" :not-registered="notRegistered" />
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
 
-      <div v-if="preview.mimeType === 'text/x-markdown'">
-        <FilePreview :activeTab="activeTab" :preview="preview" :git="git" @sync="syncSingle" @commit="commit" @push="push" :has-sync="true" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" />
+      <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+
+      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <LogsViewer v-if="activeTab === 'drive_logs'" />
+      <UserConfig v-if="activeTab === 'drive_config'" />
+
+      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
+        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+      </div>
+      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
     </template>
   </BaseLayout>
@@ -36,62 +39,93 @@ import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
 import FilesTable from '../components/FilesTable.vue';
 import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
-import {GitMixin} from '../components/GitMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
+import ImagePreview from '../components/ImagePreview.vue';
+import NavTabs from '../components/NavTabs.vue';
+import LogsViewer from '../components/LogsViewer.vue';
+import ChangesViewer from '../components/ChangesViewer.vue';
+import UserConfig from '../components/UserConfig.vue';
+import GitLog from '../components/GitLog.vue';
+import GitCommit from '../components/GitCommit.vue';
+import DriveTools from '../components/DriveTools.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    DriveTools,
+    NavTabs,
     NotRegistered,
     FilesTable,
     BaseLayout,
-    FilePreview
+    FilePreview,
+    ImagePreview,
+    LogsViewer,
+    ChangesViewer,
+    UserConfig,
+    GitLog,
+    GitCommit
   },
-  mixins: [ UtilsMixin, UiMixin, GitMixin ],
+  mixins: [ UtilsMixin, UiMixin ],
   data() {
     return {
+      rootFolder: {},
+      folderPath: '',
       activeTab: DEFAULT_TAB,
       files: [],
-      parentId: '',
-      preview: {},
-      git: {},
-      socket: null
+      selectedFile: {}
     };
+  },
+  computed: {
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    },
   },
   created() {
     this.fetch();
-
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/${this.driveId}`);
-    this.socket.onopen = () => {
-      setInterval(() => {
-        this.socket.send('inspect');
-      }, 2000);
-    };
-
-    setInterval(() => {
-      this.runInspect();
-    }, 2000);
+    this.rootFolder = this.$root.drive;
   },
   watch: {
     async $route() {
       await this.fetch();
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    },
+    async active_jobs() {
+      await this.fetch();
     }
   },
   mounted() {
     this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
   },
   methods: {
+    async fetchFolder(driveId, filePath) {
+      const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
+      this.folderPath = filePath;
+      this.files = pathContent.files;
+    },
     async fetch() {
-      this.files = [];
-      this.parentId = '';
-      this.preview = {};
-      this.git = {};
+      const filePath = this.$route.path.substring('/drive'.length);
 
-      const folderId = this.$route.params.folderId;
+      const parts = filePath.split('/').filter(s => s.length > 0);
+      const driveId = parts.shift();
+      const baseName = parts.pop() || '';
+      if (baseName.indexOf('.') > -1) {
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
+        const file = this.files.find(f => f.fileName === baseName) || {};
+        this.selectedFile = file || {};
+      } else {
+        parts.push(baseName);
+        const dirPath = '/' + parts.join('/');
+        await this.fetchFolder(driveId, dirPath);
+        this.selectedFile = {};
+      }
+/*
+      const parentId = this.$route.params.parentId;
 
-      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + folderId : ''));
+      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + parentId : ''));
       const json = await response.json();
       console.log('Folder fetch', json);
 
@@ -100,50 +134,7 @@ export default {
         this.shareEmail = json.share_email;
         return;
       }
-
-      this.files = json.files || [];
-      this.parentId = json.parentId;
-      this.rootFolder = json.rootFolder || {};
-      this.preview = {};
-      this.git = {};
-
-      await this.fetchFile();
-    },
-    async syncAll() {
-      this.rootFolder.syncing = true;
-      await fetch(`/api/drive/${this.driveId}/sync`, {
-        method: 'post'
-      });
-    },
-    async runInspect() {
-      try {
-        const response = await fetch(`/api/drive/${this.driveId}/inspect`);
-        const inspected = await response.json();
-
-        inspected.jobs = inspected.jobs || [];
-
-        let runningJob = {
-          type: ''
-        };
-        if (inspected.jobs?.length) {
-          if (inspected.jobs[0].state === 'running') {
-            runningJob = inspected.jobs[0];
-          }
-        }
-
-        const oldRootSyncing = this.rootFolder.syncing;
-        this.rootFolder.syncing = (runningJob.type === 'sync_all');
-
-        for (const file of this.files) {
-          const job = inspected.jobs.find(job => job.payload === file.id);
-          file.syncing = !!job || (runningJob.type === 'sync_all');
-        }
-
-        if (oldRootSyncing && !this.rootFolder.syncing) {
-          this.refresh();
-        }
-        // eslint-disable-next-line no-empty
-      } catch (error404) {}
+*/
     }
   }
 };

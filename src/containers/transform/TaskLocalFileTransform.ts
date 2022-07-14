@@ -21,6 +21,8 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
       return 'jpg';
     case 'image/png':
       return 'png';
+    case 'image/svg+xml':
+      return 'svg';
     case 'application/vnd.google-apps.drawing':
       return 'svg';
     case 'application/vnd.google-apps.document':

@@ -46,24 +46,24 @@ describe('LocalFiles', () => {
         conflicting: [
           {
             id: 'id1',
-            realFileName: 'test-file_1.md',
+            realFileName: 'test-file@1.md',
             title: 'test-file'
           },
           {
             id: 'id2',
-            realFileName: 'test-file_2.md',
+            realFileName: 'test-file@2.md',
             title: 'test-file'
           }
         ]
       },
-      'test-file_1.md': {
+      'test-file@1.md': {
         type: 'md',
         id: 'id1',
         title: 'test-file',
         fileName: 'test-file.md',
         lastAuthor: 'John Smith'
       },
-      'test-file_2.md': {
+      'test-file@2.md': {
         type: 'md',
         id: 'id2',
         title: 'test-file',
@@ -102,24 +102,24 @@ describe('LocalFiles', () => {
         conflicting: [
           {
             id: 'id1',
-            realFileName: 'example-1_1.md',
+            realFileName: 'example-1@1.md',
             title: 'example-1'
           },
           {
             id: 'id2',
-            realFileName: 'example-1_2.md',
+            realFileName: 'example-1@2.md',
             title: 'example-1'
           }
         ]
       },
-      'example-1_1.md': {
+      'example-1@1.md': {
         type: 'md',
         id: 'id1',
         title: 'example-1',
         fileName: 'example-1.md',
         lastAuthor: 'John Smith'
       },
-      'example-1_2.md': {
+      'example-1@2.md': {
         type: 'md',
         id: 'id2',
         title: 'example-1',

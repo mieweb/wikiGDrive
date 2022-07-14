@@ -49,6 +49,7 @@ export class TocGenerator {
 
     const fmt = yaml.dump({
       type: 'page',
+      title: 'TOC',
       wikigdrive: process.env.GIT_SHA
     }, FRONTMATTER_DUMP_OPTS);
 

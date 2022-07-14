@@ -19,6 +19,7 @@ import {loadRunningInstance} from './containers/server/loadRunningInstance';
 import {FolderRegistryContainer} from './containers/folder_registry/FolderRegistryContainer';
 import {JobManagerContainer} from './containers/job/JobManagerContainer';
 import fetch from 'node-fetch';
+import {WatchChangesContainer} from './containers/changes/WatchChangesContainer';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
@@ -205,6 +206,11 @@ export class MainService {
       this.logger.error('WikiGDrive server already running, PID: ' + instance.pid);
       process.exit(1);
     }
+
+    const changesContainer = new WatchChangesContainer({ name: 'watch_changes' });
+    await changesContainer.mount(await this.mainFileService);
+    await this.containerEngine.registerContainer(changesContainer);
+    await changesContainer.run();
 
     const port = parseInt(this.params.args[0]) || 3000;
     const serverContainer = new ServerContainer({ name: 'server' }, port);

@@ -1,5 +1,4 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import winston from 'winston';
 import {FileId} from '../../model/model';
 import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
@@ -8,13 +7,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all';
-export type JobState = 'waiting' | 'running';
+export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
   type: JobType;
   state?: JobState;
+  title: string;
   payload?: string;
   ts?: number;
+  finished?: number;
 }
 
 export interface DriveJobs {
@@ -26,9 +27,37 @@ export interface DriveJobsMap {
   [driveId: FileId]: DriveJobs;
 }
 
-export class JobManagerContainer extends Container {
-  private logger: winston.Logger;
+function removeOldFullSyncJobs() {
+  return (job: Job) => {
+    if (job.type !== 'sync_all') {
+      return true;
+    }
+    return !(job.state === 'failed' || job.state === 'done');
+  };
+}
 
+function removeOldSingleJobs(fileId) {
+  if (fileId) {
+    return (job: Job) => {
+      if (job.type !== 'sync') {
+        return true;
+      }
+      if (job.payload !== fileId) {
+        return true;
+      }
+      return !(job.state === 'failed' || job.state === 'done');
+    };
+  }
+
+  return (job: Job) => {
+    if (job.type !== 'sync') {
+      return true;
+    }
+    return !(job.state === 'failed' || job.state === 'done');
+  };
+}
+
+export class JobManagerContainer extends Container {
   private driveJobsMap: DriveJobsMap = {};
 
   constructor(public readonly params: ContainerConfig) {
@@ -37,34 +66,46 @@ export class JobManagerContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename });
+  }
+
+  async getDriveJobs(driveId) {
+    if (!this.driveJobsMap[driveId]) {
+      const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const driveJobs = await driveFileSystem.readJson('.jobs.json');
+      this.driveJobsMap[driveId] = driveJobs || {
+        driveId, jobs: []
+      };
+    }
+    return this.driveJobsMap[driveId];
+  }
+
+  async setDriveJobs(driveId, driveJobs) {
+    this.driveJobsMap[driveId] = driveJobs;
+    this.engine.emit(driveId, 'jobs:changed', driveJobs);
+    const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+    await driveFileSystem.writeJson('.jobs.json', driveJobs);
   }
 
   async schedule(driveId: FileId, job: Job) {
     job.state = 'waiting';
     job.ts = +new Date();
-    if (!this.driveJobsMap[driveId]) {
-      this.driveJobsMap[driveId] = {
-        driveId, jobs: []
-      };
-    }
 
-    const driveJobs = this.driveJobsMap[driveId];
+    const driveJobs = await this.getDriveJobs(driveId);
 
     switch (job.type) {
       case 'sync':
         for (const subJob of driveJobs.jobs) {
-          if (subJob.type === 'sync_all') {
+          if (subJob.type === 'sync_all' && !['failed', 'done'].includes(subJob.state)) {
             return;
           }
-          if (subJob.type === job.type && subJob.payload === job.payload) {
+          if (subJob.type === job.type && subJob.payload === job.payload && !['failed', 'done'].includes(subJob.state)) {
             return;
           }
         }
         driveJobs.jobs.push(job);
         break;
       case 'sync_all':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all')) {
+        if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all' && !['failed', 'done'].includes(subJob.state))) {
           return;
         }
         driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'running');
@@ -72,7 +113,7 @@ export class JobManagerContainer extends Container {
         break;
     }
 
-    this.driveJobsMap[driveId] = driveJobs;
+    await this.setDriveJobs(driveId, driveJobs);
   }
 
   async ps(): Promise<DriveJobsMap> {
@@ -80,20 +121,18 @@ export class JobManagerContainer extends Container {
   }
 
   async inspect(driveId: FileId): Promise<DriveJobs> {
-    return this.driveJobsMap[driveId] || {
-      driveId,
-      jobs: []
-    };
+    return await this.getDriveJobs(driveId);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async run() {
-    setInterval(() => {
+    setInterval(async () => {
       const now = +new Date();
       for (const driveId in this.driveJobsMap) {
-        const driveJobs = this.driveJobsMap[driveId];
+        const driveJobs = await this.getDriveJobs(driveId);
         if (driveJobs.jobs.length === 0) {
           delete this.driveJobsMap[driveId];
+          await this.setDriveJobs(driveId, this.driveJobsMap[driveId]);
           continue;
         }
 
@@ -102,18 +141,42 @@ export class JobManagerContainer extends Container {
           continue;
         }
 
-        if (driveJobs.jobs[0].state === 'running') {
+        if (driveJobs.jobs.find(job => job.state === 'running')) {
           continue;
         }
 
-        driveJobs.jobs[0].state = 'running';
-        this.runJob(driveId, driveJobs.jobs[0])
+        const currentJob = driveJobs.jobs.find(job => job.state === 'waiting');
+        if (!currentJob) {
+          continue;
+        }
+
+        currentJob.state = 'running';
+        this.runJob(driveId, currentJob)
           .then(() => {
-            driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'waiting');
+            if (currentJob.type === 'sync_all') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+            }
+            if (currentJob.type === 'sync') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+            }
+            currentJob.state = 'done';
+            currentJob.finished = +new Date();
+            this.setDriveJobs(driveId, driveJobs);
           })
           .catch(err => {
-            this.logger.error(err);
-            driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'waiting');
+            const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+            logger.error(err);
+            if (currentJob.type === 'sync_all') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+            }
+            if (currentJob.type === 'sync') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+            }
+            currentJob.state = 'failed';
+            currentJob.finished = +new Date();
+            this.setDriveJobs(driveId, driveJobs);
           });
       }
     }, 500);
@@ -149,18 +212,20 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async runJob(folderId: FileId, job: Job) {
-    this.logger.info('runJob ' + folderId + ' ' + JSON.stringify(job));
+  private async runJob(driveId: FileId, job: Job) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+    logger.info('runJob ' + driveId + ' ' + JSON.stringify(job));
     try {
       switch (job.type) {
         case 'sync':
-          await this.sync(folderId, [ job.payload ]);
+          await this.sync(driveId, [ job.payload ]);
           break;
         case 'sync_all':
-          await this.sync(folderId);
+          await this.sync(driveId);
           break;
       }
     } catch (err) {
+      logger.error(err.message);
       console.error('Job failed', err);
     }
   }

@@ -1,12 +1,23 @@
 <template>
-  <div class="mui-container">
+  <div class="container">
+
+    <ul class="list-group">
+      <li class="list-group-item" v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_log' }">
+        <a @click.prevent.stop="setActiveTab('git_log')">History</a>
+      </li>
+      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_commit' }">
+        <a @click.prevent.stop="setActiveTab('git_commit')">Commit</a>
+      </li>
+    </ul>
+
     <form>
       <div v-if="changes && changes.length > 0">
         <h2>Changes</h2>
-        <table class="mui-table mui-table--bordered">
+        <table class="table table-bordered">
           <thead>
           <tr>
-            <th></th>
+            <th><input type="checkbox" :checked="isCheckedAll" @click="toggleCheckAll" /></th>
             <th>Path</th>
             <th>Stater</th>
           </tr>
@@ -26,23 +37,33 @@
           </tbody>
         </table>
       </div>
-      <div class="mui-panel">
-          <div class="mui-textfield">
-            <textarea placeholder="Commit message" v-model="message"></textarea>
+      <div class="card">
+        <div class="card-body">
+          <div class="input-groups">
+            <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
-          <button type="button" class="mui-btn mui-btn--primary" @click="commit">Commit</button>
-          <button v-if="git_remote_url" type="button" class="mui-btn mui-btn--danger" @click="push">Commit and Push</button>
+          <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
+          <button v-if="git_remote_url" type="button" class="btn btn-danger" @click="push">Commit and Push</button>
+          <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull">Pull</button>
+        </div>
       </div>
     </form>
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
+import {GitMixin} from '../components/GitMixin.mjs';
 
 export default {
-  mixins: [UtilsMixin],
+  mixins: [UtilsMixin, GitMixin],
   props: {
-    git: Object
+    activeTab: {
+      type: String
+    },
+    folderPath: {
+      type: String
+    },
+    selectedFile: Object
   },
   data() {
     return {
@@ -54,6 +75,9 @@ export default {
   computed: {
     git_remote_url() {
       return this.git?.remote_url || '';
+    },
+    isCheckedAll() {
+      return this.filePath.length === this.changes.length;
     }
   },
   async created() {
@@ -61,30 +85,29 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch(`/api/drive/${this.driveId}/git/commit`);
+      const response = await fetch(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
-      // this.filePath = this.changes.map(item => item.path);
+      this.filePath = [];
+
+      const fileName = (this.folderPath + this.selectedFile.fileName).substring(1);
+      if (this.changes.find(item => item.path === fileName)) {
+        this.filePath.push(fileName);
+      }
     },
     open(url) {
       window.open(url, '_blank');
     },
-    async commit() {
+    async submitCommit() {
       if (!this.message) {
         alert('No commit message');
         return;
       }
-      await this.$emit('commit', {
+      await this.commit({
         message: this.message,
         filePath: this.filePath
       });
-
-    },
-    push() {
-      this.$emit('push', {
-        message: this.message,
-        filePath: this.filePath
-      });
+      this.message = '';
     },
     toggle(path) {
       const idx = this.filePath.indexOf(path);
@@ -93,8 +116,18 @@ export default {
       } else {
         this.filePath.splice(idx, 1);
       }
+    },
+    toggleCheckAll() {
+      if (this.isCheckedAll) {
+        this.filePath.splice(0, this.filePath.length);
+      } else {
+        for (const item of this.changes) {
+          if (this.filePath.indexOf(item.path) === -1) {
+            this.filePath.push(item.path);
+          }
+        }
+      }
     }
-
   }
 };
 </script>

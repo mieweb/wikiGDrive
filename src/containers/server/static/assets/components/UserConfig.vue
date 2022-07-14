@@ -1,23 +1,37 @@
 <template>
-  <div class="mui-container">
-    <div class="mui-panel">
-      <form>
-        <div class="mui-textfield">
-          <input size="50" placeholder="git@github.com:[...].git" v-model="user_config.remote_url" />
-        </div>
-        <div class="mui-textfield">
-          <input size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
-        </div>
-        <div class="mui-textfield">
-          <input size="50" placeholder="hugo_theme" v-model="user_config.hugo_theme" />
-        </div>
+  <div class="container">
+    <div class="card">
+      <div class="card-body">
+        <form>
+          <div class="input-group">
+            <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="user_config.remote_url" />
+          </div>
+          <div class="input-group">
+            <input class="form-control" size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
+          </div>
+          <div class="input-group">
+            <label>Theme</label>
+            <select class="form-control" @change="changeTheme($event.target.value)">
+              <option></option>
+              <option
+                  :selected="user_config.hugo_theme.id === theme.id"
+                  :value="theme.id"
+                  :key="theme.id"
+                  v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
+            </select>
+          </div>
 
-        <button class="mui-btn mui-btn--primary" type="button" @click="save">Save</button>
+          <div>
+            <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" />
+          </div>
 
-        <div class="mui-textfield" v-if="git.initialized">
-          <textarea rows="10" placeholder="Deploy key" readonly :value="git.public_key" @click="copyEmail"></textarea>
-        </div>
-      </form>
+          <button class="btn btn-primary" type="button" @click="save">Save</button>
+
+          <div class="input-group" v-if="gitInitialized">
+            <textarea class="form-control" rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -26,9 +40,6 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 
 export default {
   mixins: [UtilsMixin],
-  props: {
-    git: Object
-  },
   data() {
     return {
       user_config: {
@@ -41,22 +52,32 @@ export default {
   async created() {
     await this.fetch();
   },
+  computed: {
+    drive() {
+      return this.$root.drive || {};
+    },
+    public_key() {
+      return this.$root.drive?.git?.public_key || '';
+    }
+  },
   methods: {
     async fetch() {
-      const response = await fetch(`/api/drive/${this.driveId}/user_config`);
-      const config = await response.json();
-      this.user_config.remote_url = config?.remote_url || '';
-      this.user_config.remote_branch = config?.remote_branch || '';
-      this.user_config.hugo_theme = config?.hugo_theme || '';
+      this.user_config = { ...this.$root.drive?.git || {}, hugo_theme: this.$root.drive.hugo_theme };
     },
     async save() {
-      await fetch(`/api/drive/${this.driveId}/user_config`, {
+      await fetch(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'
         },
         body: JSON.stringify(this.user_config)
       });
+    },
+    changeTheme(themeId) {
+      if (!themeId) {
+        this.user_config.hugo_theme = {};
+      }
+      this.user_config.hugo_theme = this.drive.hugo_themes.find(t => t.id === themeId) || {};
     }
   }
 };

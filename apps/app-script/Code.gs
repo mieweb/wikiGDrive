@@ -1,5 +1,5 @@
 // This is in the script.  Make sure you update this with the next version number before deploying here: https://docs.google.com/document/d/1ICVsTdxvO5fkZe6wZy_Hug_nMZaS71ZLcGcP7K2mwXc/edit#heading=h.rsldzpmzud
-const VERSION=9;
+const VERSION=10;
 
 // To manage the deployment of this:
 // Notes on the madness are here:
@@ -54,7 +54,7 @@ function markFileDirty() {
         // Convert the JavaScript object to a JSON string.
         payload : JSON.stringify(data)
     };
-    UrlFetchApp.fetch(`${URL}/api/drive/${rootFolder.getId()}/sync/${doc.getId()}`, options);
+    UrlFetchApp.fetch(`${URL}/api/sync/${rootFolder.getId()}/${doc.getId()}`, options);
 }
 
 function showSidebar() { // https://developers.google.com/apps-script/guides/html#code.gs
@@ -63,7 +63,7 @@ function showSidebar() { // https://developers.google.com/apps-script/guides/htm
     const doc = DocumentApp.getActiveDocument();
     const rootFolder = getRootFolder(doc.getId())
 
-    const html = `<iframe src="${URL}/drive/${rootFolder.getId()}/file/${doc.getId()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" ></iframe>`;
+    const html = `<iframe src="${URL}/gdocs/${rootFolder.getId()}/${doc.getId()}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" ></iframe>`;
 
     const htmlOutput = HtmlService.createHtmlOutput(html);
     htmlOutput.setTitle('wikigdrive (' + VERSION + ')' );

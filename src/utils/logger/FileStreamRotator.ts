@@ -14,6 +14,22 @@ import util from 'util';
 import {StreamOptions} from 'stream';
 import dayjs from 'dayjs';
 
+interface AuditFile {
+  name: string;
+  date: number;
+  hash: string;
+  hashType?: string;
+}
+
+interface Audit {
+  hashType: string;
+  files: AuditFile[];
+  keep: {
+    days: number;
+    amount: number;
+  }
+}
+
 /**
  * FileStreamRotator:
  *
@@ -233,7 +249,7 @@ export class FileStreamRotator extends EventEmitter {
     this.rotateStream.end(...args);
   }
 
-  write(str, encoding) {
+  write(str: string, encoding: BufferEncoding = 'utf-8') {
     const newDate = this.frequencyMetaData ? getDate(this.frequencyMetaData, this.dateFormat) : this.curDate;
     if (newDate != this.curDate || (this.fileSize && this.curSize > this.fileSize)) {
       let newLogfile = this.filename + (this.curDate && this.frequencyMetaData ? '.' + newDate : '');
@@ -389,10 +405,9 @@ const staticFrequency = ['daily', 'test', 'm', 'h', 'custom'];
  * Returns date string for a given format / date_format
  * @param format
  * @param date_format
- * @param {boolean} utc
  * @returns {string}
  */
-function getDate(format, date_format) {
+function getDate(format, date_format: string) {
   date_format = date_format || DATE_FORMAT;
   const currentMoment = dayjs();
   if (format && staticFrequency.indexOf(format.type) !== -1) {
@@ -419,7 +434,6 @@ function getDate(format, date_format) {
 /**
  * Read audit json object from disk or return new object or null
  * @param max_logs
- * @param audit_file
  * @param log_file
  * @returns {Object} auditLogSettings
  * @property {Object} auditLogSettings.keep
@@ -429,7 +443,7 @@ function getDate(format, date_format) {
  * @property {Array} auditLogSettings.files
  * @property {String} auditLogSettings.hashType
  */
-function setAuditLog(max_logs, audit_file, log_file) {
+function setAuditLog(max_logs: number, audit_file: string, log_file: string) {
   let _rtn = null;
   if (max_logs) {
     const use_days = max_logs.toString().substr(-1);
@@ -588,7 +602,7 @@ function createLogWatcher(logfile, verbose, cb) {
  * @param {EventEmitter} stream
  * @param {Boolean} verbose
  */
-function addLogToAudit(logfile, audit, stream, verbose) {
+function addLogToAudit(logfile: string, audit: Audit, stream: EventEmitter, verbose: boolean) {
   if (audit && audit.files) {
     // Based on contribution by @nickbug - https://github.com/nickbug
     const index = audit.files.findIndex((file) => {
@@ -607,7 +621,7 @@ function addLogToAudit(logfile, audit, stream, verbose) {
 
     if (audit.keep.days) {
       const oldestDate = moment().subtract(audit.keep.amount,'days').valueOf();
-      const recentFiles = audit.files.filter((file) => {
+      audit.files = audit.files.filter((file) => {
         if (file.date > oldestDate) {
           return true;
         }
@@ -616,7 +630,6 @@ function addLogToAudit(logfile, audit, stream, verbose) {
         stream.emit('logRemoved', file);
         return false;
       });
-      audit.files = recentFiles;
     } else {
       const filesToKeep = audit.files.splice(-audit.keep.amount);
       if (audit.files.length > 0) {

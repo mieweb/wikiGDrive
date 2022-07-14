@@ -73,7 +73,7 @@ export class GoogleDriveService {
   constructor(private logger: Logger) {
   }
 
-  async getStartTrackToken(auth: OAuth2Client, driveId) {
+  async getStartTrackToken(auth: OAuth2Client, driveId?: string): Promise<string> {
     const drive = google.drive({ version: 'v3', auth });
 
     const params = {
@@ -89,7 +89,30 @@ export class GoogleDriveService {
     return res.data.startPageToken;
   }
 
-  async watchChanges(auth: OAuth2Client, pageToken, driveId: string): Promise<Changes> {
+  async subscribeWatch(auth: OAuth2Client, pageToken: string, driveId?: string) {
+    const drive = google.drive({ version: 'v3', auth });
+
+    try {
+      const res = await drive.changes.watch({
+        pageToken,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+        fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed), removed)',
+        includeRemoved: true,
+        driveId: driveId ? driveId : undefined
+      });
+
+      console.log(res);
+      return res;
+    } catch (err) {
+      throw new GoogleDriveServiceError('Error watching', {
+        origError: err,
+        isQuotaError: err.isQuotaError
+      });
+    }
+  }
+
+  async watchChanges(auth: OAuth2Client, pageToken: string, driveId?: string): Promise<Changes> {
     const drive = google.drive({ version: 'v3', auth });
 
     try {

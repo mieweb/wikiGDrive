@@ -1,0 +1,120 @@
+a {
+  text-decoration: none;
+}
+
+nav {
+  height: 60px;
+  max-height: 60px;
+  justify-content: space-between;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.wgd-nav-item svg {
+  max-height: 60px;
+  pointer-events: none;
+}
+
+.wgd-nav.bg {
+  opacity: 0;
+}
+
+.wgd-nav.text {
+  fill: #FFFFFF;
+}
+
+.wgd-nav-item {
+  width: 80px;
+  display: flex;
+}
+
+.wgd-nav-item.active {
+  background: url("./tab.svg") no-repeat 50% 100%;
+  color: #000;
+}
+.wgd-nav-item > a {
+  color: #FFF;
+  cursor: pointer;
+  display: inline-block;
+  align-self: end;
+  text-align: center;
+  vertical-align: bottom;
+  font-size: 18px;
+  height: 40px;
+  width: 100%;
+}
+.wgd-nav-item.active > a {
+  color: #000;
+}
+
+.wgd-nav.text.active {
+  fill: #212529;
+}
+
+.wgd-nav.bg.active {
+  opacity: 1;
+}
+
+.pane-item.active {
+  background-color: rgba(13, 109, 253, 0.75) !important;
+  color: #FFFFFF !important;
+}
+
+.pane-item.active a {
+  color: #FFFFFF !important;
+}
+
+#preview {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 215px;
+  bottom: 0;
+  overflow-y: scroll;
+  max-width: 100%;
+}
+
+#google-drive-contentarea {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 266px;
+  bottom: 0;
+  overflow-y: scroll;
+  max-width: 100%;
+}
+
+#github-contentarea {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 230px;
+  bottom: 0;
+  overflow-y: scroll;
+  max-width: 100%;
+}
+
+#sync-contentarea {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 75px;
+  bottom: 0;
+  overflow-y: scroll;
+  max-width: 100%;
+}
+
+.fixed-bottom-controls {
+  position: absolute;
+  bottom: 0;
+}
+
+.table-clickable tbody tr {
+  cursor: pointer;
+}
+
+.changes-badge {
+  right: -20px;
+}

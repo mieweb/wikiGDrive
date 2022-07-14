@@ -1,15 +1,15 @@
 <template>
   <div>
-    <header class="mui-appbar mui--z1">
+    <header class="">
       <!-- Appbar HTML goes here -->
     </header>
-    <div class="mui-container">
-      <form class="mui-form" @submit.prevent.stop="submit">
+    <div class="container">
+      <form @submit.prevent.stop="submit">
         <legend>Share</legend>
-        <div class="mui-textfield">
-          <input v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
+        <div class="input-group">
+          <input class="form-control" v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
         </div>
-        <button type="submit" class="mui-btn mui-btn--raised">Share</button>
+        <button type="submit" class="btn btn-primary">Share</button>
       </form>
     </div>
   </div>

@@ -1,27 +1,92 @@
 export const UtilsMixin = {
   computed: {
-    driveId() {
-      return this.$route.params.driveId;
+    isSinglePreview() {
+      return this.$route.name === 'gdocs';
     },
-    // folderPath
+    syncing() {
+      return this.active_jobs.length > 0;
+    },
+    changes() {
+      return this.$root.changes || [];
+    },
+    jobs() {
+      return this.$root.jobs || [];
+    },
+    active_jobs() {
+      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    },
+    last_job() {
+      let kind = 'none';
+      let dateStr = null;
+
+      if (this.selectedFile) {
+        const fileJob = this.jobs.find(job => job.type === 'sync' && job.payload === this.selectedFile.id && ['done', 'failed'].includes(job.state));
+        if (fileJob?.finished) {
+          kind = 'single';
+          dateStr = new Date(fileJob.finished).toISOString();
+        }
+      }
+
+      const syncAllJob = this.jobs.find(job => job.type === 'sync_all' && ['done', 'failed'].includes(job.state));
+      if (syncAllJob?.finished) {
+        kind = 'full';
+        dateStr = new Date(syncAllJob.finished).toISOString();
+      }
+
+      return {
+        kind, dateStr
+      };
+    },
+    drive() {
+      return this.$root.drive || {};
+    },
+    driveId() {
+      return this.$root.drive.id;
+    },
+    gitInitialized() {
+      return this.$root.drive?.git?.initialized || false;
+    },
+    github_url() {
+      const remote_url = this.$root.drive?.git?.remote_url || '';
+      if (remote_url.startsWith('git@github.com:')) {
+        return remote_url.replace('git@github.com:', 'https://github.com/')
+          .replace(/.git$/, '');
+      }
+      return '';
+    }
   },
   methods: {
-    isFolder(google) {
-      if (!google) return false;
-      return google.mimeType === 'application/vnd.google-apps.folder';
+    setActiveTab(tab, selectedFilePath) {
+      if ('undefined' !== typeof selectedFilePath) {
+        // this.$router.replace('/' + this.driveId + selectedFilePath + '#' + tab);
+      } else {
+        this.$router.replace({ hash: '#' + tab });
+      }
     },
-    isDocument(google) {
-      if (!google) return false;
-      return google.mimeType === 'application/vnd.google-apps.document';
+    goToPath(path, target) {
+      if (target) {
+        window.open('/drive/' + this.driveId + path, target);
+      } else {
+        this.$router.push('/drive/' + this.driveId + path);
+      }
     },
-    isMarkdown(local) {
-      if (!local) return false;
-      return local.mimeType === 'text/x-markdown';
+    isFolder(file) {
+      if (!file) return false;
+      return file.mimeType === 'application/vnd.google-apps.folder';
     },
-    isImage(google) {
-      if (!google) return false;
-      switch (google.mimeType) {
+    isDocument(file) {
+      if (!file) return false;
+      return file.mimeType === 'application/vnd.google-apps.document';
+    },
+    isMarkdown(file) {
+      if (!file) return false;
+      return file.mimeType === 'text/x-markdown';
+    },
+    isImage(file) {
+      if (!file) return false;
+      switch (file.mimeType) {
         case 'application/vnd.google-apps.drawing':
+        case 'image/svg+xml':
         case 'image/png':
         case 'image/jpg':
         case 'image/jpeg':
@@ -44,33 +109,27 @@ export const UtilsMixin = {
     copyEmail(event) {
       event.target.select();
     },
-    async sync(file) {
-      file.syncing = true;
+    async syncSingle(selectedFile) {
       try {
-        await fetch(`/api/drive/${this.driveId}/sync/${file.google.id}`, {
+        await fetch(`/api/sync/${this.driveId}/${selectedFile.id}`, {
           method: 'post'
         });
         // eslint-disable-next-line no-empty
       } finally {
       }
     },
-    async fetchFile() {
-      this.preview = {};
-      this.git = {};
-
-      const fileId = this.$route.params.fileId;
-
-      if (fileId) {
-        const response = await fetch(`/api/drive/${this.driveId}/file/${fileId}`);
-        this.preview = await response.json();
-        console.log('File fetch', this.preview);
-        this.git = this.preview.git;
-
-        this.notRegistered = !!this.preview.not_registered;
-        if (this.notRegistered) {
-          this.shareEmail = this.preview.share_email;
-        }
-      }
+    async syncAll() {
+      await fetch(`/api/sync/${this.driveId}`, {
+        method: 'post'
+      });
     },
+    downloadOdt(fileId) {
+      const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
+      window.open(odtPath, '_blank');
+    },
+    downloadImage(fileId) {
+      const odtPath = `/api/drive/${this.driveId}/transformed/${fileId}`;
+      window.open(odtPath, '_blank');
+    }
   }
 };
