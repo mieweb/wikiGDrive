@@ -57,7 +57,7 @@ jobs:
           --restart unless-stopped \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v wikiGDriveProd:/data \
-          -v /var/www/preview-preview:/preview \
+          -v /var/www/preview-prod:/preview \
           -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveProd/_data \
           -e VOLUME_PREVIEW=/var/www/preview-prod \
           -e RENDER_IMAGE=hugo-render:prod \
