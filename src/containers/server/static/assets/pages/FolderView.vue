@@ -2,7 +2,7 @@
   <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
       <nav class="bg-primary navbar-dark">
-        <router-link v-if="rootFolder.name" class="navbar-brand" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
+        <router-link v-if="rootFolder.name" class="navbar-brand d-none d-md-inline" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
         <span class="navbar-brand" v-else>
           WikiGDrive
         </span>
