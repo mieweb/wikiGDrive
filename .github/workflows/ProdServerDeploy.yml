@@ -20,6 +20,12 @@ jobs:
     - name: Build
       run: docker build -t wikigdrive-prod --build-arg "GIT_SHA=${GITHUB_SHA}" .
 
+    - name: Build
+      run: docker build -t "transform-watch:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/transform-watch
+
+    - name: Build
+      run: docker build -t "hugo-render:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
+
     - name: Stop
       run: docker stop wikigdrive-prod
       continue-on-error: true
@@ -40,3 +46,20 @@ jobs:
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
           server 3000
+
+    - name: Stop and remove
+      run: docker stop transform-preview-prod ; docker rm transform-preview-prod
+      continue-on-error: true
+
+    - name: Start
+      run: |
+        docker run -d --name transform-preview-prod \
+          --restart unless-stopped \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v wikiGDriveProd:/data \
+          -v /var/www/preview-preview:/preview \
+          -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveProd/_data \
+          -e VOLUME_PREVIEW=/var/www/preview-prod \
+          -e RENDER_IMAGE=hugo-render:prod \
+          -e DOMAIN=https://wikigdrive.com \
+          transform-watch:prod
