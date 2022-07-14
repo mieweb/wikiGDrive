@@ -27,6 +27,11 @@ The service runs
 ssh -p 22121 vps1.ovh.wikigdrive.com
 ```
 
+## Developer Test
+
+https://dev.wikigdrive.com/drive/0APmwe3yIhGabUk9PVA
+
+
 ## Production Docker
 
 ```
