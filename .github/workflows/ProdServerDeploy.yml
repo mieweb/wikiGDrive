@@ -2,7 +2,8 @@ name: Prod Server Deploy
 
 on:
   push:
-    branches: [ master ]
+    tags:
+      - '*'
 
 jobs:
   build:
