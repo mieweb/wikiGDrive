@@ -4,7 +4,6 @@ import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
-import fs from 'fs';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {FileId} from '../../model/model';
 import {MimeTypes} from '../../model/GoogleFile';
@@ -17,7 +16,6 @@ import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 
 import {fileURLToPath} from 'url';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
-import {useController} from './routes/Controller';
 import GitController from './routes/GitController';
 import FolderController from './routes/FolderController';
 import {ConfigController} from './routes/ConfigController';
@@ -27,8 +25,11 @@ import {GoogleDriveController} from './routes/GoogleDriveController';
 import {LogsController} from './routes/LogsController';
 import {SocketManager} from './SocketManager';
 
+import * as vite from 'vite';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const HTML_DIR = __dirname + '/../../../apps/ui';
 
 interface TreeItem {
   id: FileId;
@@ -97,30 +98,52 @@ export class ServerContainer extends Container {
     // TODO
   }
 
-  private async startServer(port) {
-    const app = this.app = express();
-    app.use(express.json());
-
-    app.use(express.static(__dirname + '/static'));
-
-    await this.initRouter(app);
-
-    app.use((req, res, next) => {
-      res.header('GIT_SHA', process.env.GIT_SHA);
-      next();
+  private async initUiServer(app) {
+    const viteInstance = await vite.createServer({
+      root: HTML_DIR,
+      logLevel: 'info',
+      server: {
+        middlewareMode: true,
+        watch: {
+          // During tests we edit the files too fast and sometimes chokidar
+          // misses change events, so enforce polling for consistency
+          usePolling: true,
+          interval: 100
+        }
+      }
     });
+    app.use(viteInstance.middlewares);
 
-    await useController(app, '/drive', import('./routes/HtmlController'));
-    await useController(app, '/gdocs', import('./routes/HtmlController'));
+/*
+    app.use(express.static(HTML_DIR));
+
+    const htmlController = new HtmlController('/drive', HTML_DIR);
+    app.use('/drive', await htmlController.getRouter());
+    app.use('/gdocs', await htmlController.getRouter());
 
     app.use((req, res) => {
-      const indexHtml = fs.readFileSync(__dirname + '/static/index.html')
+      const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
         .toString()
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
 
       res.status(404).header('Content-type', 'text/html').end(indexHtml);
       // res.status(404).send('Sorry can\'t find that!');
     });
+*/
+  }
+
+  private async startServer(port) {
+    const app = this.app = express();
+    app.use(express.json());
+
+    app.use((req, res, next) => {
+      res.header('GIT_SHA', process.env.GIT_SHA);
+      next();
+    });
+
+    await this.initRouter(app);
+
+    await this.initUiServer(app);
 
     const server = http.createServer(app);
 

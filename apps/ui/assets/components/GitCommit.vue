@@ -52,7 +52,7 @@
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
-import {GitMixin} from '../components/GitMixin.mjs';
+import {GitMixin} from './GitMixin.mjs';
 
 export default {
   mixins: [UtilsMixin, GitMixin],

@@ -17,17 +17,6 @@ function getMethods(obj) {
   return res;
 }
 
-export async function useController(router, subPath, module) {
-  module = await module;
-  if (module.default.params) {
-    router.use(subPath, module.default);
-  } else {
-    const controller = new module.default(subPath);
-    const subRouter = await controller.getRouter(module.default.prototype.controllerId);
-    router.use(subPath, subRouter);
-  }
-}
-
 export interface ControllerRouteParamBody {
   type: 'body';
   parameterIndex: number;

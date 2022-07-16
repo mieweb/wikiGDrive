@@ -93,6 +93,7 @@ export default {
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     },
     async active_jobs() {
+      console.log(JSON.stringify(this.jobs));
       await this.fetch();
     }
   },

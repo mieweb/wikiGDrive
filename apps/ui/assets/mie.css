@@ -31,7 +31,7 @@ nav {
 }
 
 .wgd-nav-item.active {
-  background: url("./tab.svg") no-repeat 50% 100%;
+  background: url("tab.svg") no-repeat 50% 100%;
   color: #000;
 }
 .wgd-nav-item > a {

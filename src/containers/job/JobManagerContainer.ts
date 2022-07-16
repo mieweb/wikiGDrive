@@ -80,7 +80,9 @@ export class JobManagerContainer extends Container {
   }
 
   async setDriveJobs(driveId, driveJobs) {
-    this.driveJobsMap[driveId] = driveJobs;
+    if (driveJobs) {
+      this.driveJobsMap[driveId] = driveJobs;
+    }
     this.engine.emit(driveId, 'jobs:changed', driveJobs);
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     await driveFileSystem.writeJson('.jobs.json', driveJobs);

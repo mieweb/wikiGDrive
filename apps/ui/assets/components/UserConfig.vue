@@ -22,7 +22,7 @@
           </div>
 
           <div>
-            <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" />
+            <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" :alt="user_config.hugo_theme.id" />
           </div>
 
           <button class="btn btn-primary" type="button" @click="save">Save</button>
