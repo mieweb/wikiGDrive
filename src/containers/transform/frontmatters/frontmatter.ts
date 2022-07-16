@@ -11,7 +11,11 @@ export function frontmatter(string) {
   const matches = string.match(pattern);
 
   if (matches[2] !== undefined) {
-    parsed.data = yaml.load(matches[2]) || {};
+    try {
+      parsed.data = yaml.load(matches[2]) || {};
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   if (matches[3] !== undefined) {

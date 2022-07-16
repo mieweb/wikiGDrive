@@ -26,6 +26,7 @@ import {LogsController} from './routes/LogsController';
 import {SocketManager} from './SocketManager';
 
 import * as vite from 'vite';
+import * as fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,6 +103,7 @@ export class ServerContainer extends Container {
     const viteInstance = await vite.createServer({
       root: HTML_DIR,
       logLevel: 'info',
+      appType: 'custom',
       server: {
         middlewareMode: true,
         watch: {
@@ -114,22 +116,12 @@ export class ServerContainer extends Container {
     });
     app.use(viteInstance.middlewares);
 
-/*
-    app.use(express.static(HTML_DIR));
-
-    const htmlController = new HtmlController('/drive', HTML_DIR);
-    app.use('/drive', await htmlController.getRouter());
-    app.use('/gdocs', await htmlController.getRouter());
-
     app.use((req, res) => {
       const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
         .toString()
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
-
       res.status(404).header('Content-type', 'text/html').end(indexHtml);
-      // res.status(404).send('Sorry can\'t find that!');
     });
-*/
   }
 
   private async startServer(port) {

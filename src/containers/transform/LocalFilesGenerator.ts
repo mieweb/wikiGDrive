@@ -10,7 +10,7 @@ export function getDesiredPath(name: string, mimeType?: string) {
   name = name.replace(/[&]+/g, ' and ');
   name = name.replace(/[/:()]+/g, ' ');
   name = name.trim();
-  name = slugify(name, { replacement: '-', lower: true });
+  name = slugify(name, { replacement: '-', lower: true, remove: /[*+~.()'"!:@]/g });
 
   if (mimeType) {
     const ext = googleMimeToExt(mimeType, name);
