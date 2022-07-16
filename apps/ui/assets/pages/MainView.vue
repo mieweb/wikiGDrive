@@ -39,7 +39,11 @@ export default {
         })
       });
       const json = await response.json();
-      await this.$router.push({ name: 'drive', params: { driveId: json.drive_id } });
+      if (json.driveId) {
+        await this.$router.push({ name: 'drive', params: { driveId: json.driveId } });
+      } else {
+        alert('Error sharing drive');
+      }
     }
   }
 };

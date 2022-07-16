@@ -351,13 +351,16 @@ export class ServerContainer extends Container {
         const folderUrl = req.body.url;
         const driveId = urlToFolderId(folderUrl);
 
+        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+        const folder = await folderRegistryContainer.registerFolder(driveId);
+
         // const googleAuthService = new GoogleAuthService();
         // const authConfig: AuthConfig = this.authContainer['authConfig'];
         // const auth = await googleAuthService.authorizeUserAccount(authConfig.web_account.client_id, authConfig.web_account.client_secret);
         // const authUrl = await googleAuthService.getWebAuthUrl(auth, serverUrl + '/api/share_drive', driveId);
         // console.log('google_auth', authUrl);
 
-        res.json({ drive_id: driveId });
+        res.json(folder);
       } catch (err) {
         next(err);
       }
