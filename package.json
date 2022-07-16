@@ -22,7 +22,7 @@
   "main": "src/main.ts",
   "scripts": {
     "test": "mocha --require ts-node/register --ui bdd test/*.ts test/**/*.ts",
-    "lint": "eslint ./src/**/*.ts ./src/**/*.vue",
+    "lint": "eslint ./apps/**/*.ts ./apps/**/*.vue",
     "start": "wikigdrive-ts watch --server 3000",
     "build": ""
   },
