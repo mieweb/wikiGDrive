@@ -226,7 +226,7 @@ export class StateMachine {
         case 'md':
         {
           if (this.currentLevel.payload.bookmarkName) {
-            const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true });
+            const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
             if (slug) {
               this.headersMap[this.currentLevel.payload.bookmarkName] = slug;
             }

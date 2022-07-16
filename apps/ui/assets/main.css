@@ -1,0 +1,47 @@
+@import "mie.css";
+
+:root {
+  --sidebar-width: 600px;
+  --navbar-height: 60px;
+}
+
+/**
+ * Body CSS
+ */
+html,
+body,
+#app, #main {
+  height: 100%;
+}
+
+#main {
+  display: flex;
+  flex-direction: column;
+}
+
+nav {
+  /*height: var(--navbar-height);*/
+  /*max-height: 60px;*/
+  justify-content: space-between;
+  display: flex;
+  align-items: center;
+  background-color: #2196F3;
+  color: #FFF;
+}
+
+.navbar {
+  min-height: var(--navbar-height);
+  padding: 0;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Autolinker */
+
+.token a {
+  color: inherit;
+}
+
+pre[class*=language-] {
+  margin-top: 0 !important;
+}

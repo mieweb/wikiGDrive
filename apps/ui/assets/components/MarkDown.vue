@@ -2,7 +2,7 @@
   <pre><code class="language-markdown line-numbers" ref="code"><slot></slot></code></pre>
 </template>
 <script lang="ts">
-import Prism from '../prism.js';
+const Prism = window['Prism'];
 
 const url = /\b([a-z]{3,7}:\/\/|tel:)[\w\-+%~/.:=&@]+(?:\?[\w\-+%~/.:=?&!$'()*,;@]*)?(?:#[\w\-+%~/.:#=?&!$'()*,;@]*)?/;
 const email = /\b\S+@[\w.]+[a-z]{2}/;

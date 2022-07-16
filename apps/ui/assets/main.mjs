@@ -4,26 +4,10 @@ import {FileClientService} from './services/FileClientService.mjs';
 import {DriveClientService} from './services/DriveClientService.mjs';
 import {GitClientService} from './services/GitClientService.mjs';
 
-const {loadModule} = window['vue3-sfc-loader'];
+import * as Vue from 'vue';
+import * as VueRouter from 'vue-router';
 
-const options = {
-  moduleCache: {
-    vue: Vue
-  },
-  async getFile(url) {
-    const res = await fetch(url);
-    if (!res.ok)
-      throw Object.assign(new Error(res.statusText + ' ' + url), {res});
-    return {
-      getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),
-    };
-  },
-  addStyle(textContent) {
-    const style = Object.assign(document.createElement('style'), {textContent});
-    const ref = document.head.getElementsByTagName('style')[0] || null;
-    document.head.insertBefore(style, ref);
-  }
-};
+import App from './App.vue';
 
 const app = Vue.createApp({
   data: {
@@ -32,7 +16,7 @@ const app = Vue.createApp({
     changes: []
   },
   components: {
-    'App': Vue.defineAsyncComponent(() => loadModule('/assets/App.vue', options))
+    'App': App
   },
   template: '<App />',
   methods: {
@@ -64,44 +48,44 @@ const router = new VueRouter.createRouter({
     {
       path: '/drive/',
       name: 'drives',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/DrivesView.vue', options)),
+      component: () => import('./pages/DrivesView.vue'),
     },
     {
       path: '/drive/:driveId*',
       name: 'drive',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/FolderView.vue', options))
+      component: () => import('./pages/FolderView.vue')
     },
     {
       path: '/gdocs/:driveId/:fileId',
       name: 'gdocs',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/GDocsView.vue', options))
+      component: () => import('./pages/GDocsView.vue')
     },
     {
       path: '/logs',
       name: 'logs',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/LogsView.vue', options))
+      component: () => import('./pages/LogsView.vue')
     },
     {
       path: '/',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/MainView.vue', options))
+      component: () => import('./pages/MainView.vue')
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: Vue.defineAsyncComponent(() => loadModule('/assets/pages/NotFound.vue', options))
+      component: () => import('./pages/NotFound.vue')
     }
   ]
 });
-
 
 app.use(router);
 
 const vm = app.mount('#app');
 
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to, from, next) => {
   const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
   const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
   if (toDriveId !== fromDriveId) {
     await vm.changeDrive(toDriveId);
   }
+  next();
 });

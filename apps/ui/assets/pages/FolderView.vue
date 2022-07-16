@@ -1,13 +1,9 @@
 <template>
   <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
     <template v-slot:navbar>
-      <nav class="bg-primary navbar-dark">
-        <router-link v-if="rootFolder.name" class="navbar-brand d-none d-md-inline" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
-        <span class="navbar-brand" v-else>
-          WikiGDrive
-        </span>
+      <NavBar>
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
-      </nav>
+      </NavBar>
     </template>
 
     <template v-slot:sidebar>
@@ -48,10 +44,12 @@ import UserConfig from '../components/UserConfig.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
 import DriveTools from '../components/DriveTools.vue';
+import NavBar from '../components/NavBar.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    NavBar,
     DriveTools,
     NavTabs,
     NotRegistered,
@@ -93,6 +91,7 @@ export default {
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     },
     async active_jobs() {
+      console.log(JSON.stringify(this.jobs));
       await this.fetch();
     }
   },

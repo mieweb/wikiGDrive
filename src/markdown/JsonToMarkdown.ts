@@ -488,7 +488,7 @@ export class JsonToMarkdown {
       }
 
       if (paragraph.paragraphStyle?.headingId) {
-        this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true });
+        this.headings[paragraph.paragraphStyle.headingId] = slugify(paragraphTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
       }
 
       if (paragraph.paragraphStyle?.namedStyleType) {

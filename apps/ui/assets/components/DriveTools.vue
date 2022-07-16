@@ -7,8 +7,8 @@
           WikiGDrive Folder
         </a>
       </li>
-      <li class="list-group-item" v-if="selectedFile.parentId" target="_blank">
-        <a :href="'https://drive.google.com/open?id=' + selectedFile.parentId">
+      <li class="list-group-item" v-if="selectedFile.parentId">
+        <a :href="'https://drive.google.com/open?id=' + selectedFile.parentId" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           Google Drive
         </a>

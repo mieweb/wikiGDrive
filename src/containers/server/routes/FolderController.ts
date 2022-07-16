@@ -69,7 +69,7 @@ export function findInTree(callBack: CallBack<BaseTreeItem>, files: Array<BaseTr
     }
   }
 
-  return {};
+  return null;
 }
 
 export class ShareErrorHandler extends ErrorHandler {
@@ -85,7 +85,7 @@ export class ShareErrorHandler extends ErrorHandler {
 }
 
 export async function outputDirectory(res: express.Response, treeItem: TreeItem) {
-  const treeItems = [].concat(treeItem.children);
+  const treeItems = [].concat(treeItem.children || []);
   treeItems.sort((file1: TreeItem, file2: TreeItem) => {
     if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
       return -1;
