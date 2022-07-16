@@ -1,11 +1,5 @@
 <template>
   <BaseLayout :sidebar="false">
-    <template v-slot:navbar>
-      <nav class="bg-primary">
-        <span class="navbar-brand">WikiGDrive</span>
-      </nav>
-    </template>
-
     <template v-slot:default>
       <div class="container">
         <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">

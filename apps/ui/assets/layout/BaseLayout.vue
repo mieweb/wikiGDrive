@@ -1,24 +1,27 @@
 <template>
   <div id="main" :class="{'hide-sidedrawer': !sidebar}">
     <slot name="navbar">
-      <nav class="bg-primary"></nav>
+      <NavBar />
     </slot>
-    <div id="content-wrapper">
-      <div id="sidedrawer" class="">
-        <Sidebar>
-          <slot name="sidebar"></slot>
-        </Sidebar>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm" v-if="sidebar">
+          <Sidebar>
+            <slot name="sidebar"></slot>
+          </Sidebar>
+        </div>
+        <main class="col">
+          <slot></slot>
+        </main>
       </div>
-      <main>
-        <slot></slot>
-      </main>
     </div>
   </div>
 </template>
 <script>
 import Sidebar from './SideBar.vue';
+import NavBar from '../components/NavBar.vue';
 export default {
-  components: {Sidebar},
+  components: {Sidebar, NavBar},
   props: {
     navbar: {
       type: Boolean,

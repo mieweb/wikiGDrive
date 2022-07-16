@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav h-100">
+  <ul class="navbar-nav mr-auto">
     <li :class="{ 'active': activeTab === 'html' }" class="wgd-nav-item" v-if="isDocument(selectedFile) || isMarkdown(selectedFile) || isImage(selectedFile)">
       <a @click.prevent.stop="setActiveTab('html')">
         <i class="fa-solid fa-eye"></i>

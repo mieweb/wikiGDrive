@@ -1,21 +1,25 @@
 <template>
-  <div>
-    <header class="">
-      <!-- Appbar HTML goes here -->
-    </header>
-    <div class="container">
-      <form @submit.prevent.stop="submit">
-        <legend>Share</legend>
-        <div class="input-group">
-          <input class="form-control" v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
-        </div>
-        <button type="submit" class="btn btn-primary">Share</button>
-      </form>
-    </div>
-  </div>
+  <BaseLayout>
+    <template v-slot:default>
+      <div class="container">
+        <form @submit.prevent.stop="submit">
+          <legend>Share</legend>
+          <div class="input-group">
+            <input class="form-control" v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
+          </div>
+          <button type="submit" class="btn btn-primary">Share</button>
+        </form>
+      </div>
+    </template>
+  </BaseLayout>
 </template>
 <script>
+import BaseLayout from '../layout/BaseLayout.vue';
+
 export default {
+  components: {
+    BaseLayout
+  },
   data() {
     return {
       url: ''

@@ -1,9 +1,9 @@
 <template>
   <BaseLayout :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
-      <nav class="bg-primary navbar-dark">
+      <NavBar>
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
-      </nav>
+      </NavBar>
     </template>
 
     <template v-slot:default>
@@ -34,6 +34,7 @@ import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import NotRegistered from './NotRegistered.vue';
+import NavBar from '../components/NavBar.vue';
 import NavTabs from '../components/NavTabs.vue';
 import DriveTools from '../components/DriveTools.vue';
 import LogsViewer from '../components/LogsViewer.vue';
@@ -46,6 +47,7 @@ export default {
   name: 'GDocsView',
   mixins: [UtilsMixin, UiMixin],
   components: {
+    NavBar,
     NavTabs,
     FilePreview,
     ImagePreview,
