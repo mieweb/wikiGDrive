@@ -75,7 +75,7 @@ export default {
   },
   computed: {
     sidebar() {
-      if (!this.notRegistered) {
+      if (this.notRegistered) {
         return false;
       }
       return this.activeTab !== 'drive_logs';
