@@ -17,8 +17,10 @@ jobs:
         node-version: 16
         cache: npm
 
-    - name: Build
-      run: docker build -t "wikigdrive-develop:${GITHUB_SHA}" --build-arg "GIT_SHA=${GITHUB_SHA}" .
+    - uses: whoan/docker-build-with-cache-action@v5
+      with:
+        image_name: "wikigdrive-develop:${GITHUB_SHA}"
+        build_extra_args: '{"--build-arg": "GIT_SHA=${GITHUB_SHA}"}'
 
     - name: Build hugo rederer
       run: docker build -t "hugo-render:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
