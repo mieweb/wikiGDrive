@@ -19,7 +19,8 @@ jobs:
 
     - uses: whoan/docker-build-with-cache-action@v5
       with:
-        image_name: "wikigdrive-develop:${{ github.sha }}"
+        image_name: "wikigdrive-develop"
+        image_tag: "${{ github.sha }},latest"
         build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
     - name: Build hugo rederer
