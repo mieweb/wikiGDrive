@@ -20,8 +20,8 @@ jobs:
 
     - uses: whoan/docker-build-with-cache-action@v5
       with:
-        image_name: "wikigdrive-prod:${{ GITHUB_SHA }}"
-        build_extra_args: "{'--build-arg': 'GIT_SHA=${{ GITHUB_SHA }}'}"
+        image_name: "wikigdrive-prod:${{ github.sha }}"
+        build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
     - name: Build hugo rederer
       run: docker build -t "hugo-render:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
