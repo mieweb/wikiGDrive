@@ -40,6 +40,7 @@ jobs:
         docker run -d --name wikigdrive-prod \
           -v wikiGDriveProd:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
+          -e DOMAIN=https://wikigdrive.com \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
           wikigdrive-prod wikigdrive-ts \

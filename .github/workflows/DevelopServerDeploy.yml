@@ -36,6 +36,7 @@ jobs:
           --restart unless-stopped \
           -v wikiGDriveDevelop:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
+          -e DOMAIN=https://dev.wikigdrive.com \
           --publish 127.0.0.1:4000:3000 \
           "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
           --service_account /service_account.json \
