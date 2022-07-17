@@ -1,5 +1,5 @@
 <template>
-  <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
+  <BaseLayout :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar>
       <NavBar>
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
@@ -7,7 +7,7 @@
     </template>
 
     <template v-slot:sidebar>
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" />
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
@@ -74,6 +74,12 @@ export default {
     };
   },
   computed: {
+    sidebar() {
+      if (!this.notRegistered) {
+        return false;
+      }
+      return this.activeTab !== 'drive_logs';
+    },
     jobs() {
       return this.$root.jobs || [];
     },

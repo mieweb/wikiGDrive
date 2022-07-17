@@ -4,6 +4,7 @@ import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
 
 import { fileURLToPath } from 'url';
+import {PreviewRendererContainer} from '../preview/PreviewRendererContainer';
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all';
@@ -211,6 +212,17 @@ export class JobManagerContainer extends Container {
       await transformContainer.run(folderId);
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
+    }
+
+    const previewRendererContainer = new PreviewRendererContainer({
+      name: folderId
+    });
+    await previewRendererContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
+    await this.engine.registerContainer(previewRendererContainer);
+    try {
+      await previewRendererContainer.run(folderId);
+    } finally {
+      await this.engine.unregisterContainer(previewRendererContainer.params.name);
     }
   }
 

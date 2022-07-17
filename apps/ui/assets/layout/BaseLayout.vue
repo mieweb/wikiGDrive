@@ -1,5 +1,5 @@
 <template>
-  <div id="main" :class="{'hide-sidedrawer': !sidebar}">
+  <div id="main">
     <slot name="navbar">
       <NavBar />
     </slot>

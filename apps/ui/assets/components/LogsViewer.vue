@@ -1,11 +1,11 @@
 <template>
   <div class="container">
-    <table class="table table-bordered" v-if="logs && logs.length > 0">
+    <table class="table table-bordered table-layout-fixed" v-if="logs && logs.length > 0">
       <thead>
       <tr>
-        <th>Level</th>
-        <th>Time</th>
-        <th>File</th>
+        <th style="width: 10ex">Level</th>
+        <th style="width: 20ex">Time</th>
+        <th style="width: 30ex">File</th>
         <th>Message</th>
       </tr>
       </thead>
@@ -14,7 +14,9 @@
         <td>{{item.level}}</td>
         <td>{{item.timestamp}}</td>
         <td v-html="getLink(item.filename)"></td>
-        <td>{{item.message}}</td>
+        <td>
+          <pre class="scrollable-code">{{item.message}}</pre>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -49,7 +51,7 @@ export default {
         return '';
       }
       const [path, line] = fileName.split(':');
-      const branch = process.env.DOMAIN === 'https://dev.wikigdrive.com' ? 'develop' : 'master';
+      const branch = window.location.hostname === 'wikigdrive.com' ? 'master' : 'develop';
       const url = `https://github.com/mieweb/wikiGDrive/blob/${branch}/${path}#L${line}`;
       let baseName = path.split('/').pop();
       return `<a target="github" href="${url}">${baseName}</a>`;
