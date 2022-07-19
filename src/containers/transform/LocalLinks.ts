@@ -57,7 +57,7 @@ export class LocalLinks {
         }
       }
     }
-    return retVal;
+    return Array.from(retVal);
   }
 
   async save() {

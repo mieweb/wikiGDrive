@@ -170,9 +170,11 @@ export class TransformContainer extends Container {
   private hierarchy: NavigationHierarchy = {};
   private localLog: LocalLog;
   private localLinks: LocalLinks;
+  private filterFilesIds: FileId[];
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
+    this.filterFilesIds = paramsArr['filesIds'] || [];
   }
 
   async mount2(fileService: FileContentService, destFileService: FileContentService): Promise<void> {
@@ -239,6 +241,11 @@ export class TransformContainer extends Container {
       }
 
       const googleFile = googleFolderFiles.find(f => f.id === localFile.id);
+
+      if (this.filterFilesIds.length > 0 && -1 === this.filterFilesIds.indexOf(localFile.id)) {
+        continue;
+      }
+
       const task = new TaskLocalFileTransform(
         this.logger,
         realFileName,
@@ -267,7 +274,30 @@ export class TransformContainer extends Container {
     await this.localLinks.load();
 
     this.hierarchy = await this.loadNavigationHierarchy();
-    await this.syncDir(this.filesService, this.generatedFileService);
+
+    const processed = new Set<string>();
+    let retry = true;
+    while (retry) {
+      retry = false;
+      await this.syncDir(this.filesService, this.generatedFileService);
+      if (this.filterFilesIds.length > 0) {
+        const filterFilesIds = new Set<string>();
+        for (const fileId of this.filterFilesIds) {
+          processed.add(fileId);
+          const backLinks = this.localLinks.getBackLinks(fileId);
+          for (const backLink of backLinks) {
+            if (processed.has(backLink)) {
+              continue;
+            }
+            filterFilesIds.add(backLink);
+          }
+        }
+        if (filterFilesIds.size > 0) {
+          this.filterFilesIds = Array.from(filterFilesIds);
+          retry = true;
+        }
+      }
+    }
 
     await this.createRedirs(this.generatedFileService);
     await this.writeToc();
