@@ -10,7 +10,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr v-for="(item, idx) of logs" :key="idx">
+      <tr v-for="(item, idx) of logs" :key="idx" :class="{'text-danger': 'error' === item.level}">
         <td>{{item.level}}</td>
         <td>{{item.timestamp}}</td>
         <td v-html="getLink(item.filename)"></td>

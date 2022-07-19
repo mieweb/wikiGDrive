@@ -42,7 +42,7 @@ export class PreviewRendererContainer extends Container {
 
     try {
       const writable = new BufferWritable();
-      await docker.run(process.env.RENDER_IMAGE, [], writable, {
+      const result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
         HostConfig: {
           Binds: [
             `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
@@ -55,7 +55,12 @@ export class PreviewRendererContainer extends Container {
           `THEME_URL=${themeUrl}`
         ]
       });
-      this.logger.info(writable.getBuffer().toString());
+
+      if (result?.length > 0 && result[0].StatusCode > 0) {
+        this.logger.error(writable.getBuffer().toString());
+      } else {
+        this.logger.info(writable.getBuffer().toString());
+      }
     } catch (err) {
       console.error(err);
       this.logger.error(err.message);
