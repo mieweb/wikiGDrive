@@ -46,12 +46,13 @@ pre[class*=language-] {
   margin-top: 0 !important;
 }
 
-.scrollable-code {
-  max-width: 100%;
-  max-height: 10em;
+.log-viewer {
+  max-height: 100vh;
   overflow: auto;
+  white-space:pre-wrap
 }
 
-.table-layout-fixed {
-  table-layout: fixed;
+.log-viewer code[class*="language-"],
+.log-viewer pre[class*="language-"] {
+  color: inherit !important;
 }

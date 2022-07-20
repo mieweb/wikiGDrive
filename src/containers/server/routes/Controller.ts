@@ -461,7 +461,7 @@ export function RouteParamPath(name: string, docs: RouteDoc = {}) {
   };
 }
 
-export function RouteParamQuery(name: string, docs: RouteDoc) {
+export function RouteParamQuery(name: string, docs: RouteDoc = {}) {
   return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
     const route = targetClass.getRoute(targetClass, methodProp);
     const param: ControllerRouteParamQuery = {
