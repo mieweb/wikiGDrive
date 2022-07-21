@@ -15,7 +15,7 @@ export class GoogleDriveController extends Controller {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const transformedTree = await transformedFileSystem.readJson('.tree.json');
 
-    const treeItem = findInTree(treeItem => treeItem.id === fileId, transformedTree);
+    const treeItem = findInTree(treeItem => treeItem['id'] === fileId, transformedTree);
 
     if (!treeItem) {
       this.res.status(404).send('No local');
@@ -26,6 +26,7 @@ export class GoogleDriveController extends Controller {
 
     this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
     this.res.setHeader('wgd-google-id', treeItem.id || '');
+    this.res.setHeader('wgd-google-version', treeItem.version || '');
     this.res.setHeader('wgd-path', treeItem.path || '');
     this.res.setHeader('wgd-file-name', treeItem.fileName || '');
     this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');

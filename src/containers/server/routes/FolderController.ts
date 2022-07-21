@@ -126,6 +126,7 @@ export default class FolderController extends Controller {
 
     this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
     this.res.setHeader('wgd-google-id', treeItem.id || '');
+    this.res.setHeader('wgd-google-version', treeItem.version || '');
     this.res.setHeader('wgd-path', treeItem.path || '');
     this.res.setHeader('wgd-file-name', treeItem.fileName || '');
     this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');

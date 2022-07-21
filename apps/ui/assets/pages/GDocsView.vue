@@ -107,6 +107,7 @@ export default {
         this.selectedFile = {
           fileName,
           folderId: response.headers.get('wgd-google-parent-id'),
+          version: response.headers.get('wgd-google-version'),
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type')
         };

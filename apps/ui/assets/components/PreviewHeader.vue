@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid bg-light my-1">
+    <div class="row py-1 align-items-center" v-if="selectedFile.fileName">
+      <div class="col-8">
+      {{ selectedFile.fileName }} <span v-if="selectedFile.version">#{{ selectedFile.version }}</span>
+      </div>
+    </div>
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
       <div class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
