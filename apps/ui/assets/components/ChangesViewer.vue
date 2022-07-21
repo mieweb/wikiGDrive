@@ -1,5 +1,16 @@
 <template>
   <div class="x-container">
+    <div class="row py-1">
+      <div class="col-12 text-end">
+        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Logs" title="Logs">
+          <i class="fa-solid fa-bug me-1"></i>
+        </router-link>
+        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Settings" title="Settings">
+          <i class="fa-solid fa-gear me-1"></i>
+        </router-link>
+      </div>
+    </div>
+
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
       <ul class="list-group">
@@ -39,7 +50,10 @@ export default {
   name: 'ChangeViewer',
   mixins: [UtilsMixin, UiMixin],
   props: {
-    selectedFile: Object
+    selectedFile: Object,
+    activeTab: {
+      type: String
+    }
   }
 };
 </script>

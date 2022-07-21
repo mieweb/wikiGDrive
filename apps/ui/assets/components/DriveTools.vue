@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul class="list-group">
-      <li class="list-group-item" v-if="isSinglePreview">
+      <li class="list-group-item" v-if="isGDocsPreview">
         <a :href="'/drive/' + driveId + folderPath" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           WikiGDrive Folder
@@ -31,13 +31,13 @@
           Navigation
         </a>
       </li>
-      <li class="list-group-item" v-if="!isSinglePreview">
+      <li class="list-group-item" v-if="!isGDocsPreview">
         <router-link :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }">
           <i class="fa-solid fa-bug me-1"></i>
           Logs
         </router-link>
       </li>
-      <li class="list-group-item" v-if="!isSinglePreview">
+      <li class="list-group-item" v-if="!isGDocsPreview">
         <router-link :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }">
           <i class="fa-solid fa-gear me-1"></i>
           Settings

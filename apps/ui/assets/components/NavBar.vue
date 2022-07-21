@@ -8,7 +8,7 @@
         </a>
       </span>
 
-      <span v-if="!isSinglePreview" class="drive-link">
+      <span v-if="!isGDocsPreview" class="drive-link">
         <router-link v-if="driveId" class="text-white" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name || 'WikiGDrive' }}</router-link>
       </span>
     </span>

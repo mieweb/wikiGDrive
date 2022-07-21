@@ -9,7 +9,7 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" />
+        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
         <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
@@ -108,6 +108,7 @@ export default {
           fileName,
           folderId: response.headers.get('wgd-google-parent-id'),
           version: response.headers.get('wgd-google-version'),
+          modifiedTime: response.headers.get('wgd-google-modified-time'),
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type')
         };
