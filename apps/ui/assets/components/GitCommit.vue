@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="x-container">
 
     <ul class="list-group">
       <li class="list-group-item" v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>

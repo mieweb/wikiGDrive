@@ -1,7 +1,7 @@
 <template>
   <BaseLayout :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
-      <NavBar>
+      <NavBar :sidebar="false">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </NavBar>
     </template>

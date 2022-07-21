@@ -1,13 +1,13 @@
 <template>
   <BaseLayout :share-email="shareEmail" :sidebar="sidebar">
-    <template v-slot:navbar>
-      <NavBar>
+    <template v-slot:navbar="{ collapsed, collapse }">
+      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </NavBar>
     </template>
 
-    <template v-slot:sidebar>
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" />
+    <template v-slot:sidebar="{ collapse }">
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />

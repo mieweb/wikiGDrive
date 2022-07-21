@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="x-container">
     <pre class="bg-dark text-white log-viewer" ref="scroller"
     ><div v-for="(item, idx) of logs" :key="idx" :class="{'text-danger': 'error' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span

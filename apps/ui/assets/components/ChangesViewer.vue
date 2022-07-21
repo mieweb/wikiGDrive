@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="x-container">
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
       <ul class="list-group">
