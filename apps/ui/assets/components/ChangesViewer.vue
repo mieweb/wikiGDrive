@@ -15,7 +15,11 @@
       <h4>Changed on gdocs</h4>
       <ul class="list-group">
         <li class="list-group-item" v-for="(file, idx) of changes" :key="idx">
-          <a>{{ file.name }} #{{ file.version }}</a>
+          <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
+
+          <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
+            <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+          </button>
         </li>
       </ul>
     </div>
@@ -53,6 +57,29 @@ export default {
     selectedFile: Object,
     activeTab: {
       type: String
+    }
+  },
+  methods: {
+    async gotoFile(fileId) {
+      if (fileId) {
+        const response = await fetch(`/api/gdrive/${this.driveId}/${fileId}`);
+
+        const path = response.headers.get('wgd-path') || '';
+        const fileName = response.headers.get('wgd-file-name') || '';
+        const selectedFile = {
+          fileName,
+          folderId: response.headers.get('wgd-google-parent-id'),
+          version: response.headers.get('wgd-google-version'),
+          modifiedTime: response.headers.get('wgd-google-modified-time'),
+          fileId: response.headers.get('wgd-google-id'),
+          mimeType: response.headers.get('wgd-mime-type'),
+          path: path
+        };
+
+        if (selectedFile.path) {
+          this.$router.push(`/drive/${this.driveId}${selectedFile.path}`);
+        }
+      }
     }
   }
 };

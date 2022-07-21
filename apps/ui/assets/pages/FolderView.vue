@@ -12,7 +12,7 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
 
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 

@@ -9,7 +9,7 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" />
+        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
         <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
@@ -112,7 +112,6 @@ export default {
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type')
         };
-        console.log('selectedFile', this.selectedFile);
 
 /*        this.notRegistered = !!this.preview.not_registered;
         if (this.notRegistered) {
