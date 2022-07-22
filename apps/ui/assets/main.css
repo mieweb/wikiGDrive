@@ -46,8 +46,7 @@ pre[class*=language-] {
 }
 
 .log-viewer {
-  max-height: 100vh;
-  overflow: auto;
+  margin-bottom: 0 !important;
   white-space:pre-wrap
 }
 
