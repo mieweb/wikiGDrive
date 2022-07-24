@@ -1,6 +1,6 @@
 export const UtilsMixin = {
   computed: {
-    isSinglePreview() {
+    isGDocsPreview() {
       return this.$route.name === 'gdocs';
     },
     syncing() {

@@ -1,62 +1,71 @@
 <template>
   <div class="container-fluid bg-light my-1">
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
-      <div class="col-8">
+      <foo class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
         <span v-else class="fw-bold">Last synced</span>
-        <span class="small text-muted">{{ last_job.dateStr }}</span>
-      </div>
+        <span class="small text-muted">&nbsp;{{ last_job.dateStr }}</span>
+      </foo>
       <div class="col-4 text-end">
-        <button class="btn btn-light" v-if="!syncing" @click="syncSingle(selectedFile)">
+        <button class="btn btn-light" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         </button>
       </div>
     </div>
+    <div class="row py-1 align-items-center" v-if="selectedFile.fileName">
+      <div class="col-8">
+        <strong>{{ selectedFile.fileName }}</strong>
+        <span v-if="selectedFile.version">#{{ selectedFile.version }}</span>
+        <span v-if="selectedFile.modifiedTime" class="small text-muted">&nbsp;{{ selectedFile.modifiedTime }}</span>
+      </div>
+    </div>
   </div>
 
-  <div class="container-fluid my-1">
-    <ul class="list-group">
-      <li class="list-group-item" v-if="activeTab !== 'html'">
-        <a @click.prevent.stop="setActiveTab('html')">
-          <i class="fa-brands fa-html5 me-1"></i>
-          Preview
-        </a>
-      </li>
-      <li class="list-group-item" v-if="activeTab !== 'markdown'">
-        <a @click.prevent.stop="setActiveTab('markdown')">
-          <i class="fa-brands fa-markdown me-1"></i>
-          Markdown
-        </a>
-      </li>
-      <li class="list-group-item" :class="{ 'active': activeTab === 'drive_backlinks' }">
-        <a @click.prevent.stop="setActiveTab('drive_backlinks')">
-          <i class="fa-solid fa-arrows-to-circle me-1"></i>
-          BackLinks
-        </a>
-      </li>
-      <li class="list-group-item" v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))">
-        <a @click.prevent.stop="downloadOdt(selectedFile.id)">
-          <i class="fa fa-download me-1"></i>
-          Download odt
-        </a>
-      </li>
-      <li class="list-group-item" v-if="selectedFile.id && isImage(selectedFile)">
-        <a @click.prevent.stop="downloadImage(selectedFile.id)">
-          <i class="fa fa-download me-1"></i>
-          Download image
-        </a>
-      </li>
-    </ul>
+  <form class="row py-1" @submit.prevent="commitSingle" v-if="selectedFile">
+    <div class="input-group mb-1">
+      <input v-model="commitMsg" type="text" class="form-control border-light" placeholder="Commit message..." aria-label="Commit message" aria-describedby="commit-button">
+      <button class="btn btn-white bg-white text-primary" type="submit" id="commit-button" title="Commit button">
+        <i class="fa-solid fa-code-commit"></i>
+      </button>
+    </div>
+  </form>
+
+  <div class="row py-1">
+    <div class="col-12 text-end">
+      <button v-if="activeTab !== 'html'" @click.prevent.stop="setActiveTab('html')" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview" title="Preview">
+        <i class="fa-brands fa-html5 me-1"></i>
+      </button>
+      <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
+        <i class="fa-brands fa-markdown me-1"></i>
+      </button>
+      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
+        <i class="fa fa-download me-1"></i>
+      </button>
+      <button v-if="selectedFile.id && isImage(selectedFile)" @click.prevent.stop="downloadImage(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download image" title="Download image" >
+        <i class="fa fa-download me-1"></i>
+      </button>
+
+      <button v-if="drive.tocFilePath" @click.prevent.stop="goToPath(drive.tocFilePath)" class="btn btn-white text-primary ml-1" type="button" aria-label="Table of Contents" title="Table of Contents">
+        <i class="fa-solid fa-list"></i>
+      </button>
+      <button @click.prevent.stop="setActiveTab('drive_backlinks')" class="btn btn-white text-primary ml-1" type="button" aria-label="Backlinks" title="Backlinks">
+        <i class="fa-solid fa-link"></i>
+      </button>
+      <button v-if="drive.navFilePath" @click.prevent.stop="goToPath(drive.navFilePath)" class="btn btn-white text-primary mx-1" type="button" aria-label="Navigation" title="Navigation">
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+      </button>
+    </div>
   </div>
 
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
+import {GitMixin} from './GitMixin.mjs';
 
 export default {
   name: 'PreviewHeader',
-  mixins: [UtilsMixin, UiMixin],
+  mixins: [UtilsMixin, UiMixin, GitMixin],
   props: {
     folderPath: {
       type: String
@@ -65,6 +74,27 @@ export default {
       type: String
     },
     selectedFile: Object
+  },
+  data() {
+    return {
+      commitMsg: ''
+    };
+  },
+  methods: {
+    async commitSingle() {
+      if (!this.commitMsg) {
+        alert('No commit message');
+        return;
+      }
+      await this.commit({
+        message: this.commitMsg,
+        filePath: this.selectedFile.path
+      });
+      alert('Commited');
+      this.commitMsg = '';
+    },
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    fetch() {}
   }
 };
 </script>

@@ -1,3 +1,7 @@
+.navbar-brand a {
+  color: #FFF;
+}
+
 a {
   text-decoration: none;
 }
@@ -24,7 +28,7 @@ a {
 }
 
 .wgd-nav-item {
-  width: 80px;
+  width: 70px;
   display: flex;
 }
 

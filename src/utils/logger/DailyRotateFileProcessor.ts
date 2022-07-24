@@ -74,6 +74,7 @@ export class DailyRotateFileProcessor {
       }
 
       const time = new Date(log.timestamp);
+      log.timestamp = +time;
       const options = this.options;
       if ((options.from && time < options.from) ||
         (options.until && time > options.until) ||

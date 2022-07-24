@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamPath} from './Controller';
+import {Controller, RouteGet, RouteParamPath, RouteParamQuery} from './Controller';
 import {Logger, QueryOptions} from 'winston';
 
 export class LogsController extends Controller {
@@ -8,13 +8,13 @@ export class LogsController extends Controller {
   }
 
   @RouteGet('/:driveId')
-  async getConfig(@RouteParamPath('driveId') driveId: string) {
+  async getConfig(@RouteParamPath('driveId') driveId: string, @RouteParamQuery('from') from: number) {
     const options: QueryOptions = {
-      from: new Date(+new Date() - (24 * 60 * 60 * 1000)),
+      from: new Date(+from || +new Date() - (24 * 60 * 60 * 1000)),
       until: new Date(),
-      limit: 100,
-      start: 0,
-      order: 'desc',
+      // limit: 100,
+      // start: 0,
+      order: 'asc',
       fields: undefined//['message']
     };
 
@@ -27,6 +27,7 @@ export class LogsController extends Controller {
         resolve(results);
       }
     }));
+
     return results['dailyRotateFile'];
   }
 

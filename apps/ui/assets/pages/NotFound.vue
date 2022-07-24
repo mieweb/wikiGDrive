@@ -2,7 +2,7 @@
   <BaseLayout>
     <template v-slot:default>
       <div>
-        <div class="container">
+        <div class="x-container">
           404 NOT FOUND
         </div>
       </div>

@@ -1,0 +1,86 @@
+/**
+ * Body CSS
+ */
+html,
+body,
+#app, #main {
+  height: 100vh;
+}
+
+#main {
+  display: flex;
+  flex-direction: column;
+}
+
+#main > .navbar {
+  min-height: var(--navbar-height);
+  padding: 0;
+  padding-left: 15px;
+  padding-right: 15px;
+  overflow: auto;
+}
+
+#main > .mainbar {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - var(--navbar-height));
+}
+
+.mainbar__sidebar {
+  /*min-width: var(--sidebar-width);*/
+  width: var(--sidebar-width);
+  max-width: 50vw;
+  transition: 0.3s width linear;
+
+  height: calc(100vh - var(--navbar-height));
+  overflow-y: auto;
+}
+
+.mainbar__content {
+  flex: 1 1 auto;
+  overflow: auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: calc(100vh - var(--navbar-height));
+  overflow: auto;
+}
+
+.navbar-nav {
+  height: var(--navbar-height);
+  flex: 1;
+  justify-content: end;
+}
+
+/* Responsive */
+
+.sidebar--collapsed .mainbar__sidebar {
+  width: 0;
+}
+
+@media (max-width: 400px) {
+  .navbar-brand {
+    position: absolute;
+    left: 15px;
+    top: 10px;
+  }
+
+  .mainbar__sidebar {
+    background: #FFF;
+    width: 100vw;
+    max-width: 100vw;
+    top: var(--navbar-height);
+    bottom: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .drive-link {
+    display: none;
+  }
+
+  #main > .navbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+}

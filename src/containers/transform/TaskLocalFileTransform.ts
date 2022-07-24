@@ -145,6 +145,7 @@ export class TaskLocalFileTransform extends QueueTask {
 
   async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
     try {
+      const verStr = this.localFile.version ? ' #' + this.localFile.version : ' ';
       if (localFile.type === 'conflict') {
         this.logger.info('Transforming conflict: ' + this.localFile.fileName);
         const md = generateConflictMarkdown(localFile);
@@ -158,26 +159,26 @@ export class TaskLocalFileTransform extends QueueTask {
         // await this.destinationDirectory.writeFile(targetPath, md);
         // await this.generatedScanner.update(targetPath, md);
       } else if (localFile.type === 'md') {
-        this.logger.info('Transforming markdown: ' + this.localFile.fileName);
+        this.logger.info('Transforming markdown: ' + this.localFile.fileName + verStr);
         // const googleFile = await this.googleScanner.getFileById(localFile.id);
         // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
         if (this.googleFile) { // && downloadFile
           await this.generateDocument(localFile, this.googleFile, hierarchy);
         }
       } else if (localFile.type === 'drawing') {
-        this.logger.info('Transforming drawing: ' + this.localFile.fileName);
+        this.logger.info('Transforming drawing: ' + this.localFile.fileName + verStr);
         // const googleFile = await this.googleScanner.getFileById(localFile.id);
         // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
         if (this.googleFile) { // && downloadFile
           await this.generateDrawing(localFile);
         }
       } else if (localFile.type === 'binary') {
-        this.logger.info('Transforming binary: ' + this.localFile.fileName);
+        this.logger.info('Transforming binary: ' + this.localFile.fileName + verStr);
         if (this.googleFile) { // && downloadFile
           await this.generateBinary(localFile);
         }
       }
-      this.logger.info('Transformed: ' + this.localFile.fileName);
+      this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
     } catch (err) {
       this.logger.error('Error transforming ' + localFile.fileName, err);
     }

@@ -1,23 +1,6 @@
+@import "vars.css";
+@import "layout.css";
 @import "mie.css";
-
-:root {
-  --sidebar-width: 600px;
-  --navbar-height: 60px;
-}
-
-/**
- * Body CSS
- */
-html,
-body,
-#app, #main {
-  height: 100%;
-}
-
-#main {
-  display: flex;
-  flex-direction: column;
-}
 
 nav {
   /*height: var(--navbar-height);*/
@@ -29,11 +12,27 @@ nav {
   color: #FFF;
 }
 
-.navbar {
-  min-height: var(--navbar-height);
-  padding: 0;
-  padding-left: 15px;
-  padding-right: 15px;
+.files-list > li {
+  position: relative;
+  cursor: pointer;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.files-list > li:hover, .files-list > li.active {
+  background: #CCC;
+}
+
+.files-list > li > i {
+  position: absolute;
+  top: 4px;
+  left: -20px;
+}
+
+.files-list {
+  list-style: none;
+  padding-left: 24px;
 }
 
 /* Autolinker */
@@ -44,4 +43,14 @@ nav {
 
 pre[class*=language-] {
   margin-top: 0 !important;
+}
+
+.log-viewer {
+  margin-bottom: 0 !important;
+  white-space:pre-wrap
+}
+
+.log-viewer code[class*="language-"],
+.log-viewer pre[class*="language-"] {
+  color: inherit !important;
 }

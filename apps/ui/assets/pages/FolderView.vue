@@ -1,18 +1,18 @@
 <template>
-  <BaseLayout :sidebar="!notRegistered" :share-email="shareEmail">
-    <template v-slot:navbar>
-      <NavBar>
+  <BaseLayout :share-email="shareEmail" :sidebar="sidebar">
+    <template v-slot:navbar="{ collapsed, collapse }">
+      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </NavBar>
     </template>
 
-    <template v-slot:sidebar>
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" />
+    <template v-slot:sidebar="{ collapse }">
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
 
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
@@ -74,6 +74,12 @@ export default {
     };
   },
   computed: {
+    sidebar() {
+      if (this.notRegistered) {
+        return false;
+      }
+      return this.activeTab !== 'drive_logs';
+    },
     jobs() {
       return this.$root.jobs || [];
     },

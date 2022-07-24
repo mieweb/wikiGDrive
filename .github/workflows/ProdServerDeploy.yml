@@ -18,13 +18,14 @@ jobs:
         node-version: 16
         cache: npm
 
-    - name: Build
-      run: docker build -t wikigdrive-prod --build-arg "GIT_SHA=${GITHUB_SHA}" .
+    - uses: whoan/docker-build-with-cache-action@v5
+      with:
+        image_name: "wikigdrive-prod"
+        image_tag: "${{ github.sha }},latest"
+        push_image_and_stages: false
+        build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
-    - name: Build
-      run: docker build -t "transform-watch:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/transform-watch
-
-    - name: Build
+    - name: Build hugo rederer
       run: docker build -t "hugo-render:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
 
     - name: Stop
@@ -40,6 +41,11 @@ jobs:
         docker run -d --name wikigdrive-prod \
           -v wikiGDriveProd:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveProd/_data \
+          -e VOLUME_PREVIEW=/var/www/preview-prod \
+          -e RENDER_IMAGE=hugo-render:prod \
+          -e DOMAIN=https://wikigdrive.com \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
           wikigdrive-prod wikigdrive-ts \
@@ -51,16 +57,3 @@ jobs:
     - name: Stop and remove
       run: docker stop transform-preview-prod ; docker rm transform-preview-prod
       continue-on-error: true
-
-    - name: Start
-      run: |
-        docker run -d --name transform-preview-prod \
-          --restart unless-stopped \
-          -v /var/run/docker.sock:/var/run/docker.sock \
-          -v wikiGDriveProd:/data \
-          -v /var/www/preview-prod:/preview \
-          -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveProd/_data \
-          -e VOLUME_PREVIEW=/var/www/preview-prod \
-          -e RENDER_IMAGE=hugo-render:prod \
-          -e DOMAIN=https://wikigdrive.com \
-          transform-watch:prod

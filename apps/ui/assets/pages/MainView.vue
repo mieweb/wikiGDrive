@@ -1,7 +1,7 @@
 <template>
   <BaseLayout>
     <template v-slot:default>
-      <div class="container">
+      <div class="x-container">
         <form @submit.prevent.stop="submit">
           <legend>Share</legend>
           <div class="input-group">

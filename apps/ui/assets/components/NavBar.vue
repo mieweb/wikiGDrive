@@ -1,7 +1,18 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <router-link v-if="!isSinglePreview && rootFolder.name" class="navbar-brand" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
-    <span class="navbar-brand" v-else-if="!isSinglePreview">WikiGDrive</span>
+    <span class="navbar-brand">
+
+      <span v-if="sidebar">
+        <a @click.prevent="$emit('collapse')" href="#">
+          <i class="fa-solid fa-bars"></i>
+        </a>
+      </span>
+
+      <span v-if="!isGDocsPreview" class="drive-link">
+        <router-link v-if="driveId" class="text-white" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name || 'WikiGDrive' }}</router-link>
+      </span>
+    </span>
+
 <!--    <button class="navbar-toggler" type="button" data-toggle="collapse" @click="show = !show">
       <span class="navbar-toggler-icon"></span>
     </button>-->
@@ -15,6 +26,10 @@ import {UtilsMixin} from './UtilsMixin.mjs';
 
 export default {
   mixins: [ UtilsMixin ],
+  props: {
+    sidebar: Boolean,
+    collapsed: Boolean
+  },
   data() {
     return {
       show: false

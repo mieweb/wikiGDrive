@@ -1,10 +1,25 @@
 <template>
-  <div class="container">
+  <div class="x-container">
+    <div class="row py-1">
+      <div class="col-12 text-end">
+        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Logs" title="Logs">
+          <i class="fa-solid fa-bug me-1"></i>
+        </router-link>
+        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Settings" title="Settings">
+          <i class="fa-solid fa-gear me-1"></i>
+        </router-link>
+      </div>
+    </div>
+
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
       <ul class="list-group">
         <li class="list-group-item" v-for="(file, idx) of changes" :key="idx">
-          <a>{{ file.name }} #{{ file.version }}</a>
+          <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
+
+          <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
+            <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+          </button>
         </li>
       </ul>
     </div>
@@ -39,7 +54,33 @@ export default {
   name: 'ChangeViewer',
   mixins: [UtilsMixin, UiMixin],
   props: {
-    selectedFile: Object
+    selectedFile: Object,
+    activeTab: {
+      type: String
+    }
+  },
+  methods: {
+    async gotoFile(fileId) {
+      if (fileId) {
+        const response = await fetch(`/api/gdrive/${this.driveId}/${fileId}`);
+
+        const path = response.headers.get('wgd-path') || '';
+        const fileName = response.headers.get('wgd-file-name') || '';
+        const selectedFile = {
+          fileName,
+          folderId: response.headers.get('wgd-google-parent-id'),
+          version: response.headers.get('wgd-google-version'),
+          modifiedTime: response.headers.get('wgd-google-modified-time'),
+          fileId: response.headers.get('wgd-google-id'),
+          mimeType: response.headers.get('wgd-mime-type'),
+          path: path
+        };
+
+        if (selectedFile.path) {
+          this.$router.push(`/drive/${this.driveId}${selectedFile.path}`);
+        }
+      }
+    }
   }
 };
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="x-container">
     <table class="table table-hover table-clickable table-bordered" v-if="backlinks && backlinks.length > 0">
       <thead>
       <tr>

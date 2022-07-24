@@ -83,7 +83,7 @@ export class ContainerEngine {
       await container.init(this);
       this.containers[container.params.name] = container;
     } catch (err) {
-      this.logger.error(`Error starting container ${container.params.name}`, err);
+      this.logger.error(`Error starting container ${container.params.name} ${err.message}`, err);
     }
 
     return container;
