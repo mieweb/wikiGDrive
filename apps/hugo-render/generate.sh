@@ -11,4 +11,6 @@ then
     mv themes/$THEME_ID/$THEME_SUBPATH/* themes/$THEME_ID
 fi
 
+cat /site/tmp_dir/config.toml
+
 hugo --config=/site/tmp_dir/config.toml --verbose

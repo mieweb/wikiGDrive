@@ -4,9 +4,7 @@ import winston from 'winston';
 import Docker from 'dockerode';
 import {fileURLToPath} from 'url';
 import {BufferWritable} from '../../utils/BufferWritable';
-import fs from "fs";
-import path from "path";
-import os from "os";
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -47,7 +45,7 @@ export class PreviewRendererContainer extends Container {
 
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
+    const tempDir = `${process.env.VOLUME_DATA}/${driveId}_transform/tmp_dir`;
 
     const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
     fs.writeFileSync(`${tempDir}/config.toml`, configTomlPrefix + configToml);
