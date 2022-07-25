@@ -11,7 +11,4 @@ then
     mv themes/$THEME_ID/$THEME_SUBPATH/* themes/$THEME_ID
 fi
 
-echo /site/themes/$THEME_ID/layouts/shortcodes
-ls /site/themes/$THEME_ID/layouts/shortcodes
-
-hugo --verbose
+hugo --config=/site/tmp_dir/config.toml --verbose

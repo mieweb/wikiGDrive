@@ -59,7 +59,7 @@ export class PreviewRendererContainer extends Container {
           Binds: [
             `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
             `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-            `${tempDir}/config.toml:/site/config.toml`
+            `${tempDir}:/site/tmp_dir`
           ]
         },
         Env: [
