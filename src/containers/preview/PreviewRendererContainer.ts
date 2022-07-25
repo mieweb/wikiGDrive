@@ -58,7 +58,7 @@ export class PreviewRendererContainer extends Container {
           Binds: [
             `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
             `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-            `${this.filesService.getRealPath()}/tmp_dir:/site/tmp_dir`
+            `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
           ]
         },
         Env: [
