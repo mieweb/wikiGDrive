@@ -80,7 +80,7 @@ export class PreviewRendererContainer extends Container {
       this.logger.error(err.message);
     }
 
-    fs.unlinkSync(`${tempDir}/config.toml`);
+    // fs.unlinkSync(`${tempDir}/config.toml`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
