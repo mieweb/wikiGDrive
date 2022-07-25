@@ -8,6 +8,7 @@ interface ConfigBody {
   remote_url: string;
   hugo_theme: HugoTheme;
   hugo_themes: HugoTheme[];
+  config_toml?: string;
 }
 
 export interface HugoTheme {
@@ -56,6 +57,9 @@ export class ConfigController extends Controller {
     }
     if (body.hugo_theme) {
       userConfigService.config.hugo_theme = body.hugo_theme;
+    }
+    if (body.config_toml) {
+      userConfigService.config.config_toml = body.config_toml;
     }
 
     await userConfigService.save();

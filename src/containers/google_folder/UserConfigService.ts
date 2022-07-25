@@ -29,6 +29,7 @@ async function execAsync(cmd, params: string[] = []) {
 export class UserConfig {
   remote_branch: string;
   hugo_theme?: HugoTheme;
+  config_toml?: string;
 }
 
 export class UserConfigService {

@@ -4,6 +4,9 @@ import winston from 'winston';
 import Docker from 'dockerode';
 import {fileURLToPath} from 'url';
 import {BufferWritable} from '../../utils/BufferWritable';
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -33,6 +36,10 @@ export class PreviewRendererContainer extends Container {
 
     const themeId = config?.hugo_theme?.id;
     const themeUrl = config?.hugo_theme?.url;
+    const themeSubPath = config?.hugo_theme?.path || '';
+    const configToml = config?.config_toml || '#relativeURLs = true\n' +
+      'languageCode = "en-us"\n' +
+      'title = "My New Hugo Site"\n';
 
     if (!themeUrl || !themeId) {
       return;
@@ -40,18 +47,25 @@ export class PreviewRendererContainer extends Container {
 
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
+
+    const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
+    fs.writeFileSync(`${tempDir}/config.toml`, configTomlPrefix + configToml);
+
     try {
       const writable = new BufferWritable();
       const result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
         HostConfig: {
           Binds: [
             `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
-            `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`
+            `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
+            `${tempDir}/config.toml:/site/config.toml`
           ]
         },
         Env: [
           `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
           `THEME_ID=${themeId}`,
+          `THEME_SUBPATH=${themeSubPath}`,
           `THEME_URL=${themeUrl}`
         ]
       });
@@ -66,21 +80,7 @@ export class PreviewRendererContainer extends Container {
       this.logger.error(err.message);
     }
 
-
-    /*
--e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveDevelop/_data \
--e VOLUME_PREVIEW=/var/www/preview-develop \
--e RENDER_IMAGE=hugo-render:develop \
--e DOMAIN=https://dev.wikigdrive.com \
-
-          docker run \
-            --env BASE_URL=$DOMAIN/preview/$1/$THEME_ID/ \
-            --env THEME_ID=$THEME_ID \
-            --env THEME_URL=$THEME_URL \
-            --mount type=bind,source="$VOLUME_DATA/$1_transform",target=/site/content \
-            --mount type=bind,source="$VOLUME_PREVIEW/$1/$THEME_ID",target=/site/public \
-            $RENDER_IMAGE
-    */
+    fs.unlinkSync(`${tempDir}/config.toml`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function

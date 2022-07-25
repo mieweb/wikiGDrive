@@ -1,6 +1,6 @@
 <template>
   <div class="x-container">
-    <pre class="bg-dark text-white log-viewer" ref="scroller"
+    <pre class="bg-dark text-white log-viewer"
     ><div v-for="(item, idx) of logs" :key="idx" :class="{'text-danger': 'error' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
@@ -33,11 +33,12 @@ export default {
         this.logs = this.logs.filter(row => row.timestamp < firstLog.timestamp);
       }
 
-      const oldScrollTop = this.$refs.scroller.scrollHeight - this.$refs.scroller.offsetHeight - 20;
+      const scroller = document.querySelector('.mainbar__content');
+      const oldScrollTop = scroller.scrollHeight - scroller.offsetHeight - 10;
       this.logs.push(...logs);
-      if (this.$refs.scroller.scrollTop > oldScrollTop) {
+      if (scroller.scrollTop > oldScrollTop) {
         this.$nextTick(() => {
-          this.$refs.scroller.scrollTop = this.$refs.scroller.scrollHeight - this.$refs.scroller.offsetHeight;
+          scroller.scrollTop = scroller.scrollHeight - scroller.offsetHeight;
         });
       }
     },

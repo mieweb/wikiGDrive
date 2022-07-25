@@ -10,7 +10,8 @@ ENV THEME_URL=https://github.com/budparr/gohugo-theme-ananke.git
 VOLUME ["/site/content"]
 VOLUME ["/site/public"]
 
-RUN apk add --no-cache hugo git
+RUN apk add --no-cache hugo git nodejs npm
+RUN npm i -g postcss postcss-cli
 
 RUN git init /site
 
