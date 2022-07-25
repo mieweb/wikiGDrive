@@ -45,13 +45,11 @@ export class PreviewRendererContainer extends Container {
 
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
-    const tempDir = `${process.env.VOLUME_DATA}/${driveId}_transform/tmp_dir`;
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
-    }
+
+    await this.filesService.mkdir('tmp_dir');
 
     const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
-    fs.writeFileSync(`${tempDir}/config.toml`, configTomlPrefix + configToml);
+    await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
 
     try {
       const writable = new BufferWritable();
@@ -60,7 +58,7 @@ export class PreviewRendererContainer extends Container {
           Binds: [
             `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
             `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-            `${tempDir}:/site/tmp_dir`
+            `${this.filesService.getRealPath()}/tmp_dir:/site/tmp_dir`
           ]
         },
         Env: [
