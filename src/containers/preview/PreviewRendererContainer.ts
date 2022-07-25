@@ -46,6 +46,9 @@ export class PreviewRendererContainer extends Container {
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
     const tempDir = `${process.env.VOLUME_DATA}/${driveId}_transform/tmp_dir`;
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir);
+    }
 
     const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
     fs.writeFileSync(`${tempDir}/config.toml`, configTomlPrefix + configToml);
