@@ -5,6 +5,10 @@ import {TransformContainer} from '../transform/TransformContainer';
 
 import { fileURLToPath } from 'url';
 import {PreviewRendererContainer} from '../preview/PreviewRendererContainer';
+import {WatchChangesContainer} from '../changes/WatchChangesContainer';
+import {TreeItem} from '../../model/TreeItem';
+import {GoogleFile} from '../../model/GoogleFile';
+import {BaseTreeItem, findInTree} from '../server/routes/FolderController';
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all';
@@ -17,6 +21,7 @@ export interface Job {
   payload?: string;
   ts?: number;
   finished?: number;
+  startAfter?: number;
 }
 
 export interface DriveJobs {
@@ -148,7 +153,7 @@ export class JobManagerContainer extends Container {
           continue;
         }
 
-        const currentJob = driveJobs.jobs.find(job => job.state === 'waiting');
+        const currentJob = driveJobs.jobs.find(job => job.state === 'waiting' && (!job.startAfter || job.startAfter > now));
         if (!currentJob) {
           continue;
         }
@@ -186,6 +191,9 @@ export class JobManagerContainer extends Container {
   }
 
   private async sync(folderId: FileId, filesIds: FileId[] = []) {
+    const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
+    const changesToFetch: GoogleFile[] = await watchChangesContainer.getChanges(folderId);
+
     const downloadContainer = new GoogleFolderContainer({
       cmd: 'pull',
       name: folderId,
@@ -203,13 +211,21 @@ export class JobManagerContainer extends Container {
     const transformContainer = new TransformContainer({
       name: folderId
     }, { filesIds });
+    const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
     await transformContainer.mount2(
       await this.filesService.getSubFileService(folderId, '/'),
-      await this.filesService.getSubFileService(folderId + '_transform', '/')
+      generatedFileService
     );
     await this.engine.registerContainer(transformContainer);
     try {
       await transformContainer.run(folderId);
+      const tree: Array<TreeItem> = await generatedFileService.readJson('.tree.json');
+
+      if (filesIds.length > 0) {
+        await this.scheduleRetry(folderId, changesToFetch.filter(file => filesIds.includes(file.id)), tree);
+      } else {
+        await this.scheduleRetry(folderId, changesToFetch, tree);
+      }
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
     }
@@ -223,6 +239,32 @@ export class JobManagerContainer extends Container {
       await previewRendererContainer.run(folderId);
     } finally {
       await this.engine.unregisterContainer(previewRendererContainer.params.name);
+    }
+  }
+
+  private async scheduleRetry(driveId: FileId, changesToFetch, tree: TreeItem[]) {
+    if (changesToFetch.length === 0) {
+      return;
+    }
+
+    const filesToRetry = [];
+    for (const change of changesToFetch) {
+      const treeItem = findInTree(treeItem => treeItem['id'] === change.id, <Array<BaseTreeItem>>tree);
+      if (+treeItem.version && +treeItem.version < +change.version) {
+        filesToRetry.push(change);
+      }
+    }
+
+    const now = +new Date();
+    if (filesToRetry.length > 0) {
+      for (const change of filesToRetry) {
+        await this.schedule(driveId, {
+          type: 'sync',
+          startAfter: now + 10 * 1000,
+          payload: change.id,
+          title: 'Retry syncing file: ' + change.title
+        });
+      }
     }
   }
 
