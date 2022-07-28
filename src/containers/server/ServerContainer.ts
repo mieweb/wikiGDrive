@@ -119,11 +119,15 @@ export class ServerContainer extends Container {
     });
     app.use(viteInstance.middlewares);
 
-    app.use((req, res) => {
-      const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
-        .toString()
-        .replace(/GIT_SHA/g, process.env.GIT_SHA);
-      res.status(404).header('Content-type', 'text/html').end(indexHtml);
+    app.use((req: express.Request, res: express.Response) => {
+      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs')) {
+        const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
+          .toString()
+          .replace(/GIT_SHA/g, process.env.GIT_SHA);
+        res.status(200).header('Content-type', 'text/html').end(indexHtml);
+      } else {
+        res.status(404).json({});
+      }
     });
   }
 
@@ -159,6 +163,9 @@ export class ServerContainer extends Container {
 
     app.use((err, req, res, next) => {
       switch(err.status) {
+        case 404:
+          next(err);
+          return;
         case 401:
           res.status(err.status).send({ message: err.message, authPath: err.authPath });
           return;
