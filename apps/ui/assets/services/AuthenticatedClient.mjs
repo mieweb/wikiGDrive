@@ -5,7 +5,7 @@ export class AuthenticatedClient {
       params.headers = {};
     }
 
-    params.headers.redirectTo = window.location.pathname;
+    params.headers['redirect-to'] = window.location.pathname;
     const response = await fetch(url, params);
 
     switch (response.status) {

@@ -22,8 +22,8 @@ function redirError(req, msg) {
   const err = new AuthError(msg, 401);
   const [empty, driveId] = req.path.split('/');
 
-  if (req.headers.redirectTo) {
-    err.redirectTo = req.headers.redirectTo;
+  if (req.headers['redirect-to']) {
+    err.redirectTo = req.headers['redirect-to'];
   } else {
     err.redirectTo = '/drive/' + driveId;
   }
@@ -34,9 +34,14 @@ function redirError(req, msg) {
   return err;
 }
 
-export function authenticate() {
+export function authenticate(idx = 0) {
   return (req, res, next) => {
-    const [empty, driveId] = req.path.split('/');
+    const parts = req.path.split('/');
+
+    if (parts[0].length === 0) {
+      parts.shift();
+    }
+    const driveId = parts[idx] || '';
 
     if (!req.cookies.accessToken) {
       return next(redirError(req, 'No accessToken cookie'));
@@ -63,6 +68,5 @@ export function authenticate() {
       // driveId: decoded.driveId
     };
     next();
-
   };
 }

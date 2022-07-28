@@ -282,7 +282,7 @@ export class ServerContainer extends Container {
     const logsController = new LogsController('/api/logs', this.logger);
     app.use('/api/logs', authenticate(), await logsController.getRouter());
 
-    app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(), async (req, res, next) => {
+    app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -311,7 +311,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/drive/:driveId/transformed/(:fileId)', authenticate(), async (req, res, next) => {
+    app.get('/api/drive/:driveId/transformed/(:fileId)', authenticate(2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -366,7 +366,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/sync/:driveId', authenticate(), async (req, res, next) => {
+    app.post('/api/sync/:driveId', authenticate(2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
 
@@ -382,7 +382,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/sync/:driveId/:fileId', authenticate(), async (req, res, next) => {
+    app.post('/api/sync/:driveId/:fileId', authenticate(2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -411,7 +411,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/inspect/:driveId', authenticate(), async (req, res, next) => {
+    app.get('/api/inspect/:driveId', authenticate(2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
