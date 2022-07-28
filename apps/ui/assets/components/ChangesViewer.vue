@@ -3,7 +3,7 @@
     <div class="row py-1">
       <div class="col-12 text-end">
         <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Logs" title="Logs">
-          <i class="fa-solid fa-bug me-1"></i>
+          <i class="fa-solid fa-computer me-1"></i>
         </router-link>
         <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Settings" title="Settings">
           <i class="fa-solid fa-gear me-1"></i>
