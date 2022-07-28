@@ -26,7 +26,7 @@ export default {
   },
   methods: {
     async fetch(from) {
-      const response = await fetch(`/api/logs/${this.driveId}?from=` + from);
+      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?from=` + from);
       const logs = await response.json();
       const firstLog = logs.length > 0 ? logs[0] : null;
       if (firstLog) {

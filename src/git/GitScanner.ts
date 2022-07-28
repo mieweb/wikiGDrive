@@ -39,7 +39,7 @@ export class GitScanner {
     return retVal;
   }
 
-  async commit(message: string, fileNames: string[], author_str: string): Promise<string> {
+  async commit(message: string, fileNames: string[], committer): Promise<string> {
     const repo = await Repository.open(this.rootPath);
     const index = await repo.refreshIndex();
 
@@ -57,20 +57,14 @@ export class GitScanner {
     const oid = await index.writeTree();
     const parent = await repo.getHeadCommit();
 
-    const parts = author_str.split(/[<>]+/);
-
-    const author_name = parts[0].trim();
-    const author_email = (parts[1] || '').trim() || this.email;
-
-    const author = Signature.now(author_name, author_email);
-    const committer = Signature.now('WikiGDrive', this.email);
-
     const parents = [];
     if (parent) {
       parents.push(parent);
     }
 
-    const commitId = await repo.createCommit('HEAD', author, committer, message, oid, parents);
+    const author = Signature.now(committer.name, committer.email);
+
+    const commitId = await repo.createCommit('HEAD', author, author, message, oid, parents);
     return commitId.tostrS();
   }
 

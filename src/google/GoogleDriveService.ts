@@ -369,7 +369,7 @@ export class GoogleDriveService {
       return res.data;
     } catch (err) {
       console.error(err);
-      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response?.statusText, {
         origError: err,
         isQuotaError: err.isQuotaError,
       });

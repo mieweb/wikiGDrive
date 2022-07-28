@@ -111,7 +111,7 @@ export const UtilsMixin = {
     },
     async syncSingle(selectedFile) {
       try {
-        await fetch(`/api/sync/${this.driveId}/${selectedFile.id}`, {
+        await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
           method: 'post'
         });
         // eslint-disable-next-line no-empty
@@ -119,7 +119,7 @@ export const UtilsMixin = {
       }
     },
     async syncAll() {
-      await fetch(`/api/sync/${this.driveId}`, {
+      await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
         method: 'post'
       });
     },

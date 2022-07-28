@@ -1,7 +1,11 @@
 export class FileClientService {
 
+  constructor(authenticatedClient) {
+    this.authenticatedClient = authenticatedClient;
+  }
+
   async getFile(path) {
-    const response = await fetch(`/api/file${path}`);
+    const response = await this.authenticatedClient.fetchApi(`/api/file${path}`);
 
     const retVal = {
       path,
@@ -23,7 +27,7 @@ export class FileClientService {
   }
 
   async getBacklinks(driveId, fileId) {
-    const response = await fetch(`/api/backlinks/${driveId}/${fileId}`);
+    const response = await this.authenticatedClient.fetchApi(`/api/backlinks/${driveId}/${fileId}`);
     return await response.json();
   }
 

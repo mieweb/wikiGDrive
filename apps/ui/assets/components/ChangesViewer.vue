@@ -62,7 +62,7 @@ export default {
   methods: {
     async gotoFile(fileId) {
       if (fileId) {
-        const response = await fetch(`/api/gdrive/${this.driveId}/${fileId}`);
+        const response = await this.authenticatedClient.fetchApi(`/api/gdrive/${this.driveId}/${fileId}`);
 
         const path = response.headers.get('wgd-path') || '';
         const fileName = response.headers.get('wgd-file-name') || '';

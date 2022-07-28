@@ -8,6 +8,7 @@ import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {GoogleAuth} from '../model/GoogleAuth';
 import {GetTokenResponse, OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {ServiceAccountJson} from '../model/AccountJson';
+import fetch from 'node-fetch';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -51,8 +52,10 @@ export class GoogleAuthService {
 
   async getWebAuthUrl(oAuth2Client: OAuth2Client, redirect_uri: string, state: string): Promise<string> {
     const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'online',
-      scope: SCOPES,
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/drive.readonly'
+      ],
       redirect_uri,
       state
     });
@@ -61,18 +64,27 @@ export class GoogleAuthService {
   }
 
   async getWebToken(oAuth2Client: OAuth2Client, redirect_uri: string, code: string): Promise<GoogleAuth> {
-    const response = await oAuth2Client.getToken({
-      code,
-      redirect_uri
+    const body = new URLSearchParams({
+      client_id: oAuth2Client._clientId,
+      client_secret: oAuth2Client._clientSecret,
+      redirect_uri: redirect_uri,
+      grant_type: 'authorization_code',
+      code: code
+    }).toString();
+
+    const response = await fetch('https://accounts.google.com/o/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body
     });
+    const json = await response.json();
 
     return {
-      access_token: response.tokens.access_token,
-      refresh_token: response.tokens.refresh_token,
-      scope: response.tokens.scope,
-      token_type: response.tokens.token_type,
-      expiry_date: response.tokens.expiry_date,
-      id_token: response.tokens.id_token
+      access_token: json.access_token,
+      scope: json.scope
     };
   }
 
@@ -116,6 +128,16 @@ export class GoogleAuthService {
       token_type: credentials.tokens.token_type,
       expiry_date: credentials.tokens.expiry_date,
       id_token: credentials.tokens.id_token
+    };
+  }
+
+  async getUser(auth: { access_token: string }) {
+    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?access_token=' + auth.access_token);
+    const json = await response.json();
+    return {
+      id: json.id,
+      email: json.email,
+      name: json.name
     };
   }
 }

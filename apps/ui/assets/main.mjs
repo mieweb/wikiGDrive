@@ -8,6 +8,7 @@ import * as Vue from 'vue';
 import * as VueRouter from 'vue-router';
 
 import App from './App.vue';
+import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
 
 const app = Vue.createApp({
   data: {
@@ -34,10 +35,12 @@ const app = Vue.createApp({
 
 app.mixin({
   data() {
+    const authenticatedClient = new AuthenticatedClient();
     return {
-      DriveClientService: new DriveClientService(),
-      FileClientService: new FileClientService(),
-      GitClientService: new GitClientService()
+      authenticatedClient,
+      DriveClientService: new DriveClientService(authenticatedClient),
+      FileClientService: new FileClientService(authenticatedClient),
+      GitClientService: new GitClientService(authenticatedClient)
     }
   }
 });

@@ -1,7 +1,11 @@
 export class DriveClientService {
 
+  constructor(authenticatedClient) {
+    this.authenticatedClient = authenticatedClient;
+  }
+
   async getDrives() {
-    const response = await fetch(`/api/drive`);
+    const response = await this.authenticatedClient.fetchApi(`/api/drive`);
     return response.json();
   }
 
@@ -15,7 +19,7 @@ export class DriveClientService {
     if (!driveId) {
       return {};
     }
-    const response = await fetch(`/api/drive/${driveId}`);
+    const response = await this.authenticatedClient.fetchApi(`/api/drive/${driveId}`);
     return response.json();
   }
 

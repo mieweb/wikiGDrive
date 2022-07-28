@@ -76,7 +76,7 @@ export default {
       this.user_config = { ...this.$root.drive?.git || {}, hugo_theme: this.$root.drive.hugo_theme };
     },
     async save() {
-      await fetch(`/api/config/${this.driveId}`, {
+      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'
