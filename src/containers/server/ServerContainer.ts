@@ -14,7 +14,6 @@ import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
-import {expressjwt} from 'express-jwt';
 import {fileURLToPath} from 'url';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
 import GitController from './routes/GitController';
@@ -120,7 +119,7 @@ export class ServerContainer extends Container {
     app.use(viteInstance.middlewares);
 
     app.use((req: express.Request, res: express.Response) => {
-      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs')) {
+      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path === '/') {
         const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
           .toString()
           .replace(/GIT_SHA/g, process.env.GIT_SHA);
@@ -162,17 +161,18 @@ export class ServerContainer extends Container {
     });
 
     app.use((err, req, res, next) => {
-      switch(err.status) {
+      const code = err.status || err.code;
+      switch(code) {
         case 404:
-          next(err);
+          res.status(code).send({ code, message: err.message });
           return;
         case 401:
-          res.status(err.status).send({ message: err.message, authPath: err.authPath });
+          res.status(code).send({ message: err.message, authPath: err.authPath });
           return;
         default:
           console.error(err);
       }
-      res.status(err.status).send(err.message);
+      res.status(code).send(err.message);
     });
 
     server.listen(port, () => {
