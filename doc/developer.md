@@ -21,6 +21,13 @@ wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdri
 * wikigdrive.com (hosted by??)
 * DNS SERVER?
 
+## Authentication
+
+Link to production's OAUTH configuration:
+https://console.cloud.google.com/apis/credentials/oauthclient/762352378313-3u5pagjnk24g9640a5j1bmlsvobtlq2k.apps.googleusercontent.com?project=wikigdrive
+
+Stored in /home/githubactions/wikigdrive/env.prod
+
 
 ## Add On Service
 
