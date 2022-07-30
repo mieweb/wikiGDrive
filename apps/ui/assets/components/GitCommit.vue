@@ -85,7 +85,7 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch(`/api/git/${this.driveId}/commit`);
+      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
       this.filePath = [];

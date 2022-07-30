@@ -17,6 +17,12 @@ function getMethods(obj) {
   return res;
 }
 
+export interface ControllerRouteParamUser {
+  type: 'user';
+  parameterIndex: number;
+  docs?: RouteDoc;
+}
+
 export interface ControllerRouteParamBody {
   type: 'body';
   parameterIndex: number;
@@ -58,7 +64,7 @@ export interface ControllerRouteParamPath {
 
 type ControllerRouteParam = ControllerRouteParamGetAll | ControllerRouteParamQuery
   | ControllerRouteParamBody | ControllerRouteParamPath | ControllerRouteParamStream
-  | ControllerRouteParamRelated;
+  | ControllerRouteParamRelated | ControllerRouteParamUser;
 
 export interface RouteDoc {
   description?: string;
@@ -210,6 +216,11 @@ export class Controller implements ControllerCallContext {
             }
 
             switch (param.type) {
+              case 'user':
+                {
+                  args[param.parameterIndex] = req.user;
+                }
+                break;
               case 'body':
                 {
                   let body = req.body;
@@ -392,6 +403,18 @@ export function RouteResponseStatus(status: number = HttpStatus.OK) {
   return function (controller: Controller, methodProp: string) {
     const route = controller.getRoute(controller, methodProp);
     route.responseStatus = status;
+  };
+}
+
+export function RouteParamUser(docs: RouteDoc = {}) {
+  return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
+    const route = targetClass.getRoute(targetClass, methodProp);
+    const param: ControllerRouteParamUser = {
+      type: 'user',
+      parameterIndex,
+      docs
+    };
+    route.params.push(param);
   };
 }
 

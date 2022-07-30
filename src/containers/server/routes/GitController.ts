@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamBody, RouteParamPath, RoutePost, RouteUse} from './Controller';
+import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, RoutePost, RouteUse} from './Controller';
 import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
@@ -35,7 +35,7 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/commit')
-  async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost) {
+  async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
     const message = body.message;
     const filePaths: string[] = Array.isArray(body.filePath) ? body.filePath : [body.filePath];
 
@@ -60,7 +60,7 @@ export default class GitController extends Controller {
       transformPaths.push(filePath);
     }
 
-    await gitScanner.commit(message, transformPaths, 'WikiGDrive');
+    await gitScanner.commit(message, transformPaths, user);
 
     return {};
   }

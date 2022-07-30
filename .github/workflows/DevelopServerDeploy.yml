@@ -24,7 +24,7 @@ jobs:
         push_image_and_stages: false
         build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
-    - name: Build hugo rederer
+    - name: Build hugo renderer
       run: docker build -t "hugo-render:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
 
     - name: Stop and remove
@@ -37,18 +37,11 @@ jobs:
           --restart unless-stopped \
           -v wikiGDriveDevelop:/data \
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
+          -v /home/githubactions/wikigdrive/env.develop:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
-          -e VOLUME_DATA=/var/lib/docker/volumes/wikiGDriveDevelop/_data \
-          -e VOLUME_PREVIEW=/var/www/preview-develop \
-          -e RENDER_IMAGE=hugo-render:develop \
-          -e DOMAIN=https://dev.wikigdrive.com \
           --publish 127.0.0.1:4000:3000 \
           "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
           server 3000
-
-    - name: Stop and remove
-      run: docker stop transform-preview-develop ; docker rm transform-preview-develop
-      continue-on-error: true

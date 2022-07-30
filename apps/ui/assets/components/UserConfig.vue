@@ -3,13 +3,19 @@
     <div class="card">
       <div class="card-body">
         <form>
-          <div class="input-group">
+          <div class="form-group">
+            <label>
+              Remote URL
+            </label>
             <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="user_config.remote_url" />
           </div>
-          <div class="input-group">
+          <div class="form-group">
+            <label>
+              Remote Branch
+            </label>
             <input class="form-control" size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
           </div>
-          <div class="input-group">
+          <div class="form-group">
             <label>Theme</label>
             <select class="form-control" @change="changeTheme($event.target.value)">
               <option></option>
@@ -19,6 +25,10 @@
                   :key="theme.id"
                   v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Config.toml</label>
+            <textarea class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
           </div>
 
           <div>
@@ -45,6 +55,7 @@ export default {
       user_config: {
         remote_url: '',
         remote_branch: '',
+        config_toml: '',
         hugo_theme: ''
       }
     };
@@ -65,7 +76,7 @@ export default {
       this.user_config = { ...this.$root.drive?.git || {}, hugo_theme: this.$root.drive.hugo_theme };
     },
     async save() {
-      await fetch(`/api/config/${this.driveId}`, {
+      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'

@@ -78,6 +78,11 @@ export class GoogleApiContainer extends Container {
     return await googleDriveService.listDrives(this.auth);
   }
 
+  async getDrive(driveId: FileId): Promise<Drive> {
+    const googleDriveService = new GoogleDriveService(this.logger);
+    return await googleDriveService.getDrive(this.auth, driveId);
+  }
+
   async getFolder(fileId: FileId): Promise<GoogleFile> {
     const googleDriveService = new GoogleDriveService(this.logger);
     return await googleDriveService.getFile(this.auth, fileId);

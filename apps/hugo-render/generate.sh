@@ -2,11 +2,15 @@
 
 cd /site
 
-git submodule add $THEME_URL themes/$THEME_ID
+echo "Using theme $THEME_URL $THEME_SUBPATH"
 
-cp config.toml.example config.toml
+git clone $THEME_URL themes/$THEME_ID
 
-echo "theme=\"$THEME_ID\"" >> config.toml
-echo "baseURL=\"$BASE_URL\"" >> config.toml
+if [[ ! -z "$THEME_SUBPATH" ]]
+then
+    mv themes/$THEME_ID/$THEME_SUBPATH/* themes/$THEME_ID
+fi
 
-hugo
+cat /site/tmp_dir/config.toml
+
+hugo --config=/site/tmp_dir/config.toml --verbose

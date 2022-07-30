@@ -33,7 +33,7 @@
       </li>
       <li class="list-group-item" v-if="!isGDocsPreview">
         <router-link :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }">
-          <i class="fa-solid fa-bug me-1"></i>
+          <i class="fa-solid fa-computer me-1"></i>
           Logs
         </router-link>
       </li>

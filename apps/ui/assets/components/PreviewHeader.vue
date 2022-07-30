@@ -54,6 +54,11 @@
       <button v-if="drive.navFilePath" @click.prevent.stop="goToPath(drive.navFilePath)" class="btn btn-white text-primary mx-1" type="button" aria-label="Navigation" title="Navigation">
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </button>
+
+      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="reportBug(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Report issue" title="Report issue" >
+        <i class="fa-solid fa-bug"></i>
+      </button>
+
     </div>
   </div>
 
@@ -94,7 +99,18 @@ export default {
       this.commitMsg = '';
     },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    fetch() {}
+    fetch() {},
+    reportBug(selectedFile) {
+      const url = 'https://github.com/mieweb/wikiGDrive/issues/new?' + new URLSearchParams({
+        labels: 'markdown',
+        title: 'Incorrect result',
+        template: 'markdown_report.md',
+        body: `FileId: ${selectedFile.id}\nURL: ${window.location.toString()}\nGoogle Docs: https://drive.google.com/open?id=${selectedFile.id}`
+
+      }).toString();
+
+      window.open(url, '_blank');
+    }
   }
 };
 </script>

@@ -27,10 +27,10 @@ body,
 }
 
 .mainbar__sidebar {
-  /*min-width: var(--sidebar-width);*/
+  min-width: var(--sidebar-width);
   width: var(--sidebar-width);
   max-width: 50vw;
-  transition: 0.3s width linear;
+  transition: 0.3s all linear;
 
   height: calc(100vh - var(--navbar-height));
   overflow-y: auto;
@@ -38,7 +38,6 @@ body,
 
 .mainbar__content {
   flex: 1 1 auto;
-  overflow: auto;
   text-overflow: ellipsis;
   white-space: nowrap;
   height: calc(100vh - var(--navbar-height));
@@ -55,6 +54,7 @@ body,
 
 .sidebar--collapsed .mainbar__sidebar {
   width: 0;
+  min-width: 0;
 }
 
 @media (max-width: 400px) {

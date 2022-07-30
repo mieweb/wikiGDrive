@@ -1,6 +1,6 @@
 <template>
   <div class="x-container">
-    <pre class="bg-dark text-white log-viewer" ref="scroller"
+    <pre class="bg-dark text-white log-viewer"
     ><div v-for="(item, idx) of logs" :key="idx" :class="{'text-danger': 'error' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
@@ -26,18 +26,19 @@ export default {
   },
   methods: {
     async fetch(from) {
-      const response = await fetch(`/api/logs/${this.driveId}?from=` + from);
+      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?from=` + from);
       const logs = await response.json();
       const firstLog = logs.length > 0 ? logs[0] : null;
       if (firstLog) {
         this.logs = this.logs.filter(row => row.timestamp < firstLog.timestamp);
       }
 
-      const oldScrollTop = this.$refs.scroller.scrollHeight - this.$refs.scroller.offsetHeight - 20;
+      const scroller = document.querySelector('.mainbar__content');
+      const oldScrollTop = scroller.scrollHeight - scroller.offsetHeight - 10;
       this.logs.push(...logs);
-      if (this.$refs.scroller.scrollTop > oldScrollTop) {
+      if (scroller.scrollTop > oldScrollTop) {
         this.$nextTick(() => {
-          this.$refs.scroller.scrollTop = this.$refs.scroller.scrollHeight - this.$refs.scroller.offsetHeight;
+          scroller.scrollTop = scroller.scrollHeight - scroller.offsetHeight;
         });
       }
     },

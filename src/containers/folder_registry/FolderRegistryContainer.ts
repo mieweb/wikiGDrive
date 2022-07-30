@@ -2,7 +2,6 @@ import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine
 import winston from 'winston';
 import {FileId} from '../../model/model';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -25,14 +24,6 @@ export interface FoldersMap {
   [id: string]: Folder;
 }
 
-function folderToDrive(folder: GoogleFile) {
-  return {
-    id: folder.id,
-    name: folder.name,
-    driveId: folder.driveId,
-  };
-}
-
 export class FolderRegistryContainer extends Container {
   private logger: winston.Logger;
   private folders: FoldersMap;
@@ -49,9 +40,13 @@ export class FolderRegistryContainer extends Container {
 
     this.folders = {};
     const folders = await this.filesService.readJson('folders.json') || {};
+
+    const drives = await apiContainer.listDrives();
     for (const folderId in folders) {
-      const folder = await apiContainer.getFolder(folderId);
-      this.folders[folderId] = folderToDrive(folder);
+      const drive = drives.find(drive => drive.id === folderId);
+      if (drive) {
+        this.folders[folderId] = drive;
+      }
     }
   }
 
@@ -61,12 +56,16 @@ export class FolderRegistryContainer extends Container {
     }
 
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
-    const folder = await apiContainer.getFolder(folderId);
-    if (!folder && folder.mimeType !== MimeTypes.FOLDER_MIME) {
+    const folder = await apiContainer.getDrive(folderId);
+    if (!folder) {
       throw new Error('Folder not shared with wikigdrive');
     }
 
-    this.folders[folderId] = folderToDrive(folder);
+    this.folders[folderId] = {
+      id: folder.id,
+      name: folder.name,
+      driveId: folder.id,
+    };
 
     this.engine.emit(folderId, 'drive:register', this.folders[folderId]);
 

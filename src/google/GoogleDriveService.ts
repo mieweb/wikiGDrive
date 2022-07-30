@@ -19,6 +19,7 @@ interface GoogleDriveServiceErrorParams {
   origError: Error;
   isQuotaError: boolean;
 
+  code?: number;
   file?: SimpleFile;
   dest?: Writable;
   folderId?: string;
@@ -39,10 +40,12 @@ export class GoogleDriveServiceError extends Error {
   private folderId: string;
   private isQuotaError: boolean;
   private origError: Error;
+  private code: number;
 
   constructor(msg, params?: GoogleDriveServiceErrorParams) {
     super(msg);
     if (params) {
+      this.code = params.code;
       this.origError = params.origError;
       this.isQuotaError = params.isQuotaError;
 
@@ -362,14 +365,18 @@ export class GoogleDriveService {
     }
   }
 
-  async getDrive(auth: OAuth2Client, driveId) {
+  async getDrive(auth: OAuth2Client, driveId: FileId): Promise<Drive> {
     try {
       const drive = google.drive({ version: 'v3', auth });
       const res = await drive.drives.get({ driveId });
-      return res.data;
+      return {
+        id: driveId,
+        name: res.data.name,
+        kind: res.data.kind
+      };
     } catch (err) {
-      console.error(err);
-      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
+      throw new GoogleDriveServiceError('Error getting drive: ' + err.response?.statusText, {
+        code: err.response.status,
         origError: err,
         isQuotaError: err.isQuotaError,
       });

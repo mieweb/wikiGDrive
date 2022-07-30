@@ -70,6 +70,7 @@ export class DriveController extends Controller {
         public_key: await userConfigService.getDeployKey(),
         remote_branch: userConfig.remote_branch,
         remote_url: initialized ? await gitScanner.getRemoteUrl() : null,
+        config_toml: userConfig.config_toml
       },
       tocFilePath: tocFile ? tocFile.path : null,
       navFilePath: navFile ? navFile.path : null,

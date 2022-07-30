@@ -8,6 +8,7 @@ import * as Vue from 'vue';
 import * as VueRouter from 'vue-router';
 
 import App from './App.vue';
+import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
 
 const app = Vue.createApp({
   data: {
@@ -22,6 +23,14 @@ const app = Vue.createApp({
   methods: {
     async changeDrive(toDriveId) {
       this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
+      const titleEl = document.querySelector('title');
+      if (titleEl) {
+        if (this.drive?.name) {
+          titleEl.innerText = this.drive?.name + ' - wikigdrive';
+        } else {
+          titleEl.innerText = 'wikigdrive';
+        }
+      }
     },
     setJobs(jobs) {
       this.jobs = jobs;
@@ -34,10 +43,12 @@ const app = Vue.createApp({
 
 app.mixin({
   data() {
+    const authenticatedClient = new AuthenticatedClient();
     return {
-      DriveClientService: new DriveClientService(),
-      FileClientService: new FileClientService(),
-      GitClientService: new GitClientService()
+      authenticatedClient,
+      DriveClientService: new DriveClientService(authenticatedClient),
+      FileClientService: new FileClientService(authenticatedClient),
+      GitClientService: new GitClientService(authenticatedClient)
     }
   }
 });
