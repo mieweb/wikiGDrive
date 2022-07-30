@@ -47,26 +47,36 @@ export function authenticate(idx = 0) {
       return next(redirError(req, 'No accessToken cookie'));
     }
 
-    const decoded = jsonwebtoken.verify(req.cookies.accessToken, process.env.JWT_SECRET);
+    try {
+      const decoded = jsonwebtoken.verify(req.cookies.accessToken, process.env.JWT_SECRET);
+      if (!decoded.sub) {
+        return next(redirError(req, 'No jwt.sub'));
+      }
 
-    if (!decoded.sub) {
-      return next(redirError(req, 'No jwt.sub'));
+      if (driveId && decoded['driveId'] !== driveId) {
+        res.cookie('accessToken', '', {
+          httpOnly: true,
+          secure: true
+        });
+        return next(redirError(req, 'Authenticated for different drive'));
+      }
+
+      req.user = {
+        name: decoded['name'],
+        email: decoded['email'],
+        userId: decoded.sub
+        // driveId: decoded.driveId
+      };
+      next();
+    } catch (err) {
+      if (err.expiredAt) {
+        res.cookie('accessToken', '', {
+          httpOnly: true,
+          secure: true
+        });
+        return next(redirError(req, 'JWT expired'));
+      }
+      throw err;
     }
-
-    if (driveId && decoded['driveId'] !== driveId) {
-      res.cookie('accessToken', '', {
-        httpOnly: true,
-        secure: true
-      });
-      return next(redirError(req, 'Authenticated for different drive'));
-    }
-
-    req.user = {
-      name: decoded['name'],
-      email: decoded['email'],
-      userId: decoded.sub
-      // driveId: decoded.driveId
-    };
-    next();
   };
 }
