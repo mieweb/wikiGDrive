@@ -2,7 +2,7 @@
   <div>
     <ul class="list-group">
       <li class="list-group-item" v-if="isGDocsPreview">
-        <a :href="'/drive/' + driveId + folderPath" target="_blank">
+        <a :href="'/drive/' + driveId + folderPath + (selectedFile ? selectedFile.fileName : '')" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           WikiGDrive Folder
         </a>
