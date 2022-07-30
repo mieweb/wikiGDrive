@@ -23,6 +23,14 @@ const app = Vue.createApp({
   methods: {
     async changeDrive(toDriveId) {
       this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
+      const titleEl = document.querySelector('title');
+      if (titleEl) {
+        if (this.drive?.name) {
+          titleEl.innerText = this.drive?.name + ' - wikigdrive';
+        } else {
+          titleEl.innerText = 'wikigdrive';
+        }
+      }
     },
     setJobs(jobs) {
       this.jobs = jobs;
