@@ -81,7 +81,7 @@
     "listr2": "^3.14.0",
     "mathjs": "10.5.0",
     "minimist": "1.2.6",
-    "node-fetch": "2.6.7",
+    "node-fetch": "3.2.10",
     "nunjucks": "^3.2.3",
     "open": "^7.4.2",
     "relateurl": "0.2.7",
