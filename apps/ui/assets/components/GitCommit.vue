@@ -24,7 +24,7 @@
           </thead>
           <tbody>
           <tr v-for="(item, idx) of changes" :key="idx" @click="toggle(item.path)">
-            <td><input name="filePath" type="checkbox" :value="item.path" :checked="filePath.indexOf(item.path) > -1" /></td>
+            <td><input name="filePath" type="checkbox" :value="item.path" :checked="checked[item.path]" /></td>
             <td>{{item.path}}</td>
             <td>
               <span v-if="item.state.isNew">New</span>
@@ -67,8 +67,8 @@ export default {
   },
   data() {
     return {
+      checked: {},
       changes: [],
-      filePath: [],
       message: ''
     };
   },
@@ -77,7 +77,7 @@ export default {
       return this.git?.remote_url || '';
     },
     isCheckedAll() {
-      return this.filePath.length === this.changes.length;
+      return Object.keys(this.checked).length === this.changes.length;
     }
   },
   async created() {
@@ -88,11 +88,11 @@ export default {
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
-      this.filePath = [];
+      this.checked = {};
 
       const fileName = (this.folderPath + this.selectedFile.fileName).substring(1);
       if (this.changes.find(item => item.path === fileName)) {
-        this.filePath.push(fileName);
+        this.checked[fileName] = true;
       }
     },
     open(url) {
@@ -103,28 +103,27 @@ export default {
         alert('No commit message');
         return;
       }
+
+      const filePath = Object.keys(this.checked);
       await this.commit({
         message: this.message,
-        filePath: this.filePath
+        filePath: filePath
       });
       this.message = '';
     },
     toggle(path) {
-      const idx = this.filePath.indexOf(path);
-      if (idx === -1) {
-        this.filePath.push(path);
+      if (this.checked[path]) {
+        delete this.checked[path];
       } else {
-        this.filePath.splice(idx, 1);
+        this.checked[path] = true;
       }
     },
     toggleCheckAll() {
       if (this.isCheckedAll) {
-        this.filePath.splice(0, this.filePath.length);
+        this.checked = {};
       } else {
         for (const item of this.changes) {
-          if (this.filePath.indexOf(item.path) === -1) {
-            this.filePath.push(item.path);
-          }
+          this.checked[item.path] = true;
         }
       }
     }

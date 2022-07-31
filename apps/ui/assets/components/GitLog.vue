@@ -62,7 +62,7 @@ export default {
   },
   methods: {
     async fetch() {
-      this.history = await this.GitClientService.getHistory(this.driveId, this.folderPath + this.selectedFile.fileName);
+      this.history = await this.GitClientService.getHistory(this.driveId, (this.folderPath || '') + (this.selectedFile?.fileName || ''));
     }
   }
 };
