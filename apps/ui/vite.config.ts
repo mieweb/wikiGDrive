@@ -1,9 +1,6 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
-if (!process.env.GIT_SHA) {
-  process.env.GIT_SHA = process.env.SOURCE_VERSION;
-}
 if (!process.env.BUILD_TIME) {
   process.env.BUILD_TIME = new Date().toISOString();
 }
