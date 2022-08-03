@@ -47,7 +47,7 @@ export class DriveController extends Controller {
   @RouteGet('/:driveId')
   async getDrive(@RouteParamPath('driveId') driveId: string) {
     const folders = await this.folderRegistryContainer.getFolders();
-    const drive = folders[driveId] || {};
+    const drive = folders[driveId] || await this.folderRegistryContainer.registerFolder(driveId);
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 

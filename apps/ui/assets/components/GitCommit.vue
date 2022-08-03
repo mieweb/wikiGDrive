@@ -1,15 +1,32 @@
 <template>
-  <div class="x-container">
+  <div class="container">
+    <div class="row py-1">
+      <div class="col-12 text-end">
+        <ToolButton
+            v-if="github_url"
+            :active="activeTab === 'git_log'"
+            @click="openWindow(github_url)"
+            title="GitHub"
+            icon="fa-brands fa-github"
+        />
 
-    <ul class="list-group">
-      <li class="list-group-item" v-if="github_url"><a @click.prevent.stop="openWindow(github_url)">GitHub</a></li>
-      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_log' }">
-        <a @click.prevent.stop="setActiveTab('git_log')">History</a>
-      </li>
-      <li class="list-group-item" v-if="gitInitialized" :class="{ 'active': activeTab === 'git_commit' }">
-        <a @click.prevent.stop="setActiveTab('git_commit')">Commit</a>
-      </li>
-    </ul>
+        <ToolButton
+            v-if="gitInitialized"
+            :active="activeTab === 'git_log'"
+            @click="setActiveTab('git_log')"
+            title="History"
+            icon="fa-solid fa-timeline"
+        />
+
+        <ToolButton
+            v-if="gitInitialized"
+            :active="activeTab === 'git_commit'"
+            @click="setActiveTab('git_commit')"
+            title="Commit"
+            icon="fa-solid fa-code-commit"
+        />
+      </div>
+    </div>
 
     <form>
       <div v-if="changes && changes.length > 0">
@@ -53,9 +70,11 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
+import ToolButton from './ToolButton.vue';
 
 export default {
   mixins: [UtilsMixin, GitMixin],
+  components: {ToolButton},
   props: {
     activeTab: {
       type: String
@@ -105,11 +124,18 @@ export default {
       }
 
       const filePath = Object.keys(this.checked);
+      if (filePath.length === 0) {
+        alert('No files selected');
+        return;
+      }
+
       await this.commit({
         message: this.message,
         filePath: filePath
       });
       this.message = '';
+
+      window.location.hash = '#git_log';
     },
     toggle(path) {
       if (this.checked[path]) {

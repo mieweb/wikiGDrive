@@ -14,7 +14,9 @@ const app = Vue.createApp({
   data: {
     drive: {},
     jobs: [],
-    changes: []
+    jobsMap: {},
+    changes: [],
+    changesMap: {}
   },
   components: {
     'App': App
@@ -41,9 +43,28 @@ const app = Vue.createApp({
     },
     setJobs(jobs) {
       this.jobs = jobs;
+      this.jobsMap = {};
+      for (const job of jobs) {
+        if (!['waiting', 'running'].includes(job.state)) {
+          continue;
+        }
+
+        if (job.type === 'sync_all') {
+          this.jobsMap['sync_all'] = job;
+          continue;
+        }
+        if (!job.payload) {
+          continue;
+        }
+        this.jobsMap[job.payload] = job;
+      }
     },
-    setChanges(jobs) {
-      this.changes = jobs;
+    setChanges(changes) {
+      this.changes = changes;
+      this.changesMap = {};
+      for (const change of changes) {
+        this.changesMap[change.id] = change;
+      }
     }
   }
 });

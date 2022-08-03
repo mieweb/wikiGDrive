@@ -4,6 +4,7 @@ import {FileId} from '../../model/model';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 
 import { fileURLToPath } from 'url';
+import {GoogleDriveServiceError} from '../../google/driveFetch';
 const __filename = fileURLToPath(import.meta.url);
 
 export interface Drive {
@@ -58,7 +59,10 @@ export class FolderRegistryContainer extends Container {
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
     const folder = await apiContainer.getDrive(folderId);
     if (!folder) {
-      throw new Error('Folder not shared with wikigdrive');
+      throw new GoogleDriveServiceError('Folder not shared with wikigdrive', {
+        isQuotaError: false,
+        status: 404
+      });
     }
 
     this.folders[folderId] = {

@@ -7,7 +7,7 @@
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" />
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
@@ -16,7 +16,7 @@
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
-      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" />
       <UserConfig v-if="activeTab === 'drive_config'" />
 
@@ -70,7 +70,8 @@ export default {
       folderPath: '',
       activeTab: DEFAULT_TAB,
       files: [],
-      selectedFile: {}
+      selectedFile: {},
+      selectedFolder: {}
     };
   },
   computed: {
@@ -109,6 +110,7 @@ export default {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
       this.folderPath = filePath;
       this.files = pathContent.files || [];
+      return pathContent;
     },
     async fetch() {
       const filePath = this.$route.path.substring('/drive'.length);
@@ -126,7 +128,7 @@ export default {
         } else {
           parts.push(baseName);
           const dirPath = '/' + parts.join('/');
-          await this.fetchFolder(driveId, dirPath);
+          this.selectedFolder = await this.fetchFolder(driveId, dirPath);
           this.selectedFile = {};
         }
         this.notRegistered = false;

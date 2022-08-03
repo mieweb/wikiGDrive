@@ -1,5 +1,5 @@
 <template>
-  <div class="x-container">
+  <div class="container">
     <div class="card">
       <div class="card-body">
         <form>
@@ -26,21 +26,32 @@
                   v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Config.toml</label>
-            <textarea class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
-          </div>
 
           <div>
             <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" :alt="user_config.hugo_theme.id" />
           </div>
 
+          <div class="form-group">
+            <label>Config.toml</label>
+            <textarea class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
+          </div>
+
           <button class="btn btn-primary" type="button" @click="save">Save</button>
 
-          <div class="input-group" v-if="gitInitialized">
+        </form>
+      </div>
+    </div>
+
+    <div v-if="gitInitialized && github_url" class="mt-3">
+      <div class="card">
+        <div class="card-body">
+          <div v-if="github_url">
+            To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'">Deploy keys</a>
+          </div>
+          <div class="input-group">
             <textarea class="form-control" rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>

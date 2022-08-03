@@ -9,8 +9,14 @@ export const UtilsMixin = {
     changes() {
       return this.$root.changes || [];
     },
+    changesMap() {
+      return this.$root.changesMap || {};
+    },
     jobs() {
       return this.$root.jobs || [];
+    },
+    jobsMap() {
+      return this.$root.jobsMap || {};
     },
     active_jobs() {
       return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));

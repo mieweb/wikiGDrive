@@ -13,7 +13,7 @@
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
         <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
-        <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+        <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
         <LogsViewer v-if="activeTab === 'drive_logs'" />
         <UserConfig v-if="activeTab === 'drive_config'" />
 
@@ -65,6 +65,7 @@ export default {
       activeTab: DEFAULT_TAB,
       folderPath: '',
       selectedFile: {},
+      selectedFolder: {},
       notRegistered: false
     };
   },

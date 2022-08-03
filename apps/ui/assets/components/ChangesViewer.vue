@@ -1,5 +1,5 @@
 <template>
-  <div class="x-container">
+  <div class="container">
     <div class="row py-1">
       <div class="col-12 text-end">
         <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Logs" title="Logs">
@@ -14,9 +14,8 @@
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
       <ul class="list-group">
-        <li class="list-group-item" v-for="(file, idx) of changes" :key="idx">
+        <li class="list-group-item" v-for="(file, idx) of fileChanges" :key="idx">
           <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
-
           <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
             <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
           </button>
@@ -34,10 +33,10 @@
       </div>
     </div>
 
-    <div class="btn-group-vertical" v-if="!syncing">
-      <a class="btn btn-primary" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync single</a>
-      <a class="btn btn-danger" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-      <a class="btn btn-danger" v-if="drive.name" @click.prevent="renderPreview">Render preview</a>
+    <div class="btn-group" v-if="!syncing">
+      <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync single</a>
+      <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+      <a class="btn btn-outline-secondary me-2" v-if="drive.name" @click.prevent="renderPreview">Render preview</a>
     </div>
     <ul class="list-group" v-else>
       <li v-for="(job, idx) of active_jobs" :key="idx">
@@ -58,6 +57,11 @@ export default {
     selectedFile: Object,
     activeTab: {
       type: String
+    }
+  },
+  computed: {
+    fileChanges() {
+      return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');
     }
   },
   methods: {

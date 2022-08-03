@@ -1,7 +1,7 @@
 <template>
   <BaseLayout :sidebar="false">
     <template v-slot:default>
-      <div class="x-container">
+      <div class="container">
         <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">
           <thead>
           <tr>

@@ -1,14 +1,24 @@
 <template>
-  <ul class="list-unstyled files-list" v-if="!notRegistered && files.length > 0">
-    <li v-if="folderPath !== '/'" @click="selectFile('..' , {mimeType: 'application/vnd.google-apps.folder'})">
+  <ul class="nav files-list border-bottom dark">
+    <li class="nav-item fs-4" v-if="drive.id">
+      <i class="fa-brands fa-google-drive"></i>&nbsp;
+      <a :href="'/drive/' + drive.id + '#drive_tools'">{{ drive.name }}</a>
+    </li>
+  </ul>
+  <ul class="nav nav-pills flex-column files-list" v-if="!notRegistered && files.length > 0">
+    <li v-if="folderPath !== '/'" @click="selectFile('..' , {mimeType: 'application/vnd.google-apps.folder'})" class="nav-item">
       <i class="fa-solid fa-folder"></i> ..
     </li>
-    <li v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName, file)" :class="{'active': file.fileName === selectedName}" :title="file.title">
-        <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
-        <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
-        <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
-        <i v-else class="fa-solid fa-file"></i>
-        {{ file.fileName }} <span v-if="file.version">#{{ file.version }}</span>
+    <li v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName, file)" class="nav-item" :class="{'active': file.fileName === selectedName}" :title="file.title">
+      <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
+      <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
+      <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
+      <i v-else class="fa-solid fa-file"></i>
+      <span class="file-name">{{ file.fileName }}</span>
+      <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', file)">
+        <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap[file.id]) }"></i>
+        #{{ changesMap[file.id].version }}
+      </span>
     </li>
   </ul>
 </template>
@@ -51,7 +61,11 @@ export default {
       } else  {
         parts.push(fileName);
       }
-      this.goToPath(`/${parts.join('/')}`);
+      if (file.mimeType === 'application/vnd.google-apps.folder') {
+        this.goToPath(`/${parts.join('/')}#drive_tools`);
+      } else {
+        this.goToPath(`/${parts.join('/')}`);
+      }
       this.$emit('selected', fileName);
 
       if (file.mimeType !== 'application/vnd.google-apps.folder') {

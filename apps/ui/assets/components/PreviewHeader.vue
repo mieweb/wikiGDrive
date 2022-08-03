@@ -1,11 +1,11 @@
 <template>
   <div class="container-fluid bg-light my-1">
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
-      <foo class="col-8">
+      <div class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
         <span v-else class="fw-bold">Last synced</span>
         <span class="small text-muted">&nbsp;{{ last_job.dateStr }}</span>
-      </foo>
+      </div>
       <div class="col-4 text-end">
         <button class="btn btn-light" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
