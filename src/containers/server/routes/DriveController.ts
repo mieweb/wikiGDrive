@@ -56,6 +56,7 @@ export class DriveController extends Controller {
     const userConfig = await userConfigService.load();
 
     const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
 
     const initialized = await gitScanner.isRepo();
 
