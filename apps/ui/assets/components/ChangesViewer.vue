@@ -37,6 +37,7 @@
     <div class="btn-group-vertical" v-if="!syncing">
       <a class="btn btn-primary" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync single</a>
       <a class="btn btn-danger" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+      <a class="btn btn-danger" v-if="drive.name" @click.prevent="renderPreview">Render preview</a>
     </div>
     <ul class="list-group" v-else>
       <li v-for="(job, idx) of active_jobs" :key="idx">

@@ -60,9 +60,6 @@ export default {
           this.$emit('collapse', true);
         }
       }
-    },
-    isSyncing(id) {
-      return !!this.active_jobs.find(job => (job.type === 'sync' && job.payload === id) || job.type === 'sync_all');
     }
   },
   mounted() {

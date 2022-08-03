@@ -411,6 +411,22 @@ export class ServerContainer extends Container {
       }
     });
 
+    app.post('/api/render_preview/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
+        });
+
+        res.json({ driveId });
+      } catch (err) {
+        next(err);
+      }
+    });
+
     app.post('/api/sync/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
@@ -419,6 +435,10 @@ export class ServerContainer extends Container {
         await jobManagerContainer.schedule(driveId, {
           type: 'sync_all',
           title: 'Syncing all'
+        });
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
         });
 
         res.json({ driveId });
@@ -448,6 +468,11 @@ export class ServerContainer extends Container {
           type: 'sync',
           payload: fileId,
           title: 'Syncing file: ' + fileTitle
+        });
+
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
         });
 
         res.json({ driveId, fileId });

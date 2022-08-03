@@ -137,6 +137,11 @@ export const UtilsMixin = {
         method: 'post'
       });
     },
+    async renderPreview() {
+      await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
+        method: 'post'
+      });
+    },
     downloadOdt(fileId) {
       const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
       window.open(odtPath, '_blank');
