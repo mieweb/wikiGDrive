@@ -29,6 +29,7 @@ import * as vite from 'vite';
 import * as fs from 'fs';
 import {authenticate, AuthError, signToken} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
+import {Logger} from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,6 +103,27 @@ export class ServerContainer extends Container {
   }
 
   private async initUiServer(app) {
+    const customLogger: Logger = {
+      hasWarned: false,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      clearScreen() {},
+      error: (msg: string) => {
+        this.logger.error(msg);
+      },
+      hasErrorLogged: () => {
+        return false;
+      },
+      info: (msg: string) => {
+        this.logger.info(msg);
+      },
+      warn: (msg: string) => {
+        this.logger.warn(msg);
+      },
+      warnOnce: (msg: string) => {
+        this.logger.warn(msg);
+      }
+    };
+
     const viteInstance = await vite.createServer({
       root: HTML_DIR,
       logLevel: 'info',
@@ -114,7 +136,8 @@ export class ServerContainer extends Container {
           usePolling: true,
           interval: 100
         }
-      }
+      },
+      customLogger: customLogger
     });
     app.use(viteInstance.middlewares);
 
@@ -184,9 +207,6 @@ export class ServerContainer extends Container {
           } else {
             err.authPath = '/auth/none?redirectTo=' + err.redirectTo;
           }
-          // this.logger.error('Authorization error: ' + req.path);
-          console.error(err);
-
           res.status(code).send({ message: err.message, authPath: err.authPath });
           return;
         default:

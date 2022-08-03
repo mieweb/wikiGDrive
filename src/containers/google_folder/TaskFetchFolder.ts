@@ -9,6 +9,7 @@ import {TaskFetchBinary} from './TaskFetchBinary';
 import {TaskFetchAsset} from './TaskFetchAsset';
 import {MimeTypes, SimpleFile} from '../../model/GoogleFile';
 import {FileId} from '../../model/model';
+import {HasQuotaLimiter} from '../../google/AuthClient';
 
 interface Filters {
   filterFoldersIds: FileId[];
@@ -19,7 +20,7 @@ export class TaskFetchFolder extends QueueTask {
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
-              private auth: OAuth2Client,
+              private auth: OAuth2Client & HasQuotaLimiter,
               private fileService: FileContentService,
               private file: SimpleFile,
               private filters: Filters) {
