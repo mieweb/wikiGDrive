@@ -9,6 +9,11 @@
             <button type="submit" class="btn btn-primary">Share</button>
           </div>
         </form>
+
+        <div class="mt-3">
+          or select one of your <a href="/drive">drives</a>
+        </div>
+
       </div>
     </template>
   </BaseLayout>

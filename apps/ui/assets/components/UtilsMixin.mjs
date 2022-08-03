@@ -53,6 +53,20 @@ export const UtilsMixin = {
           .replace(/.git$/, '');
       }
       return '';
+    },
+    previewUrl() {
+      if (!this.folderPath) {
+        return '';
+      }
+      if (!this.selectedFile) {
+        return '';
+      }
+      const folderPath = this.folderPath.endsWith('/') ? this.folderPath : this.folderPath + '/';
+      const fullUrlPreview = '/' + this.driveId + (this.drive.hugo_theme?.id ? `/${this.drive.hugo_theme?.id}` : '') + folderPath + this.selectedFile.fileName;
+      return window.location.protocol + '//' + window.location.hostname + '/preview' +
+        fullUrlPreview
+          .replace(/.md$/, '')
+          .replace(/_index$/, '');
     }
   },
   methods: {

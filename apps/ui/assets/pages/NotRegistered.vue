@@ -13,6 +13,12 @@
         </div>
       </div>
     </div>
+    <br/>
+    <div class="card">
+      <div class="card-body">
+        Or go back to <a href="/">homepage</a>
+      </div>
+    </div>
   </div>
 </template>
 <script>

@@ -8,12 +8,13 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {GoogleFile} from '../../model/GoogleFile';
 import {GoogleTreeItem} from '../google_folder/GoogleFolderContainer';
 import {findInTree} from '../server/routes/FolderController';
+import {HasQuotaLimiter} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 
 export class WatchChangesContainer extends Container {
   private logger: winston.Logger;
-  private auth: OAuth2Client;
+  private auth: OAuth2Client & HasQuotaLimiter;
   private googleDriveService: GoogleDriveService;
   private lastToken: { [driveId: string]: string } = {};
   private intervals: { [driveId: string]: NodeJS.Timer } = {};

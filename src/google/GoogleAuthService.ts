@@ -6,9 +6,11 @@ import {promisify} from 'util';
 
 import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {GoogleAuth} from '../model/GoogleAuth';
-import {GetTokenResponse, OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
+import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {ServiceAccountJson} from '../model/AccountJson';
 import fetch from 'node-fetch';
+import crypto from 'crypto';
+import {convertResponseToError} from './driveFetch';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/drive',
@@ -18,6 +20,20 @@ const SCOPES = [
 
 // https://stackoverflow.com/questions/19641783/google-drive-api-username-password-authentication#19643080
 // https://developers.google.com/identity/protocols/OAuth2ServiceAccount
+const IV = '5383165476e1c2e3';
+export function encrypt(val: string, key: string) {
+  key = new Buffer(key).toString('hex').substring(0, 32);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, IV);
+  const encrypted = cipher.update(val, 'utf8', 'base64');
+  return encrypted + cipher.final('base64');
+}
+
+export function decrypt(encrypted: string, key: string) {
+  key = new Buffer(key).toString('hex').substring(0, 32);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, IV);
+  const decrypted = decipher.update(encrypted, 'base64', 'utf8');
+  return decrypted + decipher.final('utf8');
+}
 
 export class GoogleAuthService {
 
@@ -50,29 +66,29 @@ export class GoogleAuthService {
     return new QuotaAuthClient(client_id, client_secret, redirect_uri);
   }
 
-  async getWebAuthUrl(oAuth2Client: OAuth2Client, redirect_uri: string, state: string): Promise<string> {
-    const authUrl = oAuth2Client.generateAuthUrl({
+  async getWebAuthUrl(client_id: string, redirect_uri: string, state: string): Promise<string> {
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id,
+      redirect_uri,
       access_type: 'offline',
+      response_type: 'code',
       scope: [
         'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/drive.readonly'
-      ],
-      redirect_uri,
+      ].join(' '),
       state
-    });
-
-    return authUrl;
+    }).toString();
   }
 
-  async getWebToken(oAuth2Client: OAuth2Client, redirect_uri: string, code: string): Promise<GoogleAuth> {
+  async getWebToken(client_id: string, client_secret: string, redirect_uri: string, code: string): Promise<GoogleAuth> {
     const body = new URLSearchParams({
-      client_id: oAuth2Client._clientId,
-      client_secret: oAuth2Client._clientSecret,
+      client_id,
+      client_secret,
       redirect_uri: redirect_uri,
       grant_type: 'authorization_code',
       code: code
     }).toString();
 
-    const response = await fetch('https://accounts.google.com/o/oauth2/token', {
+    const response = await fetch('https://accounts.google.com/o/oauth2/token ', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -80,19 +96,39 @@ export class GoogleAuthService {
       },
       body
     });
+
+    if (response.status >= 400) {
+      throw await convertResponseToError(response);
+    }
+
     const json = await response.json();
 
     return {
       access_token: json.access_token,
-      scope: json.scope
+      refresh_token: json.refresh_token,
+      scope: json.scope,
+      token_type: json.token_type,
+      expiry_date: json.expiry_date,
+      id_token: json.id_token
     };
   }
 
-  async getCliAccessToken(oAuth2Client: OAuth2Client): Promise<GoogleAuth> {
+  async getCliAccessToken(client_id: string, client_secret: string): Promise<GoogleAuth> {
+    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id,
+      // redirect_uri: ,
+      access_type: 'offline',
+      // response_type: 'code',
+      scope: SCOPES.join(' '),
+    }).toString();
+
+
+/*
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: SCOPES
     });
+*/
 
     const child = await open(authUrl, { wait: true });
     child.stdout.on('data', (data) => {
@@ -119,25 +155,24 @@ export class GoogleAuthService {
     const code = await question('Enter the code from that page here: ');
     rl.close();
 
-    const credentials: GetTokenResponse = await oAuth2Client.getToken(code);
+    // const credentials: GetTokenResponse = await oAuth2Client.getToken(code);
 
-    return {
-      access_token: credentials.tokens.access_token,
-      refresh_token: credentials.tokens.refresh_token,
-      scope: credentials.tokens.scope,
-      token_type: credentials.tokens.token_type,
-      expiry_date: credentials.tokens.expiry_date,
-      id_token: credentials.tokens.id_token
-    };
+    return await this.getWebToken(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob', code);
   }
 
   async getUser(auth: { access_token: string }) {
     const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?access_token=' + auth.access_token);
+
+    if (response.status >= 400) {
+      throw await convertResponseToError(response);
+    }
+
     const json = await response.json();
     return {
       id: json.id,
       email: json.email,
-      name: json.name
+      name: json.name,
+      google_access_token: auth.access_token
     };
   }
 }

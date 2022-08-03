@@ -84,7 +84,7 @@ async function main() {
 
     drive_id: argv['drive_id'] || '',
     service_account: argv['service_account'] || null,
-    share_email: argv['share_email'] || null,
+    share_email: argv['share_email'] || process.env.SHARE_EMAIL || null,
     git_update_delay: argv['git_update_delay'] || 60,
     force: !!argv['force'],
     server_port: +argv['server']

@@ -22,14 +22,21 @@ const app = Vue.createApp({
   template: '<App />',
   methods: {
     async changeDrive(toDriveId) {
-      this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
-      const titleEl = document.querySelector('title');
-      if (titleEl) {
-        if (this.drive?.name) {
-          titleEl.innerText = this.drive?.name + ' - wikigdrive';
-        } else {
-          titleEl.innerText = 'wikigdrive';
+      try {
+        this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
+        const titleEl = document.querySelector('title');
+        if (titleEl) {
+          if (this.drive?.name) {
+            titleEl.innerText = this.drive?.name + ' - wikigdrive';
+          } else {
+            titleEl.innerText = 'wikigdrive';
+          }
         }
+      } catch (err) {
+        this.drive = {
+          id: toDriveId,
+          notRegistered: true
+        };
       }
     },
     setJobs(jobs) {
@@ -78,6 +85,7 @@ const router = new VueRouter.createRouter({
     },
     {
       path: '/',
+      name: 'home',
       component: () => import('./pages/MainView.vue')
     },
     {

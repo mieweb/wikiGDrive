@@ -108,7 +108,7 @@ export default {
     async fetchFolder(driveId, filePath) {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
       this.folderPath = filePath;
-      this.files = pathContent.files;
+      this.files = pathContent.files || [];
     },
     async fetch() {
       const filePath = this.$route.path.substring('/drive'.length);
@@ -116,30 +116,26 @@ export default {
       const parts = filePath.split('/').filter(s => s.length > 0);
       const driveId = parts.shift();
       const baseName = parts.pop() || '';
-      if (baseName.indexOf('.') > -1) {
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
-        const file = this.files.find(f => f.fileName === baseName) || {};
-        this.selectedFile = file || {};
-      } else {
-        parts.push(baseName);
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
-        this.selectedFile = {};
-      }
-/*
-      const parentId = this.$route.params.parentId;
 
-      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + parentId : ''));
-      const json = await response.json();
-      console.log('Folder fetch', json);
-
-      this.notRegistered = !!json.not_registered;
-      if (this.notRegistered) {
-        this.shareEmail = json.share_email;
-        return;
+      try {
+        if (baseName.indexOf('.') > -1) {
+          const dirPath = '/' + parts.join('/');
+          await this.fetchFolder(driveId, dirPath);
+          const file = this.files.find(f => f.fileName === baseName) || {};
+          this.selectedFile = file || {};
+        } else {
+          parts.push(baseName);
+          const dirPath = '/' + parts.join('/');
+          await this.fetchFolder(driveId, dirPath);
+          this.selectedFile = {};
+        }
+        this.notRegistered = false;
+      } catch (err) {
+        if (err.code === 404) {
+          this.shareEmail = err.share_email;
+          this.notRegistered = true;
+        }
       }
-*/
     }
   }
 };

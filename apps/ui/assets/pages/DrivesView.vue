@@ -40,8 +40,7 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch('/api/ps');
-      this.drives = await response.json();
+      this.drives = await this.DriveClientService.getDrives();
     },
     open(url) {
       window.open(url, '_blank');
