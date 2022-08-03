@@ -198,6 +198,14 @@ export class StateMachine {
         this.markdownChunks.removeChunk(payload.position);
         this.markdownChunks.removeChunk(this.currentLevel.payload.position);
       }
+      if (innerTxt.startsWith('{{% /') && innerTxt.endsWith('%}}')) {
+        this.markdownChunks.chunks.push({
+          isTag: true,
+          mode: this.currentMode,
+          tag: 'BR/',
+          payload: {}
+        });
+      }
     }
 
     if (tag === 'EMB_SVG') {
