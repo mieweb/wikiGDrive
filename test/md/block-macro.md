@@ -23,3 +23,4 @@ The following information is intended to walk users through the basic enrollment
 6. Once all necessary measures have been selected, click the <strong>Submit</strong> button.
 
 {{% info %}}The logged-in user will now be able to track the enrolled measures from the Quality Reporting portlet on the Quick View.{{% /info %}}
+

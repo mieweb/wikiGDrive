@@ -463,8 +463,8 @@ export class StateMachine {
         continue;
       }
 
-      if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
-        const nextTag = this.markdownChunks.chunks[position - 1];
+      if (position + 1 < this.markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
+        const nextTag = this.markdownChunks.chunks[position + 1];
 
         if (!(nextTag.isTag && nextTag.tag === 'BR/')) {
           this.markdownChunks.chunks.splice(position + 1, 0, {
