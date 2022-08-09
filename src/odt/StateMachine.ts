@@ -1,4 +1,4 @@
-import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks';
+import {isClosing, isOpening, MarkdownChunks, MarkdownTagChunk, OutputMode, TAG, TagPayload} from './MarkdownChunks';
 import {fixCharacters} from './utils';
 import slugify from 'slugify';
 
@@ -421,6 +421,39 @@ export class StateMachine {
       if (inChange) {
         this.markdownChunks.removeChunk(position);
         position--;
+      }
+    }
+
+    for (let position = 0; position < this.markdownChunks.length; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+
+
+      if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4'].indexOf(chunk.tag) > -1) {
+        const prevTag = this.markdownChunks.chunks[position - 1];
+        if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
+          this.markdownChunks.chunks.splice(position - 1, 0, {
+            isTag: true,
+            mode: 'md',
+            tag: 'BR/',
+            payload: {}
+          });
+          position++;
+        }
+        continue;
+      }
+
+      if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
+        const nextTag = this.markdownChunks.chunks[position - 1];
+
+        if (!(nextTag.isTag && nextTag.tag === 'BR/')) {
+          this.markdownChunks.chunks.splice(position + 1, 0, {
+            isTag: true,
+            mode: 'md',
+            tag: 'BR/',
+            payload: {}
+          });
+        }
+        continue;
       }
     }
 
