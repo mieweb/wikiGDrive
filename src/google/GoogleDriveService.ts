@@ -295,20 +295,15 @@ export class GoogleDriveService {
   }
 
   async getDrive(auth: OAuth2Client & HasQuotaLimiter, driveId: FileId): Promise<Drive> {
-    try {
-      const params = {
-        driveId
-      };
-      const res = await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/drives/${driveId}`, params);
-      return {
-        id: driveId,
-        name: res.name,
-        kind: res.kind
-      };
-    } catch (err) {
-      err.message = 'Error getting drive: ' + err.message;
-      throw err;
-    }
+    const params = {
+      driveId
+    };
+    const res = await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/drives/${driveId}`, params);
+    return {
+      id: driveId,
+      name: res.name,
+      kind: res.kind
+    };
   }
 
   async shareDrive(auth: OAuth2Client & HasQuotaLimiter, fileId: string, email: string) {

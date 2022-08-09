@@ -100,24 +100,27 @@ export default {
       const fileId = this.$route.params.fileId;
 
       if (fileId) {
-        const response = await fetch(`/api/gdrive/${this.driveId}/${fileId}`);
+        try {
+          const response = await this.authenticatedClient.fetchApi(`/api/gdrive/${this.driveId}/${fileId}`);
 
-        const path = response.headers.get('wgd-path') || '';
-        const fileName = response.headers.get('wgd-file-name') || '';
-        this.folderPath = path.substring(0, path.length - fileName.length);
-        this.selectedFile = {
-          fileName,
-          folderId: response.headers.get('wgd-google-parent-id'),
-          version: response.headers.get('wgd-google-version'),
-          modifiedTime: response.headers.get('wgd-google-modified-time'),
-          fileId: response.headers.get('wgd-google-id'),
-          mimeType: response.headers.get('wgd-mime-type')
-        };
-
-/*        this.notRegistered = !!this.preview.not_registered;
-        if (this.notRegistered) {
-          this.shareEmail = this.preview.share_email;
-        }*/
+          const path = response.headers.get('wgd-path') || '';
+          const fileName = response.headers.get('wgd-file-name') || '';
+          this.folderPath = path.substring(0, path.length - fileName.length);
+          this.selectedFile = {
+            fileName,
+            folderId: response.headers.get('wgd-google-parent-id'),
+            version: response.headers.get('wgd-google-version'),
+            modifiedTime: response.headers.get('wgd-google-modified-time'),
+            fileId: response.headers.get('wgd-google-id'),
+            mimeType: response.headers.get('wgd-mime-type')
+          };
+          this.notRegistered = false;
+        } catch (err) {
+          if (err.code === 404) {
+            this.shareEmail = err.share_email;
+            this.notRegistered = true;
+          }
+        }
       }
     }
   }

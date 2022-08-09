@@ -101,6 +101,10 @@ export function authenticate(logger: Logger, idx = 0) {
 
       next();
     } catch (err) {
+      if (err.status === 404 && req.user?.email) {
+        err.message = err.message + `, user: ${req.user.email}`;
+      }
+
       if (err.expiredAt) {
         res.cookie('accessToken', '', {
           httpOnly: true,
