@@ -86,6 +86,7 @@ export default {
   },
   data() {
     return {
+      user_config: {},
       checked: {},
       changes: [],
       message: ''
@@ -93,7 +94,7 @@ export default {
   },
   computed: {
     git_remote_url() {
-      return this.git?.remote_url || '';
+      return this.user_config.remote_url || '';
     },
     isCheckedAll() {
       return Object.keys(this.checked).length === this.changes.length;
@@ -113,6 +114,9 @@ export default {
       if (this.changes.find(item => item.path === fileName)) {
         this.checked[fileName] = true;
       }
+
+      const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
+      this.user_config = await responseConfig.json();
     },
     open(url) {
       window.open(url, '_blank');
@@ -136,6 +140,53 @@ export default {
       this.message = '';
 
       window.location.hash = '#git_log';
+    },
+    async pull() {
+      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/pull`, {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      const json = await response.json();
+      await this.fetch();
+      if (json.error) {
+        alert(json.error);
+      } else {
+        alert('Pull completed');
+        window.location.hash = '#git_log';
+      }
+    },
+    async push({ message, filePath }) {
+      if (message) {
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            filePath,
+            message: message
+          })
+        });
+      }
+
+      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/push`, {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      const json = await response.json();
+      await this.fetch();
+      if (json.error) {
+        alert(json.error);
+      } else {
+        alert('Push completed');
+        window.location.hash = '#git_log';
+      }
     },
     toggle(path) {
       if (this.checked[path]) {

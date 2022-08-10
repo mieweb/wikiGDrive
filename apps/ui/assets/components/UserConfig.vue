@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" v-if="user_config">
     <div class="card">
       <div class="card-body">
         <form>
@@ -20,14 +20,14 @@
             <select class="form-control" @change="changeTheme($event.target.value)">
               <option></option>
               <option
-                  :selected="user_config.hugo_theme.id === theme.id"
+                  :selected="userThemeId === theme.id"
                   :value="theme.id"
                   :key="theme.id"
                   v-for="theme of drive.hugo_themes">{{ theme.name }}</option>
             </select>
           </div>
 
-          <div>
+          <div v-if="userThemeId">
             <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" :alt="user_config.hugo_theme.id" />
           </div>
 
@@ -46,7 +46,8 @@
       <div class="card">
         <div class="card-body">
           <div v-if="github_url">
-            To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'">Deploy keys</a>
+            To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'" target="_blank">Deploy keys</a>.<br />
+            Then check <code>Allow write access</code>
           </div>
           <div class="input-group">
             <textarea class="form-control" rows="10" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
@@ -63,16 +64,16 @@ export default {
   mixins: [UtilsMixin],
   data() {
     return {
-      user_config: {
-        remote_url: '',
-        remote_branch: '',
-        config_toml: '',
-        hugo_theme: ''
-      }
+      user_config: null
     };
   },
   async created() {
     await this.fetch();
+  },
+  watch: {
+    async $route() {
+      await this.fetch();
+    }
   },
   computed: {
     drive() {
@@ -80,20 +81,26 @@ export default {
     },
     public_key() {
       return this.$root.drive?.git?.public_key || '';
+    },
+    userThemeId() {
+      return this.user_config?.hugo_theme?.id || '';
     }
   },
   methods: {
     async fetch() {
-      this.user_config = { ...this.$root.drive?.git || {}, hugo_theme: this.$root.drive.hugo_theme };
+      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
+      this.user_config = await response.json();
     },
     async save() {
-      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
+      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'
         },
         body: JSON.stringify(this.user_config)
       });
+      this.user_config = await response.json();
+      alert('Saved');
     },
     changeTheme(themeId) {
       if (!themeId) {

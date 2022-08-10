@@ -156,7 +156,9 @@ export class ServerContainer extends Container {
   private async startServer(port) {
     const app = this.app = express();
 
-    app.use(express.json());
+    app.use(express.json({
+      limit: '50mb'
+    }));
     app.use(cookieParser());
 
     app.use((req, res, next) => {
