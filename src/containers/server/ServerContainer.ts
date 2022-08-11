@@ -42,6 +42,10 @@ interface TreeItem {
   children?: TreeItem[];
 }
 
+function openerRedirect(res: Response, redirectTo: string) {
+  res.send(`<script>window.opener.authenticated('${redirectTo}');</script>`);
+}
+
 function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
   for (const file of files) {
     const part = file[fieldName];
@@ -276,7 +280,7 @@ export class ServerContainer extends Container {
               secure: true
             });
 
-            res.redirect(redirectTo || '/');
+            openerRedirect(res, redirectTo || '/');
             return;
           }
         } else {
@@ -286,7 +290,7 @@ export class ServerContainer extends Container {
             secure: true
           });
 
-          res.redirect(redirectTo || '/');
+          openerRedirect(res, redirectTo || '/');
           return;
         }
 
@@ -296,9 +300,9 @@ export class ServerContainer extends Container {
           if (req.query.state) {
             const state = new URLSearchParams(req.query.state);
             const redirectTo = state.get('redirectTo');
-            res.redirect(redirectTo || '/');
+            openerRedirect(res, redirectTo || '/');
           } else {
-            res.redirect('/');
+            openerRedirect(res, '/');
           }
           return;
         }
