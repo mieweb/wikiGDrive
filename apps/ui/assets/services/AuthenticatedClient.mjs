@@ -17,11 +17,14 @@ export class AuthenticatedClient {
         {
           const json = await response.json();
           if (json.authPath) {
-            const authPopup = window.open(json.authPath, '_blank', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no')
-            window['authenticated'] = (url) => {
-              authPopup.close();
-              window.location = url;
-            };
+            if (!window['authPopup']) {
+              window['authPopup'] = window.open(json.authPath, '_blank', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no')
+              window['authenticated'] = (url) => {
+                window['authPopup'].close();
+                window['authPopup'] = null;
+                window.location = url;
+              };
+            }
           }
         }
         throw new Error(url + ' ' + response.statusText);

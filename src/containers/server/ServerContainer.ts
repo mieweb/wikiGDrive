@@ -256,6 +256,11 @@ export class ServerContainer extends Container {
         const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
         const serverUrl = protocol + hostname;
 
+        if (!req.query.not_popup) {
+          openerRedirect(res, req.url + '&not_popup=1');
+          return;
+        }
+
         if (!req.query.state) {
           throw new Error('No state query parameter');
         }
@@ -277,20 +282,20 @@ export class ServerContainer extends Container {
             const accessToken = signToken(googleUser, driveId);
             res.cookie('accessToken', accessToken, {
               httpOnly: true,
-              secure: true
+              secure: true,
+              sameSite: 'none'
             });
-
-            openerRedirect(res, redirectTo || '/');
+            res.redirect(redirectTo || '/');
             return;
           }
         } else {
           const accessToken = signToken(googleUser, '');
           res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite: 'none'
           });
-
-          openerRedirect(res, redirectTo || '/');
+          res.redirect(redirectTo || '/');
           return;
         }
 
@@ -300,9 +305,9 @@ export class ServerContainer extends Container {
           if (req.query.state) {
             const state = new URLSearchParams(req.query.state);
             const redirectTo = state.get('redirectTo');
-            openerRedirect(res, redirectTo || '/');
+            res.redirect(redirectTo || '/');
           } else {
-            openerRedirect(res, '/');
+            res.redirect('/');
           }
           return;
         }

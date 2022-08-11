@@ -95,7 +95,8 @@ export function authenticate(logger: Logger, idx = 0) {
         const accessToken = signToken(req.user, driveId);
         res.cookie('accessToken', accessToken, {
           httpOnly: true,
-          secure: true
+          secure: true,
+          sameSite: 'none'
         });
       }
 
@@ -106,10 +107,7 @@ export function authenticate(logger: Logger, idx = 0) {
       }
 
       if (err.expiredAt) {
-        res.cookie('accessToken', '', {
-          httpOnly: true,
-          secure: true
-        });
+        res.clearCookie('accessToken');
         return next(redirError(req, 'JWT expired'));
       }
       next(err);
