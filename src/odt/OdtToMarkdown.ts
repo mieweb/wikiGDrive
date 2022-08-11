@@ -443,6 +443,9 @@ export class OdtToMarkdown {
         case 'paragraph':
           await this.paragraphToText(<TextParagraph>child);
           break;
+        case 'list':
+          await this.listToText(<TextList>child);
+          break;
         case 'table':
           await this.tableToText(<TableTable>child);
           break;

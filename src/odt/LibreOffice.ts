@@ -12,8 +12,9 @@ interface ParagraphSection {
 @XmlElement()
 @XmlElementChild('text:p', 'list', 'TextParagraph', {isArray: true})
 @XmlElementChild('table:table', 'list', 'TableTable', {isArray: true})
+@XmlElementChild('text:list', 'list', 'TextList', {isArray: true})
 export class TableCell {
-  list: Array<TextParagraph | TableTable> = [];
+  list: Array<TextParagraph | TableTable | TextList> = [];
 }
 
 @XmlElement()
