@@ -80,12 +80,6 @@ function chunkToText(chunk: MarkdownChunk) {
     case 'md':
       switch (chunk.tag) {
         case 'P':
-          {
-            const level = (chunk.payload.listLevel || 1) - 1;
-            const indent = spaces(level * 4);
-            const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
-            return indent + listStr + '';
-          }
           break;
         case '/P':
           return '\n';
@@ -135,6 +129,8 @@ function chunkToText(chunk: MarkdownChunk) {
       break;
     case 'html':
       switch (chunk.tag) {
+        case 'BR/':
+          return '\n';
         case 'HR/':
           return '<hr />';
         case 'B':
@@ -271,6 +267,36 @@ export class MarkdownChunks {
       if (chunk.isTag) {
         chunk.payload.position--;
       }
+    }
+  }
+
+  dump(logger = console) {
+    for (let position = 0; position < this.chunks.length; position++) {
+      const chunk = this.chunks[position];
+      let line = position + '\t';
+
+      switch (chunk.mode) {
+        case 'md':
+          line += 'M ';
+          break;
+        case 'html':
+          line += 'H ';
+          break;
+        case 'raw':
+          line += 'R ';
+          break;
+      }
+
+      if (chunk.isTag === true) {
+        line += chunk.tag;
+      }
+      if (chunk.isTag === false) {
+        line += chunk.text
+          .replace(/\n/g, '\\n')
+          .replace(/\t/g, '[TAB]');
+      }
+
+      logger.log(line);
     }
   }
 }

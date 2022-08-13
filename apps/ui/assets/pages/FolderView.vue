@@ -7,7 +7,7 @@
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" />
+      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
@@ -16,7 +16,7 @@
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
-      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" />
       <UserConfig v-if="activeTab === 'drive_config'" />
 
@@ -70,7 +70,8 @@ export default {
       folderPath: '',
       activeTab: DEFAULT_TAB,
       files: [],
-      selectedFile: {}
+      selectedFile: {},
+      selectedFolder: {}
     };
   },
   computed: {
@@ -108,7 +109,8 @@ export default {
     async fetchFolder(driveId, filePath) {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
       this.folderPath = filePath;
-      this.files = pathContent.files;
+      this.files = pathContent.files || [];
+      return pathContent;
     },
     async fetch() {
       const filePath = this.$route.path.substring('/drive'.length);
@@ -116,30 +118,26 @@ export default {
       const parts = filePath.split('/').filter(s => s.length > 0);
       const driveId = parts.shift();
       const baseName = parts.pop() || '';
-      if (baseName.indexOf('.') > -1) {
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
-        const file = this.files.find(f => f.fileName === baseName) || {};
-        this.selectedFile = file || {};
-      } else {
-        parts.push(baseName);
-        const dirPath = '/' + parts.join('/');
-        await this.fetchFolder(driveId, dirPath);
-        this.selectedFile = {};
-      }
-/*
-      const parentId = this.$route.params.parentId;
 
-      const response = await fetch(`/api/drive/${this.driveId}` + (folderId && folderId !== this.driveId ? '/folder/' + parentId : ''));
-      const json = await response.json();
-      console.log('Folder fetch', json);
-
-      this.notRegistered = !!json.not_registered;
-      if (this.notRegistered) {
-        this.shareEmail = json.share_email;
-        return;
+      try {
+        if (baseName.indexOf('.') > -1) {
+          const dirPath = '/' + parts.join('/');
+          await this.fetchFolder(driveId, dirPath);
+          const file = this.files.find(f => f.fileName === baseName) || {};
+          this.selectedFile = file || {};
+        } else {
+          parts.push(baseName);
+          const dirPath = '/' + parts.join('/');
+          this.selectedFolder = await this.fetchFolder(driveId, dirPath);
+          this.selectedFile = {};
+        }
+        this.notRegistered = false;
+      } catch (err) {
+        if (err.code === 404) {
+          this.shareEmail = err.share_email;
+          this.notRegistered = true;
+        }
       }
-*/
     }
   }
 };

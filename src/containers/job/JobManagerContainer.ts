@@ -11,7 +11,7 @@ import {GoogleFile} from '../../model/GoogleFile';
 import {BaseTreeItem, findInTree} from '../server/routes/FolderController';
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all';
+export type JobType = 'sync' | 'sync_all' | 'render_preview';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -31,6 +31,15 @@ export interface DriveJobs {
 
 export interface DriveJobsMap {
   [driveId: FileId]: DriveJobs;
+}
+
+function removeOldRenderPreview() {
+  return (job: Job) => {
+    if (job.type !== 'render_preview') {
+      return true;
+    }
+    return !(job.state === 'failed' || job.state === 'done');
+  };
 }
 
 function removeOldFullSyncJobs() {
@@ -119,6 +128,12 @@ export class JobManagerContainer extends Container {
         driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'running');
         driveJobs.jobs.push(job);
         break;
+      case 'render_preview':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'render_preview' && !['failed', 'done'].includes(subJob.state))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
     }
 
     await this.setDriveJobs(driveId, driveJobs);
@@ -161,6 +176,9 @@ export class JobManagerContainer extends Container {
         currentJob.state = 'running';
         this.runJob(driveId, currentJob)
           .then(() => {
+            if (currentJob.type === 'render_preview') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+            }
             if (currentJob.type === 'sync_all') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
               driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
@@ -175,6 +193,9 @@ export class JobManagerContainer extends Container {
           .catch(err => {
             const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
             logger.error(err);
+            if (currentJob.type === 'render_preview') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+            }
             if (currentJob.type === 'sync_all') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
               driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
@@ -230,6 +251,9 @@ export class JobManagerContainer extends Container {
       await this.engine.unregisterContainer(transformContainer.params.name);
     }
 
+  }
+
+  private async renderPreview(folderId: FileId) {
     const previewRendererContainer = new PreviewRendererContainer({
       name: folderId
     });
@@ -278,6 +302,9 @@ export class JobManagerContainer extends Container {
           break;
         case 'sync_all':
           await this.sync(driveId);
+          break;
+        case 'render_preview':
+          await this.renderPreview(driveId);
           break;
       }
     } catch (err) {

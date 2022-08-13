@@ -176,13 +176,6 @@ export class GitScanner {
       fileName = fileName.substring(1);
     }
 
-/*
-    const s = await this.repository.status({
-      file: fileName
-    });
-    console.log('s', s);
-*/
-
     try {
       const repo = await Repository.open(this.rootPath);
       const firstCommitOnMaster = await repo.getMasterCommit();
@@ -192,16 +185,29 @@ export class GitScanner {
       walker.sorting(Revwalk.SORT.TIME);
 
       const retVal = [];
-      const resultingArrayOfCommits = await walker.fileHistoryWalk(fileName, 500);
-      resultingArrayOfCommits.forEach(function(entry) {
-        const author = entry.commit.author();
-        const item = {
-          date: entry.commit.date(),
-          author_name: author.name() + ' <' + author.email() + '>',
-          message: entry.commit.message()
-        };
-        retVal.push(item);
-      });
+      if (fileName) {
+        const resultingArrayOfCommits = await walker.fileHistoryWalk(fileName, 500);
+        resultingArrayOfCommits.forEach(function(entry) {
+          const author = entry.commit.author();
+          const item = {
+            date: entry.commit.date(),
+            author_name: author.name() + ' <' + author.email() + '>',
+            message: entry.commit.message()
+          };
+          retVal.push(item);
+        });
+      } else {
+        const resultingArrayOfCommits = await walker.commitWalk(500);
+        resultingArrayOfCommits.forEach(function(commit) {
+          const author = commit.author();
+          const item = {
+            date: commit.date(),
+            author_name: author.name() + ' <' + author.email() + '>',
+            message: commit.message()
+          };
+          retVal.push(item);
+        });
+      }
 
       return retVal;
     } catch (err) {

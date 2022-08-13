@@ -1,8 +1,10 @@
-import {Controller, RouteGet, RouteParamPath} from './Controller';
+import {Controller, RouteGet, RouteParamPath, RouteParamUser} from './Controller';
 import {GitScanner} from '../../../git/GitScanner';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
+import {GoogleDriveService} from '../../../google/GoogleDriveService';
+import {GoogleAuthService} from '../../../google/GoogleAuthService';
 
 async function loadHugoThemes(filesService: FileContentService) {
   if (!await filesService.exists('hugo_themes.json')) {
@@ -24,26 +26,28 @@ export class DriveController extends Controller {
   }
 
   @RouteGet('/')
-  async getDrives() {
+  async getDrives(@RouteParamUser() user) {
     const folders = await this.folderRegistryContainer.getFolders();
 
-    const retVal = [];
-    for (const folderId in folders) {
-      // const driveJobs = driveJobsMap[folderId] || { jobs: [] };
-      const folder = folders[folderId];
-      retVal.push({
-        folderId,
-        name: folder.name,
-        // jobs_count: driveJobs.jobs.length
-      });
-    }
-    return retVal;
+    const googleDriveService = new GoogleDriveService(this.logger);
+    const googleAuthService = new GoogleAuthService();
+    const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+    googleUserAuth.setCredentials({ access_token: user.google_access_token });
+
+    const drives = await googleDriveService.listDrives(googleUserAuth);
+    return drives.map(drive => {
+      return {
+        folderId: drive.id,
+        name: drive.name,
+        exists: folders[drive.id]
+      };
+    });
   }
 
   @RouteGet('/:driveId')
   async getDrive(@RouteParamPath('driveId') driveId: string) {
     const folders = await this.folderRegistryContainer.getFolders();
-    const drive = folders[driveId] || {};
+    const drive = folders[driveId] || await this.folderRegistryContainer.registerFolder(driveId);
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
@@ -52,6 +56,7 @@ export class DriveController extends Controller {
     const userConfig = await userConfigService.load();
 
     const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
 
     const initialized = await gitScanner.isRepo();
 

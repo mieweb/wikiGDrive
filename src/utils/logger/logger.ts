@@ -45,8 +45,8 @@ const myFormat = winston.format.printf((params) => {
     if (params.stack) {
       errorStr += ' ' + params.stack;
     }
-    if (params.origError) {
-      errorStr += ' ' + JSON.stringify(params.origError, null, 2);
+    if (params.message) {
+      errorStr += ' ' + params.message;
     }
   }
 
@@ -147,12 +147,8 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
 
   process
     .on('unhandledRejection', async (reason: any) => {
-      console.error(reason);
+      console.error('unhandledRejection', reason);
       logger.error('unhandledRejection: ' + reason.message, reason);
-
-      if (reason.origError) {
-        reason = reason.origError;
-      }
 
       if (reason?.response?.data?.error === 'invalid_grant') {
         eventBus.emit('panic:invalid_grant');
@@ -161,7 +157,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
       process.exit(1);
     })
     .on('uncaughtException', err => {
-      console.error(err);
+      console.error('uncaughtException', err);
       logger.error('Uncaught Exception thrown', err);
       process.exit(1);
     });

@@ -1,11 +1,11 @@
 <template>
   <div class="container-fluid bg-light my-1">
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
-      <foo class="col-8">
+      <div class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
         <span v-else class="fw-bold">Last synced</span>
         <span class="small text-muted">&nbsp;{{ last_job.dateStr }}</span>
-      </foo>
+      </div>
       <div class="col-4 text-end">
         <button class="btn btn-light" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
@@ -38,6 +38,9 @@
       <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
         <i class="fa-brands fa-markdown me-1"></i>
       </button>
+      <a v-if="previewUrl" :href="previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
+        <i class="fa-regular fa-window-maximize me-1"></i>
+      </a>
       <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
         <i class="fa fa-download me-1"></i>
       </button>

@@ -6,7 +6,6 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';
-import {GoogleAuth} from '../../model/GoogleAuth';
 import {Drive} from '../folder_registry/FolderRegistryContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
@@ -53,7 +52,7 @@ export class GoogleApiContainer extends Container {
       if (google_auth) {
         this.auth.setCredentials(google_auth);
       } else {
-        const google_auth = await googleAuthService.getCliAccessToken(this.auth);
+        const google_auth = await googleAuthService.getCliAccessToken(this.authConfig.user_account.client_id, this.authConfig.user_account.client_secret);
         await this.filesService.writeJson('auth_token.json', google_auth);
         this.auth.setCredentials(google_auth);
       }
@@ -88,22 +87,8 @@ export class GoogleApiContainer extends Container {
     return await googleDriveService.getFile(this.auth, fileId);
   }
 
-  getAuth(): OAuth2Client {
+  getAuth(): OAuth2Client & HasQuotaLimiter {
     return this.auth;
-  }
-
-  getWebAuth(): OAuth2Client {
-    return this.webAuth;
-  }
-
-  async getWebAuthUrl(redirect_uri: string, state: string): Promise<string> {
-    const googleAuthService = new GoogleAuthService();
-    return await googleAuthService.getWebAuthUrl(this.webAuth, redirect_uri, state);
-  }
-
-  async getWebToken(redirect_uri: string, code: string): Promise<GoogleAuth> {
-    const googleAuthService = new GoogleAuthService();
-    return await googleAuthService.getWebToken(this.webAuth, redirect_uri, code);
   }
 
 }

@@ -26,6 +26,8 @@ function baseFileName(fileName) {
   return fileName.replace(/.*\//, '');
 }
 
+const COURIER_FONTS = ['Courier New', 'Courier'];
+
 export class OdtToMarkdown {
 
   private readonly stateMachine: StateMachine;
@@ -99,6 +101,12 @@ export class OdtToMarkdown {
 
   async spanToText(span: TextSpan): Promise<void> {
     const style = this.getStyle(span.styleName);
+
+    if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
+      this.stateMachine.pushTag('CODE');
+    }
+
+
     if (style.textProperties?.fontStyle === 'italic' && style.textProperties?.fontWeight === 'bold') {
       this.stateMachine.pushTag('BI');
     } else
@@ -108,9 +116,6 @@ export class OdtToMarkdown {
     if (style.textProperties?.fontWeight === 'bold') {
       this.stateMachine.pushTag('B');
     }
-    if (style.textProperties.fontName === 'Courier New') {
-      this.stateMachine.pushTag('CODE');
-    }
 
     for (const child of span.list) {
       if (typeof child === 'string') {
@@ -118,6 +123,9 @@ export class OdtToMarkdown {
         continue;
       }
       switch (child.type) {
+        case 'line_break':
+          this.stateMachine.pushTag('BR/');
+          break;
         case 'tab':
           this.stateMachine.pushText('\t');
           break;
@@ -136,7 +144,8 @@ export class OdtToMarkdown {
     if (style.textProperties?.fontWeight === 'bold') {
       this.stateMachine.pushTag('/B');
     }
-    if (style.textProperties.fontName === 'Courier New') {
+
+    if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
       this.stateMachine.pushTag('/CODE');
     }
   }
@@ -206,6 +215,9 @@ export class OdtToMarkdown {
                       continue;
                     }
                     switch (child.type) {
+                      case 'line_break':
+                        this.stateMachine.pushTag('BR/');
+                        break;
                       case 'tab':
                         this.stateMachine.pushText('\t');
                         break;
@@ -284,7 +296,7 @@ export class OdtToMarkdown {
 
   isCourier(styleName: string) {
     const style = this.getStyle(styleName);
-    if (style.textProperties?.fontName === 'Courier New') {
+    if (COURIER_FONTS.indexOf(style.textProperties?.fontName) > -1) {
       return true;
     }
 
@@ -344,8 +356,10 @@ export class OdtToMarkdown {
         this.stateMachine.pushText(child);
         continue;
       }
-      // string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab
       switch (child.type) {
+        case 'line_break':
+          this.stateMachine.pushTag('BR/');
+          break;
         case 'tab':
           this.stateMachine.pushText('\t');
           break;
@@ -356,7 +370,7 @@ export class OdtToMarkdown {
           {
             const span = <TextSpan>child;
             const spanStyle = this.getStyle(span.styleName);
-            if (spanStyle.textProperties.fontName === 'Courier New' && paragraph.list.length === 1) {
+            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && paragraph.list.length === 1) {
               this.stateMachine.pushTag('PRE');
               const span2 = Object.assign({}, span);
               span2.styleName = '';
@@ -428,6 +442,9 @@ export class OdtToMarkdown {
       switch (child.type) {
         case 'paragraph':
           await this.paragraphToText(<TextParagraph>child);
+          break;
+        case 'list':
+          await this.listToText(<TextList>child);
           break;
         case 'table':
           await this.tableToText(<TableTable>child);

@@ -1,7 +1,5 @@
-import {docs_v1} from 'googleapis';
 import {DownloadFile, DownloadFileImage} from '../storage/DownloadFilesStorage';
 import {getImageDistance} from '../utils/getImageMeta';
-import Schema$Document = docs_v1.Schema$Document;
 
 const TOLERANCE = 5;
 
@@ -73,7 +71,7 @@ export class EmbedImageFixer {
     return currentNo;
   }
 
-  async process(document: Schema$Document) {
+  async process(document) {
     // this.diagrams = await this.downloadFilesStorage.findFiles(file => file.mimeType === MimeTypes.DRAWING_MIME);
     // await this.fixEmbedImages(document.body.content, document.inlineObjects);
     return document;

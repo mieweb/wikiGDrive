@@ -43,6 +43,7 @@ jobs:
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           -v /home/githubactions/wikigdrive/env.prod:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
           wikigdrive-prod wikigdrive-ts \
@@ -50,7 +51,3 @@ jobs:
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
           server 3000
-
-    - name: Stop and remove
-      run: docker stop transform-preview-prod ; docker rm transform-preview-prod
-      continue-on-error: true

@@ -12,8 +12,9 @@ interface ParagraphSection {
 @XmlElement()
 @XmlElementChild('text:p', 'list', 'TextParagraph', {isArray: true})
 @XmlElementChild('table:table', 'list', 'TableTable', {isArray: true})
+@XmlElementChild('text:list', 'list', 'TextList', {isArray: true})
 export class TableCell {
-  list: Array<TextParagraph | TableTable> = [];
+  list: Array<TextParagraph | TableTable | TextList> = [];
 }
 
 @XmlElement()
@@ -53,11 +54,12 @@ export class TextSpace {
 @XmlText('list', {isArray: true})
 @XmlElementChild('text:s', 'list', 'TextSpace', {isArray: true})
 @XmlElementChild('text:tab', 'list', 'TextTab', {isArray: true})
+@XmlElementChild('text:line-break', 'list', 'TextLineBreak', {isArray: true})
 @XmlElementChild('office:annotation', 'annotations', 'OfficeAnnotation', {isArray: true})
 export class TextSpan implements ParagraphSection {
   type = 'span';
   annotations: OfficeAnnotation[] = [];
-  list: Array<string | TextSpace | TextTab> = [];
+  list: Array<string | TextSpace | TextTab | TextLineBreak> = [];
   styleName: string;
 }
 
@@ -170,6 +172,11 @@ export class TextTab implements ParagraphSection {
 }
 
 @XmlElement()
+export class TextLineBreak implements ParagraphSection {
+  type = 'line_break';
+}
+
+@XmlElement()
 @XmlAttribute('text:change-id', 'changeId')
 export class TextChangeStart {
   type = 'change_start';
@@ -193,6 +200,7 @@ export class TextChangeEnd {
 @XmlElementChild('draw:frame', 'list', 'DrawFrame', {isArray: true})
 @XmlElementChild('draw:g', 'list', 'DrawG', {isArray: true})
 @XmlElementChild('text:tab', 'list', 'TextTab', {isArray: true})
+@XmlElementChild('text:line-break', 'list', 'TextLineBreak', {isArray: true})
 @XmlElementChild('text:s', 'list', 'TextSpace', {isArray: true})
 @XmlElementChild('office:annotation', 'annotations', 'OfficeAnnotation', {isArray: true})
 @XmlElementChild('text:change-start', 'list', 'TextChangeStart', {isArray: true})
@@ -200,7 +208,7 @@ export class TextChangeEnd {
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextSpace| DrawG | TextChangeStart | TextChangeEnd> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace| DrawG | TextChangeStart | TextChangeEnd> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }
@@ -368,6 +376,7 @@ export const LIBREOFFICE_CLASSES = {
   'TextListItem': TextListItem,
   'TextBookmark': TextBookmark,
   'TextTab': TextTab,
+  'TextLineBreak': TextLineBreak,
   'DrawRect': DrawRect,
   'DrawFrame': DrawFrame,
   'DrawObject': DrawObject,

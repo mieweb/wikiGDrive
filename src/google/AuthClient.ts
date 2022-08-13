@@ -1,12 +1,13 @@
 'use strict';
 
 import {google} from 'googleapis';
-import {handleGoogleError} from './error';
+import {handleGoogleError} from './driveFetch';
 import {QuotaLimiter} from './QuotaLimiter';
 import {GaxiosOptions, GaxiosResponse} from 'gaxios';
 
 export interface HasQuotaLimiter {
   setQuotaLimiter(quotaLimiter: QuotaLimiter);
+  getQuotaLimiter(): QuotaLimiter;
 }
 
 export class QuotaAuthClient extends google.auth.OAuth2 implements HasQuotaLimiter {
@@ -16,11 +17,16 @@ export class QuotaAuthClient extends google.auth.OAuth2 implements HasQuotaLimit
     super(client_id, client_secret, redirect_uri);
   }
 
+  getQuotaLimiter(): QuotaLimiter {
+    return this.quotaLimiter;
+  }
+
   setQuotaLimiter(quotaLimiter) {
     this.quotaLimiter = quotaLimiter;
   }
 
   async requestAsync(opts: GaxiosOptions, retry = false): Promise<GaxiosResponse> {
+    // console.log('requestAsync1', Object.keys(opts), opts);
     return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       const job = async () => {
         try {
@@ -45,11 +51,16 @@ export class QuotaJwtClient extends google.auth.JWT implements HasQuotaLimiter {
     super(optionsOrEmail, keyFile, key, scopes, subject, keyId);
   }
 
+  getQuotaLimiter(): QuotaLimiter {
+    return this.quotaLimiter;
+  }
+
   setQuotaLimiter(quotaLimiter) {
     this.quotaLimiter = quotaLimiter;
   }
 
   async requestAsync(opts: GaxiosOptions, retry = false): Promise<GaxiosResponse> {
+    // console.log('requestAsync2', Object.keys(opts), opts);
     return new Promise(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
       const job = async () => {
         try {

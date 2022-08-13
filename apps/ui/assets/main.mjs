@@ -14,7 +14,9 @@ const app = Vue.createApp({
   data: {
     drive: {},
     jobs: [],
-    changes: []
+    jobsMap: {},
+    changes: [],
+    changesMap: {}
   },
   components: {
     'App': App
@@ -22,21 +24,47 @@ const app = Vue.createApp({
   template: '<App />',
   methods: {
     async changeDrive(toDriveId) {
-      this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
-      const titleEl = document.querySelector('title');
-      if (titleEl) {
-        if (this.drive?.name) {
-          titleEl.innerText = this.drive?.name + ' - wikigdrive';
-        } else {
-          titleEl.innerText = 'wikigdrive';
+      try {
+        this.drive = await vm.DriveClientService.changeDrive(toDriveId, vm);
+        const titleEl = document.querySelector('title');
+        if (titleEl) {
+          if (this.drive?.name) {
+            titleEl.innerText = this.drive?.name + ' - wikigdrive';
+          } else {
+            titleEl.innerText = 'wikigdrive';
+          }
         }
+      } catch (err) {
+        this.drive = {
+          id: toDriveId,
+          notRegistered: true
+        };
       }
     },
     setJobs(jobs) {
       this.jobs = jobs;
+      this.jobsMap = {};
+      for (const job of jobs) {
+        if (!['waiting', 'running'].includes(job.state)) {
+          continue;
+        }
+
+        if (job.type === 'sync_all') {
+          this.jobsMap['sync_all'] = job;
+          continue;
+        }
+        if (!job.payload) {
+          continue;
+        }
+        this.jobsMap[job.payload] = job;
+      }
     },
-    setChanges(jobs) {
-      this.changes = jobs;
+    setChanges(changes) {
+      this.changes = changes;
+      this.changesMap = {};
+      for (const change of changes) {
+        this.changesMap[change.id] = change;
+      }
     }
   }
 });
@@ -78,6 +106,7 @@ const router = new VueRouter.createRouter({
     },
     {
       path: '/',
+      name: 'home',
       component: () => import('./pages/MainView.vue')
     },
     {

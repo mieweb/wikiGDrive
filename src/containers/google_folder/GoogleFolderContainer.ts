@@ -11,6 +11,7 @@ import {FileContentService} from '../../utils/FileContentService';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
+import {HasQuotaLimiter} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -26,7 +27,7 @@ export interface GoogleTreeItem {
 export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;
   private googleDriveService: GoogleDriveService;
-  private auth: OAuth2Client;
+  private auth: OAuth2Client & HasQuotaLimiter;
   private filterFilesIds: FileId[];
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {

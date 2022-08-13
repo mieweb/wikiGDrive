@@ -1,28 +1,19 @@
 'use strict';
 
-import {google} from 'googleapis';
+// https://developers.google.com/drive/api/v3/reference
+
 import {Logger} from 'winston';
-import {drive_v3} from 'googleapis/build/src/apis/drive/v3';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
-import Schema$Permission = drive_v3.Schema$Permission;
 import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
 import {FileId} from '../model/model';
+import {driveFetch, driveFetchStream} from './driveFetch';
+import {HasQuotaLimiter} from './AuthClient';
 
 export interface Changes {
   token: string;
   files: GoogleFile[];
-}
-
-interface GoogleDriveServiceErrorParams {
-  origError: Error;
-  isQuotaError: boolean;
-
-  code?: number;
-  file?: SimpleFile;
-  dest?: Writable;
-  folderId?: string;
 }
 
 export interface ListContext {
@@ -34,29 +25,7 @@ export interface ListContext {
   // parentName?: string;
 }
 
-export class GoogleDriveServiceError extends Error {
-  private file: SimpleFile;
-  private dest: Writable;
-  private folderId: string;
-  private isQuotaError: boolean;
-  private origError: Error;
-  private code: number;
-
-  constructor(msg, params?: GoogleDriveServiceErrorParams) {
-    super(msg);
-    if (params) {
-      this.code = params.code;
-      this.origError = params.origError;
-      this.isQuotaError = params.isQuotaError;
-
-      this.file = params.file;
-      this.dest = params.dest;
-      this.folderId = params.folderId;
-    }
-  }
-}
-
-function apiFileToGoogleFile(apiFile: drive_v3.Schema$File): GoogleFile {
+function apiFileToGoogleFile(apiFile): GoogleFile {
   const googleFile: GoogleFile = <GoogleFile>Object.assign({}, apiFile, {
     parentId: (apiFile.parents && apiFile.parents.length > 0) ? apiFile.parents[0] : undefined,
     size: apiFile.size ? +apiFile.size : undefined
@@ -76,9 +45,7 @@ export class GoogleDriveService {
   constructor(private logger: Logger) {
   }
 
-  async getStartTrackToken(auth: OAuth2Client, driveId?: string): Promise<string> {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async getStartTrackToken(auth: OAuth2Client & HasQuotaLimiter, driveId?: string): Promise<string> {
     const params = {
       supportsAllDrives: true,
       driveId: undefined
@@ -88,47 +55,40 @@ export class GoogleDriveService {
       params.driveId = driveId;
     }
 
-    const res = await drive.changes.getStartPageToken(params);
-    return res.data.startPageToken;
+    const res = await driveFetch(auth, 'GET', 'https://www.googleapis.com/drive/v3/changes/startPageToken', params);
+    return res.startPageToken;
   }
 
-  async subscribeWatch(auth: OAuth2Client, pageToken: string, driveId?: string) {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async subscribeWatch(auth: OAuth2Client & HasQuotaLimiter, pageToken: string, driveId?: string) {
     try {
-      const res = await drive.changes.watch({
+      const params = {
         pageToken,
-        supportsAllDrives: true,
+          supportsAllDrives: true,
         includeItemsFromAllDrives: true,
         fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed), removed)',
         includeRemoved: true,
         driveId: driveId ? driveId : undefined
-      });
-
-      console.log(res);
-      return res;
+      };
+      return await driveFetch(auth, 'POST', 'https://www.googleapis.com/drive/v3/changes/watch', params);
     } catch (err) {
-      throw new GoogleDriveServiceError('Error watching', {
-        origError: err,
-        isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error watching: ' + err.message;
+      throw err;
     }
   }
 
-  async watchChanges(auth: OAuth2Client, pageToken: string, driveId?: string): Promise<Changes> {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async watchChanges(auth: OAuth2Client & HasQuotaLimiter, pageToken: string, driveId?: string): Promise<Changes> {
     try {
-      const res = await drive.changes.list({
+      const params = {
         pageToken: pageToken,
         supportsAllDrives: true,
         includeItemsFromAllDrives: true,
         fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed), removed)',
         includeRemoved: true,
         driveId: driveId ? driveId : undefined
-      });
+      };
+      const res = await driveFetch(auth, 'GET', 'https://www.googleapis.com/drive/v3/changes', params);
 
-      const files = res.data.changes
+      const files = res.changes
         .filter(change => !!change.file)
         .map(change => {
           if (change.removed) {
@@ -139,20 +99,16 @@ export class GoogleDriveService {
         .map(apiFile => apiFileToGoogleFile(apiFile));
 
       return {
-        token: res.data.nextPageToken || res.data.newStartPageToken,
+        token: res.nextPageToken || res.newStartPageToken,
         files: files
       };
     } catch (err) {
-      throw new GoogleDriveServiceError('Error watching changes', {
-        origError: err,
-        isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error watching changes: ' + err.message;
+      throw err;
     }
   }
 
-  async listFiles(auth: OAuth2Client, context: ListContext, pageToken?: string) {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async listFiles(auth: OAuth2Client & HasQuotaLimiter, context: ListContext, pageToken?: string) {
     let query = '';
 
     if (context.folderId) {
@@ -179,85 +135,73 @@ export class GoogleDriveService {
     };
 
     try {
-      const res = await drive.files.list(listParams);
+      const res = await driveFetch(auth, 'GET', 'https://www.googleapis.com/drive/v3/files', listParams);
 
       const apiFiles = [];
 
-      if (res.data.nextPageToken) {
-        const nextFiles = await this.listFiles(auth, context, res.data.nextPageToken);
+      if (res.nextPageToken) {
+        const nextFiles = await this.listFiles(auth, context, res.nextPageToken);
         apiFiles.push(...nextFiles);
       }
-      apiFiles.push(...res.data.files);
+      apiFiles.push(...res.files);
 
       return apiFiles.map(apiFile => apiFileToGoogleFile(apiFile));
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening directory ' + context.folderId, {
-        origError: err,
-        folderId: context.folderId,
-        isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error listening directory ' + context.folderId;
+      err.folderId = context.folderId;
+      throw err;
     }
   }
 
-  async listPermissions(auth: OAuth2Client, fileId: string, pageToken?: string) {
-    const drive = google.drive({ version: 'v3', auth });
+  async listPermissions(auth: OAuth2Client & HasQuotaLimiter, fileId: string, pageToken?: string) {
+    const params = {
+      fileId: fileId,
+      supportsAllDrives: true,
+      // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+      fields: '*',
+      pageToken: pageToken
+    };
+    const res = await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
 
-    try {
-      const res = await drive.permissions.list({
-        fileId: fileId,
-        supportsAllDrives: true,
-        // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
-        fields: '*',
-        pageToken: pageToken
-      });
+    const permissions = [];
 
-      const permissions = [];
-
-      if (res.data.nextPageToken) {
-        const nextItems = await this.listPermissions(auth, fileId, res.data.nextPageToken);
-        permissions.push(...nextItems);
-      }
-      permissions.push(...res.data.permissions);
-
-      return permissions;
-    } catch (err) {
-      throw new GoogleDriveServiceError('Error download fileId: ' + fileId, {
-        origError: err, isQuotaError: err.isQuotaError
-      });
+    if (res.nextPageToken) {
+      const nextItems = await this.listPermissions(auth, fileId, res.nextPageToken);
+      permissions.push(...nextItems);
     }
+    permissions.push(...res.permissions);
+
+    return permissions;
   }
 
-  async getFile(auth: OAuth2Client, fileId: FileId) {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async getFile(auth: OAuth2Client & HasQuotaLimiter, fileId: FileId) {
     try {
-      const res = await drive.files.get({
+      const params = {
         fileId: fileId,
         supportsAllDrives: true,
         // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
         fields: '*'
-      });
+      };
+      const res = await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}`, params);
 
-      return apiFileToGoogleFile(res.data);
+      return apiFileToGoogleFile(res);
     } catch (err) {
-      throw new GoogleDriveServiceError('Error download fileId: ' + fileId, {
-        origError: err, isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error downloading fileId: ' + fileId + ': ' + err.message;
+      throw err;
     }
   }
 
-  async download(auth: OAuth2Client, file: SimpleFile, dest: Writable) {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async download(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable) {
     try {
-      const res = await drive.files.get({
+      const params = {
         fileId: file.id,
         alt: 'media',
         supportsAllDrives: true
-      }, { responseType: 'stream' });
+      };
+      const res = await driveFetchStream(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}`, params);
 
       return new Promise<void>((resolve, reject) => {
-        res.data
+        res
             .on('end', () => {
               resolve();
             })
@@ -267,28 +211,26 @@ export class GoogleDriveService {
             .pipe(dest);
       });
     } catch (err) {
-      throw new GoogleDriveServiceError('Error download file: ' + file.id + ' ' + err.message, {
-        origError: err,
-        file, dest, isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error download file: ' + file.id + ' ' + err.message;
+      err.file = file;
+      throw err;
     }
   }
 
-  async exportDocument(auth: OAuth2Client, file: SimpleFile, dest: Writable) {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async exportDocument(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable) {
     const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
-      const res = await drive.files.export({
+      const params = {
         fileId: file.id,
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
-      }, { responseType: 'stream' });
+      };
+      const res = await driveFetchStream(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
 
       return await new Promise((resolve, reject) => {
-        let stream = res.data
+        let stream = res
           .on('error', err => {
             reject(err);
           });
@@ -311,39 +253,28 @@ export class GoogleDriveService {
       if (!err.isQuotaError && err?.code != 404) {
         this.logger.error(err);
       }
-      throw new GoogleDriveServiceError('Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id + ' ' + file.name, {
-        origError: err,
-        file, dest, isQuotaError: err.isQuotaError
-      });
+      err.message = 'Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id + ' ' + file.name;
+      err.file = file;
+      throw err;
     }
   }
 
-  async about(auth: OAuth2Client) {
-    try {
-      const drive = google.drive({ version: 'v3', auth });
-      const res = await drive.about.get({
-        fields: '*'
-      });
-      return res.data;
-    } catch (err) {
-      throw new GoogleDriveServiceError('Error about: ' + err.response.statusText, {
-        origError: err,
-        isQuotaError: err.isQuotaError,
-      });
-    }
+  async about(auth: OAuth2Client & HasQuotaLimiter) {
+    const params = {
+      fields: '*'
+    };
+    return await driveFetch(auth, 'GET', 'https://www.googleapis.com/drive/v3/about', params);
   }
 
-  async listDrives(auth: OAuth2Client, pageToken?: string): Promise<Drive[]> {
-    const drive = google.drive({ version: 'v3', auth });
-
+  async listDrives(auth: OAuth2Client & HasQuotaLimiter, pageToken?: string): Promise<Drive[]> {
     const listParams = {
       pageSize: 100,
       pageToken: pageToken
     };
 
     try {
-      const res = await drive.drives.list(listParams);
-      const drives = res.data.drives.map(drive => {
+      const res = await driveFetch(auth, 'GET', 'https://www.googleapis.com/drive/v3/drives', listParams);
+      const drives = res.drives.map(drive => {
         return {
           id: drive.id,
           name: drive.name,
@@ -351,59 +282,40 @@ export class GoogleDriveService {
         };
       });
 
-      if (res.data.nextPageToken) {
-        const nextDrives = await this.listDrives(auth, res.data.nextPageToken);
+      if (res.nextPageToken) {
+        const nextDrives = await this.listDrives(auth, res.nextPageToken);
         return drives.concat(nextDrives);
       } else {
         return drives;
       }
     } catch (err) {
-      throw new GoogleDriveServiceError('Error listening drives: ' + err.response.statusText, {
-        origError: err,
-        isQuotaError: err.isQuotaError,
-      });
+      err.message = 'Error listening drives: ' + err.message;
+      throw err;
     }
   }
 
-  async getDrive(auth: OAuth2Client, driveId: FileId): Promise<Drive> {
-    try {
-      const drive = google.drive({ version: 'v3', auth });
-      const res = await drive.drives.get({ driveId });
-      return {
-        id: driveId,
-        name: res.data.name,
-        kind: res.data.kind
-      };
-    } catch (err) {
-      throw new GoogleDriveServiceError('Error getting drive: ' + err.response?.statusText, {
-        code: err.response.status,
-        origError: err,
-        isQuotaError: err.isQuotaError,
-      });
-    }
+  async getDrive(auth: OAuth2Client & HasQuotaLimiter, driveId: FileId): Promise<Drive> {
+    const params = {
+      driveId
+    };
+    const res = await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/drives/${driveId}`, params);
+    return {
+      id: driveId,
+      name: res.name,
+      kind: res.kind
+    };
   }
 
-  async shareDrive(auth: OAuth2Client, driveId: string, email: string) {
-    try {
-      const permissions: Schema$Permission = {
+  async shareDrive(auth: OAuth2Client & HasQuotaLimiter, fileId: string, email: string) {
+    const params = {
+      requestBody: {
         type: 'user',
         role: 'reader',
         emailAddress: email
-      };
-
-      const drive = google.drive({ version: 'v3', auth });
-      const res = await drive.permissions.create({
-        requestBody: permissions,
-        fileId: driveId,
-        fields: 'id',
-      });
-      return res.data;
-    } catch (err) {
-      console.error(err);
-      throw new GoogleDriveServiceError('Error getting drive: ' + err.response.statusText, {
-        origError: err,
-        isQuotaError: err.isQuotaError,
-      });
-    }
+      },
+      fileId,
+      fields: 'id',
+    };
+    return await driveFetch(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
   }
 }

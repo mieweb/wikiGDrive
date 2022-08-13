@@ -20,6 +20,8 @@ export default class GitController extends Controller {
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
     const history = await gitScanner.history(filePath);
 
     return history;
@@ -29,6 +31,7 @@ export default class GitController extends Controller {
   async getCommit(@RouteParamPath('driveId') driveId: string) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
 
     const changes = await gitScanner.changes();
     return { changes };
@@ -41,6 +44,7 @@ export default class GitController extends Controller {
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
 
     const transformPaths = [];
 
@@ -70,6 +74,7 @@ export default class GitController extends Controller {
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
       const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
 
       const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
       const userConfigService = new UserConfigService(googleFileSystem);
@@ -97,6 +102,7 @@ export default class GitController extends Controller {
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
       const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
 
       const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
       const userConfigService = new UserConfigService(googleFileSystem);

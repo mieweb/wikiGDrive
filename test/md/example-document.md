@@ -161,6 +161,7 @@ ___
 
 This is after the horizontal line.
 
+
 ## Lists
 
 * Bullet 1
@@ -177,7 +178,7 @@ This is after the horizontal line.
 
 ## Formatting
 
-Some **bold ****_boldanditalic_*** italic*  text
+Some **bold** **_boldanditalic_*** italic*  text
 
 
 ## Equations

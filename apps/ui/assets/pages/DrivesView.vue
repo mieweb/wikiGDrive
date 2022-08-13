@@ -1,7 +1,7 @@
 <template>
   <BaseLayout :sidebar="false">
     <template v-slot:default>
-      <div class="x-container">
+      <div class="container">
         <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">
           <thead>
           <tr>
@@ -40,8 +40,7 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch('/api/ps');
-      this.drives = await response.json();
+      this.drives = await this.DriveClientService.getDrives();
     },
     open(url) {
       window.open(url, '_blank');

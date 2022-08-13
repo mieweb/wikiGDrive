@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express} from 'express';
+import express, {Express, Request, Response, NextFunction} from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
@@ -13,7 +13,6 @@ import {urlToFolderId} from '../../utils/idParsers';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {fileURLToPath} from 'url';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
 import GitController from './routes/GitController';
@@ -28,7 +27,9 @@ import cookieParser from 'cookie-parser';
 import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
 import * as fs from 'fs';
-import {authenticate, signToken} from './auth';
+import {authenticate, AuthError, signToken} from './auth';
+import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
+import {Logger} from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,10 @@ interface TreeItem {
   name: string;
   mimeType: string;
   children?: TreeItem[];
+}
+
+function openerRedirect(res: Response, redirectTo: string) {
+  res.send(`<script>window.opener.authenticated('${redirectTo}');</script>`);
 }
 
 function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
@@ -102,6 +107,27 @@ export class ServerContainer extends Container {
   }
 
   private async initUiServer(app) {
+    const customLogger: Logger = {
+      hasWarned: false,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      clearScreen() {},
+      error: (msg: string) => {
+        this.logger.error(msg);
+      },
+      hasErrorLogged: () => {
+        return false;
+      },
+      info: (msg: string) => {
+        this.logger.info(msg);
+      },
+      warn: (msg: string) => {
+        this.logger.warn(msg);
+      },
+      warnOnce: (msg: string) => {
+        this.logger.warn(msg);
+      }
+    };
+
     const viteInstance = await vite.createServer({
       root: HTML_DIR,
       logLevel: 'info',
@@ -114,12 +140,13 @@ export class ServerContainer extends Container {
           usePolling: true,
           interval: 100
         }
-      }
+      },
+      customLogger: customLogger
     });
     app.use(viteInstance.middlewares);
 
     app.use((req: express.Request, res: express.Response) => {
-      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path === '/') {
+      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
         const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
           .toString()
           .replace(/GIT_SHA/g, process.env.GIT_SHA);
@@ -133,7 +160,9 @@ export class ServerContainer extends Container {
   private async startServer(port) {
     const app = this.app = express();
 
-    app.use(express.json());
+    app.use(express.json({
+      limit: '50mb'
+    }));
     app.use(cookieParser());
 
     app.use((req, res, next) => {
@@ -160,13 +189,30 @@ export class ServerContainer extends Container {
       this.socketManager.addSocketConnection(ws, parts[2]);
     });
 
-    app.use((err, req, res, next) => {
-      const code = err.status || err.code;
+    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
+      const code = err.status || 501;
       switch(code) {
         case 404:
-          res.status(code).send({ code, message: err.message });
+          if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
+            const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
+              .toString()
+              .replace(/GIT_SHA/g, process.env.GIT_SHA);
+            res.status(404).header('Content-type', 'text/html').end(indexHtml);
+          } else {
+            res.status(code).send({ code, message: err.message });
+          }
           return;
         case 401:
+          if (req.headers['redirect-to']) {
+            err.redirectTo = req.headers['redirect-to'].toString();
+          } else {
+            err.redirectTo = '/drive/' + req['driveId'];
+          }
+          if (req['driveId']) {
+            err.authPath = '/auth/' + req['driveId'] + '?redirectTo=' + err.redirectTo;
+          } else {
+            err.authPath = '/auth/none?redirectTo=' + err.redirectTo;
+          }
           res.status(code).send({ message: err.message, authPath: err.authPath });
           return;
         default:
@@ -190,14 +236,13 @@ export class ServerContainer extends Container {
         const redirectTo = req.query.redirectTo;
 
         const googleAuthService = new GoogleAuthService();
-        const auth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
 
-        const state = new URLSearchParams({
-          driveId,
+        const state = new URLSearchParams(filterParams({
+          driveId: driveId !== 'none' ? driveId : undefined,
           redirectTo
-        }).toString();
+        })).toString();
 
-        const authUrl = await googleAuthService.getWebAuthUrl(auth, `${serverUrl}/auth`, state);
+        const authUrl = await googleAuthService.getWebAuthUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/auth`, state);
 
         res.redirect(authUrl);
       } catch (err) {
@@ -211,6 +256,11 @@ export class ServerContainer extends Container {
         const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
         const serverUrl = protocol + hostname;
 
+        if (!req.query.not_popup) {
+          openerRedirect(res, req.url + '&not_popup=1');
+          return;
+        }
+
         if (!req.query.state) {
           throw new Error('No state query parameter');
         }
@@ -219,42 +269,48 @@ export class ServerContainer extends Container {
         const redirectTo = state.get('redirectTo');
 
         const googleAuthService = new GoogleAuthService();
-        const auth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-        const token = await googleAuthService.getWebToken(auth, `${serverUrl}/auth`, req.query.code);
-
-        const auth2 = new OAuth2Client();
-        auth2.setCredentials(token);
+        const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
+        const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+        googleUserAuth.setCredentials(token);
 
         const googleDriveService = new GoogleDriveService(this.logger);
-        const drive = await googleDriveService.getDrive(auth2, driveId);
+        const googleUser = await googleAuthService.getUser({ access_token: token.access_token });
 
-        if (drive.id) {
-          const googleUser = await googleAuthService.getUser({ access_token: token.access_token });
-          const accessToken = signToken(googleUser, driveId);
+        if (driveId) {
+          const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
+          if (drive.id) {
+            const accessToken = signToken(googleUser, driveId);
+            res.cookie('accessToken', accessToken, {
+              httpOnly: true,
+              secure: true,
+              sameSite: 'none'
+            });
+            res.redirect(redirectTo || '/');
+            return;
+          }
+        } else {
+          const accessToken = signToken(googleUser, '');
           res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite: 'none'
           });
-
-          res.redirect(redirectTo);
+          res.redirect(redirectTo || '/');
           return;
         }
 
         res.json({});
       } catch (err) {
-        next(err);
-      }
-    });
-
-    app.post('/auth/gdrive', async (req, res, next) => {
-      try {
-        const driveId = req.data.driveId;
-        if (!driveId) {
-          throw new Error('No driveId');
+        if (err.message.indexOf('invalid_grant') > -1) {
+          if (req.query.state) {
+            const state = new URLSearchParams(req.query.state);
+            const redirectTo = state.get('redirectTo');
+            res.redirect(redirectTo || '/');
+          } else {
+            res.redirect('/');
+          }
+          return;
         }
-
-        res.json({ driveId });
-      } catch (err) {
         next(err);
       }
     });
@@ -262,27 +318,27 @@ export class ServerContainer extends Container {
 
   async initRouter(app) {
     const driveController = new DriveController('/api/drive', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
-    app.use('/api/drive', authenticate(), await driveController.getRouter());
+    app.use('/api/drive', authenticate(this.logger), await driveController.getRouter());
 
     const gitController = new GitController('/api/git', this.filesService);
-    app.use('/api/git', authenticate(), await gitController.getRouter());
+    app.use('/api/git', authenticate(this.logger), await gitController.getRouter());
 
     const folderController = new FolderController('/api/file', this.filesService, this.authContainer);
-    app.use('/api/file', authenticate(), await folderController.getRouter());
+    app.use('/api/file', authenticate(this.logger), await folderController.getRouter());
 
     const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);
-    app.use('/api/gdrive', authenticate(), await googleDriveController.getRouter());
+    app.use('/api/gdrive', authenticate(this.logger), await googleDriveController.getRouter());
 
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
-    app.use('/api/backlinks', authenticate(), await backlinksController.getRouter());
+    app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
 
     const configController = new ConfigController('/api/config', this.filesService);
-    app.use('/api/config', authenticate(), await configController.getRouter());
+    app.use('/api/config', authenticate(this.logger), await configController.getRouter());
 
     const logsController = new LogsController('/api/logs', this.logger);
-    app.use('/api/logs', authenticate(), await logsController.getRouter());
+    app.use('/api/logs', authenticate(this.logger), await logsController.getRouter());
 
-    app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(2), async (req, res, next) => {
+    app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -311,7 +367,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/drive/:driveId/transformed/(:fileId)', authenticate(2), async (req, res, next) => {
+    app.get('/api/drive/:driveId/transformed/(:fileId)', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -366,14 +422,14 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/sync/:driveId', authenticate(2), async (req, res, next) => {
+    app.post('/api/render_preview/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
-          type: 'sync_all',
-          title: 'Syncing all'
+          type: 'render_preview',
+          title: 'Render preview'
         });
 
         res.json({ driveId });
@@ -382,7 +438,27 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/sync/:driveId/:fileId', authenticate(2), async (req, res, next) => {
+    app.post('/api/sync/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        await jobManagerContainer.schedule(driveId, {
+          type: 'sync_all',
+          title: 'Syncing all'
+        });
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
+        });
+
+        res.json({ driveId });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.post('/api/sync/:driveId/:fileId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const fileId = req.params.fileId;
@@ -405,13 +481,18 @@ export class ServerContainer extends Container {
           title: 'Syncing file: ' + fileTitle
         });
 
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
+        });
+
         res.json({ driveId, fileId });
       } catch (err) {
         next(err);
       }
     });
 
-    app.get('/api/inspect/:driveId', authenticate(2), async (req, res, next) => {
+    app.get('/api/inspect/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
@@ -427,45 +508,24 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/api/share_drive', async (req, res) => {
-      const serverUrl = 'http://localhost:3000';
-      const driveId = req.query.state;
-      const code = req.query.code;
-
-      const googleAuthService = new GoogleAuthService();
-      const authConfig: AuthConfig = this.authContainer['authConfig'];
-      const auth = await googleAuthService.authorizeUserAccount(authConfig.web_account.client_id, authConfig.web_account.client_secret);
-      try {
-        const google_auth = await googleAuthService.getWebToken(auth, serverUrl + '/api/share_drive', code);
-        auth.setCredentials(google_auth);
-
-        const googleDriveService = new GoogleDriveService(this.logger);
-        await googleDriveService.shareDrive(auth, driveId, authConfig.share_email);
-
-        res.json({
-          driveId
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    });
-
-    app.post('/api/share_drive', async (req, res, next) => {
+    app.post('/api/share_drive', authenticate(this.logger, -1), async (req, res, next) => {
       try {
         const folderUrl = req.body.url;
         const driveId = urlToFolderId(folderUrl);
 
-        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
         if (!driveId) {
           throw new Error('No DriveId');
         }
-        const folder = await folderRegistryContainer.registerFolder(driveId);
 
-        // const googleAuthService = new GoogleAuthService();
-        // const authConfig: AuthConfig = this.authContainer['authConfig'];
-        // const auth = await googleAuthService.authorizeUserAccount(authConfig.web_account.client_id, authConfig.web_account.client_secret);
-        // const authUrl = await googleAuthService.getWebAuthUrl(auth, serverUrl + '/api/share_drive', driveId);
-        // console.log('google_auth', authUrl);
+        const googleDriveService = new GoogleDriveService(this.logger);
+        const googleAuthService = new GoogleAuthService();
+        const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+        googleUserAuth.setCredentials({ access_token: req.user.google_access_token });
+
+        const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
+
+        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+        const folder = await folderRegistryContainer.registerFolder(drive.id);
 
         res.json(folder);
       } catch (err) {

@@ -4,7 +4,6 @@ import winston from 'winston';
 import Docker from 'dockerode';
 import {fileURLToPath} from 'url';
 import {BufferWritable} from '../../utils/BufferWritable';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -52,6 +51,16 @@ export class PreviewRendererContainer extends Container {
     await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
 
     try {
+      this.logger.info(`docker run
+        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site/content"
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir}"
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
+        --env THEME_ID=${themeId}
+        --env THEME_SUBPATH=${themeSubPath}
+        --env THEME_URL=${themeUrl}
+        `);
+
       const writable = new BufferWritable();
       const result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
         HostConfig: {

@@ -20,7 +20,7 @@
               <td>{{ row.timestamp }}</td>
               <td>{{ row.level }}</td>
               <td>{{ row.message }}</td>
-              <td><pre>{{ row.stack }}{{ row.origError }}</pre></td>
+              <td><pre>{{ row.stack }}</pre></td>
             </tr>
           </tbody>
         </table>

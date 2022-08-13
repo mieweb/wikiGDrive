@@ -39,6 +39,7 @@ jobs:
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           -v /home/githubactions/wikigdrive/env.develop:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:4000:3000 \
           "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
           --service_account /service_account.json \

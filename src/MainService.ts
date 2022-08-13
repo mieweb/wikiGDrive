@@ -105,9 +105,6 @@ export class MainService {
       } else {
         this.logger.error(error.message);
       }
-      if (error.origError) {
-        this.logger.error(error.origError);
-      }
       console.error(error.message);
       process.exit(1);
       */

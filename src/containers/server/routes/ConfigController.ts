@@ -67,7 +67,11 @@ export class ConfigController extends Controller {
     if (body.remote_url) {
       await gitScanner.setRemoteUrl(body.remote_url);
     }
-    return {};
+
+    return {
+      ...userConfigService.config,
+      remote_url: await gitScanner.getRemoteUrl()
+    };
   }
 
 }

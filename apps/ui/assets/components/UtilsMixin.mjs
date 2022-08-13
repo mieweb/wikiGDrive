@@ -9,8 +9,14 @@ export const UtilsMixin = {
     changes() {
       return this.$root.changes || [];
     },
+    changesMap() {
+      return this.$root.changesMap || {};
+    },
     jobs() {
       return this.$root.jobs || [];
+    },
+    jobsMap() {
+      return this.$root.jobsMap || {};
     },
     active_jobs() {
       return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
@@ -53,6 +59,20 @@ export const UtilsMixin = {
           .replace(/.git$/, '');
       }
       return '';
+    },
+    previewUrl() {
+      if (!this.folderPath) {
+        return '';
+      }
+      if (!this.selectedFile) {
+        return '';
+      }
+      const folderPath = this.folderPath.endsWith('/') ? this.folderPath : this.folderPath + '/';
+      const fullUrlPreview = '/' + this.driveId + (this.drive.hugo_theme?.id ? `/${this.drive.hugo_theme?.id}` : '') + folderPath + this.selectedFile.fileName;
+      return window.location.protocol + '//' + window.location.hostname + '/preview' +
+        fullUrlPreview
+          .replace(/.md$/, '')
+          .replace(/_index$/, '');
     }
   },
   methods: {
@@ -120,6 +140,11 @@ export const UtilsMixin = {
     },
     async syncAll() {
       await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
+        method: 'post'
+      });
+    },
+    async renderPreview() {
+      await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
         method: 'post'
       });
     },
