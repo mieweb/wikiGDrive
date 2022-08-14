@@ -1,8 +1,14 @@
+import AuthModal from '../components/AuthModal.vue';
+
 export class NotFoundError extends Error {
   code = 404;
 }
 
 export class AuthenticatedClient {
+
+  constructor(app) {
+    this.app = app;
+  }
 
   async fetchApi(url, params = {}) {
     if (!params.headers) {
@@ -17,14 +23,12 @@ export class AuthenticatedClient {
         {
           const json = await response.json();
           if (json.authPath) {
-            if (!window['authPopup']) {
-              window['authPopup'] = window.open(json.authPath, '_blank', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no')
-              window['authenticated'] = (url) => {
-                window['authPopup'].close();
-                window['authPopup'] = null;
-                window.location = url;
-              };
-            }
+            this.app.$root.$addModal({
+              component: AuthModal,
+              props: {
+                authPath: json.authPath
+              },
+            });
           }
         }
         throw new Error(url + ' ' + response.statusText);
