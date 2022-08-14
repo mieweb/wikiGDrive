@@ -43,7 +43,7 @@ interface TreeItem {
 }
 
 function openerRedirect(res: Response, redirectTo: string) {
-  res.send(`<script>window.opener.authenticated('${redirectTo}');</script>`);
+  res.send(`<script>window.opener.authenticated('${redirectTo}');window.close();</script>`);
 }
 
 function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {

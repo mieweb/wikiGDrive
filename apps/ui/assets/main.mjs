@@ -9,6 +9,7 @@ import * as VueRouter from 'vue-router';
 
 import App from './App.vue';
 import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
+import {ModalsMixin} from './modals/ModalsMixin.mjs';
 
 const app = Vue.createApp({
   data: {
@@ -21,6 +22,7 @@ const app = Vue.createApp({
   components: {
     'App': App
   },
+  mixins: [ModalsMixin],
   template: '<App />',
   methods: {
     async changeDrive(toDriveId) {
@@ -71,7 +73,7 @@ const app = Vue.createApp({
 
 app.mixin({
   data() {
-    const authenticatedClient = new AuthenticatedClient();
+    const authenticatedClient = new AuthenticatedClient(this);
     return {
       authenticatedClient,
       DriveClientService: new DriveClientService(authenticatedClient),
