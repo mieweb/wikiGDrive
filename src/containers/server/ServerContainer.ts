@@ -448,6 +448,10 @@ export class ServerContainer extends Container {
           title: 'Syncing all'
         });
         await jobManagerContainer.schedule(driveId, {
+          type: 'transform',
+          title: 'Transform markdown'
+        });
+        await jobManagerContainer.schedule(driveId, {
           type: 'render_preview',
           title: 'Render preview'
         });
@@ -480,7 +484,11 @@ export class ServerContainer extends Container {
           payload: fileId,
           title: 'Syncing file: ' + fileTitle
         });
-
+        await jobManagerContainer.schedule(driveId, {
+          type: 'transform',
+          payload: fileId,
+          title: 'Transform markdown'
+        });
         await jobManagerContainer.schedule(driveId, {
           type: 'render_preview',
           title: 'Render preview'

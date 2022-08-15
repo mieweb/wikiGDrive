@@ -11,7 +11,7 @@ import {GoogleFile} from '../../model/GoogleFile';
 import {BaseTreeItem, findInTree} from '../server/routes/FolderController';
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'render_preview';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -37,6 +37,15 @@ export interface DriveJobsMap {
 function removeOldRenderPreview() {
   return (job: Job) => {
     if (job.type !== 'render_preview') {
+      return true;
+    }
+    return !(job.state === 'failed' || job.state === 'done');
+  };
+}
+
+function removeOldTransformJobs() {
+  return (job: Job) => {
+    if (job.type !== 'transform') {
       return true;
     }
     return !(job.state === 'failed' || job.state === 'done');
@@ -135,6 +144,12 @@ export class JobManagerContainer extends Container {
         }
         driveJobs.jobs.push(job);
         break;
+      case 'transform':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'transform' && !['failed', 'done'].includes(subJob.state))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
     }
 
     await this.setDriveJobs(driveId, driveJobs);
@@ -180,6 +195,9 @@ export class JobManagerContainer extends Container {
             if (currentJob.type === 'render_preview') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
             }
+            if (currentJob.type === 'transform') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+            }
             if (currentJob.type === 'sync_all') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
               driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
@@ -197,6 +215,9 @@ export class JobManagerContainer extends Container {
             if (currentJob.type === 'render_preview') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
             }
+            if (currentJob.type === 'transform') {
+              driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+            }
             if (currentJob.type === 'sync_all') {
               driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
               driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
@@ -212,36 +233,9 @@ export class JobManagerContainer extends Container {
     }, 500);
   }
 
-  private async sync(folderId: FileId, filesIds: FileId[] = []) {
+  private async transform(folderId: FileId, filesIds: FileId[] = []) {
     const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
     const changesToFetch: GoogleFile[] = await watchChangesContainer.getChanges(folderId);
-
-    const downloadContainer = new GoogleFolderContainer({
-      cmd: 'pull',
-      name: folderId,
-      folderId: folderId,
-      apiContainer: 'google_api'
-    }, { filesIds });
-    await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
-    downloadContainer.onProgressNotify(({ completed, total }) => {
-      if (!this.driveJobsMap[folderId]) {
-        return;
-      }
-      const jobs = this.driveJobsMap[folderId].jobs || [];
-      const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
-      job.progress = {
-        completed: completed,
-        total: total
-      };
-      this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
-    });
-    await this.engine.registerContainer(downloadContainer);
-    try {
-      await downloadContainer.run();
-    } finally {
-      await this.engine.unregisterContainer(downloadContainer.params.name);
-    }
-
     const transformContainer = new TransformContainer({
       name: folderId
     }, { filesIds });
@@ -263,7 +257,36 @@ export class JobManagerContainer extends Container {
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
     }
+  }
 
+  private async sync(folderId: FileId, filesIds: FileId[] = []) {
+    const downloadContainer = new GoogleFolderContainer({
+      cmd: 'pull',
+      name: folderId,
+      folderId: folderId,
+      apiContainer: 'google_api'
+    }, { filesIds });
+    await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
+    downloadContainer.onProgressNotify(({ completed, total }) => {
+      if (!this.driveJobsMap[folderId]) {
+        return;
+      }
+      const jobs = this.driveJobsMap[folderId].jobs || [];
+      const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
+      if (job) {
+        job.progress = {
+          completed: completed,
+          total: total
+        };
+        this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
+      }
+    });
+    await this.engine.registerContainer(downloadContainer);
+    try {
+      await downloadContainer.run();
+    } finally {
+      await this.engine.unregisterContainer(downloadContainer.params.name);
+    }
   }
 
   private async renderPreview(folderId: FileId) {
@@ -315,6 +338,9 @@ export class JobManagerContainer extends Container {
           break;
         case 'sync_all':
           await this.sync(driveId);
+          break;
+        case 'transform':
+          await this.transform(driveId, [ job.payload] );
           break;
         case 'render_preview':
           await this.renderPreview(driveId);

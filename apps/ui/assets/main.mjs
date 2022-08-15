@@ -55,6 +55,10 @@ const app = Vue.createApp({
           this.jobsMap['sync_all'] = job;
           continue;
         }
+        if (job.type === 'transform') {
+          this.jobsMap['transform'] = job;
+          continue;
+        }
         if (!job.payload) {
           continue;
         }

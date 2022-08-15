@@ -38,12 +38,17 @@
       <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
       <a class="btn btn-outline-secondary me-2" v-if="drive.name" @click.prevent="renderPreview">Render preview</a>
     </div>
-    <ul class="list-group" v-else>
-      <li v-for="(job, idx) of active_jobs" :key="idx">
-        <a>{{ job.title }}</a>
-        <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
-      </li>
-    </ul>
+    <table class="table table-bordered jobs-list" v-else>
+      <tbody>
+        <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
+          <td>{{ job.title }}</td>
+          <td>
+            <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
+            <span v-else>{{ job.state }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 <script>
