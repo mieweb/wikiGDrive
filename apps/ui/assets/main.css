@@ -54,6 +54,11 @@ nav {
   flex: 1
 }
 
+.jobs-list__item.active:hover, .jobs-list__item.active {
+  background: var(--bs-primary);
+  color: var(--bs-white);
+}
+
 /* Autolinker */
 
 .token a {

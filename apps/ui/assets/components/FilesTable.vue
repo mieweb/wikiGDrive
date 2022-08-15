@@ -16,7 +16,7 @@
       <i v-else class="fa-solid fa-file"></i>
       <span class="file-name">{{ file.fileName }}</span>
       <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', file)">
-        <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap[file.id]) }"></i>
+        <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap['transform'] || jobsMap[file.id]) }"></i>
         #{{ changesMap[file.id].version }}
       </span>
     </li>
