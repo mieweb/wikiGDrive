@@ -7,7 +7,7 @@
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTable :folder-path="folderPath" :files="files" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" />
+      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle"  />
     </template>
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" />
@@ -33,6 +33,7 @@
 import BaseLayout from '../layout/BaseLayout.vue';
 import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
 import FilesTable from '../components/FilesTable.vue';
+import FilesTree from '../components/FilesTree.vue';
 import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
@@ -54,6 +55,7 @@ export default {
     NavTabs,
     NotRegistered,
     FilesTable,
+    FilesTree,
     BaseLayout,
     FilePreview,
     ImagePreview,
@@ -98,7 +100,6 @@ export default {
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     },
     async active_jobs() {
-      console.log(JSON.stringify(this.jobs));
       await this.fetch();
     }
   },
