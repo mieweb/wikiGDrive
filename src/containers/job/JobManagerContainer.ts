@@ -15,6 +15,7 @@ export type JobType = 'sync' | 'sync_all' | 'render_preview';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
+  progress?: { total: number; completed: number };
   type: JobType;
   state?: JobState;
   title: string;
@@ -222,6 +223,18 @@ export class JobManagerContainer extends Container {
       apiContainer: 'google_api'
     }, { filesIds });
     await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
+    downloadContainer.onProgressNotify(({ completed, total }) => {
+      if (!this.driveJobsMap[folderId]) {
+        return;
+      }
+      const jobs = this.driveJobsMap[folderId].jobs || [];
+      const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
+      job.progress = {
+        completed: completed,
+        total: total
+      };
+      this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
+    });
     await this.engine.registerContainer(downloadContainer);
     try {
       await downloadContainer.run();

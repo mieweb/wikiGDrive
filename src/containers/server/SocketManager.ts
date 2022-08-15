@@ -42,19 +42,6 @@ export class SocketManager {
       payload: changes
     }));
 
-    ws.on('message', (data) => {
-      try {
-        const json = JSON.parse(data.toString());
-        ws.send(JSON.stringify({
-          cmd: 'test',
-          payload: {
-            driveId,
-            cmd: json.cmd
-          }
-        }));
-      } catch (ignoreParseError) {} // eslint-disable-line no-empty
-    });
-
     ws.on('close', () => {
       this.socketsMap[driveId].delete(ws);
     });
