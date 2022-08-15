@@ -171,6 +171,9 @@ export class TransformContainer extends Container {
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
+  private transformSubDir: string;
+
+  private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -226,6 +229,11 @@ export class TransformContainer extends Container {
     }
 
     const transformerQueue = new QueueTransformer(this.logger);
+    transformerQueue.onProgressNotify(({ total, completed }) => {
+      if (this.progressNotifyCallback) {
+        this.progressNotifyCallback({ total, completed });
+      }
+    });
 
     for (const realFileName in realFileNameToGenerated) {
       const localFile: LocalFile = realFileNameToGenerated[realFileName];
@@ -267,10 +275,12 @@ export class TransformContainer extends Container {
   }
 
   async run(rootFolderId: FileId) {
+    const contentFileService = this.transformSubDir ? await this.generatedFileService.getSubFileService(this.transformSubDir, '/') : this.generatedFileService;
+
     this.logger.info('Start transforming: ' + rootFolderId);
-    this.localLog = new LocalLog(this.generatedFileService);
+    this.localLog = new LocalLog(contentFileService);
     await this.localLog.load();
-    this.localLinks = new LocalLinks(this.generatedFileService);
+    this.localLinks = new LocalLinks(contentFileService);
     await this.localLinks.load();
 
     this.hierarchy = await this.loadNavigationHierarchy();
@@ -279,7 +289,7 @@ export class TransformContainer extends Container {
     let retry = true;
     while (retry) {
       retry = false;
-      await this.syncDir(this.filesService, this.generatedFileService);
+      await this.syncDir(this.filesService, contentFileService);
       if (this.filterFilesIds.length > 0) {
         const filterFilesIds = new Set<string>();
         for (const fileId of this.filterFilesIds) {
@@ -299,21 +309,21 @@ export class TransformContainer extends Container {
       }
     }
 
-    await this.createRedirs(this.generatedFileService);
-    await this.writeToc();
-    await this.rewriteLinks(this.generatedFileService);
+    await this.createRedirs(contentFileService);
+    await this.writeToc(contentFileService);
+    await this.rewriteLinks(contentFileService);
 
     await this.localLog.save();
     await this.localLinks.save();
 
     this.logger.info('Regenerate tree: ' + rootFolderId);
-    const tree = await this.regenerateTree(this.generatedFileService, rootFolderId);
-    await this.generatedFileService.writeJson('.tree.json', tree);
+    const tree = await this.regenerateTree(contentFileService, rootFolderId);
+    await contentFileService.writeJson('.tree.json', tree);
   }
 
-  async regenerateTree(filesService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
+  async regenerateTree(contentFileService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
     const scanner = new DirectoryScanner();
-    const files = await scanner.scan(filesService);
+    const files = await scanner.scan(contentFileService);
     const retVal = [];
     for (const realFileName in files) {
       if (RESERVED_NAMES.includes(realFileName)) {
@@ -325,11 +335,11 @@ export class TransformContainer extends Container {
 
       const file = files[realFileName];
       if (file.mimeType === MimeTypes.FOLDER_MIME) {
-        const subFilesService = await filesService.getSubFileService(realFileName);
+        const subFilesService = await contentFileService.getSubFileService(realFileName);
         const item: TreeItem = {
           id: file.id,
           title: file.title,
-          path: filesService.getVirtualPath() + realFileName,
+          path: contentFileService.getVirtualPath() + realFileName,
           realFileName: realFileName,
           fileName: file.fileName,
           mimeType: file.mimeType,
@@ -343,7 +353,7 @@ export class TransformContainer extends Container {
         const item: TreeItem = {
           id: file.id,
           title: file.title,
-          path: filesService.getVirtualPath() + realFileName,
+          path: contentFileService.getVirtualPath() + realFileName,
           fileName: file.fileName,
           realFileName: realFileName,
           mimeType: file.mimeType,
@@ -383,25 +393,30 @@ export class TransformContainer extends Container {
     }
   }
 
-  async createRedirs(destinationDirectory: FileContentService) {
+  async createRedirs(contentFileService: FileContentService) {
     const rows = this.localLog.getLogs();
 
     const markDownScanner = new DirectoryScanner();
     const transformerQueue = new QueueTransformer(this.logger);
+    transformerQueue.onProgressNotify(({ total, completed }) => {
+      if (this.progressNotifyCallback) {
+        this.progressNotifyCallback({ total, completed });
+      }
+    });
 
     for (let rowNo = rows.length - 1; rowNo >= 0; rowNo--) {
       const row = rows[rowNo];
-      if (row.type === 'md' && !await destinationDirectory.exists(row.filePath)) {
+      if (row.type === 'md' && !await contentFileService.exists(row.filePath)) {
         const lastLog = this.localLog.findLastFile(row.id);
         if (lastLog) {
           const parts = row.filePath.split('/');
           const fileName = parts.pop();
           const dirName = parts.join('/');
 
-          if (!await destinationDirectory.exists(lastLog.filePath)) {
+          if (!await contentFileService.exists(lastLog.filePath)) {
             continue;
           }
-          const localFileContent = await destinationDirectory.readFile(lastLog.filePath);
+          const localFileContent = await contentFileService.readFile(lastLog.filePath);
           const localFile = markDownScanner.parseMarkdown(localFileContent, lastLog.filePath);
           if (!localFile) {
             continue;
@@ -420,7 +435,7 @@ export class TransformContainer extends Container {
           const task = new TaskRedirFileTransform(
             this.logger,
             fileName,
-            dirName ? await destinationDirectory.getSubFileService(dirName) : destinationDirectory,
+            dirName ? await contentFileService.getSubFileService(dirName) : contentFileService,
             redirFile,
             localFile
           );
@@ -432,10 +447,10 @@ export class TransformContainer extends Container {
     await transformerQueue.finished();
   }
 
-  async writeToc() {
+  async writeToc(contentFileService: FileContentService) {
     const tocGenerator = new TocGenerator();
-    const md = await tocGenerator.generate(this.generatedFileService);
-    await this.generatedFileService.writeFile('toc.md', md);
+    const md = await tocGenerator.generate(contentFileService);
+    await contentFileService.writeFile('toc.md', md);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -461,4 +476,11 @@ export class TransformContainer extends Container {
     return {};
   }
 
+  setTransformSubDir(transform_subdir: string) {
+    this.transformSubDir = transform_subdir.replaceAll('/', '').trim();
+  }
+
+  onProgressNotify(callback: ({total, completed}: { total?: number; completed?: number }) => void) {
+    this.progressNotifyCallback = callback;
+  }
 }

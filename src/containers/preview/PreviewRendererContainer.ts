@@ -4,6 +4,7 @@ import winston from 'winston';
 import Docker from 'dockerode';
 import {fileURLToPath} from 'url';
 import {BufferWritable} from '../../utils/BufferWritable';
+import {UserConfigService} from '../google_folder/UserConfigService';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -31,28 +32,32 @@ export class PreviewRendererContainer extends Container {
 
     const config = await this.filesService.readJson('.user_config.json') || {};
 
-    const themeId = config?.hugo_theme?.id;
-    const themeUrl = config?.hugo_theme?.url;
+    const themeId = config?.hugo_theme?.id || '';
+    const themeUrl = config?.hugo_theme?.url || '';
     const themeSubPath = config?.hugo_theme?.path || '';
     const configToml = config?.config_toml || '#relativeURLs = true\n' +
       'languageCode = "en-us"\n' +
       'title = "My New Hugo Site"\n';
 
-    if (!themeUrl || !themeId) {
-      return;
-    }
-
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
-
 
     await this.filesService.mkdir('tmp_dir');
 
     const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
     await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
 
+    const contentDir = config.transform_subdir ?
+      `/${driveId}_transform/${config.transform_subdir}` :
+      `/${driveId}_transform`;
+
     try {
-      this.logger.info(`docker run
-        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site/content"
+      const writable = new BufferWritable();
+
+      let result;
+
+      if (themeId) {
+        this.logger.info(`docker run
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir}"
         --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
@@ -61,22 +66,46 @@ export class PreviewRendererContainer extends Container {
         --env THEME_URL=${themeUrl}
         `);
 
-      const writable = new BufferWritable();
-      const result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
-        HostConfig: {
-          Binds: [
-            `${process.env.VOLUME_DATA}/${driveId}_transform:/site/content`,
-            `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-            `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+        result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
+          HostConfig: {
+            Binds: [
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
+              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+            ]
+          },
+          Env: [
+            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
+            `THEME_ID=${themeId}`,
+            `THEME_SUBPATH=${themeSubPath}`,
+            `THEME_URL=${themeUrl}`
           ]
-        },
-        Env: [
-          `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
-          `THEME_ID=${themeId}`,
-          `THEME_SUBPATH=${themeSubPath}`,
-          `THEME_URL=${themeUrl}`
-        ]
-      });
+        });
+      } else {
+        this.logger.info(`docker run
+        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site"
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir}"
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
+        --env THEME_ID=${themeId}
+        --env THEME_SUBPATH=${themeSubPath}
+        --env THEME_URL=${themeUrl}
+        `);
+
+        result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
+          HostConfig: {
+            Binds: [
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/site`,
+              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+            ]
+          },
+          Env: [
+            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
+            'THEME_ID=\'\'',
+          ]
+        });
+      }
 
       if (result?.length > 0 && result[0].StatusCode > 0) {
         this.logger.error(writable.getBuffer().toString());

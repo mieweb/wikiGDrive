@@ -10,15 +10,15 @@ export const LINKS_NAME = '.wgd-local-links.csv';
 
 export class LocalLinks {
   private links: Link[];
-  constructor(private generatedFileService: FileContentService) {
+  constructor(private transformFileService: FileContentService) {
   }
 
   async load() {
-    if (!await this.generatedFileService.exists(LINKS_NAME)) {
+    if (!await this.transformFileService.exists(LINKS_NAME)) {
       this.links = [];
       return;
     }
-    const content = await this.generatedFileService.readFile(LINKS_NAME) || '';
+    const content = await this.transformFileService.readFile(LINKS_NAME) || '';
     const rows = content.split('\n').map(row => row.trim()).filter(row => !!row);
     rows.shift();
     const groups = {};
@@ -69,6 +69,6 @@ export class LocalLinks {
       }).join('\n').trim();
     }).join('\n');
 
-    await this.generatedFileService.writeFile(LINKS_NAME, content + '\n' + rowsContent);
+    await this.transformFileService.writeFile(LINKS_NAME, content + '\n' + rowsContent);
   }
 }

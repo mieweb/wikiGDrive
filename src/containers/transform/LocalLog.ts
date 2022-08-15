@@ -12,15 +12,15 @@ export const LOG_NAME = '.wgd-local-log.csv';
 
 export class LocalLog {
   private rows: LogRow[];
-  constructor(private generatedFileService: FileContentService) {
+  constructor(private transformFileService: FileContentService) {
   }
 
   async load() {
-    if (!await this.generatedFileService.exists(LOG_NAME)) {
+    if (!await this.transformFileService.exists(LOG_NAME)) {
       this.rows = [];
       return;
     }
-    const content = await this.generatedFileService.readFile(LOG_NAME) || '';
+    const content = await this.transformFileService.readFile(LOG_NAME) || '';
     const rows = content.split('\n').map(row => row.trim()).filter(row => !!row);
     rows.shift();
     this.rows = rows.map(row => {
@@ -52,7 +52,7 @@ export class LocalLog {
       return `${row.filePath};${row.mtime};${row.id};${row.type};${row.event}`;
     }).join('\n');
 
-    await this.generatedFileService.writeFile(LOG_NAME, content + '\n' + rowsContent);
+    await this.transformFileService.writeFile(LOG_NAME, content + '\n' + rowsContent);
   }
 
   findLastFile(id: string): LogRow {

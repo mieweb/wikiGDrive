@@ -9,6 +9,7 @@ interface ConfigBody {
   hugo_theme: HugoTheme;
   hugo_themes: HugoTheme[];
   config_toml?: string;
+  transform_subdir?: string;
 }
 
 export interface HugoTheme {
@@ -60,6 +61,9 @@ export class ConfigController extends Controller {
     }
     if (body.config_toml) {
       userConfigService.config.config_toml = body.config_toml;
+    }
+    if (body.transform_subdir) {
+      userConfigService.config.transform_subdir = body.transform_subdir;
     }
 
     await userConfigService.save();

@@ -9,6 +9,7 @@ import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {TreeItem} from '../../model/TreeItem';
 import {GoogleFile} from '../../model/GoogleFile';
 import {BaseTreeItem, findInTree} from '../server/routes/FolderController';
+import {UserConfigService} from '../google_folder/UserConfigService';
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview';
@@ -240,10 +241,29 @@ export class JobManagerContainer extends Container {
       name: folderId
     }, { filesIds });
     const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
+    const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
     await transformContainer.mount2(
-      await this.filesService.getSubFileService(folderId, '/'),
+      googleFileSystem,
       generatedFileService
     );
+
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
+    transformContainer.setTransformSubDir(userConfigService.config.transform_subdir);
+    transformContainer.onProgressNotify(({ completed, total }) => {
+      if (!this.driveJobsMap[folderId]) {
+        return;
+      }
+      const jobs = this.driveJobsMap[folderId].jobs || [];
+      const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
+      if (job) {
+        job.progress = {
+          completed: completed,
+          total: total
+        };
+        this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
+      }
+    });
     await this.engine.registerContainer(transformContainer);
     try {
       await transformContainer.run(folderId);
@@ -340,7 +360,7 @@ export class JobManagerContainer extends Container {
           await this.sync(driveId);
           break;
         case 'transform':
-          await this.transform(driveId, [ job.payload] );
+          await this.transform(driveId, job.payload ? [ job.payload ] : [] );
           break;
         case 'render_preview':
           await this.renderPreview(driveId);
