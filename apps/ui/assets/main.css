@@ -20,7 +20,7 @@ nav {
   color: var(--bs-dark);
 }
 
-.files-list > li {
+.files-list__item {
   cursor: pointer;
 
   white-space: nowrap;
@@ -34,21 +34,21 @@ nav {
   padding-right: 8px;
 }
 
-.files-list > li:hover {
+.files-list__item:hover {
   background: var(--bs-secondary);
 }
-.files-list > li.active:hover, .files-list > li.active {
+.files-list__item.active:hover, .files-list__item.active {
   background: var(--bs-primary);
   color: var(--bs-white);
 }
 
-.files-list > li > i {
+.files-list__item > i {
   display: inline-block;
   width: 0px;
   padding-right: 20px;
 }
 
-.files-list > li > span.file-name {
+.files-list__item > span.file-name {
   text-overflow: ellipsis;
   overflow: hidden;
   flex: 1

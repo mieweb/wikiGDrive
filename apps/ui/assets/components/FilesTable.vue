@@ -6,10 +6,10 @@
     </li>
   </ul>
   <ul class="nav nav-pills flex-column files-list" v-if="!notRegistered && files.length > 0">
-    <li v-if="folderPath !== '/'" @click="selectFile('..' , {mimeType: 'application/vnd.google-apps.folder'})" class="nav-item">
+    <li v-if="folderPath !== '/'" @click="selectFile('..' , {mimeType: 'application/vnd.google-apps.folder'})" class="nav-item files-list__item">
       <i class="fa-solid fa-folder"></i> ..
     </li>
-    <li v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName, file)" class="nav-item" :class="{'active': file.fileName === selectedName}" :title="file.title">
+    <li v-for="file in files" :key="file.fileName" @click="selectFile(file.fileName, file)" class="nav-item files-list__item" :class="{'active': file.fileName === selectedName}" :title="file.title">
       <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
       <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
       <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
