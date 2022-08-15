@@ -20,6 +20,7 @@ import {FolderRegistryContainer} from './containers/folder_registry/FolderRegist
 import {JobManagerContainer} from './containers/job/JobManagerContainer';
 import fetch from 'node-fetch';
 import {WatchChangesContainer} from './containers/changes/WatchChangesContainer';
+import {UserConfigService} from './containers/google_folder/UserConfigService';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
@@ -130,10 +131,16 @@ export class MainService {
     const transformContainer = new TransformContainer({
       name: folderId
     }, { filesIds });
+    const googleFileSystem = await this.mainFileService.getSubFileService(folderId, '/');
     await transformContainer.mount2(
-      await this.mainFileService.getSubFileService(folderId, '/'),
+      googleFileSystem,
       await this.mainFileService.getSubFileService(folderId + '_transform', '/')
     );
+
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
+    transformContainer.setTransformSubDir(userConfigService.config.transform_subdir);
+
     await this.containerEngine.registerContainer(transformContainer);
 
     await transformContainer.run(folderId);

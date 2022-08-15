@@ -32,6 +32,11 @@
           </div>
 
           <div class="form-group">
+            <label>Content subdirectory</label>
+            <input class="form-control" rows="10" v-model="user_config.transform_subdir" />
+          </div>
+
+          <div class="form-group">
             <label>Config.toml</label>
             <textarea class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
           </div>

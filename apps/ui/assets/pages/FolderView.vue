@@ -26,18 +26,21 @@
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
         <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
+      <div v-if="(activeTab === 'html') && selectedFile.mimeType === 'application/binary'">
+        <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+      </div>
     </template>
   </BaseLayout>
 </template>
 <script lang="ts">
 import BaseLayout from '../layout/BaseLayout.vue';
 import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.mjs';
-import FilesTable from '../components/FilesTable.vue';
 import FilesTree from '../components/FilesTree.vue';
 import {UtilsMixin} from '../components/UtilsMixin.mjs';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
+import IframePreview from '../components/IframePreview.vue';
 import NavTabs from '../components/NavTabs.vue';
 import LogsViewer from '../components/LogsViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
@@ -54,11 +57,11 @@ export default {
     DriveTools,
     NavTabs,
     NotRegistered,
-    FilesTable,
     FilesTree,
     BaseLayout,
     FilePreview,
     ImagePreview,
+    IframePreview,
     LogsViewer,
     ChangesViewer,
     UserConfig,

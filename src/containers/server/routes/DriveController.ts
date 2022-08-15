@@ -60,8 +60,8 @@ export class DriveController extends Controller {
 
     const initialized = await gitScanner.isRepo();
 
-
-    const transformedTree = (await transformedFileSystem.readJson('.tree.json')) || [];
+    const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+    const transformedTree = (await contentFileService.readJson('.tree.json')) || [];
 
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');
@@ -75,7 +75,8 @@ export class DriveController extends Controller {
         public_key: await userConfigService.getDeployKey(),
         remote_branch: userConfig.remote_branch,
         remote_url: initialized ? await gitScanner.getRemoteUrl() : null,
-        config_toml: userConfig.config_toml
+        config_toml: userConfig.config_toml,
+        transform_subdir: userConfig.transform_subdir
       },
       tocFilePath: tocFile ? tocFile.path : null,
       navFilePath: navFile ? navFile.path : null,

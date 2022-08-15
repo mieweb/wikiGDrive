@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid bg-light my-1">
+  <div class="container-fluid bg-light my-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
       <div class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
@@ -30,7 +30,7 @@
     </div>
   </form>
 
-  <div class="row py-1">
+  <div class="row py-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
     <div class="col-12 text-end">
       <button v-if="activeTab !== 'html'" @click.prevent.stop="setActiveTab('html')" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview" title="Preview">
         <i class="fa-brands fa-html5 me-1"></i>

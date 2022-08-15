@@ -74,15 +74,6 @@ function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, 
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
-const extToMime = {
-  '.js': 'application/javascript',
-  '.mjs': 'application/javascript',
-  '.css': 'text/css',
-  '.txt': 'text/plain',
-  '.md': 'text/plain',
-  '.htm': 'text/html',
-  '.html': 'text/html'
-};
 
 export class ServerContainer extends Container {
   private logger: winston.Logger;
@@ -430,6 +421,22 @@ export class ServerContainer extends Container {
         await jobManagerContainer.schedule(driveId, {
           type: 'render_preview',
           title: 'Render preview'
+        });
+
+        res.json({ driveId });
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.post('/api/transform/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        await jobManagerContainer.schedule(driveId, {
+          type: 'transform',
+          title: 'Transform Markdown'
         });
 
         res.json({ driveId });

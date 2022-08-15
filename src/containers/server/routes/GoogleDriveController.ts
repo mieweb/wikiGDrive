@@ -1,6 +1,7 @@
 import {Controller, RouteErrorHandler, RouteGet, RouteParamPath, RouteResponse, RouteUse} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {findInTree, outputDirectory, ShareErrorHandler} from './FolderController';
+import {UserConfigService} from '../../google_folder/UserConfigService';
 
 export class GoogleDriveController extends Controller {
 
@@ -12,8 +13,12 @@ export class GoogleDriveController extends Controller {
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
   async getFolder(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string) {
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const transformedTree = await transformedFileSystem.readJson('.tree.json');
+    const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+    const transformedTree = await contentFileService.readJson('.tree.json');
 
     const treeItem = findInTree(treeItem => treeItem['id'] === fileId, transformedTree);
 

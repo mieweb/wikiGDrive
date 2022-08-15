@@ -30,6 +30,7 @@ export class UserConfig {
   remote_branch: string;
   hugo_theme?: HugoTheme;
   config_toml?: string;
+  transform_subdir?: string;
 }
 
 export class UserConfigService {

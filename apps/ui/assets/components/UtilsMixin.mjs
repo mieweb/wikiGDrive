@@ -148,6 +148,11 @@ export const UtilsMixin = {
         method: 'post'
       });
     },
+    async transform() {
+      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}`, {
+        method: 'post'
+      });
+    },
     downloadOdt(fileId) {
       const odtPath = `/api/drive/${this.driveId}/file/${fileId}.odt`;
       window.open(odtPath, '_blank');

@@ -11,6 +11,18 @@ import {FileContentService} from '../../../utils/FileContentService';
 import {FileId} from '../../../model/model';
 import express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
+import {UserConfigService} from '../../google_folder/UserConfigService';
+import {DirectoryScanner} from '../../transform/DirectoryScanner';
+
+const extToMime = {
+  'js': 'application/javascript',
+  'mjs': 'application/javascript',
+  'css': 'text/css',
+  'txt': 'text/plain',
+  'md': 'text/plain',
+  'htm': 'text/html',
+  'html': 'text/html'
+};
 
 export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
   if (!Array.isArray(files)) {
@@ -100,6 +112,13 @@ export async function outputDirectory(res: express.Response, treeItem: TreeItem)
   res.send(JSON.stringify(treeItems));
 }
 
+function inDir(dirPath: string, filePath: string) {
+  if (dirPath === filePath) {
+    return true;
+  }
+  return filePath.startsWith(dirPath + '/');
+}
+
 export default class FolderController extends Controller {
 
   constructor(subPath: string, private readonly filesService: FileContentService, private readonly authContainer) {
@@ -112,41 +131,80 @@ export default class FolderController extends Controller {
   async getFolder(@RouteParamPath('driveId') driveId: string) {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const transformedTree = await transformedFileSystem.readJson('.tree.json') || [];
-
-    const treeItem = filePath === '/'
-      ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }
-      : findInTree(treeItem => treeItem['path'] === filePath, transformedTree);
-
-    if (!treeItem) {
-      this.res.status(404).send('No local');
-      return;
-    }
-
-    this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
-    this.res.setHeader('wgd-google-id', treeItem.id || '');
-    this.res.setHeader('wgd-google-version', treeItem.version || '');
-    this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
-    this.res.setHeader('wgd-path', treeItem.path || '');
-    this.res.setHeader('wgd-file-name', treeItem.fileName || '');
-    this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+    const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+    const transformedTree = await contentFileService.readJson('.tree.json') || [];
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');
       return;
     }
-    if (await transformedFileSystem.isDirectory(filePath)) {
-      await outputDirectory(this.res, treeItem);
-      return;
-    } else {
-      if (treeItem.mimeType) {
-        this.res.setHeader('Content-type', treeItem.mimeType);
+
+    if (!userConfigService.config.transform_subdir || inDir('/' + userConfigService.config.transform_subdir, filePath)) {
+      const contentFilePath = !userConfigService.config.transform_subdir ?
+        filePath :
+        filePath.replace('/' + userConfigService.config.transform_subdir, '') || '/';
+
+      const treeItem = contentFilePath === '/'
+        ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }
+        : findInTree(treeItem => treeItem['path'] === contentFilePath, transformedTree);
+
+      if (!treeItem) {
+        this.res.status(404).send('No local');
+        return;
       }
 
-      const buffer = await transformedFileSystem.readBuffer(filePath);
-      this.res.send(buffer);
-      return;
+      this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
+      this.res.setHeader('wgd-google-id', treeItem.id || '');
+      this.res.setHeader('wgd-google-version', treeItem.version || '');
+      this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
+      this.res.setHeader('wgd-path', treeItem.path || '');
+      this.res.setHeader('wgd-file-name', treeItem.fileName || '');
+      this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+
+      if (await transformedFileSystem.isDirectory(filePath)) {
+        await outputDirectory(this.res, treeItem);
+        return;
+      } else {
+        if (treeItem.mimeType) {
+          this.res.setHeader('Content-type', treeItem.mimeType);
+        }
+
+        const buffer = await transformedFileSystem.readBuffer(filePath);
+        this.res.send(buffer);
+        return;
+      }
+    } else {
+      if (await transformedFileSystem.isDirectory(filePath)) {
+        const scanner = new DirectoryScanner();
+        const files = await scanner.scan(transformedFileSystem);
+
+        const treeItem: TreeItem = {
+          fileName: filePath,
+          id: '',
+          parentId: '',
+          path: '',
+          realFileName: '',
+          title: '',
+          children: <any>Object.values(files)
+        };
+
+        await outputDirectory(this.res, treeItem);
+        return;
+      } else {
+        const ext = await transformedFileSystem.guessExtension(filePath);
+        const mimeType = extToMime[ext];
+        if (mimeType) {
+          this.res.setHeader('Content-type', mimeType);
+        }
+
+        const buffer = await transformedFileSystem.readBuffer(filePath);
+        this.res.send(buffer);
+        return;
+      }
     }
   }
 
