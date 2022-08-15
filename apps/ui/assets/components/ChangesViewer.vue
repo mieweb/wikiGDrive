@@ -41,9 +41,9 @@
     <ul class="list-group" v-else>
       <li v-for="(job, idx) of active_jobs" :key="idx">
         <a>{{ job.title }}</a>
+        <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
       </li>
     </ul>
-
   </div>
 </template>
 <script>

@@ -7,7 +7,7 @@ import {Request} from 'express';
 export function signToken(user: {id: string, name: string, email: string, google_access_token: string}, driveId: string, tokenType = 'ACCESS_TOKEN') {
   const expiresIn =
     tokenType === 'ACCESS_TOKEN'
-      ? (process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || 600)
+      ? (process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || 24*3600)
       : (process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME || 24*3600);
   return jsonwebtoken.sign({
     name: user.name,

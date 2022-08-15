@@ -36,11 +36,6 @@ export class DriveClientService {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.socket = new WebSocket(`${wsProtocol}//${window.location.host}/api/${driveId}`);
     this.socket.onopen = () => {
-      setInterval(() => {
-        this.socket.send(JSON.stringify({
-          cmd: 'inspect'
-        }));
-      }, 2000);
     };
 
     this.socket.onmessage = (event) => {

@@ -30,6 +30,8 @@ export class GoogleFolderContainer extends Container {
   private auth: OAuth2Client & HasQuotaLimiter;
   private filterFilesIds: FileId[];
 
+  private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
+
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
     this.filterFilesIds = paramsArr['filesIds'] || [];
@@ -57,15 +59,22 @@ export class GoogleFolderContainer extends Container {
     }
 
     switch (this.params.cmd) {
-      case 'pull':
-        downloader.addTask(new TaskFetchFolder(
+      case 'pull': {
+        const taskFetchFolder = new TaskFetchFolder(
           this.logger,
           this.googleDriveService,
           this.auth,
           this.filesService,
-        { id: this.params.folderId, name: this.params.folderId, mimeType: MimeTypes.FOLDER_MIME },
-          { filterFilesIds: this.filterFilesIds, filterFoldersIds}
-        ));
+          {id: this.params.folderId, name: this.params.folderId, mimeType: MimeTypes.FOLDER_MIME},
+          {filterFilesIds: this.filterFilesIds, filterFoldersIds}
+        );
+        downloader.onProgressNotify(({ total, completed }) => {
+          if (this.progressNotifyCallback) {
+            this.progressNotifyCallback({ total, completed });
+          }
+        });
+        downloader.addTask(taskFetchFolder);
+      }
     }
 
     await downloader.finished();
@@ -123,5 +132,9 @@ export class GoogleFolderContainer extends Container {
         await this.buildFolderFilter([file.parentId], folderFilterIds);
       }
     }
+  }
+
+  onProgressNotify(callback: ({total, completed}: { total?: number; completed?: number }) => void) {
+    this.progressNotifyCallback = callback;
   }
 }
