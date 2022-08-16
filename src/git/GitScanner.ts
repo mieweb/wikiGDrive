@@ -281,27 +281,4 @@ export class GitScanner {
       await Repository.init(this.rootPath, 0);
     }
   }
-
-  async getStatus(fileName: string): Promise<GitChange[]> {
-    const repo = await Repository.open(this.rootPath);
-    const status: StatusFile[] = await repo.getStatus({
-      pathspec: fileName,
-      flags: Status.OPT.INCLUDE_UNTRACKED | Status.OPT.RECURSE_UNTRACKED_DIRS
-    });
-
-    const retVal = [];
-    for (const item of status) {
-      const row = {
-        path: item.path(),
-        state: {
-          isNew: !!item.isNew(),
-          isModified: !!item.isModified(),
-          isDeleted: !!item.isDeleted(),
-          isRenamed: !!item.isRenamed()
-        }
-      };
-      retVal.push(row);
-    }
-    return retVal;
-  }
 }

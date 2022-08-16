@@ -13,7 +13,7 @@ import express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner} from '../../transform/DirectoryScanner';
-import {GitScanner} from '../../../git/GitScanner';
+import {GitChange, GitScanner} from '../../../git/GitScanner';
 
 const extToMime = {
   'js': 'application/javascript',
@@ -97,12 +97,42 @@ export class ShareErrorHandler extends ErrorHandler {
   }
 }
 
-async function addGitData(treeItems: TreeItem[], gitScanner: GitScanner, contentFilePath: string) {
+async function getCachedChanges(transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
+  const CACHE_PATH = '.private/cached_git_status.json';
+
+  let mtime = 0;
+  try {
+    mtime += await transformedFileSystem.getMtime('.git');
+    // eslint-disable-next-line no-empty
+  } catch (ignore) {}
+
+  try {
+    mtime += await contentFileService.getMtime('');
+    // eslint-disable-next-line no-empty
+  } catch (ignore) {}
+
+  if (await googleFileSystem.exists(CACHE_PATH)) {
+    const cached = await googleFileSystem.readJson(CACHE_PATH);
+    if (cached?.mtime === mtime) {
+      return cached.changes;
+    }
+  }
+
+  const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+  await gitScanner.initialize();
+
+  const changes = await gitScanner.changes();
+  await googleFileSystem.writeJson(CACHE_PATH, {
+    mtime: mtime,
+    changes
+  });
+  return changes;
+}
+
+async function addGitData(treeItems: TreeItem[], changes: GitChange[], contentFilePath: string) {
   if (contentFilePath.startsWith('/')) {
     contentFilePath = contentFilePath.substring(1);
   }
-
-  const changes = await gitScanner.getStatus(contentFilePath.replace(/\/$/, ''));
 
   for (const treeItem of treeItems) {
     const change = changes.find(change => change.path === (contentFilePath + treeItem.path).replace(/^\//, ''));
@@ -168,9 +198,6 @@ export default class FolderController extends Controller {
       return;
     }
 
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-    await gitScanner.initialize();
-
     if (!userConfigService.config.transform_subdir || inDir('/' + userConfigService.config.transform_subdir, filePath)) {
       const contentFilePath = !userConfigService.config.transform_subdir ?
         filePath :
@@ -194,7 +221,8 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
 
       if (await transformedFileSystem.isDirectory(filePath)) {
-        await addGitData(treeItem.children, gitScanner, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
+        const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
+        await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
         await outputDirectory(this.res, treeItem);
         return;
       } else {
@@ -233,7 +261,8 @@ export default class FolderController extends Controller {
            })
         };
 
-        await addGitData(treeItem.children, gitScanner, '');
+        const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
+        await addGitData(treeItem.children, changes, '');
         await outputDirectory(this.res, treeItem);
         return;
       } else {
