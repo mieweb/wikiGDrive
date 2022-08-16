@@ -16,4 +16,11 @@ fi
 
 cat /site/tmp_dir/config.toml
 
+if [[ -d /site/resources/_gen ]]
+then
+    rm -rf /site/resources/_gen
+fi
+
 hugo --config=/site/tmp_dir/config.toml --verbose
+
+rm -rf .hugo_build.lock

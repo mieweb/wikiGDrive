@@ -204,7 +204,7 @@ export class Controller implements ControllerCallContext {
             subPath: this.subPath,
             req,
             res,
-            logger: this.logger
+            logger: req['logger']
           });
 
           res.header('Content-type', route.responseContentType);

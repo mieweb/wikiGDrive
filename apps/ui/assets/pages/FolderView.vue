@@ -18,7 +18,7 @@
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" />
-      <UserConfig v-if="activeTab === 'drive_config'" />
+      <UserConfig v-if="activeTab === 'drive_config' || activeTab == 'drive_config_git'" :activeTab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />

@@ -71,17 +71,22 @@ export class UserConfigService {
     return null;
   }
 
-  async genKeys() {
+  async genKeys(force = false) {
     const privatePath = path.join(this.fileService.getRealPath(), '.private');
     if (!fs.existsSync(privatePath)) {
       fs.mkdirSync(privatePath);
-      if (fs.existsSync(`${privatePath}/id_rsa`)) {
-        fs.unlinkSync(`${privatePath}/id_rsa`);
+    } else {
+      if (!force) {
+        return;
       }
-      if (fs.existsSync(`${privatePath}/id_rsa.pub`)) {
-        fs.unlinkSync(`${privatePath}/id_rsa.pub`);
-      }
-      await execAsync('ssh-keygen', ['-t', 'ecdsa', '-b', '521', '-f', `${privatePath}/id_rsa`, '-q',  '-N', 'sekret']);
     }
+
+    if (fs.existsSync(`${privatePath}/id_rsa`)) {
+      fs.unlinkSync(`${privatePath}/id_rsa`);
+    }
+    if (fs.existsSync(`${privatePath}/id_rsa.pub`)) {
+      fs.unlinkSync(`${privatePath}/id_rsa.pub`);
+    }
+    await execAsync('ssh-keygen', ['-t', 'ecdsa', '-b', '521', '-f', `${privatePath}/id_rsa`, '-q',  '-N', 'sekret']);
   }
 }

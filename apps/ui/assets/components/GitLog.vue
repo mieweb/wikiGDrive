@@ -28,6 +28,8 @@
       </div>
     </div>
 
+    <h5>Git log: {{ historyPath }}</h5>
+
     <table class="table table-bordered" v-if="history && history.length > 0">
       <thead>
       <tr>
@@ -45,7 +47,9 @@
       </tbody>
     </table>
     <div v-else>
-      Not committed
+      <div class="alert alert-info">
+        Git log empty
+      </div>
     </div>
   </div>
 </template>
@@ -66,6 +70,11 @@ export default {
     },
     selectedFile: Object
   },
+  computed: {
+    historyPath() {
+      return (this.folderPath || '') + (this.selectedFile?.fileName || '');
+    }
+  },
   data() {
     return {
       history: []
@@ -81,7 +90,7 @@ export default {
   },
   methods: {
     async fetch() {
-      this.history = await this.GitClientService.getHistory(this.driveId, (this.folderPath || '') + (this.selectedFile?.fileName || ''));
+      this.history = await this.GitClientService.getHistory(this.driveId, this.historyPath);
     }
   }
 };

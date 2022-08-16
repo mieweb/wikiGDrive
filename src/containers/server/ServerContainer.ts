@@ -209,6 +209,8 @@ export class ServerContainer extends Container {
         default:
           console.error(err);
       }
+
+      res.header('Content-type', 'text/plain');
       res.status(code).send(err.message);
     });
 
@@ -323,7 +325,7 @@ export class ServerContainer extends Container {
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
 
-    const configController = new ConfigController('/api/config', this.filesService);
+    const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
     app.use('/api/config', authenticate(this.logger), await configController.getRouter());
 
     const logsController = new LogsController('/api/logs', this.logger);

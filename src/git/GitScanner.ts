@@ -69,87 +69,90 @@ export class GitScanner {
   }
 
   async pullBranch(branch, {publicKey, privateKey, passphrase}) {
-    try {
-      const repo = await Repository.open(this.rootPath);
+    const repo = await Repository.open(this.rootPath);
 
-      await repo.fetch('origin', {
-        callbacks: {
-          credentials: (url, username) => {
-            return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
-          }
-        }
-      });
-
-      const headCommit = await repo.getReferenceCommit('refs/heads/master');
-      try {
-        const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
-        const index = await Merge.commits(repo, headCommit, remoteCommit, {
-          fileFavor: Merge.FILE_FAVOR.OURS
-        });
-
-        if (!index.hasConflicts()) {
-          const oid = await index.writeTreeTo(repo);
-          const committer = Signature.now('WikiGDrive', this.email);
-          await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
-          const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
-          await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
-        }
-      } catch (err) {
-        if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
-          throw err;
+    await repo.fetch('origin', {
+      callbacks: {
+        credentials: (url, username) => {
+          return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
         }
       }
+    });
+
+    const remoteBranch = 'refs/remotes/origin/' + branch;
+
+    const headCommit = await repo.getHeadCommit();
+    // const headCommit = await repo.getReferenceCommit('refs/heads/master');
+    try {
+      const remoteCommit = await repo.getReferenceCommit(remoteBranch);
+
+      if (!headCommit) {
+        await repo.createBranch('refs/heads/master', remoteCommit);
+        await repo.mergeBranches('refs/heads/master', remoteBranch);
+        const commit = await repo.getReferenceCommit(remoteBranch);
+        await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+        return;
+      }
+
+      const index = await Merge.commits(repo, headCommit, remoteCommit, {
+        fileFavor: Merge.FILE_FAVOR.OURS
+      });
+
+      if (!index.hasConflicts()) {
+        const oid = await index.writeTreeTo(repo);
+        const committer = Signature.now('WikiGDrive', this.email);
+        await repo.createCommit(remoteBranch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
+        const commit = await repo.getReferenceCommit(remoteBranch);
+        await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+      }
     } catch (err) {
-      console.warn(err.message);
-      throw err;
+      if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
+        throw err;
+      }
     }
   }
 
   async pushBranch(branch, {publicKey, privateKey, passphrase}) {
-    try {
-      const repo = await Repository.open(this.rootPath);
+    const repo = await Repository.open(this.rootPath);
 
-      await repo.fetch('origin', {
-        callbacks: {
-          credentials: (url, username) => {
-            return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
-          }
-        }
-      });
-
-      const headCommit = await repo.getReferenceCommit('refs/heads/master');
-      try {
-        const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
-        const index = await Merge.commits(repo, headCommit, remoteCommit, {
-          fileFavor: Merge.FILE_FAVOR.OURS
-        });
-
-        if (!index.hasConflicts()) {
-          const oid = await index.writeTreeTo(repo);
-          const committer = Signature.now('WikiGDrive', this.email);
-          await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
-          const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
-          await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
-        }
-      } catch (err) {
-        if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
-          throw err;
+    await repo.fetch('origin', {
+      callbacks: {
+        credentials: (url, username) => {
+          return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
         }
       }
+    });
 
-      const origin = await repo.getRemote('origin');
-      const refs = ['refs/heads/master:refs/heads/' + branch];
-      await origin.push(refs, {
-        callbacks: {
-          credentials: (url, username) => {
-            return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
-          }
-        }
+    const headCommit = await repo.getHeadCommit();
+    // const headCommit = await repo.getReferenceCommit('refs/heads/master');
+    try {
+      const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+      const index = await Merge.commits(repo, headCommit, remoteCommit, {
+        fileFavor: Merge.FILE_FAVOR.OURS
       });
+
+      if (!index.hasConflicts()) {
+        const oid = await index.writeTreeTo(repo);
+        const committer = Signature.now('WikiGDrive', this.email);
+        await repo.createCommit('refs/remotes/origin/' + branch, committer, committer, 'Merge remote repo', oid, [remoteCommit, headCommit]);
+        const commit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+        await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
+      }
     } catch (err) {
-      console.warn(err.message);
-      throw err;
+      if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
+        throw err;
+      }
     }
+
+    const origin = await repo.getRemote('origin');
+    const refs = ['refs/heads/master:refs/heads/' + branch];
+    await origin.push(refs, {
+      callbacks: {
+        credentials: (url, username) => {
+          return Cred.sshKeyMemoryNew(username, publicKey, privateKey, passphrase);
+        }
+      }
+    });
   }
 
   async getRemoteUrl(): Promise<string> {
@@ -214,7 +217,6 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return [];
       }
-      console.error(err.message);
       return [];
     }
   }
