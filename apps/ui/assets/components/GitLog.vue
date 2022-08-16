@@ -81,8 +81,9 @@ export default {
   },
   computed: {
     historyPath() {
-      if (this.folderPath && this.folderPath !== '/') {
-        return this.folderPath + '/' + (this.selectedFile?.fileName || '');
+      if (this.folderPath) {
+        const folderPath = this.folderPath.replace(/\/$/, '');
+        return folderPath + '/' + (this.selectedFile?.fileName || '');
       } else {
         return '/' + (this.selectedFile?.fileName || '');
       }

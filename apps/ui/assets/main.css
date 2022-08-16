@@ -17,7 +17,7 @@ nav {
 }
 
 .files-list a {
-  color: var(--bs-dark);
+  color: var(--bs-body-color-rgb);
 }
 
 .files-list__item {
