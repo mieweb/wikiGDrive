@@ -94,12 +94,16 @@ export default {
         alert('No commit message');
         return;
       }
+
+      const folderPath = this.folderPath.endsWith('/') ? this.folderPath : this.folderPath + '/';
+      const filePath = folderPath + this.selectedFile.fileName;
+
       await this.commit({
         message: this.commitMsg,
-        filePath: this.selectedFile.path
+        filePath
       });
-      alert('Commited');
       this.commitMsg = '';
+      window.location.hash = '#git_log';
     },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     fetch() {},
