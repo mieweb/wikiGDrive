@@ -105,9 +105,14 @@ export default {
 
           const path = response.headers.get('wgd-path') || '';
           const fileName = response.headers.get('wgd-file-name') || '';
-          this.folderPath = path.substring(0, path.length - fileName.length);
+
+          const contentDir = (response.headers.get('wgd-content-dir') || '/').replace(/\/$/, '');
+          console.log('contentDir', contentDir, path);
+          this.folderPath = contentDir + path.substring(0, path.length - fileName.length);
           this.selectedFile = {
+            id: fileId,
             fileName,
+            path,
             folderId: response.headers.get('wgd-google-parent-id'),
             version: response.headers.get('wgd-google-version'),
             modifiedTime: response.headers.get('wgd-google-modified-time'),
