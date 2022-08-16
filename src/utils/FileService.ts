@@ -60,6 +60,11 @@ export class FileService {
     return stats.size;
   }
 
+  async getMtime(filePath: string): Promise<number> {
+    const stats = fs.statSync(pathResolve(this.rootPath, filePath));
+    return +stats.mtime;
+  }
+
   readBuffer(filePath: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       fs.readFile(pathResolve(this.rootPath, filePath), (err, data) => {
