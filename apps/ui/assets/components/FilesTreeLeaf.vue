@@ -65,6 +65,11 @@ export default {
   created() {
     this.fetchFolder(this.driveId, this.folderPath);
   },
+  watch: {
+    $route() {
+      this.fetchFolder(this.driveId, this.folderPath);
+    }
+  },
   methods: {
     isExpanded(file) {
       return !!this.expanded[file.fileName];
