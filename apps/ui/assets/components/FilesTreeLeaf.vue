@@ -1,7 +1,10 @@
 <template>
   <ul class="nav nav-pills flex-column files-list" v-if="files.length > 0" :title="folderPath">
     <li v-for="file in files" :key="file.fileName" :title="file.title">
-      <div class="nav-item files-list__item" :class="{'active': file.fileName === selectedName}" :style="{ 'padding-left': (8 + level * 16) + 'px'}" @click="selectFile(file.fileName, file)">
+      <div class="nav-item files-list__item"
+           :class="{'active': file.fileName === selectedName, 'text-danger': (file.status === 'D' || file.status === 'N'), 'text-success': file.status === 'M'}"
+           :style="{ 'padding-left': (8 + level * 16) + 'px'}"
+           @click="selectFile(file.fileName, file)">
         <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
         <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
         <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
@@ -18,6 +21,13 @@
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
+
+function inDir(dirPath, filePath) {
+  if (dirPath === filePath) {
+    return true;
+  }
+  return filePath.startsWith(dirPath + '/');
+}
 
 export default {
   name: 'FilesTreeLeaf',
@@ -57,17 +67,15 @@ export default {
   },
   methods: {
     isExpanded(file) {
-      if (this.expanded[file.fileName]) {
-        return true;
-      }
-      return false;
+      return !!this.expanded[file.fileName];
+
     },
     async fetchFolder(driveId, filePath) {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
       this.files = pathContent.files || [];
       this.expanded = {};
       for (const file of this.files) {
-        if (this.selectedName.startsWith(file.fileName + '/')) {
+        if (inDir(file.fileName, this.selectedName)) {
           this.expanded[file.fileName] = true;
         }
       }

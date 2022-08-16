@@ -91,3 +91,15 @@ body,
   }
 
 }
+
+.text-danger {
+  color: var(--bs-red);
+}
+.text-success {
+  color: var(--bs-green);
+}
+.text-warning {
+  color: var(--bs-blue);
+}
+
+
