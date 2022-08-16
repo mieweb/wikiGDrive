@@ -9,4 +9,9 @@ export class GitClientService {
     return await response.json();
   }
 
+  async getDiff(driveId, path) {
+    const response = await this.authenticatedClient.fetchApi(`/api/git/${driveId}/diff${path}`);
+    return await response.json();
+  }
+
 }

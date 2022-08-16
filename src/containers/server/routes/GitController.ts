@@ -27,6 +27,19 @@ export default class GitController extends Controller {
     return history;
   }
 
+  @RouteUse('/:driveId/diff')
+  async getDiff(@RouteParamPath('driveId') driveId: string) {
+    const filePath = this.req.originalUrl.replace('/api/git/' + driveId + '/diff', '') || '/';
+
+    const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
+    const history = await gitScanner.diff(filePath);
+
+    return history;
+  }
+
   @RouteGet('/:driveId/commit')
   async getCommit(@RouteParamPath('driveId') driveId: string) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');

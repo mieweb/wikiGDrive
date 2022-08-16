@@ -3,7 +3,17 @@ import path from 'path';
 
 import NodeGit from 'nodegit';
 import {StatusFile} from 'nodegit/status-file';
-const { Cred, Remote, Repository, Revwalk, Signature, Merge } = NodeGit;
+const { Cred, Remote, Repository, Revwalk, Signature, Merge, Status, Diff } = NodeGit;
+
+export interface GitChange {
+  path: string;
+  state: {
+    isNew: boolean;
+    isModified: boolean;
+    isDeleted: boolean;
+    isRenamed: boolean;
+  };
+}
 
 export class GitScanner {
 
@@ -19,7 +29,7 @@ export class GitScanner {
     }
   }
 
-  async changes(): Promise<any> {
+  async changes(): Promise<GitChange[]> {
     const repo = await Repository.open(this.rootPath);
 
     const status: StatusFile[] = await repo.getStatus();
@@ -174,6 +184,50 @@ export class GitScanner {
     await Remote.create(repo, 'origin', url);
   }
 
+  async diff(fileName: string) {
+    if (fileName.startsWith('/')) {
+      fileName = fileName.substring(1);
+    }
+
+    try {
+      const repo = await Repository.open(this.rootPath);
+      const diff = await Diff.indexToWorkdir(repo, null, {
+        pathspec: fileName,
+        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
+      });
+      const patches = await diff.patches();
+
+      const retVal = [];
+
+      for (const patch of patches) {
+        const item = {
+          oldFile: patch.oldFile().path(),
+          newFile: patch.newFile().path(),
+          txt: '',
+        };
+
+        const hunks = await patch.hunks();
+        for (const hunk of hunks) {
+          const lines = await hunk.lines();
+
+          item.txt += patch.oldFile().path() + ' ' + patch.newFile().path() + '\n';
+          item.txt += hunk.header().trim() + '\n';
+          for (const line of lines) {
+            item.txt += String.fromCharCode(line.origin()) + line.content();
+          }
+        }
+        retVal.push(item);
+      }
+
+      return retVal;
+    } catch (err) {
+      if (err.message.indexOf('does not have any commits yet') > 0) {
+        return [];
+      }
+      return [];
+    }
+  }
+
   async history(fileName: string) {
     if (fileName.startsWith('/')) {
       fileName = fileName.substring(1);
@@ -226,5 +280,28 @@ export class GitScanner {
       fs.writeFileSync(path.join(this.rootPath, '.gitignore'), '.private\n.git.json\n.wgd-directory.yaml\n*.debug.xml\n');
       await Repository.init(this.rootPath, 0);
     }
+  }
+
+  async getStatus(fileName: string): Promise<GitChange[]> {
+    const repo = await Repository.open(this.rootPath);
+    const status: StatusFile[] = await repo.getStatus({
+      pathspec: fileName,
+      flags: Status.OPT.INCLUDE_UNTRACKED | Status.OPT.RECURSE_UNTRACKED_DIRS
+    });
+
+    const retVal = [];
+    for (const item of status) {
+      const row = {
+        path: item.path(),
+        state: {
+          isNew: !!item.isNew(),
+          isModified: !!item.isModified(),
+          isDeleted: !!item.isDeleted(),
+          isRenamed: !!item.isRenamed()
+        }
+      };
+      retVal.push(row);
+    }
+    return retVal;
   }
 }

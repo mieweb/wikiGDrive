@@ -13,6 +13,7 @@ import express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner} from '../../transform/DirectoryScanner';
+import {GitScanner} from '../../../git/GitScanner';
 
 const extToMime = {
   'js': 'application/javascript',
@@ -96,8 +97,32 @@ export class ShareErrorHandler extends ErrorHandler {
   }
 }
 
+async function addGitData(treeItems: TreeItem[], gitScanner: GitScanner, contentFilePath: string) {
+  if (contentFilePath.startsWith('/')) {
+    contentFilePath = contentFilePath.substring(1);
+  }
+
+  const changes = await gitScanner.getStatus(contentFilePath.replace(/\/$/, ''));
+
+  for (const treeItem of treeItems) {
+    const change = changes.find(change => change.path === (contentFilePath + treeItem.path).replace(/^\//, ''));
+    if (change) {
+      if (change.state.isNew) {
+        treeItem['status'] = 'N';
+      } else
+      if (change.state.isModified || change.state.isRenamed) {
+        treeItem['status'] = 'M';
+      } else
+      if (change.state.isDeleted) {
+        treeItem['status'] = 'D';
+      }
+    }
+  }
+}
+
 export async function outputDirectory(res: express.Response, treeItem: TreeItem) {
   const treeItems = [].concat(treeItem.children || []);
+
   treeItems.sort((file1: TreeItem, file2: TreeItem) => {
     if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
       return -1;
@@ -143,6 +168,9 @@ export default class FolderController extends Controller {
       return;
     }
 
+    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
     if (!userConfigService.config.transform_subdir || inDir('/' + userConfigService.config.transform_subdir, filePath)) {
       const contentFilePath = !userConfigService.config.transform_subdir ?
         filePath :
@@ -166,6 +194,7 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
 
       if (await transformedFileSystem.isDirectory(filePath)) {
+        await addGitData(treeItem.children, gitScanner, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
         await outputDirectory(this.res, treeItem);
         return;
       } else {
@@ -186,12 +215,25 @@ export default class FolderController extends Controller {
           fileName: filePath,
           id: '',
           parentId: '',
-          path: '',
+          path: filePath,
           realFileName: '',
           title: '',
-          children: <any>Object.values(files)
+          mimeType: MimeTypes.FOLDER_MIME,
+          children: Object.values(files)
+            .map(file => {
+              return {
+                fileName: file.fileName,
+                id: 'UNKNOWN',
+                parentId: 'UNKNOWN',
+                path: filePath + file.fileName,
+                realFileName: file.fileName,
+                title: file.title,
+                mimeType: file.mimeType
+              };
+           })
         };
 
+        await addGitData(treeItem.children, gitScanner, '');
         await outputDirectory(this.res, treeItem);
         return;
       } else {

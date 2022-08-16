@@ -51,11 +51,20 @@
         Git log empty
       </div>
     </div>
+
+    <div v-if="diffs.length > 0">
+      <h5>Git Diff</h5>
+      <div v-for="(diff, idx) of diffs" :key="idx">
+        <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
+      </div>
+    </div>
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import ToolButton from './ToolButton.vue';
+const Prism = window['Prism'];
+Prism.manual = true;
 
 export default {
   name: 'GitLog',
@@ -72,12 +81,17 @@ export default {
   },
   computed: {
     historyPath() {
-      return (this.folderPath || '') + (this.selectedFile?.fileName || '');
+      if (this.folderPath && this.folderPath !== '/') {
+        return this.folderPath + '/' + (this.selectedFile?.fileName || '');
+      } else {
+        return '/' + (this.selectedFile?.fileName || '');
+      }
     }
   },
   data() {
     return {
-      history: []
+      history: [],
+      diffs: []
     };
   },
   async created() {
@@ -86,11 +100,23 @@ export default {
   watch: {
     async selectedFile() {
       await this.fetch();
+    },
+    diffs() {
+      this.$nextTick(() => {
+        const codeElems = this.$el.querySelectorAll('code');
+        for (const elem of codeElems.values()) {
+          Prism.highlightElement(elem);
+        }
+      });
     }
   },
   methods: {
     async fetch() {
       this.history = await this.GitClientService.getHistory(this.driveId, this.historyPath);
+      this.diffs = [];
+      if (this.selectedFile?.fileName) {
+        this.diffs = await this.GitClientService.getDiff(this.driveId, this.historyPath);
+      }
     }
   }
 };
