@@ -1,11 +1,11 @@
-FROM nginx:alpine
+FROM alpine
 MAINTAINER Grzegorz Godlewski <gg@gitgis.com>
 
 ADD site/ /site
 
 ENV BASE_URL=http://example.com/
-ENV THEME_ID=ananke
-ENV THEME_URL=https://github.com/budparr/gohugo-theme-ananke.git
+ENV THEME_ID=""
+ENV THEME_URL=""
 
 VOLUME ["/site/content"]
 VOLUME ["/site/public"]

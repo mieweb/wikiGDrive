@@ -49,6 +49,7 @@ function redirError(req: Request, msg: string) {
 export function authenticate(logger: Logger, idx = 0) {
   return async (req, res, next) => {
     req['driveId'] = '';
+    req['logger'] = logger;
     const parts = req.path.split('/');
 
     if (parts[0].length === 0) {
@@ -77,6 +78,7 @@ export function authenticate(logger: Logger, idx = 0) {
       googleUserAuth.setCredentials({ access_token: google_access_token });
 
       req['driveId'] = driveId || '';
+      req['logger'] = req['driveId'] ? logger.child({ driveId: req['driveId'] }) : logger;
 
       req.user = {
         name: decoded['name'],

@@ -6,18 +6,6 @@ import {FileContentService} from '../../../utils/FileContentService';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {GoogleAuthService} from '../../../google/GoogleAuthService';
 
-async function loadHugoThemes(filesService: FileContentService) {
-  if (!await filesService.exists('hugo_themes.json')) {
-    await filesService.writeJson('hugo_themes.json', [{
-      id: 'ananke',
-      name: 'Anake',
-      url: 'https://github.com/budparr/gohugo-theme-ananke.git',
-      preview_img: 'https://raw.githubusercontent.com/budparr/gohugo-theme-ananke/master/images/screenshot.png'
-    }]);
-  }
-  return await filesService.readJson('hugo_themes.json');
-}
-
 export class DriveController extends Controller {
   constructor(subPath: string,
               private readonly filesService: FileContentService,
@@ -66,22 +54,15 @@ export class DriveController extends Controller {
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');
 
-    const hugo_themes = await loadHugoThemes(this.filesService);
-
     return {
       ...drive,
       git: {
         initialized,
-        public_key: await userConfigService.getDeployKey(),
         remote_branch: userConfig.remote_branch,
-        remote_url: initialized ? await gitScanner.getRemoteUrl() : null,
-        config_toml: userConfig.config_toml,
-        transform_subdir: userConfig.transform_subdir
+        remote_url: initialized ? await gitScanner.getRemoteUrl() : null
       },
       tocFilePath: tocFile ? tocFile.path : null,
-      navFilePath: navFile ? navFile.path : null,
-      hugo_theme: userConfig.hugo_theme || {},
-      hugo_themes
+      navFilePath: navFile ? navFile.path : null
     };
   }
 

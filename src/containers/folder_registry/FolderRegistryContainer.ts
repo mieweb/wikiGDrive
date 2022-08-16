@@ -95,6 +95,14 @@ export class FolderRegistryContainer extends Container {
     await this.filesService.remove(folderId + '_transform');
   }
 
+  async pruneTransformFolder(folderId: FileId) {
+    await this.filesService.remove(folderId + '_transform');
+  }
+
+  async pruneGitFolder(folderId: FileId) {
+    await this.filesService.remove(folderId + '_transform/.git');
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async flushData() {
     await this.filesService.writeJson('folders.json', this.folders);

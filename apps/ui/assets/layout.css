@@ -26,6 +26,10 @@ body,
   height: calc(100vh - var(--navbar-height));
 }
 
+.w-vh-toolbar {
+  height: calc(100vh - var(--navbar-height));
+}
+
 .mainbar__sidebar {
   min-width: var(--sidebar-width);
   width: var(--sidebar-width);

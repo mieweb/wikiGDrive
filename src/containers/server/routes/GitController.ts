@@ -39,34 +39,39 @@ export default class GitController extends Controller {
 
   @RoutePost('/:driveId/commit')
   async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
-    const message = body.message;
-    const filePaths: string[] = Array.isArray(body.filePath) ? body.filePath : [body.filePath];
+    try {
+      const message = body.message;
+      const filePaths: string[] = Array.isArray(body.filePath) ? body.filePath : [body.filePath];
 
-    const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-    await gitScanner.initialize();
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
 
-    const transformPaths = [];
+      const transformPaths = [];
 
-    for (const filePath of filePaths) {
-      /*
-        const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
-        let author = '';
-        if (file && transformPath) {
-          const yamlContent = await transformedFileSystem.readFile(transformPath);
-          const directoryScanner = new DirectoryScanner();
-          const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
-          if (file.type === 'md') {
-            author = file.lastAuthor;
+      for (const filePath of filePaths) {
+        /*
+          const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
+          let author = '';
+          if (file && transformPath) {
+            const yamlContent = await transformedFileSystem.readFile(transformPath);
+            const directoryScanner = new DirectoryScanner();
+            const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
+            if (file.type === 'md') {
+              author = file.lastAuthor;
+            }
           }
-        }
-      */
-      transformPaths.push(filePath);
+        */
+        transformPaths.push(filePath);
+      }
+
+      await gitScanner.commit(message, transformPaths, user);
+
+      return {};
+    } catch (err) {
+      this.logger.error(err.message);
+      throw err;
     }
-
-    await gitScanner.commit(message, transformPaths, user);
-
-    return {};
   }
 
   @RoutePost('/:driveId/pull')
@@ -90,6 +95,7 @@ export default class GitController extends Controller {
 
       return {};
     } catch (err) {
+      this.logger.error(err.message, err);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
@@ -118,6 +124,7 @@ export default class GitController extends Controller {
 
       return {};
     } catch (err) {
+      this.logger.error(err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }

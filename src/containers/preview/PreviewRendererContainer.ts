@@ -43,8 +43,13 @@ export class PreviewRendererContainer extends Container {
 
     await this.filesService.mkdir('tmp_dir');
 
-    const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
-    await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
+    if (themeId) {
+      const configTomlPrefix = `theme="${themeId}"\nbaseURL="${process.env.DOMAIN}/preview/${driveId}/${themeId}/"\n`;
+      await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
+    } else {
+      const configTomlPrefix = `baseURL="${process.env.DOMAIN}/preview/${driveId}/_manual"\n`;
+      await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
+    }
 
     const contentDir = config.transform_subdir ?
       `/${driveId}_transform/${config.transform_subdir}` :
@@ -59,7 +64,7 @@ export class PreviewRendererContainer extends Container {
         this.logger.info(`docker run
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir}"
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir"
         --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
         --env THEME_ID=${themeId}
         --env THEME_SUBPATH=${themeSubPath}
@@ -84,25 +89,24 @@ export class PreviewRendererContainer extends Container {
       } else {
         this.logger.info(`docker run
         -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site"
-        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir}"
-        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
-        --env THEME_ID=${themeId}
-        --env THEME_SUBPATH=${themeSubPath}
-        --env THEME_URL=${themeUrl}
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public"
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir"
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/
+        ${process.env.RENDER_IMAGE}
         `);
 
         result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
           HostConfig: {
             Binds: [
               `${process.env.VOLUME_DATA}/${driveId}_transform:/site`,
-              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
+              `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
             ]
           },
           Env: [
-            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
-            'THEME_ID=\'\'',
+            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/_manual`
           ]
         });
       }

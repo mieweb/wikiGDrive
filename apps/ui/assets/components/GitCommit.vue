@@ -1,35 +1,50 @@
 <template>
-  <div class="container">
-    <div class="row py-1">
-      <div class="col-12 text-end">
-        <ToolButton
-            v-if="github_url"
-            :active="activeTab === 'git_log'"
-            @click="openWindow(github_url)"
-            title="GitHub"
-            icon="fa-brands fa-github"
-        />
+  <form>
+    <div class="container d-flex flex-column w-vh-toolbar">
+      <div class="row py-1">
+        <div class="col-12 text-end">
+          <ToolButton
+              v-if="github_url"
+              :active="activeTab === 'git_log'"
+              @click="openWindow(github_url)"
+              title="GitHub"
+              icon="fa-brands fa-github"
+          />
 
-        <ToolButton
-            v-if="gitInitialized"
-            :active="activeTab === 'git_log'"
-            @click="setActiveTab('git_log')"
-            title="History"
-            icon="fa-solid fa-timeline"
-        />
+          <ToolButton
+              v-if="gitInitialized"
+              :active="activeTab === 'git_log'"
+              @click="setActiveTab('git_log')"
+              title="History"
+              icon="fa-solid fa-timeline"
+          />
 
-        <ToolButton
-            v-if="gitInitialized"
-            :active="activeTab === 'git_commit'"
-            @click="setActiveTab('git_commit')"
-            title="Commit"
-            icon="fa-solid fa-code-commit"
-        />
+          <ToolButton
+              v-if="gitInitialized"
+              :active="activeTab === 'git_commit'"
+              @click="setActiveTab('git_commit')"
+              title="Commit"
+              icon="fa-solid fa-code-commit"
+          />
+        </div>
       </div>
-    </div>
 
-    <form>
-      <div v-if="changes && changes.length > 0">
+      <div v-if="changes === null">
+        <div class="alert alert-info">
+          Loading...
+        </div>
+      </div>
+
+      <div v-if="changes !== null && changes.length === 0">
+        <div class="alert alert-info">
+          Nothing to commit
+        </div>
+
+        <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
+        <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
+      </div>
+
+      <div v-if="changes !== null && changes.length > 0" class="overflow-auto">
         <h2>Changes</h2>
         <table class="table table-bordered">
           <thead>
@@ -54,18 +69,18 @@
           </tbody>
         </table>
       </div>
-      <div class="card">
+      <div class="card" v-if="changes && changes.length > 0">
         <div class="card-body">
           <div class="input-groups">
             <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
-          <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
-          <button v-if="git_remote_url" type="button" class="btn btn-danger" @click="push">Commit and Push</button>
-          <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull">Pull</button>
+          <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
+          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Commit and Push</button>
+          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
         </div>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
@@ -88,8 +103,9 @@ export default {
     return {
       user_config: {},
       checked: {},
-      changes: [],
-      message: ''
+      changes: null,
+      message: '',
+      working: {}
     };
   },
   computed: {
@@ -105,6 +121,7 @@ export default {
   },
   methods: {
     async fetch() {
+      this.changes = null;
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
       this.changes = json.changes;
@@ -122,70 +139,94 @@ export default {
       window.open(url, '_blank');
     },
     async submitCommit() {
-      if (!this.message) {
-        alert('No commit message');
-        return;
+      try {
+        this.working.commit = true;
+
+        if (!this.message) {
+          alert('No commit message');
+          return;
+        }
+
+        const filePath = Object.keys(this.checked);
+        if (filePath.length === 0) {
+          alert('No files selected');
+          return;
+        }
+
+        await this.commit({
+          message: this.message,
+          filePath: filePath
+        });
+        this.message = '';
+
+        window.location.hash = '#git_log';
+      } catch(err) {
+        window.location.hash = '#drive_logs';
+      } finally {
+        delete this.working.commit;
       }
-
-      const filePath = Object.keys(this.checked);
-      if (filePath.length === 0) {
-        alert('No files selected');
-        return;
-      }
-
-      await this.commit({
-        message: this.message,
-        filePath: filePath
-      });
-      this.message = '';
-
-      window.location.hash = '#git_log';
     },
     async pull() {
-      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/pull`, {
-        method: 'post',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        body: JSON.stringify({})
-      });
-      const json = await response.json();
-      await this.fetch();
-      if (json.error) {
-        alert(json.error);
-      } else {
-        alert('Pull completed');
-        window.location.hash = '#git_log';
-      }
-    },
-    async push({ message, filePath }) {
-      if (message) {
-        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
+      try {
+        this.working.pull = true;
+        const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/pull`, {
           method: 'post',
           headers: {
             'Content-type': 'application/json'
           },
-          body: JSON.stringify({
-            filePath,
-            message: message
-          })
+          body: JSON.stringify({})
         });
+        const json = await response.json();
+        await this.fetch();
+        if (json.error) {
+          alert(json.error);
+          window.location.hash = '#drive_logs';
+        } else {
+          alert('Pull completed');
+          window.location.hash = '#git_log';
+        }
+      } catch(err) {
+        window.location.hash = '#drive_logs';
+      } finally {
+        delete this.working.pull;
       }
+    },
+    async push({ message, filePath }) {
+      try {
+        this.working.push = true;
+        if (message) {
+          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
+            method: 'post',
+            headers: {
+              'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              filePath,
+              message: message
+            })
+          });
+        }
 
-      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/push`, {
-        method: 'post',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        body: JSON.stringify({})
-      });
-      const json = await response.json();
-      await this.fetch();
-      if (json.error) {
-        alert(json.error);
-      } else {
-        alert('Push completed');
-        window.location.hash = '#git_log';
+        const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/push`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({})
+        });
+        const json = await response.json();
+        await this.fetch();
+        if (json.error) {
+          alert(json.error);
+          window.location.hash = '#drive_logs';
+        } else {
+          alert('Push completed');
+          window.location.hash = '#git_log';
+        }
+      } catch(err) {
+        window.location.hash = '#drive_logs';
+      } finally {
+        delete this.working.push;
       }
     },
     toggle(path) {

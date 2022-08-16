@@ -1,7 +1,7 @@
 export const GitMixin = {
   methods: {
     async commit({ message, filePath }) {
-      const response = this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
+      const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
         method: 'post',
         headers: {
           'Content-type': 'application/json'
@@ -15,6 +15,7 @@ export const GitMixin = {
       await this.fetch();
       if (json.error) {
         alert(json.error);
+        window.location.hash = '#drive_logs';
       } else {
         alert('Commited');
       }

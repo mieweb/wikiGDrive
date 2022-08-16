@@ -67,8 +67,7 @@ export const UtilsMixin = {
       if (!this.selectedFile) {
         return '';
       }
-      const folderPath = this.folderPath.endsWith('/') ? this.folderPath : this.folderPath + '/';
-      const fullUrlPreview = '/' + this.driveId + (this.drive.hugo_theme?.id ? `/${this.drive.hugo_theme?.id}` : '') + folderPath + this.selectedFile.fileName;
+      const fullUrlPreview = '/' + this.driveId + (this.drive.hugo_theme?.id ? `/${this.drive.hugo_theme?.id}` : '/_manual') + this.selectedFile.path;
       return window.location.protocol + '//' + window.location.hostname + '/preview' +
         fullUrlPreview
           .replace(/.md$/, '')
@@ -142,6 +141,7 @@ export const UtilsMixin = {
       await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
         method: 'post'
       });
+      window.location.hash = '';
     },
     async renderPreview() {
       await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
