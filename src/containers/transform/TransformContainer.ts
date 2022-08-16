@@ -477,7 +477,7 @@ export class TransformContainer extends Container {
   }
 
   setTransformSubDir(transform_subdir: string) {
-    this.transformSubDir = transform_subdir.replaceAll('/', '').trim();
+    this.transformSubDir = (transform_subdir || '').replaceAll('/', '').trim();
   }
 
   onProgressNotify(callback: ({total, completed}: { total?: number; completed?: number }) => void) {
