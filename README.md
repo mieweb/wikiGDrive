@@ -25,35 +25,19 @@ With a "Shared Drive" as the key, WikiGDrive:
 
 WikiGDrive scans for changes in the drive and then refresh the local converted files.
 
-## Building from source
+## Developer Documentation
 
 See [Node setup on the system](#Node-setup-on-the-system) for prereq.
 
-```
-npm install
-npm run build
-npm link --local # or node ./dist/main.js
-```
-
-## Running as typescript
-
-```
-npm install
-npm link --local
-wikigdrive-ts # or node ./src/cli.ts
-```
+[Developer README](doc/developer.md)
 
 ## Debugging
 
-To get proper sourcemap support we suggest using ts-node for running.
-
-1. Install ndb: `npm install -g ndb`
-2. Install ts-node: `npm install -g ts-node`
-3. Now you can run it with: `ndb node -r ts-node/register ./src/main.ts ...`
-4. Or you can run it with: `ndb node -r ts-node/register/transpile-only ./src/main.ts --dest $DIR pull`
-5. Or without the debugger just by `ts-node-transpile-only --project ./src/main.ts --dest $DIR pull`
 
 ## Install from NPM
+
+*Not currently working*
+See https://github.com/mieweb/wikiGDrive/issues/297 for status.
 
 [![View this project on NPM](https://img.shields.io/npm/v/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
 [![NPM downloads](https://img.shields.io/npm/dm/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
