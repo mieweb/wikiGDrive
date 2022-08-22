@@ -50,14 +50,13 @@
           <thead>
           <tr>
             <th><input type="checkbox" :checked="isCheckedAll" @click="toggleCheckAll" /></th>
+            <th>State</th>
             <th>Path</th>
-            <th>Stater</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(item, idx) of changes" :key="idx" @click="toggle(item.path)">
+          <tr v-for="(item, idx) of changes" :key="idx" @click="toggle(item.path)" :class="{'text-danger': (item.state.isDeleted || item.state.isNew), 'text-success': item.state.isModified || item.state.isRenamed}">
             <td><input name="filePath" type="checkbox" :value="item.path" :checked="checked[item.path]" /></td>
-            <td>{{item.path}}</td>
             <td>
               <span v-if="item.state.isNew">New</span>
               <span v-else-if="item.state.isModified">Modified</span>
@@ -65,6 +64,7 @@
               <span v-else-if="item.state.isDeleted">Deleted</span>
               <span v-else>{{item.state}}</span>
             </td>
+            <td>{{item.path}}</td>
           </tr>
           </tbody>
         </table>
@@ -147,20 +147,33 @@ export default {
           return;
         }
 
-        const filePath = Object.keys(this.checked);
-        if (filePath.length === 0) {
+        const checkedFileNames = Object.keys(this.checked);
+        if (checkedFileNames.length === 0) {
           alert('No files selected');
           return;
         }
 
+        const filePath = [];
+        const removeFilePath = [];
+
+        for (const checkedFileName of checkedFileNames) {
+          const change = this.changes.find(change => change.path === checkedFileName);
+          if (change?.state?.isDeleted) {
+            removeFilePath.push(checkedFileName);
+          } else {
+            filePath.push(checkedFileName);
+          }
+        }
+
         await this.commit({
           message: this.message,
-          filePath: filePath
+          filePath: filePath,
+          removeFilePath: removeFilePath
         });
         this.message = '';
 
         window.location.hash = '#git_log';
-      } catch(err) {
+      } catch (err) {
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.commit;
@@ -185,27 +198,20 @@ export default {
           alert('Pull completed');
           window.location.hash = '#git_log';
         }
-      } catch(err) {
+      } catch (err) {
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.pull;
       }
     },
-    async push({ message, filePath }) {
+    async push() {
       try {
-        this.working.push = true;
-        if (message) {
-          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
-            method: 'post',
-            headers: {
-              'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-              filePath,
-              message: message
-            })
-          });
+        const checkedFileNames = Object.keys(this.checked);
+        if (checkedFileNames.length > 0) {
+          await this.submitCommit();
         }
+
+        this.working.push = true;
 
         const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/push`, {
           method: 'post',
@@ -223,7 +229,7 @@ export default {
           alert('Push completed');
           window.location.hash = '#git_log';
         }
-      } catch(err) {
+      } catch (err) {
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.push;

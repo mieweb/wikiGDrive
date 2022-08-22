@@ -49,16 +49,24 @@ export class GitScanner {
     return retVal;
   }
 
-  async commit(message: string, fileNames: string[], committer): Promise<string> {
+  async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
     const repo = await Repository.open(this.rootPath);
     const index = await repo.refreshIndex();
 
-    for (let fileName of fileNames) {
+    for (let fileName of addedFiles) {
       if (fileName.startsWith('/')) {
         fileName = fileName.substring(1);
       }
       if (fileName) {
         await index.addByPath(fileName);
+      }
+    }
+    for (let fileName of removedFiles) {
+      if (fileName.startsWith('/')) {
+        fileName = fileName.substring(1);
+      }
+      if (fileName) {
+        await index.removeByPath(fileName);
       }
     }
 

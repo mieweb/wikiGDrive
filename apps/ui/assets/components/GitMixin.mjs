@@ -1,6 +1,6 @@
 export const GitMixin = {
   methods: {
-    async commit({ message, filePath }) {
+    async commit({ message, filePath, removeFilePath }) {
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
         method: 'post',
         headers: {
@@ -8,6 +8,7 @@ export const GitMixin = {
         },
         body: JSON.stringify({
           filePath,
+          removeFilePath,
           message: message
         })
       });
