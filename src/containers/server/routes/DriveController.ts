@@ -54,6 +54,8 @@ export class DriveController extends Controller {
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');
 
+    const contentPrefix = userConfigService.config.transform_subdir ? `/${userConfigService.config.transform_subdir}` : '';
+
     return {
       ...drive,
       git: {
@@ -61,8 +63,8 @@ export class DriveController extends Controller {
         remote_branch: userConfig.remote_branch,
         remote_url: initialized ? await gitScanner.getRemoteUrl() : null
       },
-      tocFilePath: tocFile ? tocFile.path : null,
-      navFilePath: navFile ? navFile.path : null
+      tocFilePath: tocFile ? contentPrefix + tocFile.path : null,
+      navFilePath: navFile ? contentPrefix + navFile.path : null
     };
   }
 
