@@ -6,6 +6,7 @@ import {FileContentService} from '../../../utils/FileContentService';
 interface CommitPost {
   message: string;
   filePath: string[];
+  removeFilePath: string[];
 }
 
 export default class GitController extends Controller {
@@ -54,31 +55,18 @@ export default class GitController extends Controller {
   async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
     try {
       const message = body.message;
-      const filePaths: string[] = Array.isArray(body.filePath) ? body.filePath : [body.filePath];
+      const filePaths: string[] = Array.isArray(body.filePath)
+        ? body.filePath
+        : (body.filePath ? [body.filePath] : []);
+      const removeFilePaths: string[] = Array.isArray(body.removeFilePath)
+        ? body.removeFilePath
+        : (body.removeFilePath ? [body.removeFilePath] : []);
 
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
       const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
-      const transformPaths = [];
-
-      for (const filePath of filePaths) {
-        /*
-          const [file, transformPath] = generateTreePath(fileId, transformedTree, 'name');
-          let author = '';
-          if (file && transformPath) {
-            const yamlContent = await transformedFileSystem.readFile(transformPath);
-            const directoryScanner = new DirectoryScanner();
-            const file = await directoryScanner.parseMarkdown(yamlContent, transformPath);
-            if (file.type === 'md') {
-              author = file.lastAuthor;
-            }
-          }
-        */
-        transformPaths.push(filePath);
-      }
-
-      await gitScanner.commit(message, transformPaths, user);
+      await gitScanner.commit(message, filePaths, removeFilePaths, user);
 
       return {};
     } catch (err) {
