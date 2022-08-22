@@ -139,7 +139,9 @@ export class TaskLocalFileTransform extends QueueTask {
     const markdown = await converter.convert();
     const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, Array.from(converter.links));
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
-    await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
+    if (process.env.VERSION === 'dev') {
+      await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
+    }
     this.localLinks.append(localFile.id, localFile.fileName, Array.from(converter.links));
   }
 
