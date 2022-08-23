@@ -31,7 +31,7 @@ Stored in /home/githubactions/wikigdrive/env.prod
 
 ### This is for the Service Account
 https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333?project=wikigdrive
-** [Link to the keys](https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333/keys?project=wikigdrive)
+* [Link to the keys](https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333/keys?project=wikigdrive)
 
 ## Add On Service
 
