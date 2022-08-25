@@ -38,7 +38,7 @@
       <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
         <i class="fa-brands fa-markdown me-1"></i>
       </button>
-      <a v-if="previewUrl" :href="previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
+      <a v-if="selectedFile.previewUrl" :href="selectedFile.previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
         <i class="fa-regular fa-window-maximize me-1"></i>
       </a>
       <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
@@ -56,6 +56,10 @@
       </button>
       <button v-if="drive.navFilePath" @click.prevent.stop="goToPath(drive.navFilePath)" class="btn btn-white text-primary mx-1" type="button" aria-label="Navigation" title="Navigation">
         <i class="fa-solid fa-ellipsis-vertical"></i>
+      </button>
+
+      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="openAddonView(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Google addon mode" title="Google addon mode" >
+        <i class="fa-solid fa-arrows-left-right"></i>
       </button>
 
       <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="reportBug(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Report issue" title="Report issue" >
@@ -117,6 +121,15 @@ export default {
       }).toString();
 
       window.open(url, '_blank');
+    },
+    openAddonView(fileId) {
+      this.$router.push({
+        name: 'gdocs',
+        params: {
+          driveId: this.driveId,
+          fileId
+        }
+      });
     }
   }
 };
