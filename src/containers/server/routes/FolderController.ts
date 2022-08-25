@@ -25,6 +25,19 @@ const extToMime = {
   'html': 'text/html'
 };
 
+function addPreviewUrl(hugo_theme, driveId) {
+  return (file) => {
+    const previewMdUrl = '/' + driveId + (hugo_theme?.id ? `/${hugo_theme?.id}` : '/_manual') + file.path;
+
+    const previewUrl = '/preview' +
+      previewMdUrl
+        .replace(/.md$/, '')
+        .replace(/_index$/, '');
+
+    return { ...file, previewUrl };
+  };
+}
+
 export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
   if (!Array.isArray(files)) {
     return [];
@@ -212,6 +225,15 @@ export default class FolderController extends Controller {
         return;
       }
 
+      const previewMdUrl = treeItem.path
+        ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + treeItem.path
+        : '';
+
+      const previewUrl = '/preview' +
+        previewMdUrl
+          .replace(/.md$/, '')
+          .replace(/_index$/, '');
+
       this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
       this.res.setHeader('wgd-google-id', treeItem.id || '');
       this.res.setHeader('wgd-google-version', treeItem.version || '');
@@ -219,10 +241,12 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-path', treeItem.path || '');
       this.res.setHeader('wgd-file-name', treeItem.fileName || '');
       this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+      this.res.setHeader('wgd-preview-url', previewUrl);
 
       if (await transformedFileSystem.isDirectory(filePath)) {
         const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
+        treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
         return;
       } else {
@@ -263,6 +287,7 @@ export default class FolderController extends Controller {
 
         const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, '');
+        treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
         return;
       } else {

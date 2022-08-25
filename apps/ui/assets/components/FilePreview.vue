@@ -65,7 +65,7 @@ export default {
         const fullUrl = '/' + this.driveId + folderPath + this.selectedFile.fileName;
         const file = await this.FileClientService.getFile(fullUrl);
         this.fileContent = file.content;
-        this.htmlUrl = this.previewUrl;
+        this.htmlUrl = file.previewUrl;
       }
     }
   }
