@@ -87,8 +87,10 @@ export default {
           path: path
         };
 
+        const contentDir = response.headers.get('wgd-content-dir');
         if (selectedFile.path) {
-          this.$router.push(`/drive/${this.driveId}${selectedFile.path}`);
+          const path = (contentDir + selectedFile.path).replace('//', '/');
+          this.$router.push(`/drive/${this.driveId}${path}`);
         }
       }
     }
