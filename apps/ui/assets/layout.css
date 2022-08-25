@@ -72,7 +72,7 @@ body,
   }
 
   .mainbar__sidebar {
-    background: #FFF;
+    background: var(--bs-body-bg);
     width: 100vw;
     max-width: 100vw;
     top: var(--navbar-height);

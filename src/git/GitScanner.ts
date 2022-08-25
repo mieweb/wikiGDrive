@@ -252,26 +252,29 @@ export class GitScanner {
       const retVal = [];
       if (fileName) {
         const resultingArrayOfCommits = await walker.fileHistoryWalk(fileName, 500);
-        resultingArrayOfCommits.forEach(function(entry) {
+        for (const entry of resultingArrayOfCommits) {
           const author = entry.commit.author();
           const item = {
             date: entry.commit.date(),
             author_name: author.name() + ' <' + author.email() + '>',
-            message: entry.commit.message()
+            message: entry.commit.message(),
+            id: entry.commit.id().tostrS()
           };
           retVal.push(item);
-        });
+        }
       } else {
         const resultingArrayOfCommits = await walker.commitWalk(500);
-        resultingArrayOfCommits.forEach(function(commit) {
+
+        for (const commit of resultingArrayOfCommits) {
           const author = commit.author();
           const item = {
             date: commit.date(),
             author_name: author.name() + ' <' + author.email() + '>',
-            message: commit.message()
+            message: commit.message(),
+            id: commit.id().tostrS()
           };
           retVal.push(item);
-        });
+        }
       }
 
       return retVal;
@@ -284,8 +287,11 @@ export class GitScanner {
   }
 
   async initialize() {
+    const ignorePath = path.join(this.rootPath, '.gitignore');
+    if (!fs.existsSync(ignorePath)) {
+      fs.writeFileSync(ignorePath, '.private\n.git.json\n.wgd-directory.yaml\n.wgd-local-links.csv\n.wgd-local-log.csv\n*.debug.xml\n');
+    }
     if (!await this.isRepo()) {
-      fs.writeFileSync(path.join(this.rootPath, '.gitignore'), '.private\n.git.json\n.wgd-directory.yaml\n*.debug.xml\n');
       await Repository.init(this.rootPath, 0);
     }
   }

@@ -11,7 +11,7 @@
       </a>
     </li>
     <li :class="{ 'active': activeTab.startsWith('git_') }" class="wgd-nav-item">
-      <a @click.prevent.stop="setActiveTab('git_log')">
+      <a @click.prevent.stop="setActiveTab('git_commit')">
         <i class="fa-brands fa-git-square"></i>
       </a>
     </li>

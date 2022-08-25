@@ -95,3 +95,7 @@ pre[class*=language-] {
 .modals:empty {
   display: none;
 }
+
+.cursor-pointer {
+  cursor: pointer;
+}
