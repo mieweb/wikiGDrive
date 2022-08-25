@@ -108,7 +108,6 @@ export default {
           const fileName = response.headers.get('wgd-file-name') || '';
 
           const contentDir = (response.headers.get('wgd-content-dir') || '/').replace(/\/$/, '');
-          console.log('contentDir', contentDir, path);
           this.folderPath = contentDir + path.substring(0, path.length - fileName.length);
           this.selectedFile = {
             id: fileId,

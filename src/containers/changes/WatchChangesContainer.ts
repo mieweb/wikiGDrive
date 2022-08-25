@@ -104,8 +104,8 @@ export class WatchChangesContainer extends Container {
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     const folders = await folderRegistryContainer.getFolders();
     for (const folderId in folders) {
-      if (folders[folderId].driveId) {
-        await this.startWatching(folders[folderId].driveId);
+      if (folders[folderId]['kind'] === 'drive#drive') {
+        await this.startWatching(folders[folderId].id);
       }
     }
   }
