@@ -251,7 +251,7 @@ export default class FolderController extends Controller {
             .map(file => {
               return {
                 fileName: file.fileName,
-                id: 'UNKNOWN',
+                id: '/' + userConfigService.config.transform_subdir === filePath + file.fileName ? driveId : 'UNKNOWN',
                 parentId: 'UNKNOWN',
                 path: filePath + file.fileName,
                 realFileName: file.fileName,

@@ -35,6 +35,7 @@ export default {
   },
   methods: {
   },
+  emits: ['collapse', 'sync'],
   mounted() {
     window.addEventListener('resize', () => {
       const sidebarEl = document.querySelector('.mainbar__sidebar');

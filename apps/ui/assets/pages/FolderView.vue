@@ -91,8 +91,12 @@ export default {
     jobs() {
       return this.$root.jobs || [];
     },
-    active_jobs() {
-      return this.jobs.filter(job => ['waiting', 'running'].includes(job.state));
+    active_job() {
+      const job = this.jobs.find(job => job.state === 'running');
+      if (job) {
+        return job.title;
+      }
+      return '';
     },
   },
   created() {
@@ -104,7 +108,7 @@ export default {
       await this.fetch();
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     },
-    async active_jobs() {
+    async active_job() {
       await this.fetch();
     }
   },
