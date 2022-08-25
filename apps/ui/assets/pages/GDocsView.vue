@@ -1,5 +1,7 @@
 <template>
-  <BaseLayout :sidebar="false" :share-email="shareEmail">
+  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+
+  <BaseLayout v-else :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
       <NavBar :sidebar="false">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
@@ -11,7 +13,6 @@
       <div v-else>
         <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
-        <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
         <LogsViewer v-if="activeTab === 'drive_logs'" />

@@ -1,96 +1,105 @@
 <template>
-  <form>
-    <div class="container d-flex flex-column w-vh-toolbar">
-      <div class="row py-1">
-        <div class="col-12 text-end">
-          <ToolButton
-              v-if="github_url"
-              :active="activeTab === 'git_log'"
-              @click="openWindow(github_url)"
-              title="GitHub"
-              icon="fa-brands fa-github"
-          />
+  <BaseLayout :sidebar="sidebar">
+    <template v-slot:navbar="{ collapsed, collapse }">
+      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+      </NavBar>
+    </template>
 
-          <ToolButton
-              v-if="gitInitialized"
-              :active="activeTab === 'git_log'"
-              @click="setActiveTab('git_log')"
-              title="History"
-              icon="fa-solid fa-timeline"
-          />
+    <template v-slot:sidebar="{ collapse }">
+      <GitSideBar
+          :selectedPath="selectedPath"
+          :gitChanges="gitChanges"
+          :checked="checked"
+          @toggleCheckAll="toggleCheckAll"
+          @toggle="toggle"
+          @setCurrentDiff="setCurrentDiff"
+          @collapse="collapse"
+      />
+    </template>
 
-          <ToolButton
-              v-if="gitInitialized"
-              :active="activeTab === 'git_commit'"
-              @click="setActiveTab('git_commit')"
-              title="Commit"
-              icon="fa-solid fa-code-commit"
-          />
-        </div>
-      </div>
+    <form>
+      <div class="container d-flex flex-column w-vh-toolbar">
+        <div class="row py-1">
+          <div class="col-12 text-end">
+            <ToolButton
+                v-if="github_url"
+                :active="activeTab === 'git_log'"
+                @click="openWindow(github_url)"
+                title="GitHub"
+                icon="fa-brands fa-github"
+            />
 
-      <div v-if="changes === null">
-        <div class="alert alert-info">
-          Loading...
-        </div>
-      </div>
+            <ToolButton
+                v-if="gitInitialized"
+                :active="activeTab === 'git_log'"
+                @click="setActiveTab('git_log')"
+                title="History"
+                icon="fa-solid fa-timeline"
+            />
 
-      <div v-if="changes !== null && changes.length === 0">
-        <div class="alert alert-info">
-          Nothing to commit
-        </div>
-
-        <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
-        <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
-      </div>
-
-      <div v-if="changes !== null && changes.length > 0" class="overflow-auto">
-        <h2>Changes</h2>
-        <table class="table table-bordered">
-          <thead>
-          <tr>
-            <th><input type="checkbox" :checked="isCheckedAll" @click="toggleCheckAll" /></th>
-            <th>State</th>
-            <th>Path</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(item, idx) of changes" :key="idx" @click="toggle(item.path)" :class="{'text-danger': (item.state.isDeleted || item.state.isNew), 'text-success': item.state.isModified || item.state.isRenamed}">
-            <td><input name="filePath" type="checkbox" :value="item.path" :checked="checked[item.path]" /></td>
-            <td>
-              <span v-if="item.state.isNew">New</span>
-              <span v-else-if="item.state.isModified">Modified</span>
-              <span v-else-if="item.state.isRenamed">Renamed</span>
-              <span v-else-if="item.state.isDeleted">Deleted</span>
-              <span v-else>{{item.state}}</span>
-            </td>
-            <td>{{item.path}}</td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card" v-if="changes && changes.length > 0">
-        <div class="card-body">
-          <div class="input-groups">
-            <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
+            <ToolButton
+                v-if="gitInitialized"
+                :active="activeTab === 'git_commit'"
+                @click="setActiveTab('git_commit')"
+                title="Commit"
+                icon="fa-solid fa-code-commit"
+            />
           </div>
-          <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
-          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Commit and Push</button>
+        </div>
+
+        <div v-if="diffs.length > 0">
+          <h5>Git Diff</h5>
+          <div v-for="(diff, idx) of diffs" :key="idx">
+            <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
+          </div>
+        </div>
+
+        <div class="card" v-if="isSomethingChecked">
+          <div class="card-body">
+            <div class="input-groups">
+              <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
+            </div>
+            <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
+            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Commit and Push</button>
+            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
+          </div>
+        </div>
+        <div v-else>
+          <div class="alert alert-info">
+            Nothing to commit
+          </div>
+
+          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
           <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
         </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </BaseLayout>
+
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
 import ToolButton from './ToolButton.vue';
+import BaseLayout from '../layout/BaseLayout.vue';
+import NavBar from './NavBar.vue';
+import NavTabs from './NavTabs.vue';
+import GitSideBar from './GitSideBar.vue';
+const Prism = window['Prism'];
+Prism.manual = true;
 
 export default {
   mixins: [UtilsMixin, GitMixin],
-  components: {ToolButton},
+  components: {
+    GitSideBar,
+    ToolButton,
+    BaseLayout,
+    NavBar,
+    NavTabs
+  },
   props: {
+    sidebar: Boolean,
     activeTab: {
       type: String
     },
@@ -103,9 +112,12 @@ export default {
     return {
       user_config: {},
       checked: {},
-      changes: null,
+      gitChanges: null,
       message: '',
-      working: {}
+      working: {},
+      diffs: [],
+      selectedPath: '',
+      isSomethingChecked: false
     };
   },
   computed: {
@@ -113,24 +125,51 @@ export default {
       return this.user_config.remote_url || '';
     },
     isCheckedAll() {
-      return Object.keys(this.checked).length === this.changes.length;
+      return Object.keys(this.checked).length === this.gitChanges?.length;
+    },
+    historyPath() {
+      if (this.folderPath) {
+        const folderPath = this.folderPath.replace(/\/$/, '');
+        return folderPath + '/' + (this.selectedFile?.fileName || '');
+      } else {
+        return '/' + (this.selectedFile?.fileName || '');
+      }
+    }
+  },
+  watch: {
+    diffs() {
+      this.$nextTick(() => {
+        const codeElems = this.$el.querySelectorAll('code');
+        for (const elem of codeElems.values()) {
+          Prism.highlightElement(elem);
+        }
+      });
     }
   },
   async created() {
     await this.fetch();
   },
   methods: {
+    async setCurrentDiff(path) {
+      this.diffs = [];
+      if (path) {
+        this.diffs = await this.GitClientService.getDiff(this.driveId, path);
+      }
+      this.selectedPath = path.substring(1);
+    },
     async fetch() {
-      this.changes = null;
+      this.gitChanges = null;
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`);
       const json = await response.json();
-      this.changes = json.changes;
+      this.gitChanges = json.changes;
       this.checked = {};
 
-      const fileName = (this.folderPath + this.selectedFile.fileName).substring(1);
-      if (this.changes.find(item => item.path === fileName)) {
-        this.checked[fileName] = true;
+      const fileName = this.historyPath.substring(1);
+      if (this.gitChanges.find(item => item.path === fileName)) {
+        this.toggle(fileName);
       }
+
+      this.setCurrentDiff(this.selectedFile?.fileName ? this.historyPath : '');
 
       const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
       this.user_config = await responseConfig.json();
@@ -157,7 +196,7 @@ export default {
         const removeFilePath = [];
 
         for (const checkedFileName of checkedFileNames) {
-          const change = this.changes.find(change => change.path === checkedFileName);
+          const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (change?.state?.isDeleted) {
             removeFilePath.push(checkedFileName);
           } else {
@@ -241,14 +280,31 @@ export default {
       } else {
         this.checked[path] = true;
       }
+
+      if (path.endsWith('.md')) {
+        const assetPath = path.replace(/.md$/, '.assets/');
+        for (const assetChange of this.gitChanges) {
+          if (!assetChange.path.startsWith(assetPath)) {
+            continue;
+          }
+          if (this.checked[path]) {
+            this.checked[assetChange.path] = true;
+          } else {
+            delete this.checked[assetChange.path];
+          }
+        }
+      }
+      this.isSomethingChecked = Object.keys(this.checked).length > 0;
     },
     toggleCheckAll() {
       if (this.isCheckedAll) {
         this.checked = {};
+        this.isSomethingChecked = false;
       } else {
-        for (const item of this.changes) {
+        for (const item of this.gitChanges) {
           this.checked[item.path] = true;
         }
+        this.isSomethingChecked = true;
       }
     }
   }
