@@ -3,7 +3,9 @@
       v-if="gitChanges !== null"
       :tree="tree"
       :checked="checked"
+      :checkedDirs="checkedDirs"
       :selectedPath="selectedPath"
+      @toggleDir="toggleDir"
       @selected="$emit('setCurrentDiff', $event)"
   />
 </template>
@@ -19,13 +21,14 @@ export default {
     checked: Object,
     selectedPath: String
   },
-  computed: {
-    filteredGitChanges() {
-      return this.gitChanges.filter(change => {
-        return (change.path.indexOf('.assets/') === -1);
-      });
-    },
-    tree() {
+  data() {
+    return {
+      tree: [],
+      checkedDirs: {}
+    };
+  },
+  watch: {
+    gitChanges() {
       const retVal = [];
       for (const change of this.filteredGitChanges) {
         const parts = change.path.split('/');
@@ -65,7 +68,60 @@ export default {
           }
         }
       }
-      return retVal;
+      this.tree = retVal;
+
+      this.checkedDirs = {};
+      this.addCheckedDirs(this.tree);
+    },
+    checked: {
+      deep: true,
+      handler() {
+        this.checkedDirs = {};
+        this.addCheckedDirs(this.tree);
+      }
+    }
+  },
+  methods: {
+    addCheckedDirs(tree) {
+      for (const item of tree) {
+        if (item.children.length > 0) {
+          this.addCheckedDirs(item.children);
+          const dirChanges = this.gitChanges.filter(change => change.path.startsWith(item.path + '/'));
+          let checkedCount = 0;
+          for (const dirChange of dirChanges) {
+            if (this.checked[dirChange.path]) {
+              checkedCount++;
+            }
+          }
+          if (dirChanges.length === checkedCount) {
+            this.checkedDirs[item.path] = true;
+          }
+        }
+      }
+    },
+    toggleDir(path) {
+      if (this.checkedDirs[path]) {
+        const dirChanges = this.gitChanges.filter(change => change.path.startsWith(path + '/'));
+        for (const dirChange of dirChanges) {
+          if (this.checked[dirChange.path]) {
+            this.$emit('toggle', dirChange.path);
+          }
+        }
+      } else {
+        const dirChanges = this.gitChanges.filter(change => change.path.startsWith(path + '/'));
+        for (const dirChange of dirChanges) {
+          if (!this.checked[dirChange.path]) {
+            this.$emit('toggle', dirChange.path);
+          }
+        }
+      }
+    }
+  },
+  computed: {
+    filteredGitChanges() {
+      return this.gitChanges.filter(change => {
+        return (change.path.indexOf('.assets/') === -1);
+      });
     },
     isCheckedAll() {
       return Object.keys(this.checked).length === this.gitChanges?.length;

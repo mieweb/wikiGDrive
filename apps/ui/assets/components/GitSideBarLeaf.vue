@@ -10,15 +10,20 @@
         <span v-if="!file.children.length">
           <input name="filePath" type="checkbox" :value="file.path" @click="$emit('toggle', file.path)" :checked="checked[file.path]" />
         </span>
-        <span class="file-name" @click="$emit('selected', '/' + file.path)">{{ file.fileName }}</span>
+        <span v-else>
+          <input name="filePath" type="checkbox" :value="file.path" @click="$emit('toggleDir', file.path)" :checked="checkedDirs[file.path]" />
+        </span>
+        <span class="file-name m-1" @click="$emit('selected', '/' + file.path)">{{ file.fileName }}</span>
       </div>
       <GitSideBarLeaf
           v-if="file.children"
           :tree="file.children"
           :level="1 + level"
           :checked="checked"
+          :checkedDirs="checkedDirs"
           :selectedPath="selectedPath"
           @selected="$emit('selected', $event)"
+          @toggleDir="$emit('toggleDir', $event)"
           @toggle="$emit('toggle', $event)"
       />
     </li>
@@ -44,7 +49,8 @@ export default {
       type: Number,
       default: 0
     },
-    checked: Object
+    checked: Object,
+    checkedDirs: Object
   },
   data() {
     return {
