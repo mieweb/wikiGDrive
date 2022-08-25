@@ -84,6 +84,7 @@ export default {
           modifiedTime: response.headers.get('wgd-google-modified-time'),
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type'),
+          previewUrl: response.headers.get('wgd-preview-url'),
           path: path
         };
 

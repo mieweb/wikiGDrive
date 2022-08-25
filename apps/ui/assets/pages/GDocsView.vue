@@ -117,7 +117,8 @@ export default {
             version: response.headers.get('wgd-google-version'),
             modifiedTime: response.headers.get('wgd-google-modified-time'),
             fileId: response.headers.get('wgd-google-id'),
-            mimeType: response.headers.get('wgd-mime-type')
+            mimeType: response.headers.get('wgd-mime-type'),
+            previewUrl : response.headers.get('wgd-preview-url')
           };
           this.notRegistered = false;
         } catch (err) {
