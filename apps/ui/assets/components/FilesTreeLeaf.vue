@@ -5,10 +5,10 @@
            :class="{'active': file.fileName === selectedName, 'text-danger': (file.status === 'D' || file.status === 'N'), 'text-success': file.status === 'M'}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
            @click="selectFile(file.fileName, file)">
-        <i class="fa-solid fa-folder" v-if="isFolder(file)"></i>
-        <i class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
-        <i class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
-        <i v-else class="fa-solid fa-file"></i>
+        <i @click.prevent="openExternal(file)" class="fa-solid fa-folder" v-if="isFolder(file)"></i>
+        <i @click.prevent="openExternal(file)" class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
+        <i @click.prevent="openExternal(file)" class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
+        <i @click.prevent="openExternal(file)" v-else class="fa-solid fa-file"></i>
         <span class="file-name">{{ file.fileName }}</span>
         <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', file)">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap['transform'] || jobsMap[file.id]) }"></i>
@@ -73,7 +73,6 @@ export default {
   methods: {
     isExpanded(file) {
       return !!this.expanded[file.fileName];
-
     },
     async fetchFolder(driveId, filePath) {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
@@ -101,6 +100,18 @@ export default {
         if (sidebarEl && sidebarEl.clientWidth === window.innerWidth) {
           this.$emit('collapse', true);
         }
+      }
+    },
+    openExternal(file) {
+      if (file.id === 'UNKNOWN') {
+        return;
+      }
+      if (this.isFolder(file)) {
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+      } else
+      if (file.id) {
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+
       }
     }
   }
