@@ -78,17 +78,21 @@ export class WatchChangesContainer extends Container {
     }
     this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
     this.intervals[driveId] = setInterval(async () => {
-      const changes = await this.googleDriveService.watchChanges(this.auth, this.lastToken[driveId], driveId);
-      if (changes.files.length > 0) {
-        let dbChanges = await this.getChanges(driveId);
-        for (const file of changes.files) {
-          dbChanges = dbChanges.filter(f => f.id !== file.id);
-          dbChanges.push(file);
-        }
+      try {
+        const changes = await this.googleDriveService.watchChanges(this.auth, this.lastToken[driveId], driveId);
+        if (changes.files.length > 0) {
+          let dbChanges = await this.getChanges(driveId);
+          for (const file of changes.files) {
+            dbChanges = dbChanges.filter(f => f.id !== file.id);
+            dbChanges.push(file);
+          }
 
-        await this.setChanges(driveId, dbChanges);
+          await this.setChanges(driveId, dbChanges);
+        }
+        this.lastToken[driveId] = changes.token;
+      } catch (err) {
+        this.logger.error(err.message);
       }
-      this.lastToken[driveId] = changes.token;
     }, 3000);
   }
 
