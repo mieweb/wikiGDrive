@@ -167,71 +167,75 @@ export class JobManagerContainer extends Container {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async run() {
     setInterval(async () => {
-      const now = +new Date();
-      for (const driveId in this.driveJobsMap) {
-        const driveJobs = await this.getDriveJobs(driveId);
-        if (driveJobs.jobs.length === 0) {
-          delete this.driveJobsMap[driveId];
-          await this.setDriveJobs(driveId, this.driveJobsMap[driveId]);
-          continue;
-        }
+      try {
+        const now = +new Date();
+        for (const driveId in this.driveJobsMap) {
+          const driveJobs = await this.getDriveJobs(driveId);
+          if (driveJobs.jobs.length === 0) {
+            delete this.driveJobsMap[driveId];
+            await this.setDriveJobs(driveId, this.driveJobsMap[driveId]);
+            continue;
+          }
 
-        const lastTs = driveJobs.jobs[driveJobs.jobs.length - 1].ts;
-        if (now - lastTs < 1000) {
-          continue;
-        }
+          const lastTs = driveJobs.jobs[driveJobs.jobs.length - 1].ts;
+          if (now - lastTs < 1000) {
+            continue;
+          }
 
-        if (driveJobs.jobs.find(job => job.state === 'running')) {
-          continue;
-        }
+          if (driveJobs.jobs.find(job => job.state === 'running')) {
+            continue;
+          }
 
-        const currentJob = driveJobs.jobs.find(job => job.state === 'waiting' && (!job.startAfter || job.startAfter > now));
-        if (!currentJob) {
-          continue;
-        }
+          const currentJob = driveJobs.jobs.find(job => job.state === 'waiting' && (!job.startAfter || job.startAfter > now));
+          if (!currentJob) {
+            continue;
+          }
 
-        currentJob.state = 'running';
-        this.runJob(driveId, currentJob)
-          .then(() => {
-            if (currentJob.type === 'render_preview') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
-            }
-            if (currentJob.type === 'transform') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
-            }
-            if (currentJob.type === 'sync_all') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
-            }
-            if (currentJob.type === 'sync') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
-            }
-            currentJob.state = 'done';
-            currentJob.finished = +new Date();
-            this.setDriveJobs(driveId, driveJobs);
-          })
-          .catch(err => {
-            const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
-            logger.error(err);
-            if (currentJob.type === 'render_preview') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
-            }
-            if (currentJob.type === 'transform') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
-            }
-            if (currentJob.type === 'sync_all') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
-            }
-            if (currentJob.type === 'sync') {
-              driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
-            }
-            currentJob.state = 'failed';
-            currentJob.finished = +new Date();
-            this.setDriveJobs(driveId, driveJobs);
-          });
+          currentJob.state = 'running';
+          this.runJob(driveId, currentJob)
+            .then(() => {
+              if (currentJob.type === 'render_preview') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+              }
+              if (currentJob.type === 'transform') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+              }
+              if (currentJob.type === 'sync_all') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+              }
+              if (currentJob.type === 'sync') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+              }
+              currentJob.state = 'done';
+              currentJob.finished = +new Date();
+              this.setDriveJobs(driveId, driveJobs);
+            })
+            .catch(err => {
+              const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+              logger.error(err);
+              if (currentJob.type === 'render_preview') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+              }
+              if (currentJob.type === 'transform') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+              }
+              if (currentJob.type === 'sync_all') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+              }
+              if (currentJob.type === 'sync') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+              }
+              currentJob.state = 'failed';
+              currentJob.finished = +new Date();
+              this.setDriveJobs(driveId, driveJobs);
+            });
+        }
+      } catch (err) {
+        this.engine.logger.error(err.message);
       }
-    }, 500);
+    }, 100);
   }
 
   private async transform(folderId: FileId, filesIds: FileId[] = []) {
