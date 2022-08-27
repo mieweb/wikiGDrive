@@ -53,7 +53,7 @@ export class QueueDownloader {
       this.progress.total++;
     }
     this.notify();
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   async finished() {
