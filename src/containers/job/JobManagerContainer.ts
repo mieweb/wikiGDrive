@@ -330,6 +330,9 @@ export class JobManagerContainer extends Container {
     if (changesToFetch.length === 0) {
       return;
     }
+    if (!tree) {
+      return;
+    }
 
     const filesToRetry = [];
     for (const change of changesToFetch) {

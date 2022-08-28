@@ -1,7 +1,7 @@
 import {
-  DocumentContent, DocumentStyles, DrawEnhancedGeometry,
+  DocumentContent, DocumentStyles, DrawCustomShape, DrawEnhancedGeometry,
   DrawFrame, DrawG,
-  DrawRect, ListStyle,
+  DrawRect, GraphicProperty, ListStyle,
   OfficeText,
   ParagraphProperty,
   Style,
@@ -19,7 +19,7 @@ import {
 import {urlToFolderId} from '../utils/idParsers';
 import {MarkdownChunks} from './MarkdownChunks';
 import {StateMachine} from './StateMachine';
-import {inchesToSpaces, spaces} from './utils';
+import {inchesToPixels, inchesToSpaces, spaces, SVG_VIEWPORT_HEIGHT, SVG_VIEWPORT_WIDTH} from './utils';
 import {extractPath} from './extractPath';
 
 function baseFileName(fileName) {
@@ -52,7 +52,8 @@ export class OdtToMarkdown {
         listStyleName: '',
         parentStyleName: '',
         paragraphProperties: new ParagraphProperty(),
-        textProperties: new TextProperty()
+        textProperties: new TextProperty(),
+        graphicProperties: new GraphicProperty()
       };
     }
 
@@ -184,66 +185,95 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('/A', { href: href });
   }
 
-  async drawGToText(drawG: DrawG) {
-    this.stateMachine.pushTag('EMB_SVG');
+  async drawCustomShape(drawCustomShape: DrawCustomShape) {
+    // https://documentation.libreoffice.org/assets/Uploads/Documentation/en/Tutorials/CustomShapes7/Custom-Shape-Tutorial.odt
+    const style = this.getStyle(drawCustomShape.styleName);
 
-    for (const group of drawG.list) {
-      this.stateMachine.pushTag('EMB_SVG_G', {
-        x: group.x, y: group.y
-      });
-      for (const item of group.list) {
-        if (item.type === 'paragraph') {
-          const paragraph = <TextParagraph>item;
+    this.stateMachine.pushTag('EMB_SVG', {
+      width: String(inchesToPixels(drawCustomShape.width)),
+      height: String(inchesToPixels(drawCustomShape.height)),
+      style
+    });
 
-          if (paragraph.list.length === 0) {
+    for (const item of drawCustomShape.list) {
+      if (item.type === 'paragraph') {
+        const paragraph = <TextParagraph>item;
+
+        if (paragraph.list.length === 0) {
+          continue;
+        }
+
+        this.stateMachine.pushTag('EMB_SVG_TEXT');
+        for (const child of paragraph.list) {
+          if (typeof child === 'string') {
+            this.stateMachine.pushText(child);
             continue;
           }
-
-          this.stateMachine.pushTag('EMB_SVG_TEXT');
-          for (const child of paragraph.list) {
-            if (typeof child === 'string') {
-              this.stateMachine.pushText(child);
-              continue;
-            }
-            switch (child.type) {
-              case 'span':
-                {
-                  const span = <TextSpan>child;
-                  for (const child of span.list) {
-                    if (typeof child === 'string') {
-                      this.stateMachine.pushText(child);
-                      continue;
-                    }
-                    switch (child.type) {
-                      case 'line_break':
-                        this.stateMachine.pushTag('BR/');
-                        break;
-                      case 'tab':
-                        this.stateMachine.pushText('\t');
-                        break;
-                      case 'space':
-                        this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
-                        break;
-                    }
-                  }
+          switch (child.type) {
+            case 'span':
+            {
+              const span = <TextSpan>child;
+              for (const child of span.list) {
+                if (typeof child === 'string') {
+                  this.stateMachine.pushText(child);
+                  continue;
                 }
-                break;
+                switch (child.type) {
+                  case 'line_break':
+                    this.stateMachine.pushTag('BR/');
+                    break;
+                  case 'tab':
+                    this.stateMachine.pushText('\t');
+                    break;
+                  case 'space':
+                    this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
+                    break;
+                }
+              }
             }
+              break;
           }
-          this.stateMachine.pushTag('/EMB_SVG_TEXT');
         }
-        if (item.type === 'draw_enhanced_geometry') {
-          const enhancedGeometry = <DrawEnhancedGeometry>item;
-          this.stateMachine.pushTag('EMB_SVG_P/', {
-            pathD: extractPath(enhancedGeometry.path, enhancedGeometry.equations)
-          });
-        }
-
+        this.stateMachine.pushTag('/EMB_SVG_TEXT');
       }
+      if (item.type === 'draw_enhanced_geometry') {
+        const enhancedGeometry = <DrawEnhancedGeometry>item;
+
+        const subViewSize = enhancedGeometry.subViewSize || `${SVG_VIEWPORT_WIDTH} ${SVG_VIEWPORT_HEIGHT}`;
+        const parts = subViewSize.split(' ');
+        const logwidth = parseInt(parts[0]) || SVG_VIEWPORT_WIDTH;
+        const logheight = parseInt(parts[1]) || SVG_VIEWPORT_HEIGHT;
+
+        const scaleX = SVG_VIEWPORT_WIDTH / logwidth;
+        const scaleY = SVG_VIEWPORT_HEIGHT / logheight;
+
+        this.stateMachine.pushTag('EMB_SVG_P/', {
+          pathD: extractPath(enhancedGeometry, logwidth, logheight),
+          transform: `scale(${scaleX}, ${scaleY})`
+        });
+      }
+    }
+
+    this.stateMachine.pushTag('/EMB_SVG');
+  }
+
+  async drawGToText(drawG: DrawG) {
+    this.stateMachine.pushTag('HTML_MODE/');
+
+    const style = this.getStyle(drawG.styleName);
+
+    this.stateMachine.pushTag('EMB_SVG', { style });
+
+    for (const drawCustomShape of drawG.list) {
+      this.stateMachine.pushTag('EMB_SVG_G', {
+        x: drawCustomShape.x, y: drawCustomShape.y
+      });
+      await this.drawCustomShape(drawCustomShape);
       this.stateMachine.pushTag('/EMB_SVG_G');
     }
 
     this.stateMachine.pushTag('/EMB_SVG');
+    this.stateMachine.pushTag('MD_MODE/');
   }
 
   async drawFrameToText(drawFrame: DrawFrame) {
@@ -397,6 +427,11 @@ export class OdtToMarkdown {
           break;
         case 'draw_frame':
           await this.drawFrameToText(<DrawFrame>child);
+          break;
+        case 'draw_custom_shape':
+          this.stateMachine.pushTag('HTML_MODE/');
+          await this.drawCustomShape(<DrawCustomShape>child);
+          this.stateMachine.pushTag('MD_MODE/');
           break;
         case 'draw_g':
           await this.drawGToText(<DrawG>child);

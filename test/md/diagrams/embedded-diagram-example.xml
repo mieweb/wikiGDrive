@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+                         xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+                         xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+                         xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+                         xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+                         xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+                         xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/"
+                         xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+                         xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+                         xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+                         xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0"
+                         xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0"
+                         xmlns:math="http://www.w3.org/1998/Math/MathML"
+                         xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0"
+                         xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0"
+                         xmlns:ooo="http://openoffice.org/2004/office" xmlns:ooow="http://openoffice.org/2004/writer"
+                         xmlns:oooc="http://openoffice.org/2004/calc" xmlns:dom="http://www.w3.org/2001/xml-events"
+                         xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xmlns:rpt="http://openoffice.org/2005/report"
+                         xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2"
+                         xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:grddl="http://www.w3.org/2003/g/data-view#"
+                         xmlns:officeooo="http://openoffice.org/2009/office"
+                         xmlns:tableooo="http://openoffice.org/2009/table"
+                         xmlns:drawooo="http://openoffice.org/2010/draw"
+                         xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0"
+                         xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0"
+                         xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0"
+                         xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0"
+                         xmlns:css3t="http://www.w3.org/TR/css3-text/" office:version="1.2">
+    <office:scripts/>
+    <office:font-face-decls>
+        <style:font-face style:name="Arial1" svg:font-family="Arial"/>
+        <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="roman"
+                         style:font-pitch="variable"/>
+        <style:font-face style:name="Courier New" svg:font-family="&apos;Courier New&apos;"
+                         style:font-family-generic="roman" style:font-pitch="variable"/>
+        <style:font-face style:name="Trebuchet MS" svg:font-family="&apos;Trebuchet MS&apos;"
+                         style:font-family-generic="roman" style:font-pitch="variable"/>
+        <style:font-face style:name="Liberation Sans" svg:font-family="&apos;Liberation Sans&apos;"
+                         style:font-family-generic="swiss" style:font-pitch="variable"/>
+        <style:font-face style:name="Arial2" svg:font-family="Arial" style:font-family-generic="system"
+                         style:font-pitch="variable"/>
+        <style:font-face style:name="Courier New1" svg:font-family="&apos;Courier New&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+        <style:font-face style:name="Linux Libertine G" svg:font-family="&apos;Linux Libertine G&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+        <style:font-face style:name="Trebuchet MS1" svg:font-family="&apos;Trebuchet MS&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+    </office:font-face-decls>
+    <office:automatic-styles>
+        <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Standard"
+                     style:master-page-name="Standard">
+            <style:paragraph-properties style:page-number="1"/>
+        </style:style>
+        <style:style style:name="P2" style:family="paragraph">
+            <loext:graphic-properties draw:fill="none"/>
+            <style:paragraph-properties fo:text-align="start"/>
+        </style:style>
+        <style:style style:name="P3" style:family="paragraph">
+            <loext:graphic-properties draw:fill="solid" draw:fill-color="#cfe2f3"/>
+            <style:paragraph-properties fo:text-align="start"/>
+        </style:style>
+        <style:style style:name="P4" style:family="paragraph">
+            <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" fo:line-height="100%"
+                                        fo:text-align="start"/>
+        </style:style>
+        <style:style style:name="P5" style:family="paragraph">
+            <loext:graphic-properties draw:fill="solid" draw:fill-color="#cfe2f3"/>
+            <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" fo:line-height="100%"
+                                        fo:text-align="start"/>
+        </style:style>
+        <style:style style:name="P6" style:family="paragraph">
+            <loext:graphic-properties draw:fill="none"/>
+            <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" fo:line-height="100%"
+                                        fo:text-align="start"/>
+        </style:style>
+        <style:style style:name="T1" style:family="text">
+            <style:text-properties fo:color="#1155cc" style:text-underline-style="solid"
+                                   style:text-underline-width="auto" style:text-underline-color="font-color"/>
+        </style:style>
+        <style:style style:name="T2" style:family="text">
+            <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000"
+                                   style:text-line-through-style="none" style:text-line-through-type="none"
+                                   style:text-position="0% 100%" style:font-name="Arial1" fo:font-size="14pt"
+                                   fo:letter-spacing="normal" fo:font-style="normal" style:text-underline-style="none"
+                                   fo:font-weight="normal" style:font-name-asian="Arial1" style:font-size-asian="14pt"
+                                   style:font-style-asian="normal" style:font-weight-asian="normal"
+                                   style:font-name-complex="Arial1" style:font-size-complex="14pt"
+                                   style:font-style-complex="normal" style:font-weight-complex="normal"/>
+        </style:style>
+        <style:style style:name="fr1" style:family="graphic" style:parent-style-name="Graphics">
+            <style:graphic-properties fo:margin-left="0in" fo:margin-right="0in" fo:margin-top="0in"
+                                      fo:margin-bottom="0in" fo:background-color="transparent" draw:fill="none"
+                                      draw:fill-color="#ffffff" fo:padding="0in" fo:border="none" style:mirror="none"
+                                      fo:clip="rect(0in, 0in, 0in, 0in)" draw:luminance="0%" draw:contrast="0%"
+                                      draw:red="0%" draw:green="0%" draw:blue="0%" draw:gamma="100%"
+                                      draw:color-inversion="false" draw:image-opacity="100%"
+                                      draw:color-mode="standard"/>
+        </style:style>
+        <style:style style:name="gr1" style:family="graphic">
+            <style:graphic-properties style:run-through="foreground" style:vertical-pos="top"
+                                      style:vertical-rel="baseline" style:horizontal-pos="from-left"
+                                      style:horizontal-rel="paragraph" draw:wrap-influence-on-position="once-concurrent"
+                                      style:flow-with-text="false"/>
+        </style:style>
+        <style:style style:name="gr2" style:family="graphic">
+            <style:graphic-properties draw:stroke="none" svg:stroke-width="0in" draw:fill="none"
+                                      draw:textarea-vertical-align="top" draw:auto-grow-height="true"
+                                      draw:fit-to-size="false" style:shrink-to-fit="false" fo:min-height="0in"
+                                      fo:min-width="0in" fo:padding-top="0.1in" fo:padding-bottom="0.1in"
+                                      fo:padding-left="0.1in" fo:padding-right="0.1in" fo:wrap-option="wrap"
+                                      style:run-through="foreground"/>
+        </style:style>
+        <style:style style:name="gr3" style:family="graphic">
+            <style:graphic-properties draw:stroke="solid" svg:stroke-width="0.0102in" svg:stroke-color="#000000"
+                                      draw:stroke-linejoin="round" draw:fill="solid" draw:fill-color="#cfe2f3"
+                                      draw:textarea-vertical-align="middle" draw:auto-grow-height="false"
+                                      draw:fit-to-size="false" style:shrink-to-fit="false" fo:min-height="0.3756in"
+                                      fo:min-width="0.3819in" fo:padding-top="0.1in" fo:padding-bottom="0.1in"
+                                      fo:padding-left="0.1in" fo:padding-right="0.1in" fo:wrap-option="wrap"
+                                      style:run-through="foreground"/>
+        </style:style>
+        <style:style style:name="gr4" style:family="graphic">
+            <style:graphic-properties draw:stroke="solid" svg:stroke-width="0.0102in" svg:stroke-color="#000000"
+                                      draw:stroke-linejoin="round" draw:fill="solid" draw:fill-color="#cfe2f3"
+                                      draw:textarea-vertical-align="middle" draw:auto-grow-height="false"
+                                      draw:fit-to-size="false" style:shrink-to-fit="false" fo:min-height="0.7429in"
+                                      fo:min-width="0.6555in" fo:padding-top="0.1in" fo:padding-bottom="0.1in"
+                                      fo:padding-left="0.1in" fo:padding-right="0.1in" fo:wrap-option="wrap"
+                                      style:run-through="foreground"/>
+        </style:style>
+        <style:style style:name="gr5" style:family="graphic">
+            <style:graphic-properties draw:stroke="none" svg:stroke-width="0in" draw:fill="none"
+                                      draw:textarea-vertical-align="top" draw:auto-grow-height="true"
+                                      draw:fit-to-size="false" style:shrink-to-fit="false" fo:min-height="0in"
+                                      fo:min-width="0in" fo:padding-top="0.1in" fo:padding-bottom="0.1in"
+                                      fo:padding-left="0.1in" fo:padding-right="0.1in" fo:wrap-option="wrap"
+                                      style:run-through="foreground"/>
+        </style:style>
+    </office:automatic-styles>
+    <office:body>
+        <office:text>
+            <text:sequence-decls>
+                <text:sequence-decl text:display-outline-level="0" text:name="Illustration"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Table"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Text"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>
+            </text:sequence-decls>
+            <text:p text:style-name="P1">The image should show up.<text:s/>Here is a link back to the
+                <text:a xlink:type="simple"
+                        xlink:href="https://docs.google.com/document/d/1wlRv3bZ5Z84TD9Oba4-lEorfV_R9aKhJyRS2iCInA7w/edit"
+                        text:style-name="ListLabel_20_1" text:visited-style-name="ListLabel_20_1">
+                    <text:span text:style-name="T1">README</text:span>
+                </text:a>
+                .
+            </text:p>
+            <text:p text:style-name="Standard">
+                <draw:g text:anchor-type="as-char" draw:z-index="0" draw:style-name="gr1">
+                    <draw:custom-shape draw:name="Shape 2" draw:style-name="gr2" draw:text-style-name="P2"
+                                       svg:width="0.5335in" svg:height="0.3252in" svg:x="0.0516in" svg:y="0.2228in">
+                        <text:p text:style-name="P4"/>
+                        <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                                draw:text-areas="0 0 ?f3 ?f2" svg:viewBox="0 0 0 0"
+                                                draw:type="ooxml-rect"
+                                                draw:enhanced-path="M 0 0 L ?f3 0 ?f3 ?f2 0 ?f2 Z N">
+                            <draw:equation draw:name="f0" draw:formula="logwidth/2"/>
+                            <draw:equation draw:name="f1" draw:formula="logheight/2"/>
+                            <draw:equation draw:name="f2" draw:formula="logheight"/>
+                            <draw:equation draw:name="f3" draw:formula="logwidth"/>
+                        </draw:enhanced-geometry>
+                    </draw:custom-shape>
+                    <draw:custom-shape draw:name="Shape 3" draw:style-name="gr3" draw:text-style-name="P3"
+                                       svg:width="0.6433in" svg:height="0.637in" svg:x="0in" svg:y="0.7654in">
+                        <text:p text:style-name="P4"/>
+                        <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                                draw:text-areas="?f5 ?f5 ?f6 ?f7" svg:viewBox="0 0 0 0"
+                                                draw:type="ooxml-roundRect" draw:modifiers="16667"
+                                                draw:enhanced-path="M 0 ?f2 L ?f3 0 L ?f11 ?f4 L ?f2 ?f10 Z N"
+                                                drawooo:enhanced-path="M 0 ?f2 G ?f2 ?f2 ?f12 ?f13 L ?f3 0 G ?f2 ?f2 ?f14 ?f15 L ?f11 ?f4 G ?f2 ?f2 ?f16 ?f17 L ?f2 ?f10 G ?f2 ?f2 ?f18 ?f19 Z N">
+                            <draw:equation draw:name="f0" draw:formula="if(0-$0 ,0,if(50000-$0 ,$0 ,50000))"/>
+                            <draw:equation draw:name="f1" draw:formula="min(logwidth,logheight)"/>
+                            <draw:equation draw:name="f2" draw:formula="?f1 *?f0 /100000"/>
+                            <draw:equation draw:name="f3" draw:formula="logwidth+0-?f2 "/>
+                            <draw:equation draw:name="f4" draw:formula="logheight+0-?f2 "/>
+                            <draw:equation draw:name="f5" draw:formula="?f2 *29289/100000"/>
+                            <draw:equation draw:name="f6" draw:formula="logwidth+0-?f5 "/>
+                            <draw:equation draw:name="f7" draw:formula="logheight+0-?f5 "/>
+                            <draw:equation draw:name="f8" draw:formula="logwidth/2"/>
+                            <draw:equation draw:name="f9" draw:formula="logheight/2"/>
+                            <draw:equation draw:name="f10" draw:formula="logheight"/>
+                            <draw:equation draw:name="f11" draw:formula="logwidth"/>
+                            <draw:equation draw:name="f12" draw:formula="(10800000)/60000.0"/>
+                            <draw:equation draw:name="f13" draw:formula="(5400000)/60000.0"/>
+                            <draw:equation draw:name="f14" draw:formula="(16200000)/60000.0"/>
+                            <draw:equation draw:name="f15" draw:formula="(5400000)/60000.0"/>
+                            <draw:equation draw:name="f16" draw:formula="(0)/60000.0"/>
+                            <draw:equation draw:name="f17" draw:formula="(5400000)/60000.0"/>
+                            <draw:equation draw:name="f18" draw:formula="(5400000)/60000.0"/>
+                            <draw:equation draw:name="f19" draw:formula="(5400000)/60000.0"/>
+                            <draw:handle draw:handle-position="?f2 0" draw:handle-range-x-maximum="50000"
+                                         draw:handle-range-x-minimum="0"/>
+                        </draw:enhanced-geometry>
+                    </draw:custom-shape>
+                    <draw:custom-shape draw:name="Shape 4" draw:style-name="gr4" draw:text-style-name="P5"
+                                       svg:width="0.9335in" svg:height="1.0205in" svg:x="1.8862in" svg:y="1.1083in">
+                        <text:p text:style-name="P4">
+                            <text:span text:style-name="T2">Label</text:span>
+                        </text:p>
+                        <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                                draw:text-areas="0 ?f4 ?f5 ?f9" svg:viewBox="0 0 0 0"
+                                                draw:type="ooxml-snip1Rect" draw:modifiers="16667"
+                                                draw:enhanced-path="M 0 0 L ?f3 0 ?f6 ?f2 ?f6 ?f9 0 ?f9 Z N">
+                            <draw:equation draw:name="f0" draw:formula="if(0-$0 ,0,if(50000-$0 ,$0 ,50000))"/>
+                            <draw:equation draw:name="f1" draw:formula="min(logwidth,logheight)"/>
+                            <draw:equation draw:name="f2" draw:formula="?f1 *?f0 /100000"/>
+                            <draw:equation draw:name="f3" draw:formula="logwidth+0-?f2 "/>
+                            <draw:equation draw:name="f4" draw:formula="?f2 *1/2"/>
+                            <draw:equation draw:name="f5" draw:formula="(?f3 +logwidth)/2"/>
+                            <draw:equation draw:name="f6" draw:formula="logwidth"/>
+                            <draw:equation draw:name="f7" draw:formula="logheight/2"/>
+                            <draw:equation draw:name="f8" draw:formula="logwidth/2"/>
+                            <draw:equation draw:name="f9" draw:formula="logheight"/>
+                            <draw:handle draw:handle-position="?f3 0" draw:handle-range-x-maximum="50000"
+                                         draw:handle-range-x-minimum="0"/>
+                        </draw:enhanced-geometry>
+                    </draw:custom-shape>
+                    <draw:custom-shape draw:name="Shape 5" draw:style-name="gr2" draw:text-style-name="P2"
+                                       svg:width="3.7087in" svg:height="0.3252in" svg:x="0.4827in" svg:y="1.3154in">
+                        <text:p text:style-name="P4"/>
+                        <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                                draw:text-areas="0 0 ?f3 ?f2" svg:viewBox="0 0 0 0"
+                                                draw:type="ooxml-rect"
+                                                draw:enhanced-path="M 0 0 L ?f3 0 ?f3 ?f2 0 ?f2 Z N">
+                            <draw:equation draw:name="f0" draw:formula="logwidth/2"/>
+                            <draw:equation draw:name="f1" draw:formula="logheight/2"/>
+                            <draw:equation draw:name="f2" draw:formula="logheight"/>
+                            <draw:equation draw:name="f3" draw:formula="logwidth"/>
+                        </draw:enhanced-geometry>
+                    </draw:custom-shape>
+                    <draw:custom-shape draw:name="Shape 6" draw:style-name="gr5" draw:text-style-name="P6"
+                                       svg:width="3.7087in" svg:height="0.8705in" svg:x="1.0102in" svg:y="0in">
+                        <text:p text:style-name="P4">
+                            <text:span text:style-name="T2">Hyperlinks do not work in embedded drawings</text:span>
+                        </text:p>
+                        <text:p text:style-name="P4">
+                            <text:span text:style-name="T2">because of Google.<text:s/>;-)
+                            </text:span>
+                        </text:p>
+                        <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                                draw:text-areas="0 0 ?f3 ?f2" svg:viewBox="0 0 0 0"
+                                                draw:type="ooxml-rect"
+                                                draw:enhanced-path="M 0 0 L ?f3 0 ?f3 ?f2 0 ?f2 Z N">
+                            <draw:equation draw:name="f0" draw:formula="logwidth/2"/>
+                            <draw:equation draw:name="f1" draw:formula="logheight/2"/>
+                            <draw:equation draw:name="f2" draw:formula="logheight"/>
+                            <draw:equation draw:name="f3" draw:formula="logwidth"/>
+                        </draw:enhanced-geometry>
+                    </draw:custom-shape>
+                </draw:g>
+            </text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">after</text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">Image from file:</text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">
+                <draw:frame draw:style-name="fr1" draw:name="image2.png" text:anchor-type="as-char" svg:width="6.2917in"
+                            svg:height="3.4165in" draw:z-index="0">
+                    <draw:image xlink:href="Pictures/100002010000025C00000148FD18A37F69FCF007.png" xlink:type="simple"
+                                xlink:show="embed" xlink:actuate="onLoad" loext:mime-type="image/png"/>
+                    <svg:desc>https://docs.google.com/drawings/d/1jEOoXqPeqiU_z2QLiC-w6TfPjmiJY4wyLZqoG-OF9Xc/edit
+                    </svg:desc>
+                </draw:frame>
+            </text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">done</text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">Inserted as unlinked:</text:p>
+            <text:p text:style-name="Standard">
+                <draw:frame draw:style-name="fr1" draw:name="image1.png" text:anchor-type="as-char" svg:width="6.2917in"
+                            svg:height="3.4165in" draw:z-index="0">
+                    <draw:image xlink:href="Pictures/100002010000025C000001488DD4BFD479C0CF61.png" xlink:type="simple"
+                                xlink:show="embed" xlink:actuate="onLoad" loext:mime-type="image/png"/>
+                </draw:frame>
+            </text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">done</text:p>
+        </office:text>
+    </office:body>
+</office:document-content>
