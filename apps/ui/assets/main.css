@@ -99,3 +99,30 @@ pre[class*=language-] {
 .cursor-pointer {
   cursor: pointer;
 }
+
+
+@media (prefers-color-scheme: dark) {
+  .bg-nav {
+    background: var(--bs-dark);
+  }
+}
+
+.text-git-del {
+  color: var(--bs-red) !important;
+}
+.text-git-new {
+  color: var(--bs-green) !important;
+}
+.text-git-mod {
+  color: var(--bs-cyan) !important;
+}
+
+.text-danger {
+  color: var(--bs-red);
+}
+.text-success {
+  color: var(--bs-green);
+}
+.text-warning {
+  color: var(--bs-blue);
+}

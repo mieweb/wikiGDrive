@@ -2,7 +2,7 @@
   <ul class="nav nav-pills flex-column files-list" v-if="files.length > 0" :title="folderPath">
     <li v-for="file in files" :key="file.fileName" :title="file.title">
       <div class="nav-item files-list__item"
-           :class="{'active': file.fileName === selectedName, 'text-danger': (file.status === 'D' || file.status === 'N'), 'text-success': file.status === 'M'}"
+           :class="{'active': file.fileName === selectedName, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
            @click="selectFile(file.fileName, file)">
         <i @click.prevent="openExternal(file)" class="fa-solid fa-folder" v-if="isFolder(file)"></i>
