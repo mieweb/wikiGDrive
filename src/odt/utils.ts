@@ -1,3 +1,6 @@
+export const SVG_VIEWPORT_WIDTH = 7200;
+export const SVG_VIEWPORT_HEIGHT = 7200;
+
 export function spaces(num: number) {
   return '                                                                '.substring(0, num || 0);
 }
@@ -18,7 +21,10 @@ export function inchesToPixels(value): number {
     return 0;
   }
   if (value.endsWith('in')) {
-    return  Math.floor(300 * parseFloat(value.substring(0, value.length - 2)));
+    return Math.floor(200 * parseFloat(value.substring(0, value.length - 2)));
+  }
+  if (value.endsWith('em')) {
+    return Math.floor(parseFloat(value.substring(0, value.length - 2)) / 0.125);
   }
   return 0;
 }

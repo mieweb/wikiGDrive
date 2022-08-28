@@ -1,5 +1,5 @@
 import {ListStyle, Style} from './LibreOffice';
-import {inchesToPixels, spaces} from './utils';
+import {inchesToPixels, spaces, SVG_VIEWPORT_HEIGHT, SVG_VIEWPORT_WIDTH} from './utils';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
@@ -10,7 +10,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
   'TOC' | '/TOC' | 'SVG/' | 'IMG/' |
   'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT' |
-  'CHANGE' | '/CHANGE';
+  'CHANGE' | '/CHANGE' | 'HTML_MODE/' | 'MD_MODE/';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
@@ -36,6 +36,7 @@ export interface TagPayload {
   y?: string;
   width?: string;
   height?: string;
+  transform?: string;
 }
 
 export interface MarkdownTextChunk {
@@ -59,6 +60,42 @@ function debugChunkToText(chunk: MarkdownChunk) {
   }
 
   return chunk.tag;
+}
+
+function buildSvgStart(payload: TagPayload) {
+  const width = parseInt(payload.width) || 100;
+  const height = parseInt(payload.width) || 100;
+
+  const scale = SVG_VIEWPORT_WIDTH / width;
+
+  let styleTxt = '';
+  if (payload?.style?.graphicProperties) {
+    const graphicProperties = payload?.style?.graphicProperties;
+    // if (graphicProperties.stroke) {
+    //   styleTxt += ` stroke: ${graphicProperties.stroke};`;
+    // }
+    if (graphicProperties.strokeWidth) {
+      styleTxt += ` stroke-width: ${scale * inchesToPixels(graphicProperties.strokeWidth)};`;
+    }
+    if (graphicProperties.strokeColor) {
+      styleTxt += ` stroke: ${graphicProperties.strokeColor};`;
+    }
+    if (graphicProperties.strokeLinejoin) {
+      styleTxt += ` stroke-line-join: ${graphicProperties.strokeLinejoin};`;
+    }
+    // if (graphicProperties.fill) {
+    //   styleTxt += ` fill: ${graphicProperties.fill};`;
+    // }
+    if (graphicProperties.fillColor) {
+      styleTxt += ` fill: ${graphicProperties.fillColor};`;
+    }
+  }
+
+  let retVal = `<svg width="${width}" height="${height}" viewBox="0 0 ${SVG_VIEWPORT_WIDTH} ${SVG_VIEWPORT_HEIGHT}" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n`;
+  if (styleTxt) {
+    retVal += `<style>* { ${styleTxt} }</style>\n`;
+  }
+  return retVal;
 }
 
 function chunkToText(chunk: MarkdownChunk) {
@@ -124,7 +161,9 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
-          return '<svg width="100%" viewBox="0 0 1000 1000" fill="none" stroke="none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n';
+          return buildSvgStart(chunk.payload);
+        case 'HTML_MODE/':
+          return '\n';
       }
       break;
     case 'html':
@@ -214,9 +253,9 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'IMG/':
           return `<img src="${chunk.payload.href}" />`;
         case 'EMB_SVG':
-          return '<svg>\n';
+          return buildSvgStart(chunk.payload);
         case '/EMB_SVG':
-          return '</svg>';
+          return '</svg>\n';
         case 'EMB_SVG_G':
           {
             if (chunk.payload.x && chunk.payload.y) {
@@ -228,7 +267,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/EMB_SVG_G':
           return '</g>\n';
         case 'EMB_SVG_P/':
-          return `<path fill="none" stroke="black" d="${chunk.payload.pathD}" />\n`;
+          return `<path d="${chunk.payload.pathD}" transform="${chunk.payload.transform}" ></path>\n`;
         case 'EMB_SVG_TEXT':
           return '<text fill="black" x="0" dy="1em" font-size="1em">';
         case '/EMB_SVG_TEXT':

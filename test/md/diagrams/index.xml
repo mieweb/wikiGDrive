@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+                         xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+                         xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+                         xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+                         xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+                         xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+                         xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/"
+                         xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+                         xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+                         xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+                         xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0"
+                         xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0"
+                         xmlns:math="http://www.w3.org/1998/Math/MathML"
+                         xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0"
+                         xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0"
+                         xmlns:ooo="http://openoffice.org/2004/office" xmlns:ooow="http://openoffice.org/2004/writer"
+                         xmlns:oooc="http://openoffice.org/2004/calc" xmlns:dom="http://www.w3.org/2001/xml-events"
+                         xmlns:xforms="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xmlns:rpt="http://openoffice.org/2005/report"
+                         xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2"
+                         xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:grddl="http://www.w3.org/2003/g/data-view#"
+                         xmlns:officeooo="http://openoffice.org/2009/office"
+                         xmlns:tableooo="http://openoffice.org/2009/table"
+                         xmlns:drawooo="http://openoffice.org/2010/draw"
+                         xmlns:calcext="urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0"
+                         xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0"
+                         xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0"
+                         xmlns:formx="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0"
+                         xmlns:css3t="http://www.w3.org/TR/css3-text/" office:version="1.2">
+    <office:scripts/>
+    <office:font-face-decls>
+        <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="roman"
+                         style:font-pitch="variable"/>
+        <style:font-face style:name="Courier New" svg:font-family="&apos;Courier New&apos;"
+                         style:font-family-generic="roman" style:font-pitch="variable"/>
+        <style:font-face style:name="Trebuchet MS" svg:font-family="&apos;Trebuchet MS&apos;"
+                         style:font-family-generic="roman" style:font-pitch="variable"/>
+        <style:font-face style:name="Liberation Sans" svg:font-family="&apos;Liberation Sans&apos;"
+                         style:font-family-generic="swiss" style:font-pitch="variable"/>
+        <style:font-face style:name="Arial1" svg:font-family="Arial" style:font-family-generic="system"
+                         style:font-pitch="variable"/>
+        <style:font-face style:name="Courier New1" svg:font-family="&apos;Courier New&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+        <style:font-face style:name="Linux Libertine G" svg:font-family="&apos;Linux Libertine G&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+        <style:font-face style:name="Trebuchet MS1" svg:font-family="&apos;Trebuchet MS&apos;"
+                         style:font-family-generic="system" style:font-pitch="variable"/>
+    </office:font-face-decls>
+    <office:automatic-styles>
+        <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Standard"
+                     style:master-page-name="Standard">
+            <style:paragraph-properties style:page-number="1"/>
+        </style:style>
+        <style:style style:name="P2" style:family="paragraph" style:parent-style-name="Frame_20_contents">
+            <style:paragraph-properties fo:margin-left="0in" fo:margin-right="0in" fo:margin-top="0in"
+                                        fo:margin-bottom="0in" loext:contextual-spacing="false"
+                                        fo:line-height="0.1665in" fo:text-align="start"
+                                        style:justify-single-word="false" fo:text-indent="0in"
+                                        style:auto-text-indent="false"/>
+            <style:text-properties style:use-window-font-color="true"/>
+        </style:style>
+        <style:style style:name="P3" style:family="paragraph">
+            <loext:graphic-properties draw:fill="solid" draw:fill-color="#cfe2f3"/>
+            <style:paragraph-properties fo:text-align="start"/>
+            <style:text-properties fo:font-size="18pt"/>
+        </style:style>
+        <style:style style:name="T1" style:family="text">
+            <style:text-properties fo:color="#1155cc" style:text-underline-style="solid"
+                                   style:text-underline-width="auto" style:text-underline-color="font-color"/>
+        </style:style>
+        <style:style style:name="gr1" style:family="graphic" style:parent-style-name="Frame">
+            <style:graphic-properties draw:stroke="solid" svg:stroke-width="0.0102in" svg:stroke-color="#000000"
+                                      draw:stroke-linejoin="round" draw:fill="solid" draw:fill-color="#cfe2f3"
+                                      draw:textarea-vertical-align="middle" draw:auto-grow-height="false"
+                                      fo:min-height="1.1098in" fo:min-width="0.5984in" fo:padding-top="0.1in"
+                                      fo:padding-bottom="0.1in" fo:padding-left="0.1in" fo:padding-right="0.1in"
+                                      fo:wrap-option="wrap" style:run-through="foreground" style:vertical-pos="top"
+                                      style:vertical-rel="baseline" style:horizontal-pos="from-left"
+                                      style:horizontal-rel="paragraph" draw:wrap-influence-on-position="once-concurrent"
+                                      style:flow-with-text="false"/>
+        </style:style>
+    </office:automatic-styles>
+    <office:body>
+        <office:text>
+            <text:sequence-decls>
+                <text:sequence-decl text:display-outline-level="0" text:name="Illustration"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Table"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Text"/>
+                <text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>
+            </text:sequence-decls>
+            <text:p text:style-name="P1">This is an example index</text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">This is an example update to the index</text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">
+                <draw:custom-shape text:anchor-type="as-char" draw:z-index="0" draw:style-name="gr1"
+                                   draw:text-style-name="P3" svg:width="3.3441in" svg:height="4.1358in">
+                    <text:p text:style-name="P2"/>
+                    <draw:enhanced-geometry draw:mirror-horizontal="false" draw:mirror-vertical="false"
+                                            drawooo:sub-view-size="21600 21600" draw:text-areas="?f2 ?f9 ?f5 ?f12"
+                                            svg:viewBox="0 0 0 0" draw:type="ooxml-lightningBolt"
+                                            draw:enhanced-path="M 8472 0 L 12860 6080 11050 6797 16577 12007 14767 12877 21600 21600 10012 14915 12222 13987 5022 9705 7602 8382 0 3890 Z N">
+                        <draw:equation draw:name="f0" draw:formula="logwidth*5022/21600"/>
+                        <draw:equation draw:name="f1" draw:formula="logwidth*8472/21600"/>
+                        <draw:equation draw:name="f2" draw:formula="logwidth*8757/21600"/>
+                        <draw:equation draw:name="f3" draw:formula="logwidth*10012/21600"/>
+                        <draw:equation draw:name="f4" draw:formula="logwidth*12860/21600"/>
+                        <draw:equation draw:name="f5" draw:formula="logwidth*13917/21600"/>
+                        <draw:equation draw:name="f6" draw:formula="logwidth*16577/21600"/>
+                        <draw:equation draw:name="f7" draw:formula="logheight*3890/21600"/>
+                        <draw:equation draw:name="f8" draw:formula="logheight*6080/21600"/>
+                        <draw:equation draw:name="f9" draw:formula="logheight*7437/21600"/>
+                        <draw:equation draw:name="f10" draw:formula="logheight*9705/21600"/>
+                        <draw:equation draw:name="f11" draw:formula="logheight*12007/21600"/>
+                        <draw:equation draw:name="f12" draw:formula="logheight*14277/21600"/>
+                        <draw:equation draw:name="f13" draw:formula="logheight*14915/21600"/>
+                        <draw:equation draw:name="f14" draw:formula="logwidth"/>
+                        <draw:equation draw:name="f15" draw:formula="logheight"/>
+                    </draw:enhanced-geometry>
+                </draw:custom-shape>
+            </text:p>
+            <text:p text:style-name="Standard"/>
+            <text:p text:style-name="Standard">
+                <text:a xlink:type="simple"
+                        xlink:href="https://docs.google.com/document/d/1wlRv3bZ5Z84TD9Oba4-lEorfV_R9aKhJyRS2iCInA7w/edit"
+                        text:style-name="ListLabel_20_1" text:visited-style-name="ListLabel_20_1">
+                    <text:span text:style-name="T1">README</text:span>
+                </text:a>
+            </text:p>
+            <text:p text:style-name="Standard"/>
+        </office:text>
+    </office:body>
+</office:document-content>

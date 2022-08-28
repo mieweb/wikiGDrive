@@ -137,11 +137,13 @@ export class DrawEquation {
 @XmlElementChild('draw:equation', 'equations', 'DrawEquation', {isArray: true})
 @XmlAttribute('draw:enhanced-path', 'path')
 @XmlAttribute('drawooo:enhanced-path', 'path2')
+@XmlAttribute('drawooo:sub-view-size', 'subViewSize')
 export class DrawEnhancedGeometry {
   type = 'draw_enhanced_geometry';
   equations?: DrawEquation[];
   path: string;
   path2?: string;
+  subViewSize = '';
 }
 
 @XmlElement()
@@ -151,19 +153,24 @@ export class DrawEnhancedGeometry {
 @XmlAttribute('svg:height', 'height')
 @XmlAttribute('svg:x', 'x')
 @XmlAttribute('svg:y', 'y')
+@XmlAttribute('draw:style-name', 'styleName')
 export class DrawCustomShape {
+  type = 'draw_custom_shape';
   x = '';
   y = '';
   width = '';
   height = '';
+  styleName: string;
   list: Array<DrawEnhancedGeometry | TextParagraph> = [];
 }
 
 @XmlElement()
 @XmlElementChild('draw:custom-shape', 'list', 'DrawCustomShape', {isArray: true})
+@XmlAttribute('draw:style-name', 'styleName')
 export class DrawG {
   type = 'draw_g';
   list: DrawCustomShape[] = [];
+  styleName: string;
 }
 
 @XmlElement()
@@ -199,6 +206,7 @@ export class TextChangeEnd {
 @XmlElementChild('draw:rect', 'list', 'DrawRect', {isArray: true})
 @XmlElementChild('draw:frame', 'list', 'DrawFrame', {isArray: true})
 @XmlElementChild('draw:g', 'list', 'DrawG', {isArray: true})
+@XmlElementChild('draw:custom-shape', 'list', 'DrawCustomShape', {isArray: true})
 @XmlElementChild('text:tab', 'list', 'TextTab', {isArray: true})
 @XmlElementChild('text:line-break', 'list', 'TextLineBreak', {isArray: true})
 @XmlElementChild('text:s', 'list', 'TextSpace', {isArray: true})
@@ -208,7 +216,7 @@ export class TextChangeEnd {
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace| DrawG | TextChangeStart | TextChangeEnd> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace| DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }
@@ -278,6 +286,22 @@ export class TextProperty {
 }
 
 @XmlElement()
+@XmlAttribute('svg:stroke-color', 'strokeColor')
+@XmlAttribute('svg:stroke-width', 'strokeWidth')
+@XmlAttribute('draw:stroke-linejoin', 'strokeLinejoin')
+@XmlAttribute('draw:stroke', 'stroke')
+@XmlAttribute('draw:fill', 'fill')
+@XmlAttribute('draw:fill-color', 'fillColor')
+export class GraphicProperty {
+  strokeColor: string;
+  strokeWidth: string;
+  strokeLinejoin: string;
+  stroke: string;
+  fill: string;
+  fillColor: string;
+}
+
+@XmlElement()
 @XmlAttribute('fo:break-before', 'breakBefore')
 @XmlAttribute('fo:break-after', 'breakAfter')
 @XmlAttribute('fo:margin-left', 'marginLeft')
@@ -293,12 +317,14 @@ export class ParagraphProperty {
 @XmlAttribute('style:parent-style-name', 'parentStyleName')
 @XmlElementChild('style:text-properties', 'textProperties', 'TextProperty')
 @XmlElementChild('style:paragraph-properties', 'paragraphProperties', 'ParagraphProperty')
+@XmlElementChild('style:graphic-properties', 'graphicProperties', 'GraphicProperty')
 export class Style {
   name: string;
   listStyleName: string;
   parentStyleName: string;
   textProperties: TextProperty;
   paragraphProperties: ParagraphProperty;
+  graphicProperties: GraphicProperty;
 }
 
 @XmlElement()
@@ -362,6 +388,7 @@ export const LIBREOFFICE_CLASSES = {
   'AutomaticStyle': AutomaticStyle,
   'Style': Style,
 
+  'GraphicProperty': GraphicProperty,
   'ParagraphProperty': ParagraphProperty,
   'TextProperty': TextProperty,
   'TextParagraph': TextParagraph,

@@ -250,10 +250,10 @@ export class StateMachine {
       }
     }
 
-    if (tag === 'EMB_SVG') {
+    if (tag === 'HTML_MODE/') {
       this.currentMode = 'html';
     }
-    if (tag === '/EMB_SVG') {
+    if (tag === 'MD_MODE/') {
       this.currentMode = 'md';
     }
 

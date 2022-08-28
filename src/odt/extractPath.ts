@@ -1,4 +1,4 @@
-import {DrawEquation} from './LibreOffice';
+import {DrawEnhancedGeometry, DrawEquation} from './LibreOffice';
 import {create, all} from 'mathjs';
 
 const math = create(all);
@@ -12,7 +12,11 @@ function cleanUpFormula(formula: string) {
     .replace(/\$[\d]+/g, '0');
 }
 
-export function extractPath(pathSource: string, equations: DrawEquation[]): string {
+export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth: number, logheight: number): string {
+  // const pathSource: string = drawEnhancedGeometry.path2 || drawEnhancedGeometry.path;
+  const pathSource: string = drawEnhancedGeometry.path;
+  const equations: DrawEquation[] = drawEnhancedGeometry.equations;
+
   const variables = {};
   if (Array.isArray(equations)) {
     for (const equation of equations) {
@@ -20,8 +24,8 @@ export function extractPath(pathSource: string, equations: DrawEquation[]): stri
     }
   }
 
-  variables['logwidth'] = 100;
-  variables['logheight'] = 100;
+  variables['logwidth'] = logwidth;
+  variables['logheight'] = logheight;
 
   let change = true;
   while (change) {
