@@ -2,7 +2,7 @@
   <ul class="nav nav-pills flex-column files-list" v-if="tree.length > 0">
     <li v-for="file in tree" :key="file.path" :title="file.path">
       <div class="nav-item files-list__item"
-           :class="{'active': file.path === selectedPath, 'text-danger': (file.status === 'D' || file.status === 'N'), 'text-success': file.status === 'M'}"
+           :class="{'active': file.path === selectedPath, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
            >
         <i class="fa-solid fa-folder" v-if="file.children.length > 0"></i>
