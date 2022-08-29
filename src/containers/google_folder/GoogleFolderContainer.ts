@@ -8,7 +8,7 @@ import {TaskFetchFolder} from './TaskFetchFolder';
 import {MimeTypes} from '../../model/GoogleFile';
 import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
 import {FileContentService} from '../../utils/FileContentService';
-import {FileId} from '../../model/model';
+import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {HasQuotaLimiter} from '../../google/AuthClient';
@@ -21,6 +21,7 @@ export interface GoogleTreeItem {
   mimeType: string;
   parentId: FileId;
   version: string;
+  modifiedTime?: DateISO;
   children?: GoogleTreeItem[];
 }
 
@@ -102,6 +103,7 @@ export class GoogleFolderContainer extends Container {
           id: file.id,
           name: file.name,
           mimeType: file.mimeType,
+          modifiedTime: file.modifiedTime,
           version: file.version,
           parentId,
           children: await this.regenerateTree(subFileService, file.id)
@@ -112,6 +114,7 @@ export class GoogleFolderContainer extends Container {
           id: file.id,
           name: file.name,
           mimeType: file.mimeType,
+          modifiedTime: file.modifiedTime,
           version: file.version,
           parentId
         };

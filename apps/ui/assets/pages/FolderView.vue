@@ -109,7 +109,9 @@ export default {
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
     },
     async active_job() {
-      await this.fetch();
+      if (this.active_job === '') {
+        await this.fetch();
+      }
     }
   },
   mounted() {
