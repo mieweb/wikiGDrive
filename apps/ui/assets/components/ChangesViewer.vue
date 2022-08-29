@@ -34,7 +34,6 @@
             </td>
             <td>
               {{ file.modifiedTime }}
-              <pre>{{ file}}</pre>
             </td>
           </tr>
         </tbody>
