@@ -18,8 +18,8 @@
     <li :class="{ 'active': activeTab === 'sync' }" class="wgd-nav-item">
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
-        <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="changes.length > 0">
-           <span class="badge">{{changes.length}}</span>
+        <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">
+           <span class="badge">{{fileChanges.length}}</span>
         </span>
       </a>
     </li>
@@ -40,6 +40,11 @@ export default {
       type: String
     },
     selectedFile: Object
+  },
+  computed: {
+    fileChanges() {
+      return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');
+    }
   }
 };
 </script>
