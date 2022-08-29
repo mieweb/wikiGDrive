@@ -90,6 +90,7 @@ export class ServerContainer extends Container {
     this.logger = engine.logger.child({ filename: __filename });
     this.authContainer = engine.getContainer('google_api');
     this.socketManager = new SocketManager(this.engine);
+    await this.socketManager.mount(this.filesService);
     await saveRunningInstance(this.port);
   }
 

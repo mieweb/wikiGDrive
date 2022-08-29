@@ -13,14 +13,32 @@
 
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
-      <ul class="list-group">
-        <li class="list-group-item" v-for="(file, idx) of fileChanges" :key="idx">
-          <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
-          <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
-            <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
-          </button>
-        </li>
-      </ul>
+      <table class="table table-bordered jobs-list">
+        <thead>
+        <tr>
+          <th>
+            Document
+          </th>
+          <th>
+            Modified
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(file, idx) of fileChanges" :key="idx">
+            <td>
+              <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
+              <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
+                <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+              </button>
+            </td>
+            <td>
+              {{ file.modifiedTime }}
+              <pre>{{ file}}</pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="container-fluid bg-light my-1">

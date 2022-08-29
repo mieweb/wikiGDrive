@@ -4,19 +4,26 @@ import {DriveJobs, JobManagerContainer} from '../job/JobManagerContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
+import {FileContentService} from '../../utils/FileContentService';
+import {generateTreePath} from './routes/FolderController';
 
 export class SocketManager {
+
+  socketsMap: {[driveId: string]: Set<WebSocket.WebSocket>} = {};
+  private fileService: FileContentService;
 
   constructor(private engine: ContainerEngine) {
     this.engine.subscribe('jobs:changed', (driveId, driveJobs: DriveJobs) => {
       this.onJobsChanged(driveId, driveJobs);
     });
-    this.engine.subscribe('changes:changed', (driveId, changes: GoogleFile) => {
+    this.engine.subscribe('changes:changed', (driveId, changes: GoogleFile[]) => {
       this.onChangesChanged(driveId, changes);
     });
   }
 
-  socketsMap: {[driveId: string]: Set<WebSocket.WebSocket>} = {};
+  async mount(fileService: FileContentService) {
+    this.fileService = fileService;
+  }
 
   async addSocketConnection(ws: WebSocket.WebSocket, driveId: string) {
     if (!this.socketsMap[driveId]) {
@@ -37,9 +44,10 @@ export class SocketManager {
 
     const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
     const changes = await watchChangesContainer.getChanges(driveId);
+    const filteredChanges = await this.getFilteredChanges(driveId, changes);
     ws.send(JSON.stringify({
       cmd: 'changes:changed',
-      payload: changes
+      payload: filteredChanges
     }));
 
     ws.on('close', () => {
@@ -60,15 +68,40 @@ export class SocketManager {
     }
   }
 
-  private onChangesChanged(driveId: FileId, changes: GoogleFile) {
+  async getFilteredChanges(driveId: FileId, changes: GoogleFile[]): Promise<GoogleFile[]> {
+    let filteredChanges = [];
+
+    const driveFileSystem = await this.fileService.getSubFileService(driveId, '');
+    const driveTree = await driveFileSystem.readJson('.tree.json');
+
+    if (driveTree) {
+      for (const change of changes) {
+        const fileId = change.id;
+        const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
+        if (file && drivePath) {
+          if (file.modifiedTime !== change.modifiedTime) {
+            filteredChanges.push(change);
+          }
+        }
+      }
+    } else {
+      filteredChanges = changes;
+    }
+
+    return filteredChanges;
+  }
+
+  private async onChangesChanged(driveId: FileId, changes: GoogleFile[]) {
     if (!this.socketsMap[driveId]) {
       return;
     }
 
+    const filteredChanges = await this.getFilteredChanges(driveId, changes);
+
     for (const socket of this.socketsMap[driveId]) {
       socket.send(JSON.stringify({
         cmd: 'changes:changed',
-        payload: changes
+        payload: filteredChanges
       }));
     }
   }

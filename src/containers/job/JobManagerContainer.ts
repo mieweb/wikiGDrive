@@ -192,6 +192,7 @@ export class JobManagerContainer extends Container {
           }
 
           currentJob.state = 'running';
+          this.engine.emit(driveId, 'jobs:changed', driveJobs);
           this.runJob(driveId, currentJob)
             .then(() => {
               if (currentJob.type === 'render_preview') {
