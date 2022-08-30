@@ -135,8 +135,22 @@ export const UtilsMixin = {
         method: 'post'
       });
     },
-    async transform() {
+    async transformAll() {
       await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}`, {
+        method: 'post'
+      });
+    },
+    async transformSingle(selectedFile) {
+      try {
+        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
+          method: 'post'
+        });
+        // eslint-disable-next-line no-empty
+      } finally {
+      }
+    },
+    async transform(selectedFile) {
+      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
         method: 'post'
       });
     },

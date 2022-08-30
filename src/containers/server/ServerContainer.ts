@@ -448,6 +448,24 @@ export class ServerContainer extends Container {
       }
     });
 
+    app.post('/api/transform/:driveId/:fileId', authenticate(this.logger, 2), async (req, res, next) => {
+      try {
+        const driveId = req.params.driveId;
+        const fileId = req.params.fileId;
+
+        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+        await jobManagerContainer.schedule(driveId, {
+          type: 'transform',
+          payload: fileId,
+          title: 'Transform Single'
+        });
+
+        res.json({ driveId });
+      } catch (err) {
+        next(err);
+      }
+    });
+
     app.post('/api/sync/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
