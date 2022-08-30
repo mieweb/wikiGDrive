@@ -499,21 +499,7 @@ export class StateMachine {
     for (let position = 0; position < this.markdownChunks.length; position++) {
       const chunk = this.markdownChunks.chunks[position];
 
-      if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4'].indexOf(chunk.tag) > -1) {
-        const prevTag = this.markdownChunks.chunks[position - 1];
-        if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
-          this.markdownChunks.chunks.splice(position - 1, 0, {
-            isTag: true,
-            mode: 'md',
-            tag: 'BR/',
-            payload: {}
-          });
-          position++;
-        }
-        continue;
-      }
-
-      if (position + 1 < this.markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
+      if (position + 1 < this.markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
         const nextTag = this.markdownChunks.chunks[position + 1];
 
         if (!(nextTag.isTag && nextTag.tag === 'BR/')) {
@@ -524,7 +510,19 @@ export class StateMachine {
             payload: {}
           });
         }
-        continue;
+      }
+
+      if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
+        const prevTag = this.markdownChunks.chunks[position - 1];
+        if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
+          this.markdownChunks.chunks.splice(position - 1, 0, {
+            isTag: true,
+            mode: 'md',
+            tag: 'BR/',
+            payload: {}
+          });
+          position++;
+        }
       }
     }
 
