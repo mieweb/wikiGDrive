@@ -135,7 +135,7 @@ export class TaskLocalFileTransform extends QueueTask {
     }
 
     const converter = new OdtToMarkdown(document, styles);
-    converter.setPicturesDir(this.realFileName.replace('.md', '.assets/'));
+    converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
     const markdown = await converter.convert();
     const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, Array.from(converter.links));
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
