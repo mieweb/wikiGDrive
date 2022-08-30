@@ -51,10 +51,11 @@
     </div>
 
     <div class="btn-group" v-if="!syncing">
-      <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync single</a>
+      <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
       <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transform">Transform Markdown</a>
-      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render preview</a>
+      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', selectedFile)">Transform Single Markdown</a>
+      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
+      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
     </div>
     <table class="table table-bordered jobs-list" v-else>
       <tbody>
