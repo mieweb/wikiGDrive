@@ -549,6 +549,13 @@ export class StateMachine {
             continue;
           }
 
+          if (chunk2.isTag === false && chunk2.text.startsWith('{{% ') && chunk2.text.endsWith(' %}}')) {
+            const innerText = chunk2.text.substring(3, chunk2.text.length - 3);
+            if (innerText.indexOf(' %}}') === -1) {
+              continue;
+            }
+          }
+
           if (prevEmptyLine > 0) {
             this.markdownChunks.chunks.splice(position2, 0, {
               mode: 'md',
