@@ -531,7 +531,7 @@ export class StateMachine {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
         const level = (chunk.payload.listLevel || 1) - 1;
-        const indent = spaces(level * 4);
+        const indent = spaces(level * 3);
         const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
         const firstStr = indent + listStr;
         const otherStr = indent + spaces(listStr.length);
