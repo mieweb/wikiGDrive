@@ -9,7 +9,7 @@
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle"  />
+      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" ref="filesTree" />
     </template>
 
     <template v-slot:default>
@@ -111,6 +111,7 @@ export default {
     async active_job() {
       if (this.active_job === '') {
         await this.fetch();
+        await this.$refs.filesTree.refresh();
       }
     }
   },
