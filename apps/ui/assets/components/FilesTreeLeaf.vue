@@ -63,19 +63,19 @@ export default {
     }
   },
   created() {
-    this.fetchFolder(this.driveId, this.folderPath);
+    this.fetchFolder();
   },
   watch: {
     $route() {
-      this.fetchFolder(this.driveId, this.folderPath);
+      this.fetchFolder();
     }
   },
   methods: {
     isExpanded(file) {
       return !!this.expanded[file.fileName];
     },
-    async fetchFolder(driveId, filePath) {
-      const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
+    async fetchFolder() {
+      const pathContent = await this.FileClientService.getFile('/' + this.driveId + this.folderPath);
       this.files = pathContent.files || [];
       this.expanded = {};
       for (const file of this.files) {

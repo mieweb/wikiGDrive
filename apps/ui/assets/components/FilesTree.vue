@@ -7,7 +7,7 @@
       </div>
     </li>
   </ul>
-  <FilesTreeLeaf folderPath="/" v-if="!notRegistered" @selected="$emit('selected', $event)" />
+  <FilesTreeLeaf folderPath="/" v-if="!notRegistered" @selected="$emit('selected', $event)" ref="rootLeaf" />
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
@@ -34,6 +34,9 @@ export default {
     }
   },
   methods: {
+    refresh() {
+      this.$refs.rootLeaf.fetchFolder();
+    }
   },
   emits: ['collapse', 'sync'],
   mounted() {
