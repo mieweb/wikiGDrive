@@ -23,11 +23,16 @@ wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdri
 
 ## Authentication
 
+### Client ID for the Web Application Add-On / Authentication
 Link to production's OAUTH configuration:
 https://console.cloud.google.com/apis/credentials/oauthclient/762352378313-3u5pagjnk24g9640a5j1bmlsvobtlq2k.apps.googleusercontent.com?project=wikigdrive
 
 Stored in /home/githubactions/wikigdrive/env.prod
 
+### This is for the Service Account
+https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333?project=wikigdrive
+* [Link to the keys](https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333/keys?project=wikigdrive)
+* last key used is dcb0a0d690d0a5ac24b42a3f1962bf9802c36882 and is in [here](https://github.com/mieweb/wikiGDrive/blob/a0f1427018e71576d696c1b0d42a926de13854d7/.github/workflows/ProdServerDeploy.yml#L43)
 
 ## Add On Service
 
