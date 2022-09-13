@@ -277,12 +277,16 @@ export class OfficeBody {
 @XmlAttribute('style:font-name', 'fontName')
 @XmlAttribute('fo:font-weight', 'fontWeight')
 @XmlAttribute('fo:font-style', 'fontStyle')
+@XmlAttribute('fo:font-size', 'fontSize')
+@XmlAttribute('fo:color', 'fontColor')
 @XmlAttribute('style:text-underline-style', 'underlineStyle')
 export class TextProperty {
   fontName?: 'Courier New' | 'Arial';
   fontWeight?: 'bold';
   fontStyle?: 'italic';
   underlineStyle?: 'solid';
+  fontSize?: string;
+  fontColor?: string;
 }
 
 @XmlElement()
