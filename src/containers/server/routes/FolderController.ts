@@ -15,14 +15,15 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner} from '../../transform/DirectoryScanner';
 import {GitChange, GitScanner} from '../../../git/GitScanner';
 
-const extToMime = {
+export const extToMime = {
   'js': 'application/javascript',
   'mjs': 'application/javascript',
   'css': 'text/css',
   'txt': 'text/plain',
   'md': 'text/plain',
   'htm': 'text/html',
-  'html': 'text/html'
+  'html': 'text/html',
+  'svg': 'image/svg+xml'
 };
 
 function addPreviewUrl(hugo_theme, driveId) {

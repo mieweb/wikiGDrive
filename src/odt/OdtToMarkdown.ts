@@ -187,6 +187,8 @@ export class OdtToMarkdown {
 
   async drawCustomShape(drawCustomShape: DrawCustomShape) {
     // https://documentation.libreoffice.org/assets/Uploads/Documentation/en/Tutorials/CustomShapes7/Custom-Shape-Tutorial.odt
+    // https://code.woboq.org/libreoffice/libreoffice/svx/source/customshapes/EnhancedCustomShape2d.cxx.html#1808
+    // https://code.woboq.org/libreoffice/libreoffice/xmloff/source/draw/ximpcustomshape.cxx.html
     const style = this.getStyle(drawCustomShape.styleName);
 
     this.stateMachine.pushTag('EMB_SVG', {
