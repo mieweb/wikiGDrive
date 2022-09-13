@@ -22,6 +22,7 @@ import {DriveController} from './routes/DriveController';
 import {BackLinksController} from './routes/BackLinksController';
 import {GoogleDriveController} from './routes/GoogleDriveController';
 import {LogsController} from './routes/LogsController';
+import {PreviewController} from './routes/PreviewController';
 import cookieParser from 'cookie-parser';
 
 import {SocketManager} from './SocketManager';
@@ -331,6 +332,9 @@ export class ServerContainer extends Container {
 
     const logsController = new LogsController('/api/logs', this.logger);
     app.use('/api/logs', authenticate(this.logger), await logsController.getRouter());
+
+    const previewController = new PreviewController('/preview', this.logger);
+    app.use('/preview', authenticate(this.logger), await previewController.getRouter());
 
     app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(this.logger, 2), async (req, res, next) => {
       try {
