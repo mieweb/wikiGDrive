@@ -1,5 +1,5 @@
-import {ListStyle, Style} from './LibreOffice';
-import {inchesToPixels, spaces, SVG_VIEWPORT_HEIGHT, SVG_VIEWPORT_WIDTH} from './utils';
+import {ListStyle, Style, TextProperty} from './LibreOffice';
+import {inchesToMm, inchesToPixels} from './utils';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
@@ -10,6 +10,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'TABLE' | '/TABLE' | 'TR' | '/TR' | 'TD' | '/TD' |
   'TOC' | '/TOC' | 'SVG/' | 'IMG/' |
   'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT' |
+  'EMB_SVG_TSPAN' | '/EMB_SVG_TSPAN' |
   'CHANGE' | '/CHANGE' | 'HTML_MODE/' | 'MD_MODE/';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
@@ -26,16 +27,17 @@ export interface TagPayload {
   bullet?: boolean;
   number?: number;
   style?: Style;
+  styleTxt?: string;
   listStyle?: ListStyle;
   continueNumbering?: boolean;
   listLevel?: number;
   bookmarkName?: string;
   pathD?: string;
 
-  x?: string;
-  y?: string;
-  width?: string;
-  height?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
   transform?: string;
 }
 
@@ -62,20 +64,31 @@ function debugChunkToText(chunk: MarkdownChunk) {
   return chunk.tag;
 }
 
-function buildSvgStart(payload: TagPayload) {
-  const width = parseInt(payload.width) || 100;
-  const height = parseInt(payload.width) || 100;
-
-  const scale = SVG_VIEWPORT_WIDTH / width;
-
+export function textStyleToString(textProperty: TextProperty) {
+  if (!textProperty) {
+    return '';
+  }
   let styleTxt = '';
-  if (payload?.style?.graphicProperties) {
-    const graphicProperties = payload?.style?.graphicProperties;
+
+  if (textProperty.fontColor) {
+      styleTxt += ` fill: ${textProperty.fontColor};`;
+  }
+  if (textProperty.fontSize) {
+    // styleTxt += ` font-size: ${inchesToMm(textProperty.fontSize)}mm;`;
+  }
+
+  return styleTxt;
+}
+
+function styleToString(style: Style) {
+  let styleTxt = '';
+  if (style?.graphicProperties) {
+    const graphicProperties = style?.graphicProperties;
     // if (graphicProperties.stroke) {
     //   styleTxt += ` stroke: ${graphicProperties.stroke};`;
     // }
     if (graphicProperties.strokeWidth) {
-      styleTxt += ` stroke-width: ${scale * inchesToPixels(graphicProperties.strokeWidth)};`;
+      styleTxt += ` stroke-width: ${graphicProperties.strokeWidth};`;
     }
     if (graphicProperties.strokeColor) {
       styleTxt += ` stroke: ${graphicProperties.strokeColor};`;
@@ -91,7 +104,21 @@ function buildSvgStart(payload: TagPayload) {
     }
   }
 
-  let retVal = `<svg width="${width}" height="${height}" viewBox="0 0 ${SVG_VIEWPORT_WIDTH} ${SVG_VIEWPORT_HEIGHT}" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n`;
+  if (!styleTxt) {
+    return 'fill: transparent;';
+  }
+
+  return styleTxt;
+}
+
+
+function buildSvgStart(payload: TagPayload) {
+  const width = payload.width;
+  const height = payload.height;
+
+
+  let retVal = `<svg style="${payload.styleTxt || ''}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">\n`;
+  const styleTxt = styleToString(payload?.style);
   if (styleTxt) {
     retVal += `<style>* { ${styleTxt} }</style>\n`;
   }
@@ -258,8 +285,8 @@ function chunkToText(chunk: MarkdownChunk) {
           return '</svg>\n';
         case 'EMB_SVG_G':
           {
-            if (chunk.payload.x && chunk.payload.y) {
-              const transformStr = `transform="translate(${inchesToPixels(chunk.payload.x)}, ${inchesToPixels(chunk.payload.y)})"`;
+            if (chunk.payload.x || chunk.payload.y) {
+              const transformStr = `transform="translate(${chunk.payload.x || 0}, ${chunk.payload.y || 0})"`;
               return `<g ${transformStr}>\n`;
             }
             return '<g>\n';
@@ -267,11 +294,18 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/EMB_SVG_G':
           return '</g>\n';
         case 'EMB_SVG_P/':
-          return `<path d="${chunk.payload.pathD}" transform="${chunk.payload.transform}" ></path>\n`;
+          return `<path d="${chunk.payload.pathD}" transform="${chunk.payload.transform}" style="${styleToString(chunk.payload?.style)}" ></path>\n`;
         case 'EMB_SVG_TEXT':
-          return '<text fill="black" x="0" dy="1em" font-size="1em">';
+          return `<text style="${chunk.payload.styleTxt || ''}" x="0" dy="100%" >`;
         case '/EMB_SVG_TEXT':
           return '</text>\n';
+        case 'EMB_SVG_TSPAN':
+          {
+            const fontSize = inchesToPixels(chunk.payload.style?.textProperties.fontSize);
+            return `<tspan style="${textStyleToString(chunk.payload.style?.textProperties)}" font-size="${fontSize}">`;
+          }
+        case '/EMB_SVG_TSPAN':
+          return '</tspan>\n';
       }
       break;
   }

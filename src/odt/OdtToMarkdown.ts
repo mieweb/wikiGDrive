@@ -19,7 +19,7 @@ import {
 import {urlToFolderId} from '../utils/idParsers';
 import {MarkdownChunks} from './MarkdownChunks';
 import {StateMachine} from './StateMachine';
-import {inchesToPixels, inchesToSpaces, spaces, SVG_VIEWPORT_HEIGHT, SVG_VIEWPORT_WIDTH} from './utils';
+import {inchesToPixels, inchesToSpaces, spaces} from './utils';
 import {extractPath} from './extractPath';
 
 function baseFileName(fileName) {
@@ -191,12 +191,24 @@ export class OdtToMarkdown {
     // https://code.woboq.org/libreoffice/libreoffice/xmloff/source/draw/ximpcustomshape.cxx.html
     const style = this.getStyle(drawCustomShape.styleName);
 
+    const logwidth = inchesToPixels(drawCustomShape.width);
+    const logheight = inchesToPixels(drawCustomShape.height);
+
     this.stateMachine.pushTag('EMB_SVG', {
-      width: String(inchesToPixels(drawCustomShape.width)),
-      height: String(inchesToPixels(drawCustomShape.height)),
-      style
+      width: logwidth,
+      height: logheight
     });
 
+    for (const item of drawCustomShape.list) {
+      if (item.type === 'draw_enhanced_geometry') {
+        const enhancedGeometry = <DrawEnhancedGeometry>item;
+
+        this.stateMachine.pushTag('EMB_SVG_P/', {
+          pathD: extractPath(enhancedGeometry, logwidth, logheight),
+          style
+        });
+      }
+    }
     for (const item of drawCustomShape.list) {
       if (item.type === 'paragraph') {
         const paragraph = <TextParagraph>item;
@@ -215,6 +227,12 @@ export class OdtToMarkdown {
             case 'span':
             {
               const span = <TextSpan>child;
+
+              const style = this.getStyle(span.styleName);
+              this.stateMachine.pushTag('EMB_SVG_TSPAN', {
+                style
+              });
+
               for (const child of span.list) {
                 if (typeof child === 'string') {
                   this.stateMachine.pushText(child);
@@ -233,26 +251,12 @@ export class OdtToMarkdown {
                 }
               }
             }
-              break;
+
+            this.stateMachine.pushTag('/EMB_SVG_TSPAN');
+            break;
           }
         }
         this.stateMachine.pushTag('/EMB_SVG_TEXT');
-      }
-      if (item.type === 'draw_enhanced_geometry') {
-        const enhancedGeometry = <DrawEnhancedGeometry>item;
-
-        const subViewSize = enhancedGeometry.subViewSize || `${SVG_VIEWPORT_WIDTH} ${SVG_VIEWPORT_HEIGHT}`;
-        const parts = subViewSize.split(' ');
-        const logwidth = parseInt(parts[0]) || SVG_VIEWPORT_WIDTH;
-        const logheight = parseInt(parts[1]) || SVG_VIEWPORT_HEIGHT;
-
-        const scaleX = SVG_VIEWPORT_WIDTH / logwidth;
-        const scaleY = SVG_VIEWPORT_HEIGHT / logheight;
-
-        this.stateMachine.pushTag('EMB_SVG_P/', {
-          pathD: extractPath(enhancedGeometry, logwidth, logheight),
-          transform: `scale(${scaleX}, ${scaleY})`
-        });
       }
     }
 
@@ -264,11 +268,28 @@ export class OdtToMarkdown {
 
     const style = this.getStyle(drawG.styleName);
 
-    this.stateMachine.pushTag('EMB_SVG', { style });
+    let maxx = 0;
+    let maxy = 0;
+    for (const drawCustomShape of drawG.list) {
+      const x2 = inchesToPixels(drawCustomShape.x) + inchesToPixels(drawCustomShape.width);
+      const y2 = inchesToPixels(drawCustomShape.y) + inchesToPixels(drawCustomShape.height);
+      if (maxx < x2) {
+        maxx = x2;
+      }
+      if (maxy < y2) {
+        maxy = y2;
+      }
+    }
+
+    this.stateMachine.pushTag('EMB_SVG', {
+      width: maxx,
+      height: maxy,
+      styleTxt: `width: ${maxx / 100}mm; height: ${maxy / 100}mm;`
+    });
 
     for (const drawCustomShape of drawG.list) {
       this.stateMachine.pushTag('EMB_SVG_G', {
-        x: drawCustomShape.x, y: drawCustomShape.y
+        x: inchesToPixels(drawCustomShape.x), y: inchesToPixels(drawCustomShape.y)
       });
       await this.drawCustomShape(drawCustomShape);
       this.stateMachine.pushTag('/EMB_SVG_G');
@@ -276,6 +297,12 @@ export class OdtToMarkdown {
 
     this.stateMachine.pushTag('/EMB_SVG');
     this.stateMachine.pushTag('MD_MODE/');
+
+    this.stateMachine.pushTag('BR/');
+    this.stateMachine.pushTag('B');
+    this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION.');
+    this.stateMachine.pushTag('/B');
+    this.stateMachine.pushTag('BR/');
   }
 
   async drawFrameToText(drawFrame: DrawFrame) {
