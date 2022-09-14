@@ -190,7 +190,7 @@ export class TransformContainer extends Container {
     this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
   }
 
-  async syncDir(googleFolder: FileContentService, destinationDirectory: FileContentService) {
+  async syncDir(googleFolder: FileContentService, destinationDirectory: FileContentService, queueTransformer: QueueTransformer) {
     const googleScanner = new GoogleFilesScanner();
     if (!await googleFolder.exists('.folder.json')) {
       return;
@@ -228,13 +228,6 @@ export class TransformContainer extends Container {
       }
     }
 
-    const transformerQueue = new QueueTransformer(this.logger);
-    transformerQueue.onProgressNotify(({ total, completed }) => {
-      if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed });
-      }
-    });
-
     for (const realFileName in realFileNameToGenerated) {
       const localFile: LocalFile = realFileNameToGenerated[realFileName];
 
@@ -243,7 +236,7 @@ export class TransformContainer extends Container {
         const googleFolderFile = googleFolderFiles.find(f => f.id === localFile.id);
         if (googleFolderFile) {
           const googleSubFolder = await googleFolder.getSubFileService(googleFolderFile.id);
-          await this.syncDir(googleSubFolder, await destinationDirectory.getSubFileService(realFileName));
+          await this.syncDir(googleSubFolder, await destinationDirectory.getSubFileService(realFileName), queueTransformer);
         }
         continue;
       }
@@ -264,10 +257,8 @@ export class TransformContainer extends Container {
         this.hierarchy,
         this.localLinks
       );
-      transformerQueue.addTask(task);
+      queueTransformer.addTask(task);
     }
-
-    await transformerQueue.finished();
 
     const dirNames = destinationDirectory.getVirtualPath().replace(/\/$/, '').split('/');
     const yaml = generateDirectoryYaml(stripConflict(dirNames[dirNames.length - 1]), googleFolderData, realFileNameToGenerated);
@@ -276,6 +267,13 @@ export class TransformContainer extends Container {
 
   async run(rootFolderId: FileId) {
     const contentFileService = this.transformSubDir ? await this.generatedFileService.getSubFileService(this.transformSubDir, '/') : this.generatedFileService;
+
+    const queueTransformer = new QueueTransformer(this.logger);
+    queueTransformer.onProgressNotify(({ total, completed }) => {
+      if (this.progressNotifyCallback) {
+        this.progressNotifyCallback({ total, completed });
+      }
+    });
 
     this.logger.info('Start transforming: ' + rootFolderId);
     this.localLog = new LocalLog(contentFileService);
@@ -289,7 +287,8 @@ export class TransformContainer extends Container {
     let retry = true;
     while (retry) {
       retry = false;
-      await this.syncDir(this.filesService, contentFileService);
+      await this.syncDir(this.filesService, contentFileService, queueTransformer);
+      await queueTransformer.finished();
       if (this.filterFilesIds.length > 0) {
         const filterFilesIds = new Set<string>();
         for (const fileId of this.filterFilesIds) {
@@ -312,6 +311,8 @@ export class TransformContainer extends Container {
     await this.createRedirs(contentFileService);
     await this.writeToc(contentFileService);
     await this.rewriteLinks(contentFileService);
+
+    await queueTransformer.finished();
 
     await this.localLog.save();
     await this.localLinks.save();

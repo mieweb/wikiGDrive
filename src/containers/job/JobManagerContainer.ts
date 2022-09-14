@@ -260,7 +260,7 @@ export class JobManagerContainer extends Container {
         return;
       }
       const jobs = this.driveJobsMap[folderId].jobs || [];
-      const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
+      const job = jobs.find(j => j.state === 'running' && j.type === 'transform');
       if (job) {
         job.progress = {
           completed: completed,
