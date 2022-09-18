@@ -8,12 +8,12 @@ import {
 import {MimeTypes} from '../../../model/GoogleFile';
 import {AuthConfig} from '../../../model/AccountJson';
 import {FileContentService} from '../../../utils/FileContentService';
-import {FileId} from '../../../model/model';
 import express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner} from '../../transform/DirectoryScanner';
 import {GitChange, GitScanner} from '../../../git/GitScanner';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -37,66 +37,6 @@ function addPreviewUrl(hugo_theme, driveId) {
 
     return { ...file, previewUrl };
   };
-}
-
-export function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
-  if (!Array.isArray(files)) {
-    return [];
-  }
-  for (const file of files) {
-    const part = file[fieldName];
-
-    if (file.id === fileId) {
-      return [ file, curPath ? curPath + '/' + part : part ];
-    }
-  }
-
-  for (const file of files) {
-    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
-      continue;
-    }
-
-    const part = file[fieldName];
-
-    if (file.children) {
-      const tuple = generateTreePath(fileId, file.children, fieldName, curPath ? curPath + '/' + part : part);
-      if (tuple?.length > 0) {
-        return tuple;
-      }
-    }
-  }
-
-  return [];
-}
-
-export interface BaseTreeItem {
-  mimeType: string;
-  children?: Array<BaseTreeItem>;
-}
-
-type CallBack<K> = (treeItem: K) => boolean;
-
-export function findInTree(callBack: CallBack<BaseTreeItem>, files: Array<BaseTreeItem>) {
-  for (const treeItem of files) {
-    if (callBack(treeItem)) {
-      return treeItem;
-    }
-  }
-
-  for (const file of files) {
-    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
-      continue;
-    }
-
-    if (file.children) {
-      const result = findInTree(callBack, file.children);
-      if (result) {
-        return result;
-      }
-    }
-  }
-
-  return null;
 }
 
 export class ShareErrorHandler extends ErrorHandler {
@@ -205,7 +145,9 @@ export default class FolderController extends Controller {
     await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
-    const transformedTree = await contentFileService.readJson('.tree.json') || [];
+
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.load();
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');
@@ -217,9 +159,9 @@ export default class FolderController extends Controller {
         filePath :
         filePath.replace('/' + userConfigService.config.transform_subdir, '') || '/';
 
-      const treeItem = contentFilePath === '/'
-        ? { id: driveId, children: transformedTree, parentId: driveId, path: '/', mimeType: MimeTypes.FOLDER_MIME }
-        : findInTree(treeItem => treeItem['path'] === contentFilePath, transformedTree);
+      const [treeItem] = contentFilePath === '/'
+        ? await markdownTreeProcessor.getRootItem(driveId)
+        : await markdownTreeProcessor.findByPath(contentFilePath);
 
       if (!treeItem) {
         this.res.status(404).send('No local');

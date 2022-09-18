@@ -4,7 +4,7 @@ import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {Logger} from 'winston';
 import {Request} from 'express';
 
-export function signToken(user: {id: string, name: string, email: string, google_access_token: string}, driveId: string, tokenType = 'ACCESS_TOKEN') {
+export function signToken(user: {id: string, name: string, email: string, google_access_token: string, google_refresh_token: string}, driveId: string, tokenType = 'ACCESS_TOKEN') {
   const expiresIn =
     tokenType === 'ACCESS_TOKEN'
       ? (process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || 24*3600)
@@ -15,7 +15,9 @@ export function signToken(user: {id: string, name: string, email: string, google
     sub: user.id,
     driveId: driveId,
     tokenType,
-    gat: encrypt(user.google_access_token, process.env.JWT_SECRET) }, process.env.JWT_SECRET, { expiresIn });
+    gat: encrypt(user.google_access_token, process.env.JWT_SECRET),
+    grt: encrypt(user.google_refresh_token, process.env.JWT_SECRET)
+  }, process.env.JWT_SECRET, { expiresIn });
 }
 
 export class AuthError extends Error {
@@ -35,7 +37,7 @@ function redirError(req: Request, msg: string) {
   if (req.headers['redirect-to']) {
     err.redirectTo = req.headers['redirect-to'].toString();
   } else {
-    err.redirectTo = '/drive/' + driveId;
+    err.redirectTo = '/drive/' + (driveId || '');
   }
   if (driveId) {
     err.authPath = '/auth/' + driveId + '?redirectTo=' + err.redirectTo;
@@ -71,11 +73,12 @@ export function authenticate(logger: Logger, idx = 0) {
       }
 
       const google_access_token = decrypt(decoded['gat'], process.env.JWT_SECRET);
+      const google_refresh_token = decrypt(decoded['grt'], process.env.JWT_SECRET);
 
       const googleDriveService = new GoogleDriveService(logger);
       const googleAuthService = new GoogleAuthService();
       const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      googleUserAuth.setCredentials({ access_token: google_access_token });
+      googleUserAuth.setCredentials({ access_token: google_access_token, refresh_token: google_refresh_token });
 
       req['driveId'] = driveId || '';
       req['logger'] = req['driveId'] ? logger.child({ driveId: req['driveId'] }) : logger;
@@ -84,7 +87,8 @@ export function authenticate(logger: Logger, idx = 0) {
         name: decoded['name'],
         email: decoded['email'],
         id: decoded.sub,
-        google_access_token
+        google_access_token,
+        google_refresh_token
         // driveId: decoded.driveId
       };
 

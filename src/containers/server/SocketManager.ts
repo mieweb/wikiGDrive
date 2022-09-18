@@ -5,7 +5,7 @@ import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {FileContentService} from '../../utils/FileContentService';
-import {generateTreePath} from './routes/FolderController';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 
 export class SocketManager {
 
@@ -72,12 +72,13 @@ export class SocketManager {
     let filteredChanges = [];
 
     const driveFileSystem = await this.fileService.getSubFileService(driveId, '');
-    const driveTree = await driveFileSystem.readJson('.tree.json');
+    const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+    await markdownTreeProcessor.load();
 
-    if (driveTree) {
+    if (!markdownTreeProcessor.isEmpty()) {
       for (const change of changes) {
         const fileId = change.id;
-        const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
+        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
         if (file && drivePath) {
           if (file.modifiedTime !== change.modifiedTime) {
             filteredChanges.push(change);

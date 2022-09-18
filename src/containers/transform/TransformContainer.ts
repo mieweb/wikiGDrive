@@ -21,7 +21,7 @@ import {TaskRedirFileTransform} from './TaskRedirFileTransform';
 import {TocGenerator} from './frontmatters/TocGenerator';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
-import {TreeItem} from '../../model/TreeItem';
+import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -318,54 +318,10 @@ export class TransformContainer extends Container {
     await this.localLinks.save();
 
     this.logger.info('Regenerate tree: ' + rootFolderId);
-    const tree = await this.regenerateTree(contentFileService, rootFolderId);
-    await contentFileService.writeJson('.tree.json', tree);
-  }
 
-  async regenerateTree(contentFileService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
-    const scanner = new DirectoryScanner();
-    const files = await scanner.scan(contentFileService);
-    const retVal = [];
-    for (const realFileName in files) {
-      if (RESERVED_NAMES.includes(realFileName)) {
-        continue;
-      }
-      if (realFileName.endsWith('.debug.xml')) {
-        continue;
-      }
-
-      const file = files[realFileName];
-      if (file.mimeType === MimeTypes.FOLDER_MIME) {
-        const subFilesService = await contentFileService.getSubFileService(realFileName);
-        const item: TreeItem = {
-          id: file.id,
-          title: file.title,
-          path: contentFileService.getVirtualPath() + realFileName,
-          realFileName: realFileName,
-          fileName: file.fileName,
-          mimeType: file.mimeType,
-          modifiedTime: file.modifiedTime,
-          version: file.version,
-          parentId,
-          children: await this.regenerateTree(subFilesService, file.id)
-        };
-        retVal.push(item);
-      } else {
-        const item: TreeItem = {
-          id: file.id,
-          title: file.title,
-          path: contentFileService.getVirtualPath() + realFileName,
-          fileName: file.fileName,
-          realFileName: realFileName,
-          mimeType: file.mimeType,
-          modifiedTime: file.modifiedTime,
-          version: file.version,
-          parentId
-        };
-        retVal.push(item);
-      }
-    }
-    return retVal;
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.regenerateTree(rootFolderId);
+    await markdownTreeProcessor.save();
   }
 
   async rewriteLinks(destinationDirectory: FileContentService) {

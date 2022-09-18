@@ -6,10 +6,9 @@ import {TransformContainer} from '../transform/TransformContainer';
 import { fileURLToPath } from 'url';
 import {PreviewRendererContainer} from '../preview/PreviewRendererContainer';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
-import {TreeItem} from '../../model/TreeItem';
 import {GoogleFile} from '../../model/GoogleFile';
-import {BaseTreeItem, findInTree} from '../server/routes/FolderController';
 import {UserConfigService} from '../google_folder/UserConfigService';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview';
@@ -272,12 +271,14 @@ export class JobManagerContainer extends Container {
     await this.engine.registerContainer(transformContainer);
     try {
       await transformContainer.run(folderId);
-      const tree: Array<TreeItem> = await generatedFileService.readJson('.tree.json');
+
+      const markdownTreeProcessor = new MarkdownTreeProcessor(generatedFileService);
+      await markdownTreeProcessor.load();
 
       if (filesIds.length > 0) {
-        await this.scheduleRetry(folderId, changesToFetch.filter(file => filesIds.includes(file.id)), tree);
+        await this.scheduleRetry(folderId, changesToFetch.filter(file => filesIds.includes(file.id)), markdownTreeProcessor);
       } else {
-        await this.scheduleRetry(folderId, changesToFetch, tree);
+        await this.scheduleRetry(folderId, changesToFetch, markdownTreeProcessor);
       }
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
@@ -327,18 +328,18 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async scheduleRetry(driveId: FileId, changesToFetch, tree: TreeItem[]) {
+  private async scheduleRetry(driveId: FileId, changesToFetch, markdownTreeProcessor: MarkdownTreeProcessor) {
     if (changesToFetch.length === 0) {
       return;
     }
-    if (!tree) {
+    if (markdownTreeProcessor.isEmpty()) {
       return;
     }
 
     const filesToRetry = [];
     for (const change of changesToFetch) {
-      const treeItem = findInTree(treeItem => treeItem['id'] === change.id, <Array<BaseTreeItem>>tree);
-      if (+treeItem.version && +treeItem.version < +change.version) {
+      const [treeItem] = await markdownTreeProcessor.findById(change.id);
+      if (treeItem.modifiedTime && treeItem.modifiedTime < change.modifiedTime) {
         filesToRetry.push(change);
       }
     }

@@ -29,6 +29,9 @@ export function encrypt(val: string, key: string) {
 }
 
 export function decrypt(encrypted: string, key: string) {
+  if (!encrypted) {
+    return null;
+  }
   key = new Buffer(key).toString('hex').substring(0, 32);
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, IV);
   const decrypted = decipher.update(encrypted, 'base64', 'utf8');
@@ -71,6 +74,7 @@ export class GoogleAuthService {
       client_id,
       redirect_uri,
       access_type: 'offline',
+      prompt: 'consent',
       response_type: 'code',
       scope: [
         'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/drive.readonly'
@@ -84,6 +88,7 @@ export class GoogleAuthService {
       client_id,
       client_secret,
       redirect_uri: redirect_uri,
+      access_type: 'offline',
       grant_type: 'authorization_code',
       code: code
     }).toString();
@@ -160,7 +165,9 @@ export class GoogleAuthService {
     return await this.getWebToken(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob', code);
   }
 
-  async getUser(auth: { access_token: string }) {
+  async getUser(auth: {
+    refresh_token: string;
+    access_token: string }) {
     const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?access_token=' + auth.access_token);
 
     if (response.status >= 400) {
@@ -172,7 +179,8 @@ export class GoogleAuthService {
       id: json.id,
       email: json.email,
       name: json.name,
-      google_access_token: auth.access_token
+      google_access_token: auth.access_token,
+      google_refresh_token: auth.refresh_token
     };
   }
 }
