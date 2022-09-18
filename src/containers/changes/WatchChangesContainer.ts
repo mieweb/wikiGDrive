@@ -6,9 +6,8 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleFile} from '../../model/GoogleFile';
-import {GoogleTreeItem} from '../google_folder/GoogleFolderContainer';
-import {findInTree} from '../server/routes/FolderController';
 import {HasQuotaLimiter} from '../../google/AuthClient';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -27,11 +26,15 @@ export class WatchChangesContainer extends Container {
     this.auth = googleApiContainer.getAuth();
     this.googleDriveService = new GoogleDriveService(this.logger);
 
-    this.engine.subscribe('gdrive:changed', async (driveId, tree: GoogleTreeItem[]) => {
+    this.engine.subscribe('gdrive:changed', async (driveId) => {
+      const folderFilesService = await this.filesService.getSubFileService(driveId, '/');
+      const treeProcessor = new GoogleTreeProcessor(folderFilesService);
+      await treeProcessor.load();
+
       const changes = await this.getChanges(driveId);
       const filteredChanges = [];
       for (const change of changes) {
-        const leaf: GoogleTreeItem = findInTree((leaf => leaf['id'] === change.id), tree);
+        const [leaf] = await treeProcessor.findById(change.id);
 
         if (!leaf) {
           if (!change.trashed) {
@@ -40,7 +43,7 @@ export class WatchChangesContainer extends Container {
           continue;
         }
 
-        if (leaf.version < change.version) {
+        if (leaf.modifiedTime < change.modifiedTime) {
           filteredChanges.push(change);
         }
       }

@@ -6,7 +6,6 @@ import winston from 'winston';
 import path from 'path';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {FileId} from '../../model/model';
-import {MimeTypes} from '../../model/GoogleFile';
 import {saveRunningInstance} from './loadRunningInstance';
 import {AuthConfig} from '../../model/AccountJson';
 import {urlToFolderId} from '../../utils/idParsers';
@@ -31,6 +30,7 @@ import * as fs from 'fs';
 import {authenticate, AuthError, signToken} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {Logger} from 'vite';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,33 +45,6 @@ interface TreeItem {
 
 function openerRedirect(res: Response, redirectTo: string) {
   res.send(`<script>window.opener.authenticated('${redirectTo}');window.close();</script>`);
-}
-
-function generateTreePath(fileId: FileId, files: TreeItem[], fieldName: string, curPath = '') {
-  for (const file of files) {
-    const part = file[fieldName];
-
-    if (file.id === fileId) {
-      return [ file, curPath ? curPath + '/' + part : part ];
-    }
-  }
-
-  for (const file of files) {
-    if (file.mimeType !== MimeTypes.FOLDER_MIME) {
-      continue;
-    }
-
-    const part = file[fieldName];
-
-    if (file.children) {
-      const tuple = generateTreePath(fileId, file.children, fieldName, curPath ? curPath + '/' + part : part);
-      if (tuple?.length > 0) {
-        return tuple;
-      }
-    }
-  }
-
-  return [];
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
@@ -269,7 +242,7 @@ export class ServerContainer extends Container {
         googleUserAuth.setCredentials(token);
 
         const googleDriveService = new GoogleDriveService(this.logger);
-        const googleUser = await googleAuthService.getUser({ access_token: token.access_token });
+        const googleUser = await googleAuthService.getUser({ access_token: token.access_token, refresh_token: token.refresh_token });
 
         if (driveId) {
           const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
@@ -342,15 +315,15 @@ export class ServerContainer extends Container {
         const fileId = req.params.fileId;
 
         const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const driveTree = await driveFileSystem.readJson('.tree.json');
-        if (driveTree) {
-          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
-          if (file && drivePath) {
-            const odtPath = drivePath + '.odt';
-            if (await driveFileSystem.exists(odtPath)) {
-              driveFileSystem.createReadStream(odtPath).pipe(res);
-              return;
-            }
+
+        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+        await markdownTreeProcessor.load();
+        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+        if (file && drivePath) {
+          const odtPath = drivePath + '.odt';
+          if (await driveFileSystem.exists(odtPath)) {
+            driveFileSystem.createReadStream(odtPath).pipe(res);
+            return;
           }
         }
 
@@ -371,17 +344,16 @@ export class ServerContainer extends Container {
         const fileId = req.params.fileId;
 
         const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const driveTree = await driveFileSystem.readJson('.tree.json');
-        if (driveTree) {
-          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
 
-          if (file && drivePath) {
-            const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
-            if (await driveFileSystem.exists(filePath)) {
-              res.header('Content-Disposition', `attachment; filename="${file.name}.${googleMimeToExt(file.mimeType, '')}"`);
-              driveFileSystem.createReadStream(filePath).pipe(res);
-              return;
-            }
+        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+        await markdownTreeProcessor.load();
+        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+        if (file && drivePath) {
+          const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
+          if (await driveFileSystem.exists(filePath)) {
+            res.header('Content-Disposition', `attachment; filename="${file['name']}.${googleMimeToExt(file.mimeType, '')}"`);
+            driveFileSystem.createReadStream(filePath).pipe(res);
+            return;
           }
         }
 
@@ -502,12 +474,11 @@ export class ServerContainer extends Container {
         let fileTitle = '#' + fileId;
 
         const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const driveTree = await driveFileSystem.readJson('.tree.json');
-        if (driveTree) {
-          const [file, drivePath] = generateTreePath(fileId, driveTree, 'id');
-          if (file && drivePath) {
-            fileTitle = file.name;
-          }
+        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+        await markdownTreeProcessor.load();
+        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+        if (file && drivePath) {
+          fileTitle = file['name'];
         }
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
@@ -560,7 +531,7 @@ export class ServerContainer extends Container {
         const googleDriveService = new GoogleDriveService(this.logger);
         const googleAuthService = new GoogleAuthService();
         const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-        googleUserAuth.setCredentials({ access_token: req.user.google_access_token });
+        googleUserAuth.setCredentials({ access_token: req.user.google_access_token, refresh_token: req.user.google_refresh_token });
 
         const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
 

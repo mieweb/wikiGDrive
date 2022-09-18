@@ -5,6 +5,7 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {GoogleAuthService} from '../../../google/GoogleAuthService';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -20,7 +21,7 @@ export class DriveController extends Controller {
     const googleDriveService = new GoogleDriveService(this.logger);
     const googleAuthService = new GoogleAuthService();
     const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-    googleUserAuth.setCredentials({ access_token: user.google_access_token });
+    googleUserAuth.setCredentials({ access_token: user.google_access_token, refresh_token: user.google_refresh_token });
 
     const drives = await googleDriveService.listDrives(googleUserAuth);
     return drives.map(drive => {
@@ -49,7 +50,11 @@ export class DriveController extends Controller {
     const initialized = await gitScanner.isRepo();
 
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
-    const transformedTree = (await contentFileService.readJson('.tree.json')) || [];
+
+    const googleTreeProcessor = new GoogleTreeProcessor(contentFileService);
+    await googleTreeProcessor.load();
+
+    const transformedTree = googleTreeProcessor.getTree();
 
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');

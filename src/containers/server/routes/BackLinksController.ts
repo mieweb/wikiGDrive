@@ -1,8 +1,8 @@
 import {Controller, RouteGet, RouteParamPath} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {LocalLinks} from '../../transform/LocalLinks';
-import {findInTree} from './FolderController';
 import {UserConfigService} from '../../google_folder/UserConfigService';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 
 export class BackLinksController extends Controller {
 
@@ -18,7 +18,8 @@ export class BackLinksController extends Controller {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
 
-    const transformedTree = await contentFileService.readJson('.tree.json');
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.load();
 
     const localLinks = new LocalLinks(contentFileService);
     await localLinks.load();
@@ -26,13 +27,14 @@ export class BackLinksController extends Controller {
     const backLinkFileIds = localLinks.getBackLinks(fileId);
     const backlinks = [];
     for (const backLinkFileId of backLinkFileIds) {
-      const obj = findInTree(node => node['id'] === backLinkFileId, transformedTree);
-      if (obj) {
+
+      const [file] = await markdownTreeProcessor.findById(backLinkFileId);
+      if (file) {
         backlinks.push({
-          folderId: obj.folderId,
+          folderId: file.parentId,
           fileId: backLinkFileId,
-          path: obj.child.path,
-          name: obj.child.name
+          path: file.path,
+          name: file.fileName
         });
       }
     }

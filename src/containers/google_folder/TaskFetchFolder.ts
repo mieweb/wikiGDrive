@@ -71,7 +71,7 @@ export class TaskFetchFolder extends QueueTask {
         filesToSave.push(file);
 /*
         const oldFile = oldFiles.find(oldFile => oldFile.id === file.id);
-        if (oldFile && oldFile.version !== file.version) {
+        if (modifiedTime && oldFile.modifiedTime !== file.modifiedTime) {
           const localFiles = await this.fileService.list();
           for (const localFile of localFiles) {
             if (localFile.startsWith(oldFile.id)) {
@@ -100,7 +100,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version
+              oldFile?.modifiedTime !== file.modifiedTime
             ));
             break;
 
@@ -111,7 +111,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version
+              oldFile?.modifiedTime !== file.modifiedTime
             ));
             break;
 
@@ -122,7 +122,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -131,7 +131,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'text/csv', 'csv'
             ));
             break;
@@ -143,7 +143,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -152,7 +152,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'application/pdf', 'pdf'
             ));
             break;
@@ -164,7 +164,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'application/zip', 'zip'
             ));
             break;
@@ -176,7 +176,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version,
+              oldFile?.modifiedTime !== file.modifiedTime,
               'application/vnd.google-apps.script+json', 'gs'
             ));
             break;
@@ -188,7 +188,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.version !== file.version
+              oldFile?.modifiedTime !== file.modifiedTime
             ));
             break;
         }

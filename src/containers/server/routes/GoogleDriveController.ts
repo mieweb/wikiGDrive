@@ -1,7 +1,8 @@
 import {Controller, RouteErrorHandler, RouteGet, RouteParamPath, RouteResponse} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
-import {findInTree, outputDirectory, ShareErrorHandler} from './FolderController';
+import {outputDirectory, ShareErrorHandler} from './FolderController';
 import {UserConfigService} from '../../google_folder/UserConfigService';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 
 export class GoogleDriveController extends Controller {
 
@@ -18,9 +19,10 @@ export class GoogleDriveController extends Controller {
     await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
-    const transformedTree = await contentFileService.readJson('.tree.json');
 
-    const treeItem = findInTree(treeItem => treeItem['id'] === fileId, transformedTree);
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.load();
+    const [treeItem] = await markdownTreeProcessor.findById(fileId);
 
     if (!treeItem) {
       this.res.status(404).send('No local');

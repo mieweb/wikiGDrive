@@ -12,6 +12,8 @@ import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {HasQuotaLimiter} from '../../google/AuthClient';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
+import {GoogleTreeProcessor} from './GoogleTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -80,48 +82,18 @@ export class GoogleFolderContainer extends Container {
 
     await downloader.finished();
 
-    const tree = await this.regenerateTree(this.filesService);
-
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     const folderData = await this.filesService.readJson('.folder.json');
     if (folderData?.name) {
       await folderRegistryContainer.rename(this.params.folderId, folderData.name);
     }
 
-    await this.filesService.writeJson('.tree.json', tree);
-    this.engine.emit(this.params.folderId, 'gdrive:changed', tree);
-  }
+    const treeProcessor = new GoogleTreeProcessor(this.filesService);
+    await treeProcessor.load();
+    await treeProcessor.regenerateTree();
+    await treeProcessor.save();
 
-  async regenerateTree(filesService: FileContentService, parentId?: string): Promise<Array<GoogleTreeItem>> {
-    const scanner = new GoogleFilesScanner();
-    const files = await scanner.scan(filesService);
-    const retVal = [];
-    for (const file of files) {
-      if (file.mimeType === MimeTypes.FOLDER_MIME) {
-        const subFileService = await filesService.getSubFileService(file.id);
-        const item: GoogleTreeItem = {
-          id: file.id,
-          name: file.name,
-          mimeType: file.mimeType,
-          modifiedTime: file.modifiedTime,
-          version: file.version,
-          parentId,
-          children: await this.regenerateTree(subFileService, file.id)
-        };
-        retVal.push(item);
-      } else {
-        const item: GoogleTreeItem = {
-          id: file.id,
-          name: file.name,
-          mimeType: file.mimeType,
-          modifiedTime: file.modifiedTime,
-          version: file.version,
-          parentId
-        };
-        retVal.push(item);
-      }
-    }
-    return retVal;
+    this.engine.emit(this.params.folderId, 'gdrive:changed', null);
   }
 
   private async buildFolderFilter(filesIds: FileId[], folderFilterIds: FileId[]): Promise<void> {
