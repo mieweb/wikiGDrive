@@ -67,11 +67,7 @@ export class GoogleTreeProcessor {
     return await this.findInTree(item => item.id === fileId, this.driveTree);
   }
 
-  private async findInTree(callBack: CallBack<TreeItem>, children?: Array<TreeItem>, curPath = ''): Promise<TreeItemTuple> {
-    if (!children) {
-      children = this.driveTree;
-    }
-
+  private async findInTree(callBack: CallBack<TreeItem>, children: Array<TreeItem>, curPath = ''): Promise<TreeItemTuple> {
     for (const file of children) {
       const part = file['id'];
       if (callBack(file)) {
@@ -93,7 +89,7 @@ export class GoogleTreeProcessor {
       }
     }
 
-    return null;
+    return [];
   }
 
 }
