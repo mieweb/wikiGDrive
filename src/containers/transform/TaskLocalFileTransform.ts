@@ -12,6 +12,14 @@ import {UnMarshaller} from '../../odt/UnMarshaller';
 import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
+import { Worker } from 'worker_threads';
+import {fileURLToPath} from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SINGLE_THREADED_TRANSFORM = true;
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -134,15 +142,47 @@ export class TaskLocalFileTransform extends QueueTask {
       throw Error('No styles unmarshalled');
     }
 
-    const converter = new OdtToMarkdown(document, styles);
-    converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
-    const markdown = await converter.convert();
-    const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, Array.from(converter.links));
+    let markdown;
+    let links = [];
+
+    if (SINGLE_THREADED_TRANSFORM) {
+      const converter = new OdtToMarkdown(document, styles);
+      converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
+      markdown = await converter.convert();
+      links = Array.from(converter.links);
+    } else {
+      interface WorkerResult {
+        markdown: string;
+        links: Array<string>;
+      }
+      const workerResult: WorkerResult = await new Promise((resolve, reject) => {
+        const worker = new Worker(__dirname + '/../../odt/OdtToMarkdownWorker.ts', {
+          workerData: {
+            realFileName: this.realFileName,
+            document,
+            styles
+          }
+        });
+        worker.on('message', ({ markdown, links }) => resolve({ markdown, links }));
+        worker.on('error', reject);
+        worker.on('exit', (code) => {
+          if (code !== 0) {
+            reject(new Error(
+              `Stopped the Worker Thread with the exit code: ${code}`));
+          }
+        });
+      });
+
+      markdown = workerResult.markdown;
+      links = workerResult.links;
+    }
+
+    const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links);
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
     if (process.env.VERSION === 'dev') {
       await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
     }
-    this.localLinks.append(localFile.id, localFile.fileName, Array.from(converter.links));
+    this.localLinks.append(localFile.id, localFile.fileName, links);
   }
 
   async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
