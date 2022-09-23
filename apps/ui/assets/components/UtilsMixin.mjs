@@ -24,12 +24,16 @@ export const UtilsMixin = {
     last_job() {
       let kind = 'none';
       let dateStr = null;
+      let durationStr = null;
 
       if (this.selectedFile) {
         const fileJob = this.jobs.find(job => job.type === 'sync' && job.payload === this.selectedFile.id && ['done', 'failed'].includes(job.state));
         if (fileJob?.finished) {
           kind = 'single';
           dateStr = new Date(fileJob.finished).toISOString();
+          if (fileJob?.started) {
+            durationStr = Math.round((fileJob?.finished - fileJob?.started) / 1000, 1) + 's';
+          }
         }
       }
 
@@ -37,10 +41,31 @@ export const UtilsMixin = {
       if (syncAllJob?.finished) {
         kind = 'full';
         dateStr = new Date(syncAllJob.finished).toISOString();
+        if (syncAllJob?.started) {
+          durationStr = Math.round((syncAllJob?.finished - syncAllJob?.started) / 1000, 1) + 's';
+        }
       }
 
       return {
-        kind, dateStr
+        kind, dateStr, durationStr
+      };
+    },
+    last_transform() {
+      let kind = 'none';
+      let dateStr = null;
+      let durationStr = null;
+
+      const transformJob = this.jobs.find(job => job.type === 'transform' && ['done', 'failed'].includes(job.state));
+      if (transformJob?.finished) {
+        kind = 'full';
+        dateStr = new Date(transformJob.finished).toISOString();
+        if (transformJob?.started) {
+          durationStr = Math.round((transformJob?.finished - transformJob?.started) / 1000, 1) + 's';
+        }
+      }
+
+      return {
+        kind, dateStr, durationStr
       };
     },
     drive() {
