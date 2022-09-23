@@ -5,6 +5,7 @@
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
         <span v-else class="fw-bold">Last synced</span>
         <span class="small text-muted">&nbsp;{{ last_job.dateStr }}</span>
+        <span v-if="last_job.durationStr" class="small text-muted">&nbsp;({{ last_job.durationStr }})</span>
       </div>
       <div class="col-4 text-end">
         <button class="btn btn-light" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)">

@@ -20,8 +20,9 @@ export interface Job {
   state?: JobState;
   title: string;
   payload?: string;
-  ts?: number;
-  finished?: number;
+  ts?: number; // scheduled at
+  started?: number; // started at
+  finished?: number; // finished at
   startAfter?: number;
 }
 
@@ -93,7 +94,7 @@ export class JobManagerContainer extends Container {
     await super.init(engine);
   }
 
-  async getDriveJobs(driveId) {
+  async getDriveJobs(driveId): Promise<DriveJobs> {
     if (!this.driveJobsMap[driveId]) {
       const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
       const driveJobs = await driveFileSystem.readJson('.jobs.json');
@@ -191,6 +192,7 @@ export class JobManagerContainer extends Container {
           }
 
           currentJob.state = 'running';
+          currentJob.started = now;
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
           this.runJob(driveId, currentJob)
             .then(() => {

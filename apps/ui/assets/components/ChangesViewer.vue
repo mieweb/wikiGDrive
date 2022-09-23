@@ -43,9 +43,14 @@
     <div class="container-fluid bg-light my-1">
       <div class="row py-1 align-items-center" v-if="last_job.dateStr">
         <div class="col-8">
-          <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
-          <span v-else class="fw-bold">Last synced</span>
-          <span class="small text-muted">{{ last_job.dateStr }}</span>
+          <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync </span>
+          <span v-else class="fw-bold">Last synced </span>
+          <span class="small text-muted">{{ last_job.dateStr }} </span>
+          <span v-if="last_job.durationStr" class="small text-muted">&nbsp;{{ last_job.durationStr }}</span>
+        </div>
+        <div v-if="last_transform.durationStr" class="col-8">
+          <span class="fw-bold">Last transform took</span>
+          <span class="small text-muted">&nbsp;{{ last_transform.durationStr }}</span>
         </div>
       </div>
     </div>
