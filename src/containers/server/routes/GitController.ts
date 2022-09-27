@@ -20,7 +20,7 @@ export default class GitController extends Controller {
     const filePath = this.req.originalUrl.replace('/api/git/' + driveId + '/history', '') || '/';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const history = await gitScanner.history(filePath);
@@ -33,7 +33,7 @@ export default class GitController extends Controller {
     const filePath = this.req.originalUrl.replace('/api/git/' + driveId + '/diff', '') || '/';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const history = await gitScanner.diff(filePath);
@@ -44,7 +44,7 @@ export default class GitController extends Controller {
   @RouteGet('/:driveId/commit')
   async getCommit(@RouteParamPath('driveId') driveId: string) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const changes = await gitScanner.changes();
@@ -63,7 +63,7 @@ export default class GitController extends Controller {
         : (body.removeFilePath ? [body.removeFilePath] : []);
 
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
       await gitScanner.commit(message, filePaths, removeFilePaths, user);
@@ -79,7 +79,7 @@ export default class GitController extends Controller {
   async pull(@RouteParamPath('driveId') driveId: string) {
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
       const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -108,7 +108,7 @@ export default class GitController extends Controller {
   async push(@RouteParamPath('driveId') driveId: string) {
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
       const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -132,6 +132,5 @@ export default class GitController extends Controller {
       throw err;
     }
   }
-
 
 }

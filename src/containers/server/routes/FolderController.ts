@@ -14,6 +14,7 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner} from '../../transform/DirectoryScanner';
 import {GitChange, GitScanner} from '../../../git/GitScanner';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
+import {Logger} from 'winston';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -51,7 +52,7 @@ export class ShareErrorHandler extends ErrorHandler {
   }
 }
 
-async function getCachedChanges(transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
+async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
   const CACHE_PATH = '.private/cached_git_status.json';
 
   let mtime = 0;
@@ -72,7 +73,7 @@ async function getCachedChanges(transformedFileSystem: FileContentService, conte
     }
   }
 
-  const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+  const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
   await gitScanner.initialize();
 
   const changes = await gitScanner.changes();
@@ -187,7 +188,7 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-preview-url', previewUrl);
 
       if (await transformedFileSystem.isDirectory(filePath)) {
-        const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
+        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
@@ -228,7 +229,7 @@ export default class FolderController extends Controller {
            })
         };
 
-        const changes = await getCachedChanges(transformedFileSystem, contentFileService, googleFileSystem);
+        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);

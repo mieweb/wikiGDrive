@@ -54,7 +54,7 @@ export class ConfigController extends Controller {
   async getConfig(@RouteParamPath('driveId') driveId: string) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -68,7 +68,7 @@ export class ConfigController extends Controller {
   async putConfig(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: ConfigBody) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -101,7 +101,7 @@ export class ConfigController extends Controller {
   async regenerateKey(@RouteParamPath('driveId') driveId: string) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
