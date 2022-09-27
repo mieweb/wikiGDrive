@@ -6,13 +6,10 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {QueueDownloader} from './QueueDownloader';
 import {TaskFetchFolder} from './TaskFetchFolder';
 import {MimeTypes} from '../../model/GoogleFile';
-import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
-import {FileContentService} from '../../utils/FileContentService';
 import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {HasQuotaLimiter} from '../../google/AuthClient';
-import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {GoogleTreeProcessor} from './GoogleTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
