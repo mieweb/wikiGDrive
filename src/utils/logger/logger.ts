@@ -65,7 +65,7 @@ const myFormat = winston.format.printf((params) => {
   }
 });
 
-function instrumentLogger(logger, childOpts = {}) {
+export function instrumentLogger(logger, childOpts = {}) {
   for (const funcName of ['info', 'error', 'warn']) {
     const originMethod = logger[funcName];
     logger[funcName] = (msg, payload) => {
