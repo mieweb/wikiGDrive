@@ -317,7 +317,7 @@ export class TransformContainer extends Container {
     await this.localLog.save();
     await this.localLinks.save();
 
-    this.logger.info('Regenerate tree: ' + rootFolderId);
+    this.logger.info('Regenerate tree: ' + rootFolderId + ` to: ${contentFileService.getRealPath()}/.tree.json`);
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.regenerateTree(rootFolderId);

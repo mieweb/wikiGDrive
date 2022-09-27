@@ -1,5 +1,4 @@
 import {FileContentService} from '../../utils/FileContentService';
-import {TreeItem} from '../../model/TreeItem';
 import {MimeTypes} from '../../model/GoogleFile';
 import {GoogleTreeItem} from './GoogleFolderContainer';
 import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
@@ -7,10 +6,10 @@ import {FileId} from '../../model/model';
 
 type CallBack<K> = (treeItem: K) => boolean;
 
-export type TreeItemTuple = [ TreeItem?, string? ];
+export type TreeItemTuple = [ GoogleTreeItem?, string? ];
 
 export class GoogleTreeProcessor {
-  private driveTree: TreeItem[] = [];
+  private driveTree: GoogleTreeItem[] = [];
 
   constructor(private filesService: FileContentService) {
   }
@@ -23,8 +22,8 @@ export class GoogleTreeProcessor {
     await this.filesService.writeJson('.tree.json', this.driveTree);
   }
 
-  async regenerateTree(): Promise<Array<GoogleTreeItem>> {
-    return await this.internalRegenerateTree(this.filesService);
+  async regenerateTree(): Promise<void> {
+    this.driveTree = await this.internalRegenerateTree(this.filesService);
   }
 
   private async internalRegenerateTree(filesService: FileContentService, parentId?: string): Promise<Array<GoogleTreeItem>> {
@@ -67,7 +66,7 @@ export class GoogleTreeProcessor {
     return await this.findInTree(item => item.id === fileId, this.driveTree);
   }
 
-  private async findInTree(callBack: CallBack<TreeItem>, children: Array<TreeItem>, curPath = ''): Promise<TreeItemTuple> {
+  private async findInTree(callBack: CallBack<GoogleTreeItem>, children: Array<GoogleTreeItem>, curPath = ''): Promise<TreeItemTuple> {
     for (const file of children) {
       const part = file['id'];
       if (callBack(file)) {

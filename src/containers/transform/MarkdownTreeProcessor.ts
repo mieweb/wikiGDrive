@@ -22,8 +22,8 @@ export class MarkdownTreeProcessor {
     await this.driveFileSystem.writeJson('.tree.json', this.driveTree);
   }
 
-  async regenerateTree(rootFolderId: FileId): Promise<Array<TreeItem>> {
-    return await this.internalRegenerateTree(this.driveFileSystem, rootFolderId);
+  async regenerateTree(rootFolderId: FileId): Promise<void> {
+    this.driveTree = await this.internalRegenerateTree(this.driveFileSystem, rootFolderId);
   }
 
   private async internalRegenerateTree(contentFileService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
@@ -122,4 +122,7 @@ export class MarkdownTreeProcessor {
     return this.driveTree.length === 0;
   }
 
+  getTree() {
+    return this.driveTree;
+  }
 }

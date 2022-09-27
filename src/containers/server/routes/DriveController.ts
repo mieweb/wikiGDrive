@@ -5,7 +5,7 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {GoogleAuthService} from '../../../google/GoogleAuthService';
-import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -44,17 +44,17 @@ export class DriveController extends Controller {
     const userConfigService = new UserConfigService(googleFileSystem);
     const userConfig = await userConfigService.load();
 
-    const gitScanner = new GitScanner(transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const initialized = await gitScanner.isRepo();
 
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
 
-    const googleTreeProcessor = new GoogleTreeProcessor(contentFileService);
-    await googleTreeProcessor.load();
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.load();
 
-    const transformedTree = googleTreeProcessor.getTree();
+    const transformedTree = markdownTreeProcessor.getTree();
 
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md');
