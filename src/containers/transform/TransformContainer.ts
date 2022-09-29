@@ -22,6 +22,7 @@ import {TocGenerator} from './frontmatters/TocGenerator';
 import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
+import {LunrIndexer} from '../search/LunrIndexer';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -322,6 +323,14 @@ export class TransformContainer extends Container {
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.regenerateTree(rootFolderId);
     await markdownTreeProcessor.save();
+
+    const indexer = new LunrIndexer();
+    await markdownTreeProcessor.walkTree((page) => {
+      indexer.addPage(page);
+      return false;
+    });
+    await this.generatedFileService.mkdir('/.private');
+    await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
   }
 
   async rewriteLinks(destinationDirectory: FileContentService) {

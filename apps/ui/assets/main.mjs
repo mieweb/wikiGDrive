@@ -1,14 +1,15 @@
 'use strict';
 
+import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
 import {FileClientService} from './services/FileClientService.mjs';
 import {DriveClientService} from './services/DriveClientService.mjs';
 import {GitClientService} from './services/GitClientService.mjs';
+import {SearchClientService} from './services/SearchClientService.mjs';
 
 import * as Vue from 'vue';
 import * as VueRouter from 'vue-router';
 
 import App from './App.vue';
-import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
 import {ModalsMixin} from './modals/ModalsMixin.mjs';
 
 const app = Vue.createApp({
@@ -82,7 +83,8 @@ app.mixin({
       authenticatedClient,
       DriveClientService: new DriveClientService(authenticatedClient),
       FileClientService: new FileClientService(authenticatedClient),
-      GitClientService: new GitClientService(authenticatedClient)
+      GitClientService: new GitClientService(authenticatedClient),
+      SearchClientService: new SearchClientService(authenticatedClient)
     }
   }
 });
