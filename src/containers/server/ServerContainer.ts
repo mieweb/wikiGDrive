@@ -31,6 +31,7 @@ import {authenticate, AuthError, signToken} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {Logger} from 'vite';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
+import {SearchController} from './routes/SearchController';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -305,6 +306,9 @@ export class ServerContainer extends Container {
 
     const logsController = new LogsController('/api/logs', this.logger);
     app.use('/api/logs', authenticate(this.logger), await logsController.getRouter());
+
+    const searchController = new SearchController('/api/search', this.filesService);
+    app.use('/api/search', authenticate(this.logger), await searchController.getRouter());
 
     const previewController = new PreviewController('/preview', this.logger);
     app.use('/preview', authenticate(this.logger), await previewController.getRouter());

@@ -105,6 +105,10 @@ export class MarkdownTreeProcessor {
     return [];
   }
 
+  async walkTree(callBack: CallBack<TreeItem>) {
+    await this.findInTree(callBack, this.driveTree);
+  }
+
   async getRootItem(driveId: FileId): Promise<TreeItemTuple> {
     return [{
       path: '/',

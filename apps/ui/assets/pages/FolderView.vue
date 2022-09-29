@@ -4,6 +4,7 @@
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
+        <NavSearch />
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </NavBar>
     </template>
@@ -44,6 +45,7 @@ import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import IframePreview from '../components/IframePreview.vue';
 import NavTabs from '../components/NavTabs.vue';
+import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
 import UserConfig from '../components/UserConfig.vue';
@@ -58,6 +60,7 @@ export default {
     NavBar,
     DriveTools,
     NavTabs,
+    NavSearch,
     NotRegistered,
     FilesTree,
     BaseLayout,
