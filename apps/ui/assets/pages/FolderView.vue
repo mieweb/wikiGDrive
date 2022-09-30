@@ -5,7 +5,7 @@
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <NavSearch />
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle" />
       </NavBar>
     </template>
 
@@ -18,10 +18,11 @@
 
       <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+      <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-      <LogsViewer v-if="activeTab === 'drive_logs'" />
-      <UserConfig v-if="activeTab === 'drive_config' || activeTab == 'drive_config_git'" :activeTab="activeTab" />
+      <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" />
+      <UserSettings v-if="activeTab === 'drive_config' || activeTab == 'drive_config_git'" :activeTab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
@@ -32,6 +33,9 @@
       <div v-if="(activeTab === 'html') && selectedFile.mimeType === 'application/binary'">
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
+
+      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
+
     </template>
   </BaseLayout>
 </template>
@@ -48,15 +52,17 @@ import NavTabs from '../components/NavTabs.vue';
 import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
-import UserConfig from '../components/UserConfig.vue';
+import UserSettings from '../components/UserSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
 import DriveTools from '../components/DriveTools.vue';
 import NavBar from '../components/NavBar.vue';
+import GitSettings from '../components/GitSettings.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    GitSettings,
     NavBar,
     DriveTools,
     NavTabs,
@@ -69,7 +75,7 @@ export default {
     IframePreview,
     LogsViewer,
     ChangesViewer,
-    UserConfig,
+    UserSettings,
     GitLog,
     GitCommit
   },
@@ -89,7 +95,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings';
     },
     jobs() {
       return this.$root.jobs || [];
@@ -135,11 +141,14 @@ export default {
       const driveId = parts.shift();
       const baseName = parts.pop() || '';
 
+      this.selectedFile = {};
+
       try {
         if (baseName.indexOf('.') > -1) {
           const dirPath = '/' + parts.join('/');
           await this.fetchFolder(driveId, dirPath);
           const file = this.files.find(f => f.fileName === baseName) || {};
+          this.selectedFolder = null;
           this.selectedFile = file || {};
         } else {
           parts.push(baseName);

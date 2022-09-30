@@ -4,7 +4,12 @@
       <input ref="searchInput" class="form-control" @focus="onFocued" @blur="onBlurred" @keydown="onKeyDown" placeholder="Search [/]" v-model="query" />
     </div>
     <ul ref="dropdown" class="dropdown-menu" :class="{ show: open && links.length > 0 }" @keydown="onKeyDownDropDown" >
-      <li v-for="link in links" :key="link.path"><a class="dropdown-item" :href="'/drive/' + driveId + link.path">{{ link.title }}</a></li>
+      <li v-for="link in links" :key="link.path">
+        <a class="dropdown-item" :href="'/drive/' + driveId + link.path">
+          {{ link.title }}<br/>
+          <small>{{ link.path }}</small>
+        </a>
+      </li>
     </ul>
   </div>
 </template>

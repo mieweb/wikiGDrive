@@ -89,9 +89,9 @@ export default {
       parts.push(fileName);
       if (file.mimeType === 'application/vnd.google-apps.folder') {
         this.expanded[file.fileName] = !this.expanded[file.fileName];
-        this.goToPath(`/${parts.join('/')}#drive_tools`);
+        this.goToPath(`/${parts.join('/')}${this.$route.hash}`);
       } else {
-        this.goToPath(`/${parts.join('/')}`);
+        this.goToPath(`/${parts.join('/')}${this.$route.hash}`);
       }
       this.$emit('selected', fileName);
 

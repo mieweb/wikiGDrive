@@ -1,15 +1,6 @@
 <template>
   <div class="container">
-    <div class="row py-1">
-      <div class="col-12 text-end">
-        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_logs' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Logs" title="Logs">
-          <i class="fa-solid fa-computer me-1"></i>
-        </router-link>
-        <router-link v-if="!isGDocsPreview" :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }" class="btn btn-white text-primary ml-1" type="button" aria-label="Settings" title="Settings">
-          <i class="fa-solid fa-gear me-1"></i>
-        </router-link>
-      </div>
-    </div>
+    <StatusToolBar :active-tab="activeTab" />
 
     <div v-if="changes.length > 0">
       <h4>Changed on gdocs</h4>
@@ -78,6 +69,7 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
+import StatusToolBar from './StatusToolBar.vue';
 
 export default {
   name: 'ChangeViewer',
@@ -88,6 +80,7 @@ export default {
       type: String
     }
   },
+  components: {StatusToolBar},
   computed: {
     fileChanges() {
       return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');

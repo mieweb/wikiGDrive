@@ -1,6 +1,8 @@
 <template>
-  <div class="x-container">
-    <pre class="bg-dark text-white log-viewer"
+  <div class="x-container mainbar__content-height">
+    <StatusToolBar :active-tab="activeTab" />
+
+    <pre class="bg-dark text-white log-viewer overflow-auto"
     ><div v-for="(item, idx) of logs" :key="idx" :class="{'text-danger': 'error' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
@@ -12,12 +14,19 @@
 
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
+import StatusToolBar from './StatusToolBar.vue';
 
 const Prism = window['Prism'];
 Prism.manual = true;
 
 export default {
   mixins: [UtilsMixin],
+  components: {StatusToolBar},
+  props: {
+    activeTab: {
+      type: String
+    }
+  },
   data() {
     return {
       interval: null,

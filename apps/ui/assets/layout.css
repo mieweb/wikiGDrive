@@ -51,6 +51,12 @@ body,
   background: rgba(0, 0, 0, 0.1);
 }
 
+.mainbar__content-height {
+  height: calc(100vh - var(--navbar-height));
+  display: flex;
+  flex-direction: column;
+}
+
 .navbar-nav {
   height: var(--navbar-height);
   flex: 1;
