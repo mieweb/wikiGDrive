@@ -189,6 +189,15 @@ export default {
 
         window.location.hash = '#git_log';
       } catch (err) {
+        if (err.message === 'rebase conflict') {
+          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.commit;
@@ -235,6 +244,7 @@ export default {
           },
           body: JSON.stringify({})
         });
+
         const json = await response.json();
         await this.fetch();
         if (json.error) {
@@ -245,6 +255,15 @@ export default {
           window.location.hash = '#git_log';
         }
       } catch (err) {
+        if (err.message === 'rebase conflict') {
+          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.push;
