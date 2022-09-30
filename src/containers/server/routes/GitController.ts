@@ -133,4 +133,33 @@ export default class GitController extends Controller {
     }
   }
 
+  @RoutePost('/:driveId/reset_remote')
+  async resetRemote(@RouteParamPath('driveId') driveId: string) {
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const userConfigService = new UserConfigService(googleFileSystem);
+      const userConfig = await userConfigService.load();
+
+      const publicKey = await userConfigService.getDeployKey();
+      const privateKey = await userConfigService.getDeployPrivateKey();
+      const passphrase = 'sekret';
+
+      await gitScanner.resetOnRemote(userConfig.remote_branch || 'master', {
+        publicKey, privateKey, passphrase
+      });
+
+      return {};
+    } catch (err) {
+      this.logger.error(err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
 }

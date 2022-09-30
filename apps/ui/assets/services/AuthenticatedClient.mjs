@@ -34,6 +34,10 @@ export class AuthenticatedClient {
         throw new Error(url + ' ' + response.statusText);
       case 404:
         throw new NotFoundError(response.statusText);
+      case 501:
+        if ((response.headers.get('Content-type') || '').startsWith('text/plain')) {
+          throw new Error(await response.text());
+        }
     }
 
     return response;
