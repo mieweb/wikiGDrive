@@ -23,6 +23,7 @@ import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
 import {LunrIndexer} from '../search/LunrIndexer';
+import {GitScanner} from '../../git/GitScanner';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -331,6 +332,10 @@ export class TransformContainer extends Container {
     });
     await this.generatedFileService.mkdir('/.private');
     await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
+
+    const gitScanner = new GitScanner(this.logger, this.generatedFileService.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+    await gitScanner.autoCommit();
   }
 
   async rewriteLinks(destinationDirectory: FileContentService) {

@@ -396,4 +396,73 @@ export class GitScanner {
     }
     return commit.id().tostrS();
   }
+
+  async autoCommit() {
+    try {
+      const repo = await Repository.open(this.rootPath);
+      const diff = await Diff.indexToWorkdir(repo, null, {
+        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
+      });
+      const patches = await diff.patches();
+
+      const dontCommit = new Set<string>();
+      const toCommit = new Set<string>();
+
+      for (const patch of patches) {
+        const item = {
+          oldFile: patch.oldFile().path(),
+          newFile: patch.newFile().path(),
+          txt: '',
+        };
+
+        const hunks = await patch.hunks();
+        for (const hunk of hunks) {
+          const lines = await hunk.lines();
+
+          for (const line of lines) {
+            if (' ' === String.fromCharCode(line.origin())) {
+              continue;
+            }
+            item.txt += line.content();
+          }
+        }
+
+        const txtWithoutVersion = item.txt
+          .split('\n')
+          .filter(line => !!line)
+          .filter(line => !line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:'))
+          .join('\n')
+          .trim();
+
+        if (txtWithoutVersion.length === 0 && item.txt.length > 0 && patch.oldFile().path() === patch.newFile().path()) {
+          toCommit.add(patch.newFile().path());
+        } else {
+          dontCommit.add(patch.oldFile().path());
+          dontCommit.add(patch.newFile().path());
+        }
+      }
+
+      for (const k of dontCommit.values()) {
+        toCommit.delete(k);
+      }
+
+      if (toCommit.size > 0) {
+        this.logger.info(`Auto committing ${toCommit.size} files`);
+        const addedFiles: string[] = Array.from(toCommit.values());
+        const committer = {
+          name: 'WikiGDrive',
+          email: this.email
+        };
+        await this.commit('Auto commit for file version change', addedFiles, [], committer);
+      }
+
+      return;
+    } catch (err) {
+      if (err.message.indexOf('does not have any commits yet') > 0) {
+        return ;
+      }
+      this.logger.error(err.message);
+    }
+
+  }
 }
