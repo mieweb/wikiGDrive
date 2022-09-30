@@ -42,7 +42,7 @@ export default {
         this.logs = this.logs.filter(row => row.timestamp < firstLog.timestamp);
       }
 
-      const scroller = document.querySelector('.mainbar__content');
+      const scroller = document.querySelector('.mainbar__content-height > pre');
       const oldScrollTop = scroller.scrollHeight - scroller.offsetHeight - 10;
       this.logs.push(...logs);
       if (scroller.scrollTop > oldScrollTop) {
