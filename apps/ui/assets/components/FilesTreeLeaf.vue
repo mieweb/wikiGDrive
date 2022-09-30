@@ -75,6 +75,9 @@ export default {
       return !!this.expanded[file.fileName];
     },
     async fetchFolder() {
+      if (!this.driveId) {
+        return;
+      }
       const pathContent = await this.FileClientService.getFile('/' + this.driveId + this.folderPath);
       this.files = pathContent.files || [];
       this.expanded = {};
