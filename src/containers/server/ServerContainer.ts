@@ -207,7 +207,7 @@ export class ServerContainer extends Container {
         const googleAuthService = new GoogleAuthService();
 
         const state = new URLSearchParams(filterParams({
-          driveId: driveId !== 'none' ? driveId : undefined,
+          driveId: driveId !== 'none' ? (driveId || '') : '',
           redirectTo
         })).toString();
 
