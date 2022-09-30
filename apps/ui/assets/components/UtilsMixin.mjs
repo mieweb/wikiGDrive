@@ -89,7 +89,7 @@ export const UtilsMixin = {
   methods: {
     setActiveTab(tab, selectedFilePath) {
       if ('undefined' !== typeof selectedFilePath) {
-        // this.$router.replace('/' + this.driveId + selectedFilePath + '#' + tab);
+        this.$router.replace('/drive/' + this.driveId + selectedFilePath + '#' + tab);
       } else {
         this.$router.replace({ hash: '#' + tab });
       }

@@ -8,30 +8,32 @@
         </a>
       </li>
 
-      <li class="list-group-item" v-if="selectedFolder.googleId">
+      <li class="list-group-item" v-if="selectedFolder && selectedFolder.googleId">
         <a :href="'https://drive.google.com/open?id=' + selectedFolder.googleId" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           Google Drive
         </a>
       </li>
-      <li class="list-group-item" v-else-if="selectedFile.parentId">
+      <li class="list-group-item" v-else-if="selectedFile && selectedFile.parentId">
         <a :href="'https://drive.google.com/open?id=' + selectedFile.parentId" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           Google Drive
         </a>
       </li>
 
-      <li class="list-group-item" v-if="selectedFile.id">
+      <ToolButton
+          v-if="github_url"
+          :active="activeTab === 'git_hub'"
+          :href="github_url"
+          title="GitHub"
+          icon="fa-brands fa-github"
+      />
+
+      <li class="list-group-item" v-if="selectedFile && selectedFile.id">
         <a :href="'https://drive.google.com/open?id=' + selectedFile.id" target="_blank">
           <i class="fa fa-arrow-up-right-from-square me-1"></i>
           Google Docs
         </a>
-      </li>
-      <li class="list-group-item" v-if="!isGDocsPreview">
-        <router-link :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }">
-          <i class="fa-solid fa-gear me-1"></i>
-          Settings
-        </router-link>
       </li>
     </ul>
   </div>
@@ -39,10 +41,12 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
+import ToolButton from './ToolButton.vue';
 
 export default {
   name: 'PreviewHeader',
   mixins: [UtilsMixin, UiMixin],
+  components: {ToolButton},
   props: {
     folderPath: {
       type: String

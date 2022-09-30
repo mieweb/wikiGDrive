@@ -16,7 +16,7 @@
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
         <LogsViewer v-if="activeTab === 'drive_logs'" />
-        <UserConfig v-if="activeTab === 'drive_config'" />
+        <UserSettings v-if="activeTab === 'drive_config'" />
 
         <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
           <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
@@ -40,7 +40,7 @@ import NavTabs from '../components/NavTabs.vue';
 import DriveTools from '../components/DriveTools.vue';
 import LogsViewer from '../components/LogsViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
-import UserConfig from '../components/UserConfig.vue';
+import UserSettings from '../components/UserSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
 
@@ -57,7 +57,7 @@ export default {
     DriveTools,
     LogsViewer,
     ChangesViewer,
-    UserConfig,
+    UserSettings,
     GitLog,
     GitCommit
   },

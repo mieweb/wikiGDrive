@@ -3,7 +3,7 @@
     <li class="nav-item fs-4" v-if="drive.id">
       <div class="files-list__item">
         <i class="fa-brands fa-google-drive"></i>&nbsp;
-        <a :href="'/drive/' + drive.id + '#drive_tools'">{{ drive.name }}</a>
+        <a :href="'/drive/' + drive.id + ''">{{ drive.name }}</a>
       </div>
     </li>
   </ul>

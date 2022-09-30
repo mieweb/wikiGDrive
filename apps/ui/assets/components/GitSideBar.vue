@@ -1,6 +1,6 @@
 <template>
   <GitSideBarLeaf
-      v-if="gitChanges !== null"
+      v-if="gitChanges !== null && gitChanges.length > 0"
       :tree="tree"
       :checked="checked"
       :checkedDirs="checkedDirs"
@@ -8,6 +8,8 @@
       @toggleDir="toggleDir"
       @selected="$emit('setCurrentDiff', $event)"
   />
+  <div v-else-if="gitChanges === null"><i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i> Loading...</div>
+  <div v-else>No changes to commit</div>
 </template>
 <script>
 import GitSideBarLeaf from './GitSideBarLeaf.vue';

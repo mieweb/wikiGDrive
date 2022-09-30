@@ -1,11 +1,24 @@
 <template>
   <ul class="navbar-nav mr-auto">
-    <li :class="{ 'active': activeTab === 'html' }" class="wgd-nav-item" v-if="isDocument(selectedFile) || isMarkdown(selectedFile) || isImage(selectedFile)">
+    <li :class="{ 'active': activeTab === 'html' || activeTab === 'markdown' }" class="wgd-nav-item"
+        v-if="isDocument(selectedFile) || isMarkdown(selectedFile) || isImage(selectedFile)">
       <a @click.prevent.stop="setActiveTab('html')">
         <i class="fa-solid fa-eye"></i>
       </a>
     </li>
-    <li :class="{ 'active': activeTab.startsWith('drive_') }" class="wgd-nav-item">
+    <li :class="{ 'active': !activeTab }" class="wgd-nav-item"
+        v-else-if="activeTab === 'git_commit'">
+      <a @click.prevent.stop="setActiveTab('')">
+        <i class="fa-solid fa-eye"></i>
+      </a>
+    </li>
+    <li :class="{ 'active': !activeTab || activeTab === 'html' || activeTab === 'markdown' }" class="wgd-nav-item"
+        v-else-if="selectedFolder">
+      <a @click.prevent.stop="setActiveTab('')">
+        <i class="fa-solid fa-eye"></i>
+      </a>
+    </li>
+    <li v-if="isGDocsPreview" :class="{ 'active': activeTab.startsWith('drive_') }" class="wgd-nav-item">
       <a @click.prevent.stop="setActiveTab('drive_tools')">
         <i class="fa-brands fa-google-drive"></i>
       </a>
@@ -39,7 +52,8 @@ export default {
     folderPath: {
       type: String
     },
-    selectedFile: Object
+    selectedFile: Object,
+    selectedFolder: Object
   },
   computed: {
     fileChanges() {

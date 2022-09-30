@@ -76,6 +76,24 @@ const app = Vue.createApp({
   }
 });
 
+app.directive('grow', {
+  mounted(el, binding, vnode) {
+    el.rows = null;
+    el.style.resize = 'none';
+    el.style.minHeight = '50px';
+    setTimeout(() => {
+      el.style.height = (el.scrollHeight + 2)+'px';
+    }, 10);
+    setInterval(() => {
+      el.style.height = (el.scrollHeight + 2)+'px';
+    }, 1000);
+  },
+  updated() {
+    console.log('updated');
+  },
+  deep: true
+});
+
 app.mixin({
   data() {
     const authenticatedClient = new AuthenticatedClient(this);

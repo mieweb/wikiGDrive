@@ -2,6 +2,7 @@
   <BaseLayout :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
+        <NavSearch />
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
       </NavBar>
     </template>
@@ -20,35 +21,10 @@
 
     <form>
       <div class="container d-flex flex-column w-vh-toolbar">
-        <div class="row py-1">
-          <div class="col-12 text-end">
-            <ToolButton
-                v-if="github_url"
-                :active="activeTab === 'git_log'"
-                @click="openWindow(github_url)"
-                title="GitHub"
-                icon="fa-brands fa-github"
-            />
 
-            <ToolButton
-                v-if="gitInitialized"
-                :active="activeTab === 'git_log'"
-                @click="setActiveTab('git_log')"
-                title="History"
-                icon="fa-solid fa-timeline"
-            />
+        <GitToolBar :active-tab="activeTab" />
 
-            <ToolButton
-                v-if="gitInitialized"
-                :active="activeTab === 'git_commit'"
-                @click="setActiveTab('git_commit')"
-                title="Commit"
-                icon="fa-solid fa-code-commit"
-            />
-          </div>
-        </div>
-
-        <div v-if="diffs.length > 0">
+        <div v-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
           <h5>Git Diff</h5>
           <div v-for="(diff, idx) of diffs" :key="idx">
             <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
@@ -58,7 +34,7 @@
         <div class="card" v-if="isSomethingChecked">
           <div class="card-body">
             <div class="input-groups">
-              <textarea class="form-control" placeholder="Commit message" v-model="message"></textarea>
+              <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
             </div>
             <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
             <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Commit and Push</button>
@@ -66,12 +42,10 @@
           </div>
         </div>
         <div v-else>
-          <div class="alert alert-info">
-            Nothing to commit
+          <div class="card-body">
+            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
+            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
           </div>
-
-          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
-          <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
         </div>
       </div>
     </form>
@@ -81,21 +55,23 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
-import ToolButton from './ToolButton.vue';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NavBar from './NavBar.vue';
 import NavTabs from './NavTabs.vue';
 import GitSideBar from './GitSideBar.vue';
+import GitToolBar from './GitToolBar.vue';
+import NavSearch from './NavSearch.vue';
 const Prism = window['Prism'];
 Prism.manual = true;
 
 export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
+    GitToolBar,
     GitSideBar,
-    ToolButton,
     BaseLayout,
     NavBar,
+    NavSearch,
     NavTabs
   },
   props: {
