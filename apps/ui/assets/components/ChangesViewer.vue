@@ -1,8 +1,8 @@
 <template>
-  <div class="container">
+  <div class="container mainbar__content-height">
     <StatusToolBar :active-tab="activeTab" />
 
-    <div v-if="changes.length > 0">
+    <div v-if="changes.length > 0" class="overflow-scroll">
       <h4>Changed on gdocs</h4>
       <table class="table table-bordered jobs-list">
         <thead>
