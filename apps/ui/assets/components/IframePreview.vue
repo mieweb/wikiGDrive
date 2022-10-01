@@ -7,7 +7,6 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import {UiMixin} from './UiMixin.mjs';
-import BackLinks from './BackLinks.vue';
 import PreviewHeader from './PreviewHeader.vue';
 
 export default {

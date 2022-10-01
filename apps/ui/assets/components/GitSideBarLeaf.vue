@@ -32,13 +32,6 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 
-function inDir(dirPath, filePath) {
-  if (dirPath === filePath) {
-    return true;
-  }
-  return filePath.startsWith(dirPath + '/');
-}
-
 export default {
   name: 'GitSideBarLeaf',
   mixins: [ UtilsMixin ],

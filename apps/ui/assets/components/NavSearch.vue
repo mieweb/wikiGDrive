@@ -83,7 +83,7 @@ export default {
     onFocued() {
       this.open = true;
     },
-    onBlurred(event) {
+    onBlurred() {
       this.$nextTick(() => {
         if (this.$refs.dropdown.contains(document.activeElement)) {
           return;

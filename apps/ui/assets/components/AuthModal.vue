@@ -22,7 +22,7 @@ export default {
   data() {
     return {
       authPopup: null
-    }
+    };
   },
   mounted() {
     window['authenticated'] = (url) => {
@@ -36,7 +36,7 @@ export default {
   },
   methods: {
     open() {
-      this.authPopup = window.open(this.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no')
+      this.authPopup = window.open(this.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
     }
   }
 };
