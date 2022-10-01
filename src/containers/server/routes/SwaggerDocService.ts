@@ -1,4 +1,4 @@
-import json from './swagger.json';
+import json from './swagger.json' assert { type: 'json' };
 import { ControllerRoute } from './Controller';
 
 class SwaggerDoc {
