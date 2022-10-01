@@ -1,13 +1,13 @@
 <template>
   <router-view class="view main-content"></router-view>
-  <Modals></Modals>
+  <ModalsContainer></ModalsContainer>
 </template>
 <script>
-import Modals from './modals/Modals.vue';
+import ModalsContainer from './modals/ModalsContainer.vue';
 
 export default {
   components: {
-    Modals
+    ModalsContainer
   }
 };
 </script>
