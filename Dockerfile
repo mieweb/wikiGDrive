@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
 RUN npm install
-RUN npm link nodegit
+RUN ln -sf /usr/local/lib/node_modules/nodegit/ /usr/src/app/node_modules/nodegit
 RUN npm install --location=global ts-node
 
 COPY . ./
