@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 16
           cache: npm
+      - run: npm install -g nodegit
       - run: npm ci
+      - run: npm link nodegit
       - run: npm run lint
       - run: npm run test
 
