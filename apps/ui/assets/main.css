@@ -48,7 +48,7 @@ var(--bs-table-hover-bg);
 }
 
 .files-list__item.active:hover, .files-list__item.active {
-  background: var(--bs-primary);
+  background: var(--bs-warning);
   color: var(--bs-white);
 }
 
