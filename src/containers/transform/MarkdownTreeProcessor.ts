@@ -19,6 +19,7 @@ export class MarkdownTreeProcessor {
   }
 
   async save() {
+    this.driveTree[0]['wikigdrive'] = process.env.GIT_SHA;
     await this.driveFileSystem.writeJson('.tree.json', this.driveTree);
   }
 
@@ -128,5 +129,13 @@ export class MarkdownTreeProcessor {
 
   getTree() {
     return this.driveTree;
+  }
+
+  getTreeVersion() {
+    if (this.driveTree.length < 1) {
+      return null;
+    }
+
+    return this.driveTree[0]['wikigdrive'];
   }
 }

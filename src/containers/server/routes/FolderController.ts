@@ -115,6 +115,9 @@ export async function outputDirectory(res: express.Response, treeItem: TreeItem)
     if (!(MimeTypes.FOLDER_MIME === file1.mimeType) && (MimeTypes.FOLDER_MIME === file2.mimeType)) {
       return 1;
     }
+    if (!file1.fileName || !file2.fileName) {
+      return 0;
+    }
     return file1.fileName.toLocaleLowerCase().localeCompare(file2.fileName.toLocaleLowerCase());
   });
 
@@ -131,7 +134,7 @@ function inDir(dirPath: string, filePath: string) {
 
 export default class FolderController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService, private readonly authContainer) {
+  constructor(subPath: string, private readonly filesService: FileContentService) {
     super(subPath);
   }
 
@@ -149,6 +152,13 @@ export default class FolderController extends Controller {
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
+
+    const treeVersion = markdownTreeProcessor.getTreeVersion();
+
+    this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
+    this.res.setHeader('wgd-tree-regenerate',
+      (treeVersion && treeVersion !== process.env.GIT_SHA
+        || !treeVersion && markdownTreeProcessor.getTree().length > 0) ? 'true' : 'false');
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');

@@ -35,6 +35,15 @@
           Google Docs
         </a>
       </li>
+
+      <li class="list-group-item" v-if="treeEmpty && !isGDocsPreview">
+        Markdown tree empty
+        <a class="btn btn-outline-secondary me-2" @click.prevent="syncAll">Sync All</a>
+      </li>
+      <li class="list-group-item" v-else-if="treeRegenerate && !isGDocsPreview">
+        Markdown tree generate with older version
+        <a class="btn btn-outline-secondary me-2" @click.prevent="transformAll">Transform All Markdown</a>
+      </li>
     </ul>
   </div>
 </template>
@@ -48,6 +57,14 @@ export default {
   mixins: [UtilsMixin, UiMixin],
   components: {ToolButton},
   props: {
+    treeEmpty: {
+      type: Boolean,
+      default: false
+    },
+    treeRegenerate: {
+      type: Boolean,
+      default: false
+    },
     folderPath: {
       type: String
     },

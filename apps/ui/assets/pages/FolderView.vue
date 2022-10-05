@@ -22,7 +22,7 @@
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" />
-      <UserSettings v-if="activeTab === 'drive_config' || activeTab == 'drive_config_git'" :activeTab="activeTab" />
+      <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
@@ -34,7 +34,14 @@
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
-      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
+      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id"
+                  :folderPath="folderPath"
+                  :selectedFile="selectedFile"
+                  :selected-folder="selectedFolder"
+                  :active-tab="activeTab"
+                  :tree-empty="treeEmpty"
+                  :tree-regenerate="treeRegenerate"
+      />
 
     </template>
   </BaseLayout>
@@ -87,7 +94,9 @@ export default {
       activeTab: DEFAULT_TAB,
       files: [],
       selectedFile: {},
-      selectedFolder: {}
+      selectedFolder: {},
+      treeEmpty: false,
+      treeRegenerate: false
     };
   },
   computed: {
@@ -132,6 +141,8 @@ export default {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
       this.folderPath = filePath;
       this.files = pathContent.files || [];
+      this.treeEmpty = pathContent.treeEmpty;
+      this.treeRegenerate = pathContent.treeRegenerate;
       return pathContent;
     },
     async fetch() {
