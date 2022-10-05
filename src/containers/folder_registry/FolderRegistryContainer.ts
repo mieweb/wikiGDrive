@@ -59,7 +59,7 @@ export class FolderRegistryContainer extends Container {
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
     const folder = await apiContainer.getDrive(folderId);
     if (!folder) {
-      throw new GoogleDriveServiceError('Folder not shared with wikigdrive', {
+      throw new GoogleDriveServiceError('Drive not shared with wikigdrive', {
         isQuotaError: false,
         status: 404
       });

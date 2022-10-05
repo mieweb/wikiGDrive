@@ -2,22 +2,46 @@
   <BaseLayout :sidebar="false">
     <template v-slot:default>
       <div class="container">
-        <table class="table table-hover table-clickable" v-if="drives && drives.length > 0">
-          <thead>
-          <tr>
-            <th>Name</th>
-            <th>Id</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(item, idx) of drives" :key="idx" @click="selectDrive(item.folderId)">
-            <td>{{item.name}}</td>
-            <td>{{item.folderId}}</td>
-            <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
-          </tr>
-          </tbody>
-        </table>
+
+        <div v-if="drivesShared && drivesShared.length > 0" class="mt-3">
+          <h3>You have shared with wikigdrive:</h3>
+          <table class="table table-hover table-clickable">
+            <thead>
+            <tr>
+              <th>Name</th>
+              <th>Id</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(item, idx) of drivesShared" :key="idx" @click="selectDrive(item.folderId)">
+              <td>{{item.name}}</td>
+              <td>{{item.folderId}}</td>
+              <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="drivesNotShared && drivesNotShared.length > 0" class="mt-3">
+          <h3>You also have few drives not shared with wikigdrive:</h3>
+          <table class="table table-hover table-clickable">
+            <thead>
+            <tr>
+              <th>Name</th>
+              <th>Id</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(item, idx) of drivesNotShared" :key="idx" @click="selectDrive(item.folderId)">
+              <td>{{item.name}}</td>
+              <td>{{item.folderId}}</td>
+              <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </template>
   </BaseLayout>
@@ -32,7 +56,8 @@ export default {
   },
   data() {
     return {
-      drives: []
+      drivesShared: [],
+      drivesNotShared: []
     };
   },
   async created() {
@@ -40,7 +65,9 @@ export default {
   },
   methods: {
     async fetch() {
-      this.drives = await this.DriveClientService.getDrives();
+      const drives = await this.DriveClientService.getDrives();
+      this.drivesShared = drives.filter(d => !!d.exists);
+      this.drivesNotShared = drives.filter(d => !d.exists);
     },
     open(url) {
       window.open(url, '_blank');
