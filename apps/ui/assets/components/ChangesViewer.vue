@@ -16,7 +16,7 @@
         </tr>
         </thead>
         <tbody>
-          <tr v-for="(file, idx) of fileChanges" :key="idx">
+          <tr v-for="(file, idx) of fileChanges" :key="idx" :class="{ 'is-warning': selectedFile && file.id === selectedFile.id }">
             <td>
               <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
               <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">

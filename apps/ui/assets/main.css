@@ -136,3 +136,7 @@ pre[class*=language-] {
 .text-warning {
   color: var(--bs-blue);
 }
+
+.is-warning {
+  background: var(--bs-warning);
+}
