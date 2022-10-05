@@ -35,7 +35,13 @@ export class SearchController extends Controller {
     const store = lunrData.store || {};
     const lunrIndex = lunr.Index.load(lunrData.index);
 
-    const result = lunrIndex.search(query);
+    query = (query || '').trim().replace(/:/g, ' ');
+
+    let result = lunrIndex.search(query);
+    if (result.length === 0 && query.indexOf('*') === -1) {
+      result = lunrIndex.search(query + '*');
+    }
+
     return { result: result.map((doc) => ({
       path: prefix + doc.ref,
       score: doc.score,

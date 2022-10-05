@@ -88,7 +88,9 @@ export default {
         if (this.$refs.dropdown.contains(document.activeElement)) {
           return;
         }
-        this.open = false;
+        setTimeout(() => {
+          this.open = false;
+        }, 500);
       });
     },
     onKeyDown(event) {
