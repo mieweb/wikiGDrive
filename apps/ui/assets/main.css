@@ -34,9 +34,19 @@ nav {
   padding-right: 8px;
 }
 
+
+/*
+var(--bs-table-hover-bg);
+*/
 .files-list__item:hover {
-  background: var(--bs-secondary);
+  background: rgba(0, 0, 0, 0.075);
 }
+@media (prefers-color-scheme: dark) {
+  .files-list__item:hover {
+    background: rgba(250, 250, 250, 0.075);
+  }
+}
+
 .files-list__item.active:hover, .files-list__item.active {
   background: var(--bs-primary);
   color: var(--bs-white);
