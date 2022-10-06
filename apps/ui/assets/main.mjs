@@ -94,9 +94,12 @@ app.directive('grow', {
   deep: true
 });
 
-const authenticatedClient = new AuthenticatedClient(app);
+const authenticatedClient = new AuthenticatedClient(null);
 app.mixin({
   data() {
+    if (!authenticatedClient.app) {
+      authenticatedClient.app = this.$root;
+    }
     return {
       authenticatedClient,
       DriveClientService: new DriveClientService(authenticatedClient),

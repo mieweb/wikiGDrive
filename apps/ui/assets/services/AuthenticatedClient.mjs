@@ -1,4 +1,5 @@
 import AuthModal from '../components/AuthModal.vue';
+import {markRaw} from 'vue';
 
 export class NotFoundError extends Error {
   code = 404;
@@ -36,7 +37,7 @@ export class AuthenticatedClient {
           const json = await response.json();
           if (json.authPath) {
             this.app.$root.$addModal({
-              component: AuthModal,
+              component: markRaw(AuthModal),
               props: {
                 authPath: json.authPath
               },
