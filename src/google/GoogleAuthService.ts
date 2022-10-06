@@ -167,7 +167,8 @@ export class GoogleAuthService {
 
   async getUser(auth: {
     refresh_token: string;
-    access_token: string }) {
+    access_token: string;
+    expiry_date: number | null }) {
     const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?access_token=' + auth.access_token);
 
     if (response.status >= 400) {
@@ -180,7 +181,8 @@ export class GoogleAuthService {
       email: json.email,
       name: json.name,
       google_access_token: auth.access_token,
-      google_refresh_token: auth.refresh_token
+      google_refresh_token: auth.refresh_token,
+      expiry_date: auth.expiry_date
     };
   }
 }

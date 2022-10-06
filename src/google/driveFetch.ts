@@ -163,6 +163,12 @@ export async function convertResponseToError(response) {
     isQuotaError = true;
   }
 
+  if (process.env.VERSION === 'dev') {
+    console.trace();
+    console.error('convertResponseToError response', response.status, response.statusText, response.headers);
+    console.error('convertResponseToError body', body);
+  }
+
   return new GoogleDriveServiceError(message, {
     status: response.status,
     isQuotaError
@@ -175,6 +181,9 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
   params = filterParams(params);
   const url = requestUrl + '?' + new URLSearchParams(params).toString();
 
+  if (process.env.VERSION === 'dev' && auth.credentials.refresh_token !== 'jwt-placeholder') {
+    console.debug('driveRequest auth.credentials', auth.credentials);
+  }
   const accessToken = await auth.getAccessToken();
 
   const quotaLimiter = auth.getQuotaLimiter();

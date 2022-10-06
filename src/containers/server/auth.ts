@@ -45,6 +45,15 @@ function redirError(req: Request, msg: string) {
     err.authPath = '/auth/none?redirectTo=' + err.redirectTo;
   }
 
+  if (process.env.VERSION === 'dev') {
+    console.trace();
+    console.debug('redirError');
+    console.debug('  driveId', driveId);
+    console.debug('  req.headers[\'redirect-to\']', req.headers['redirect-to']);
+    console.debug('  err.redirectTo', err.redirectTo);
+    console.debug('  err.authPath', err.authPath);
+  }
+
   return err;
 }
 
@@ -57,7 +66,7 @@ export function authenticate(logger: Logger, idx = 0) {
     if (parts[0].length === 0) {
       parts.shift();
     }
-    const driveId = parts[idx] || '';
+    const driveId = (parts[idx] || '').replace('undefined', '');
 
     if (!req.cookies.accessToken) {
       return next(redirError(req, 'No accessToken cookie'));
@@ -74,6 +83,11 @@ export function authenticate(logger: Logger, idx = 0) {
 
       const google_access_token = decrypt(decoded['gat'], process.env.JWT_SECRET);
       const google_refresh_token = decrypt(decoded['grt'], process.env.JWT_SECRET);
+
+      if (process.env.VERSION === 'dev') {
+        console.debug('google_access_token', google_access_token);
+        console.debug('google_refresh_token', google_refresh_token);
+      }
 
       const googleDriveService = new GoogleDriveService(logger);
       const googleAuthService = new GoogleAuthService();
@@ -115,6 +129,10 @@ export function authenticate(logger: Logger, idx = 0) {
       if (err.expiredAt) {
         res.clearCookie('accessToken');
         return next(redirError(req, 'JWT expired'));
+      }
+      if (err.message === 'invalid signature') {
+        res.clearCookie('accessToken');
+        return next(redirError(req, 'JWT invalid signature'));
       }
       next(err);
     }
