@@ -122,4 +122,8 @@ export class FolderRegistryContainer extends Container {
       await this.flushData();
     }
   }
+
+  hasFolder(folderId: string) {
+    return !!this.folders[folderId];
+  }
 }
