@@ -182,7 +182,7 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
   const url = requestUrl + '?' + new URLSearchParams(params).toString();
 
   if (process.env.VERSION === 'dev' && auth.credentials.refresh_token !== 'jwt-placeholder') {
-    console.debug('driveRequest auth.credentials', auth.credentials);
+    console.debug('driveRequest auth.credentials', auth.credentials, auth.credentials);
   }
   const accessToken = await auth.getAccessToken();
 

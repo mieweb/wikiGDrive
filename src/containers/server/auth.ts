@@ -4,7 +4,7 @@ import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {Logger} from 'winston';
 import {Request} from 'express';
 
-export function signToken(user: {id: string, name: string, email: string, google_access_token: string, google_refresh_token: string}, driveId: string, tokenType = 'ACCESS_TOKEN') {
+export function signToken(user: {id: string, name: string, email: string, google_access_token: string, google_refresh_token: string, google_expiry_date: number}, driveId: string, tokenType = 'ACCESS_TOKEN') {
   const expiresIn =
     tokenType === 'ACCESS_TOKEN'
       ? (process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME || 24*3600)
@@ -16,7 +16,8 @@ export function signToken(user: {id: string, name: string, email: string, google
     driveId: driveId,
     tokenType,
     gat: encrypt(user.google_access_token, process.env.JWT_SECRET),
-    grt: encrypt(user.google_refresh_token, process.env.JWT_SECRET)
+    grt: encrypt(user.google_refresh_token, process.env.JWT_SECRET),
+    ged: user.google_expiry_date,
   }, process.env.JWT_SECRET, { expiresIn });
 }
 
@@ -83,16 +84,18 @@ export function authenticate(logger: Logger, idx = 0) {
 
       const google_access_token = decrypt(decoded['gat'], process.env.JWT_SECRET);
       const google_refresh_token = decrypt(decoded['grt'], process.env.JWT_SECRET);
+      const google_expiry_date = decoded['ged'];
 
       if (process.env.VERSION === 'dev') {
         console.debug('google_access_token', google_access_token);
         console.debug('google_refresh_token', google_refresh_token);
+        console.debug('google_expiry_date', google_expiry_date);
       }
 
       const googleDriveService = new GoogleDriveService(logger);
       const googleAuthService = new GoogleAuthService();
       const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      googleUserAuth.setCredentials({ access_token: google_access_token, refresh_token: google_refresh_token });
+      googleUserAuth.setCredentials({ access_token: google_access_token, refresh_token: google_refresh_token, expiry_date: google_expiry_date });
 
       req['driveId'] = driveId || '';
       req['logger'] = req['driveId'] ? logger.child({ driveId: req['driveId'] }) : logger;
@@ -102,7 +105,8 @@ export function authenticate(logger: Logger, idx = 0) {
         email: decoded['email'],
         id: decoded.sub,
         google_access_token,
-        google_refresh_token
+        google_refresh_token,
+        google_expiry_date
         // driveId: decoded.driveId
       };
 

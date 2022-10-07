@@ -108,6 +108,11 @@ export class GoogleAuthService {
 
     const json = await response.json();
 
+    if (!json.expiry_date && json.expires_in) {
+      const now = new Date().getTime();
+      json.expiry_date = now + Math.floor(json.expires_in * 1000 * 0.9);
+    }
+
     return {
       access_token: json.access_token,
       refresh_token: json.refresh_token,
@@ -182,7 +187,7 @@ export class GoogleAuthService {
       name: json.name,
       google_access_token: auth.access_token,
       google_refresh_token: auth.refresh_token,
-      expiry_date: auth.expiry_date
+      google_expiry_date: auth.expiry_date
     };
   }
 }
