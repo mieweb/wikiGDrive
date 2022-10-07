@@ -21,7 +21,9 @@ export class DriveController extends Controller {
     const googleDriveService = new GoogleDriveService(this.logger);
     const googleAuthService = new GoogleAuthService();
     const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-    googleUserAuth.setCredentials({ access_token: user.google_access_token, refresh_token: user.google_refresh_token });
+    googleUserAuth.setCredentials({
+      access_token: user.google_access_token, refresh_token: user.google_refresh_token, expiry_date: user.google_expiry_date
+    });
 
     const drives = await googleDriveService.listDrives(googleUserAuth);
     return drives.map(drive => {

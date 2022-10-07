@@ -550,7 +550,11 @@ export class ServerContainer extends Container {
         const googleDriveService = new GoogleDriveService(this.logger);
         const googleAuthService = new GoogleAuthService();
         const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-        googleUserAuth.setCredentials({ access_token: req.user.google_access_token, refresh_token: req.user.google_refresh_token });
+        googleUserAuth.setCredentials({
+          access_token: req.user.google_access_token,
+          refresh_token: req.user.google_refresh_token,
+          expiry_date: req.user.google_expiry_date
+        });
 
         const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
 
