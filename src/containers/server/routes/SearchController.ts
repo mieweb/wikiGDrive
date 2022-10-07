@@ -39,7 +39,7 @@ export class SearchController extends Controller {
 
     let result = lunrIndex.search(query);
     if (result.length === 0 && query.indexOf('*') === -1) {
-      result = lunrIndex.search(query + '*');
+      result = lunrIndex.search(query.split(/\s+/g).map(w => w.length > 2 ? w + '*' : w).join(' '));
     }
 
     return { result: result.map((doc) => ({
