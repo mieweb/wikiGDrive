@@ -4,7 +4,7 @@ import {createTmpDir} from '../utils';
 import fs from 'fs';
 import path from 'path';
 import {assert} from 'chai';
-import {exec} from 'child_process';
+import {execSync} from 'child_process';
 import {instrumentLogger} from '../../src/utils/logger/logger';
 
 const COMMITER1 = {
@@ -31,7 +31,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    exec(`git init --bare ${githubRepoDir}`);
+    execSync(`git init --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -89,7 +89,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    exec(`git init --bare ${githubRepoDir}`);
+    execSync(`git init --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -159,7 +159,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    exec(`git init --bare ${githubRepoDir}`);
+    execSync(`git init --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -227,7 +227,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    exec(`git init --bare ${githubRepoDir}`);
+    execSync(`git init --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -322,7 +322,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    exec(`git init --bare ${githubRepoDir}`);
+    execSync(`git init --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
