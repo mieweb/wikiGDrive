@@ -16,7 +16,7 @@
       <tr v-for="(item, idx) of history" :key="idx">
         <td>{{item.date}}<br /><small>{{ item.id }}</small></td>
         <td>{{item.author_name}}</td>
-        <td>{{item.message}}</td>
+        <td><pre>{{item.message}}</pre></td>
       </tr>
       </tbody>
     </table>
