@@ -20,7 +20,10 @@ export class DriveClientService {
       return {};
     }
     const response = await this.authenticatedClient.fetchApi(`/api/drive/${driveId}`);
-    return response.json();
+
+    const drive = await response.json();
+    drive.GIT_SHA = this.authenticatedClient.GIT_SHA;
+    return drive;
   }
 
   connectSocket(driveId) {

@@ -35,6 +35,7 @@ export class AuthenticatedClient {
     params.headers['redirect-to'] = window.location.pathname;
     const response = await fetch(url, params);
 
+    this.GIT_SHA = response.headers.get('GIT_SHA');
     const share_email = response.headers.get('wgd-share-email');
 
     switch (response.status) {
