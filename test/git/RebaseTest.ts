@@ -31,7 +31,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    execSync(`git init --bare ${githubRepoDir}`);
+    execSync(`git init -b main --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -51,14 +51,15 @@ describe('RebaseTest', () => {
       }
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       ////
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
+      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         const files = fs.readdirSync(scannerSecond.rootPath);
@@ -70,13 +71,10 @@ describe('RebaseTest', () => {
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
       const masterCommit = await scannerLocal.getBranchCommit('master');
-      const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/master');
+      const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
 
-    } catch (err) {
-      console.error(err);
-      assert.fail(err);
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });
@@ -89,7 +87,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    execSync(`git init --bare ${githubRepoDir}`);
+    execSync(`git init -b main --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -108,24 +106,25 @@ describe('RebaseTest', () => {
       }
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       ////
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
+      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         fs.writeFileSync(path.join(secondRepoDir, 'file1.txt'), 'Change on second repo');
         const changes = await scannerSecond.changes();
         assert.equal(1, (await scannerSecond.changes()).length);
         await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
-        await scannerSecond.pushBranch('master');
+        await scannerSecond.pushBranch('main');
       }
 
-      await scannerLocal.pullBranch('master');
+      await scannerLocal.pullBranch('main');
 
       {
         const history = await scannerLocal.history('');
@@ -141,12 +140,9 @@ describe('RebaseTest', () => {
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
       const masterCommit = await scannerLocal.getBranchCommit('master');
-      const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/master');
+      const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
-    } catch (err) {
-      console.error(err);
-      assert.fail(err);
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });
@@ -159,7 +155,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    execSync(`git init --bare ${githubRepoDir}`);
+    execSync(`git init -b main --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -178,22 +174,23 @@ describe('RebaseTest', () => {
       }
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
+      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Change on local repo');
         const changes = await scannerLocal.changes();
         assert.equal(1, (await scannerLocal.changes()).length);
         await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
-        await scannerLocal.pushBranch('master');
+        await scannerLocal.pushBranch('main');
       }
 
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         const history = await scannerSecond.history('');
@@ -209,12 +206,9 @@ describe('RebaseTest', () => {
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
       const masterCommit = await scannerSecond.getBranchCommit('master');
-      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/master');
+      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
-    } catch (err) {
-      console.error(err);
-      assert.fail(err);
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });
@@ -227,7 +221,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    execSync(`git init --bare ${githubRepoDir}`);
+    execSync(`git init -b main --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -246,14 +240,15 @@ describe('RebaseTest', () => {
       }
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       ////
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
+      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         fs.writeFileSync(path.join(secondRepoDir, 'file2.txt'), 'Change on second repo');
@@ -261,7 +256,7 @@ describe('RebaseTest', () => {
         assert.equal(1, (await scannerSecond.changes()).length);
         await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
         logger.info('Push second');
-        await scannerSecond.pushBranch('master');
+        await scannerSecond.pushBranch('main');
         logger.info('Pushed second');
       }
 
@@ -283,11 +278,11 @@ describe('RebaseTest', () => {
         assert.equal(1, (await scannerLocal.changes()).length);
         await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
         logger.info('Push local');
-        await scannerLocal.pushBranch('master');
+        await scannerLocal.pushBranch('main');
         logger.info('Pushed local');
       }
 
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
       logger.info('333');
 
       {
@@ -304,12 +299,9 @@ describe('RebaseTest', () => {
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
       const masterCommit = await scannerSecond.getBranchCommit('master');
-      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/master');
+      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
-    } catch (err) {
-      console.error(err);
-      assert.fail(err);
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });
@@ -322,7 +314,7 @@ describe('RebaseTest', () => {
     const githubRepoDir: string = createTmpDir();
     const secondRepoDir: string = createTmpDir();
 
-    execSync(`git init --bare ${githubRepoDir}`);
+    execSync(`git init -b main --bare ${githubRepoDir}`);
 
     try {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
@@ -341,21 +333,22 @@ describe('RebaseTest', () => {
       }
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       ////
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
+      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('master');
+      await scannerSecond.pullBranch('main');
 
       {
         fs.writeFileSync(path.join(secondRepoDir, 'file1.txt'), 'Change on second repo');
         const changes = await scannerSecond.changes();
         assert.equal(1, (await scannerSecond.changes()).length);
         await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
-        await scannerSecond.pushBranch('master');
+        await scannerSecond.pushBranch('main');
       }
       {
         fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Change on local repo');
@@ -363,7 +356,7 @@ describe('RebaseTest', () => {
         assert.equal(1, (await scannerLocal.changes()).length);
         await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
         try {
-          await scannerLocal.pushBranch('master');
+          await scannerLocal.pushBranch('main');
           assert.ok(false, 'Should fail because of conflict');
         } catch (err) {
           if (err.message.indexOf('conflict') === -1) {
@@ -374,14 +367,14 @@ describe('RebaseTest', () => {
         }
       }
 
-      await scannerLocal.resetOnRemote('master');
+      await scannerLocal.resetOnRemote('main');
 
-      await scannerLocal.pushBranch('master');
+      await scannerLocal.pushBranch('main');
 
       {
         const headCommit = await scannerLocal.getBranchCommit('HEAD');
         const masterCommit = await scannerLocal.getBranchCommit('master');
-        const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/master');
+        const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
         assert.equal(headCommit, masterCommit);
         assert.equal(headCommit, remoteCommit);
       }
@@ -401,12 +394,9 @@ describe('RebaseTest', () => {
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
       const masterCommit = await scannerSecond.getBranchCommit('master');
-      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/master');
+      const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
-    } catch (err) {
-      console.error(err);
-      assert.fail(err);
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });

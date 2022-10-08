@@ -23,6 +23,40 @@ interface SshParams {
   passphrase: string;
 }
 
+export function wrapErrorSync<T>(asyncFunc: () => T): T {
+  try {
+    return asyncFunc();
+  } catch (errMsg) {
+    if (errMsg && errMsg.errorFunction) {
+      const err = new Error(errMsg.message);
+      const stackList = err.stack.split('\n');
+      err.stack = stackList.slice(0, 1).concat(stackList.slice(3)).join('\n');
+      for (const k in errMsg) {
+        err[k] = errMsg[k];
+      }
+      throw err;
+    }
+    throw errMsg;
+  }
+}
+
+export async function wrapError<T>(asyncFunc: () => T): Promise<T> {
+  try {
+    return await asyncFunc();
+  } catch (errMsg) {
+    if (errMsg && errMsg.errorFunction) {
+      const err = new Error(errMsg.message);
+      const stackList = err.stack.split('\n');
+      err.stack = stackList.slice(0, 1).concat(stackList.slice(3)).join('\n');
+      for (const k in errMsg) {
+        err[k] = errMsg[k];
+      }
+      throw err;
+    }
+    throw errMsg;
+  }
+}
+
 export class GitScanner {
 
   constructor(private logger: Logger, public readonly rootPath: string, private email: string) {
@@ -30,7 +64,7 @@ export class GitScanner {
 
   async isRepo() {
     try {
-      await Repository.open(this.rootPath);
+      await wrapError(async () => await Repository.open(this.rootPath));
       return true;
     } catch (err) {
       return false;
@@ -38,9 +72,9 @@ export class GitScanner {
   }
 
   async changes(): Promise<GitChange[]> {
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
-    const status: StatusFile[] = await repo.getStatus();
+    const status: StatusFile[] = await wrapError(async () => await repo.getStatus());
     const retVal = [];
     for (const item of status) {
       const row = {
@@ -60,15 +94,15 @@ export class GitScanner {
   async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
     this.logger.info(`git commit: ${message}`);
 
-    const repo = await Repository.open(this.rootPath);
-    const index = await repo.refreshIndex();
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
+    const index = await wrapError(async () => await repo.refreshIndex());
 
     for (let fileName of addedFiles) {
       if (fileName.startsWith('/')) {
         fileName = fileName.substring(1);
       }
       if (fileName) {
-        await index.addByPath(fileName);
+        await wrapError(async () => await index.addByPath(fileName));
       }
     }
     for (let fileName of removedFiles) {
@@ -76,14 +110,14 @@ export class GitScanner {
         fileName = fileName.substring(1);
       }
       if (fileName) {
-        await index.removeByPath(fileName);
+        await wrapError(async () => await index.removeByPath(fileName));
       }
     }
 
-    await index.write();
+    await wrapError(async () => await index.write());
 
-    const oid = await index.writeTree();
-    const parent = await repo.getHeadCommit();
+    const oid = await wrapError(async () => await index.writeTree());
+    const parent = await wrapError(async () => await repo.getHeadCommit());
 
     const parents = [];
     if (parent) {
@@ -92,7 +126,7 @@ export class GitScanner {
 
     const author = Signature.now(committer.name, committer.email);
 
-    const commitId = await repo.createCommit('HEAD', author, author, message, oid, parents);
+    const commitId = await wrapError(async () => await repo.createCommit('HEAD', author, author, message, oid, parents));
 
     return commitId.tostrS();
   }
@@ -108,33 +142,33 @@ export class GitScanner {
     const remoteUrl = await this.getRemoteUrl();
     this.logger.info(`git pull from: ${remoteUrl}#${remoteBranch}`);
 
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
     this.logger.info('git fetch origin');
 
-    await repo.fetch('origin', {
+    await wrapError(async () => await repo.fetch('origin', {
       callbacks: !sshParams ? undefined : {
         credentials: (url, username) => {
           return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
         }
       }
-    });
+    }));
 
-    const headCommit = await repo.getHeadCommit();
+    const headCommit = await wrapError(async () => await repo.getHeadCommit());
 
     this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
 
     try {
-      const remoteCommit = await repo.getReferenceCommit(remoteBranchRef);
+      const remoteCommit = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
 
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
       if (!headCommit) {
-        const reference = await repo.createBranch('refs/heads/master', remoteCommit);
-        repo.checkoutBranch(reference);
+        const reference = await wrapError(async () => await repo.createBranch('master', remoteCommit));
+        await wrapError(async () => await repo.checkoutBranch(reference));
 
-        const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
-        await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
+        const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
+        await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
         return;
       }
 
@@ -151,10 +185,8 @@ export class GitScanner {
       }
 
     } catch (err) {
-      if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
-        throw err;
-      }
       this.logger.error(err.message);
+      throw err;
     }
   }
 
@@ -169,34 +201,33 @@ export class GitScanner {
     const remoteUrl = await this.getRemoteUrl();
     this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
 
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
     this.logger.info('git fetch origin');
 
-    await repo.fetch('origin', {
+    await wrapError(async () => await repo.fetch('origin', {
       callbacks: !sshParams ? undefined : {
         credentials: (url, username) => {
           return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
         }
       }
-    });
+    }));
 
-    const headCommit = await repo.getHeadCommit();
+    const headCommit = await wrapError(async () => await repo.getHeadCommit());
 
     this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
 
     try {
-      const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + remoteBranch);
+      const remoteCommit = await wrapError(async () => await repo.getReferenceCommit('refs/remotes/origin/' + remoteBranch));
 
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
       if (!headCommit) {
-        const reference = await repo.createBranch('refs/heads/master', remoteCommit);
+        const reference = await wrapError(async () => await repo.createBranch('master', remoteCommit));
         repo.checkoutBranch(reference);
 
-        // await repo.mergeBranches('refs/heads/master', remoteBranch);
-        const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
-        await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
+        const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
+        await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
         return;
       }
 
@@ -214,17 +245,26 @@ export class GitScanner {
       if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
         throw err;
       }
+      // Ignore pull error if remote not found
     }
 
-    const origin = await repo.getRemote('origin');
+    const origin = await wrapError(async () => await repo.getRemote('origin'));
     const refs = ['refs/heads/master:refs/heads/' + remoteBranch];
-    await origin.push(refs, {
+    await wrapError(async () => await origin.push(refs, {
       callbacks: !sshParams ? undefined : {
         credentials: (url, username) => {
           return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
         }
       }
-    });
+    }));
+  }
+
+  async resetOnLocal() {
+    this.logger.info('git reset local');
+
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
+    const commitToReset = await wrapError(async () => await repo.getBranchCommit('HEAD'));
+    await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
   }
 
   async resetOnRemote(remoteBranch: string, sshParams?: SshParams) {
@@ -236,26 +276,26 @@ export class GitScanner {
     const remoteUrl = await this.getRemoteUrl();
     this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
 
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
     this.logger.info('git fetch origin');
 
-    await repo.fetch('origin', {
+    await wrapError(async () => await repo.fetch('origin', {
       callbacks: !sshParams ? undefined : {
         credentials: (url, username) => {
           return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
         }
       }
-    });
+    }));
 
-    const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
-    await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
+    const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
+    await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
   }
 
   async getRemoteUrl(): Promise<string> {
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
     try {
-      const origin = await repo.getRemote('origin');
+      const origin = await wrapError(async () => await repo.getRemote('origin'));
       return origin.url();
     } catch (e) {
       return null;
@@ -263,13 +303,13 @@ export class GitScanner {
   }
 
   async setRemoteUrl(url) {
-    const repo = await Repository.open(this.rootPath);
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
     try {
-      await Remote.delete(repo, 'origin');
+      await wrapError(async () => await Remote.delete(repo, 'origin'));
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
     if (url) {
-      await Remote.create(repo, 'origin', url);
+      await wrapError(async () => await Remote.create(repo, 'origin', url));
     }
   }
 
@@ -279,12 +319,12 @@ export class GitScanner {
     }
 
     try {
-      const repo = await Repository.open(this.rootPath);
-      const diff = await Diff.indexToWorkdir(repo, null, {
+      const repo = await wrapError(async () => await Repository.open(this.rootPath));
+      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
         pathspec: fileName,
         flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
-      });
-      const patches = await diff.patches();
+      }));
+      const patches = await wrapError(async () => await diff.patches());
 
       const retVal = [];
 
@@ -295,9 +335,9 @@ export class GitScanner {
           txt: '',
         };
 
-        const hunks = await patch.hunks();
+        const hunks = await wrapError(async () => await patch.hunks());
         for (const hunk of hunks) {
-          const lines = await hunk.lines();
+          const lines = await wrapError(async () => await hunk.lines());
 
           item.txt += patch.oldFile().path() + ' ' + patch.newFile().path() + '\n';
           item.txt += hunk.header().trim() + '\n';
@@ -324,7 +364,7 @@ export class GitScanner {
     }
 
     try {
-      const repo = await Repository.open(this.rootPath);
+      const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
       const headCommit = await this.getBranchCommit('HEAD');
 
@@ -334,7 +374,7 @@ export class GitScanner {
         remoteCommit = await this.getBranchCommit(remoteBranchRef);
       }
 
-      const firstCommitOnMaster = await repo.getMasterCommit();
+      const firstCommitOnMaster = await wrapError(async () => repo.getMasterCommit());
 
       const walker = repo.createRevWalk();
       walker.push(firstCommitOnMaster.id());
@@ -342,7 +382,7 @@ export class GitScanner {
 
       const retVal = [];
       if (fileName) {
-        const resultingArrayOfCommits = await walker.fileHistoryWalk(fileName, 500);
+        const resultingArrayOfCommits = await wrapError(async () => await walker.fileHistoryWalk(fileName, 500));
         for (const entry of resultingArrayOfCommits) {
           const author = entry.commit.author();
           const commitId = entry.commit.id().tostrS();
@@ -357,7 +397,7 @@ export class GitScanner {
           retVal.push(item);
         }
       } else {
-        const resultingArrayOfCommits = await walker.commitWalk(500);
+        const resultingArrayOfCommits = await wrapError(async () => await walker.commitWalk(500));
 
         for (const commit of resultingArrayOfCommits) {
           const author = commit.author();
@@ -415,14 +455,14 @@ export class GitScanner {
     }
 
     if (!await this.isRepo()) {
-      await Repository.init(this.rootPath, 0);
+      await wrapError(async () => await Repository.init(this.rootPath, 0));
     }
   }
 
-  async getBranchCommit(branch: string) {
+  async getBranchCommit(branch: string): Promise<string> {
     try {
-      const repo = await Repository.open(this.rootPath);
-      const commit = await repo.getBranchCommit(branch);
+      const repo = await wrapError(async () => await Repository.open(this.rootPath));
+      const commit = await wrapError(async () => await repo.getBranchCommit(branch));
       if (!commit) {
         return null;
       }
@@ -434,11 +474,11 @@ export class GitScanner {
 
   async autoCommit() {
     try {
-      const repo = await Repository.open(this.rootPath);
-      const diff = await Diff.indexToWorkdir(repo, null, {
+      const repo = await wrapError(async () => await Repository.open(this.rootPath));
+      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
         flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
-      });
-      const patches = await diff.patches();
+      }));
+      const patches = await wrapError(async () => await diff.patches());
 
       const dontCommit = new Set<string>();
       const toCommit = new Set<string>();
@@ -450,9 +490,9 @@ export class GitScanner {
           txt: '',
         };
 
-        const hunks = await patch.hunks();
+        const hunks = await wrapError(async () => await patch.hunks());
         for (const hunk of hunks) {
-          const lines = await hunk.lines();
+          const lines = await wrapError(async () => await hunk.lines());
 
           for (const line of lines) {
             if (' ' === String.fromCharCode(line.origin())) {

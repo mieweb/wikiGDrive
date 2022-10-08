@@ -2,22 +2,23 @@ import {Logger} from 'winston';
 import NodeGit from 'nodegit';
 import {Repository} from 'nodegit/repository';
 import {RebaseOptions} from 'nodegit/rebase';
+import {wrapError, wrapErrorSync} from './GitScanner';
 
 export async function rebaseBranches(logger: Logger, repo: Repository, branch: string, upstream: string, onto: string,
                                      signature, rebaseOptions?: RebaseOptions) {
   if (!signature) {
-    signature = await repo.defaultSignature();
+    signature = await wrapError(async () => await repo.defaultSignature());
   }
 
-  const branchCommit = await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(branch));
-  const upstreamCommit = upstream ? await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(upstream)) : null;
+  const branchCommit = await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(branch)));
+  const upstreamCommit = upstream ? await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(upstream))) : null;
 
-  const baseOid = await NodeGit.Merge.base(repo, branchCommit.id(), upstreamCommit.id());
+  const baseOid = await wrapError(async () => await NodeGit.Merge.base(repo, branchCommit.id(), upstreamCommit.id()));
 
   if (baseOid.toString() === branchCommit.id().toString()) {
     // we just need to fast-forward
     logger.info('git fast-forward');
-    await repo.mergeBranches(branch, upstream, null, null);
+    await wrapError(async () => await repo.mergeBranches(branch, upstream, null, null));
     // checkout 'branch' to match the behavior of rebase
     logger.info(`git checkout ${branch}`);
     return repo.checkoutBranch(branch);
@@ -28,37 +29,37 @@ export async function rebaseBranches(logger: Logger, repo: Repository, branch: s
     return repo.checkoutBranch(branch);
   }
 
-  const ontoCommit = onto ? await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(onto)) : null;
+  const ontoCommit = onto ? await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(onto))) : null;
 
   logger.info(`git rebase init, branch: ${branchCommit.id().tostrS()}, upstream: ${upstreamCommit.id().tostrS()}, onto: ${ontoCommit.id().tostrS()}, base: ${baseOid.tostrS()}`);
 
-  const rebase = await NodeGit.Rebase.init(
+  const rebase = await wrapError(async () => await NodeGit.Rebase.init(
     repo,
     branchCommit,
     upstreamCommit,
     ontoCommit,
     rebaseOptions
-  );
+  ));
 
   try {
-    while(await rebase.next()) {
+    while(await wrapError(async () => await rebase.next())) {
       logger.info('git rebase next');
 
-      const index = await repo.refreshIndex();
+      const index = await wrapError(async () => await repo.refreshIndex());
       if (index.hasConflicts()) {
         logger.info('git rebase conflict');
         throw new Error('rebase conflict');
       }
 
       logger.info('git rebase commit');
-      await rebase.commit(null, signature, 'utf-8', null);
+      await wrapError(async () => await rebase.commit(null, signature, 'utf-8', null));
     }
   } catch (error) {
     if (error && error.errno === NodeGit.Error.CODE.ITEROVER) {
-      rebase.finish(signature);
+      wrapErrorSync(() => rebase.finish(signature));
       logger.info('git rebase finished');
     } else {
-      rebase.abort();
+      wrapErrorSync(() => rebase.abort());
       logger.error('git rebase aborted');
       throw error;
     }
