@@ -4,8 +4,8 @@ export class DriveClientService {
     this.authenticatedClient = authenticatedClient;
   }
 
-  async getDrives() {
-    const response = await this.authenticatedClient.fetchApi(`/api/drive`);
+  async getDrives(params = {}) {
+    const response = await this.authenticatedClient.fetchApi(`/api/drive`, params);
     return response.json();
   }
 
