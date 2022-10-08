@@ -217,7 +217,7 @@ export class MainService {
     await changesContainer.run();
 
     const port = parseInt(this.params.args[0]) || 3000;
-    const serverContainer = new ServerContainer({ name: 'server' }, port);
+    const serverContainer = new ServerContainer({ name: 'server', share_email: this.params.share_email }, port);
     await serverContainer.mount(await this.mainFileService);
     await this.containerEngine.registerContainer(serverContainer);
     await serverContainer.run();

@@ -39,6 +39,7 @@ const app = Vue.createApp({
         }
       } catch (err) {
         this.drive = {
+          share_email: err.share_email,
           id: toDriveId,
           notRegistered: true
         };

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="x-container">
+    <div class="container">
       <br/><br/><br/><br/>
       <div class="card">
         <div class="card-body">
@@ -12,11 +12,11 @@
           <button class="btn btn-primary" type="button" @click="refresh">Retry</button>
         </div>
       </div>
-    </div>
-    <br/>
-    <div class="card">
-      <div class="card-body">
-        Or go back to <a href="/">homepage</a>
+      <br/>
+      <div class="card">
+        <div class="card-body">
+          Or go back to <a href="/">homepage</a>
+        </div>
       </div>
     </div>
   </div>
