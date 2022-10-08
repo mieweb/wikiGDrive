@@ -318,7 +318,7 @@ export class GitScanner {
     }
   }
 
-  async history(fileName: string, remoteBranch: string) {
+  async history(fileName: string, remoteBranch = '') {
     if (fileName.startsWith('/')) {
       fileName = fileName.substring(1);
     }
