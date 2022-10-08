@@ -3,6 +3,10 @@ import {markRaw} from 'vue';
 
 export class NotFoundError extends Error {
   code = 404;
+  constructor(msg, params) {
+    super(msg);
+    this.share_email = params.share_email;
+  }
 }
 
 export class AuthenticatedClient {
@@ -31,6 +35,8 @@ export class AuthenticatedClient {
     params.headers['redirect-to'] = window.location.pathname;
     const response = await fetch(url, params);
 
+    const share_email = response.headers.get('wgd-share-email');
+
     switch (response.status) {
       case 401:
         {
@@ -46,7 +52,7 @@ export class AuthenticatedClient {
         }
         throw new Error(url + ' ' + response.statusText);
       case 404:
-        throw new NotFoundError(response.statusText);
+        throw new NotFoundError(response.statusText, { share_email });
       case 501:
         if ((response.headers.get('Content-type') || '').startsWith('text/plain')) {
           throw new Error(await response.text());

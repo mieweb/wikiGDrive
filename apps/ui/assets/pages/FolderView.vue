@@ -3,7 +3,7 @@
 
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
-      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
+      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse" v-if="!notRegistered">
         <NavSearch />
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle" />
       </NavBar>
@@ -14,7 +14,7 @@
     </template>
 
     <template v-slot:default>
-      <NotRegistered v-if="notRegistered" />
+      <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
 
       <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
@@ -146,6 +146,13 @@ export default {
       return pathContent;
     },
     async fetch() {
+      if (this.drive.notRegistered) {
+        this.shareEmail = this.drive.share_email;
+        this.notRegistered = true;
+        console.log('xxxxxxxxxxxthis.shareEmail', this.shareEmail);
+        return;
+      }
+
       const filePath = this.$route.path.substring('/drive'.length);
 
       const parts = filePath.split('/').filter(s => s.length > 0);
@@ -170,7 +177,7 @@ export default {
         this.notRegistered = false;
       } catch (err) {
         if (err.code === 404) {
-          this.shareEmail = err.share_email;
+          this.shareEmail = err.share_email || this.drive.share_email;
           this.notRegistered = true;
         }
       }

@@ -158,6 +158,7 @@ export class ServerContainer extends Container {
 
     app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
       const code = err.status || 501;
+      res.header('wgd-share-email', this.params.share_email || '');
       switch(code) {
         case 404:
           if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
