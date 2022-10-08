@@ -96,6 +96,7 @@ export default {
       const json = await response.json();
       await this.processResponse(json);
       alert('Saved');
+      await this.$root.changeDrive(this.driveId);
     },
 
     async regenerateKey() {

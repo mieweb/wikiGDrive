@@ -23,7 +23,11 @@ export default class GitController extends Controller {
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const history = await gitScanner.history(filePath);
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+    const userConfigService = new UserConfigService(googleFileSystem);
+    const userConfig = await userConfigService.load();
+
+    const history = await gitScanner.history(filePath, userConfig.remote_branch);
 
     return history;
   }
@@ -90,7 +94,7 @@ export default class GitController extends Controller {
       const privateKey = await userConfigService.getDeployPrivateKey();
       const passphrase = 'sekret';
 
-      await gitScanner.pullBranch(userConfig.remote_branch || 'master', {
+      await gitScanner.pullBranch(userConfig.remote_branch, {
         publicKey, privateKey, passphrase
       });
 
@@ -119,7 +123,7 @@ export default class GitController extends Controller {
       const privateKey = await userConfigService.getDeployPrivateKey();
       const passphrase = 'sekret';
 
-      await gitScanner.pushBranch(userConfig.remote_branch || 'master', {
+      await gitScanner.pushBranch(userConfig.remote_branch, {
         publicKey, privateKey, passphrase
       });
 
@@ -148,7 +152,7 @@ export default class GitController extends Controller {
       const privateKey = await userConfigService.getDeployPrivateKey();
       const passphrase = 'sekret';
 
-      await gitScanner.resetOnRemote(userConfig.remote_branch || 'master', {
+      await gitScanner.resetOnRemote(userConfig.remote_branch, {
         publicKey, privateKey, passphrase
       });
 
