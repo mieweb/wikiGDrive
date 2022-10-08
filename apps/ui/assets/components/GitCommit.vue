@@ -239,6 +239,24 @@ export default {
           window.location.hash = '#git_log';
         }
       } catch (err) {
+        if (err.message === 'cannot push non-fastforwardable reference') {
+          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
+        if (err.message === 'rebase conflict') {
+          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.pull;
@@ -271,6 +289,15 @@ export default {
           window.location.hash = '#git_log';
         }
       } catch (err) {
+        if (err.message === 'cannot push non-fastforwardable reference') {
+          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
         if (err.message === 'rebase conflict') {
           if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
             await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
