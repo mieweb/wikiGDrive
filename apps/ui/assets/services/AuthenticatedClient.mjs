@@ -41,6 +41,10 @@ export class AuthenticatedClient {
     switch (response.status) {
       case 401:
         {
+          if (params.optional_login) {
+            return [];
+          }
+
           const json = await response.json();
           if (json.authPath) {
             this.app.$root.$addModal({

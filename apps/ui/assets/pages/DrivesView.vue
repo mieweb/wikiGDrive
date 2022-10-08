@@ -69,9 +69,6 @@ export default {
       this.drivesShared = drives.filter(d => !!d.exists);
       this.drivesNotShared = drives.filter(d => !d.exists);
     },
-    open(url) {
-      window.open(url, '_blank');
-    },
     selectDrive(driveId) {
       this.$router.push('/drive/' + driveId);
     },
