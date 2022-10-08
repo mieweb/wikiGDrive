@@ -40,7 +40,7 @@
                   :selected-folder="selectedFolder"
                   :active-tab="activeTab"
                   :tree-empty="treeEmpty"
-                  :tree-regenerate="treeRegenerate"
+                  :tree-version="treeVersion"
       />
 
     </template>
@@ -96,7 +96,7 @@ export default {
       selectedFile: {},
       selectedFolder: {},
       treeEmpty: false,
-      treeRegenerate: false
+      treeVersion: null
     };
   },
   computed: {
@@ -142,14 +142,13 @@ export default {
       this.folderPath = filePath;
       this.files = pathContent.files || [];
       this.treeEmpty = pathContent.treeEmpty;
-      this.treeRegenerate = pathContent.treeRegenerate;
+      this.treeVersion = pathContent.treeVersion;
       return pathContent;
     },
     async fetch() {
       if (this.drive.notRegistered) {
         this.shareEmail = this.drive.share_email;
         this.notRegistered = true;
-        console.log('xxxxxxxxxxxthis.shareEmail', this.shareEmail);
         return;
       }
 

@@ -156,9 +156,7 @@ export default class FolderController extends Controller {
     const treeVersion = markdownTreeProcessor.getTreeVersion();
 
     this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
-    this.res.setHeader('wgd-tree-regenerate',
-      (treeVersion && treeVersion !== process.env.GIT_SHA
-        || !treeVersion && markdownTreeProcessor.getTree().length > 0) ? 'true' : 'false');
+    this.res.setHeader('wgd-tree-version', treeVersion);
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');
