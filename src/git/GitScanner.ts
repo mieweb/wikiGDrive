@@ -97,12 +97,16 @@ export class GitScanner {
     return commitId.tostrS();
   }
 
-  async pullBranch(branch, sshParams?: SshParams) {
+  async pullBranch(remoteBranch: string, sshParams?: SshParams) {
+    if (!remoteBranch) {
+      remoteBranch = 'master';
+    }
+
     const committer = Signature.now('WikiGDrive', this.email);
-    const remoteBranch = 'refs/remotes/origin/' + branch;
+    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
 
     const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git pull from: ${remoteUrl}#${branch}`);
+    this.logger.info(`git pull from: ${remoteUrl}#${remoteBranch}`);
 
     const repo = await Repository.open(this.rootPath);
 
@@ -121,7 +125,7 @@ export class GitScanner {
     this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
 
     try {
-      const remoteCommit = await repo.getReferenceCommit(remoteBranch);
+      const remoteCommit = await repo.getReferenceCommit(remoteBranchRef);
 
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
@@ -129,14 +133,14 @@ export class GitScanner {
         const reference = await repo.createBranch('refs/heads/master', remoteCommit);
         repo.checkoutBranch(reference);
 
-        const commitToReset = await repo.getReferenceCommit(remoteBranch);
+        const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
         await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
         return;
       }
 
       try {
-        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranch}, onto master`);
-        await rebaseBranches(this.logger, repo, 'master', remoteBranch, remoteBranch, committer, null);
+        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranchRef}, onto master`);
+        await rebaseBranches(this.logger, repo, 'master', remoteBranchRef, remoteBranchRef, committer, null);
       } catch (err) {
         if (NodeGit.Error.CODE.ECONFLICT === err.errno) {
           this.logger.error('Conflict');
@@ -150,15 +154,20 @@ export class GitScanner {
       if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
         throw err;
       }
+      this.logger.error(err.message);
     }
   }
 
-  async pushBranch(branch, sshParams?: SshParams) {
+  async pushBranch(remoteBranch: string, sshParams?: SshParams) {
+    if (!remoteBranch) {
+      remoteBranch = 'master';
+    }
+
     const committer = Signature.now('WikiGDrive', this.email);
-    const remoteBranch = 'refs/remotes/origin/' + branch;
+    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
 
     const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git push to: ${remoteUrl}#${branch}`);
+    this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
 
     const repo = await Repository.open(this.rootPath);
 
@@ -177,7 +186,7 @@ export class GitScanner {
     this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
 
     try {
-      const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + branch);
+      const remoteCommit = await repo.getReferenceCommit('refs/remotes/origin/' + remoteBranch);
 
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
@@ -186,14 +195,14 @@ export class GitScanner {
         repo.checkoutBranch(reference);
 
         // await repo.mergeBranches('refs/heads/master', remoteBranch);
-        const commitToReset = await repo.getReferenceCommit(remoteBranch);
+        const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
         await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
         return;
       }
 
       try {
-        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranch}, onto master`);
-        await rebaseBranches(this.logger, repo, 'master', remoteBranch, remoteBranch, committer, null);
+        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranchRef}, onto master`);
+        await rebaseBranches(this.logger, repo, 'master', remoteBranchRef, remoteBranchRef, committer, null);
       } catch (err) {
         if (NodeGit.Error.CODE.ECONFLICT === err.errno) {
           this.logger.error('Conflict');
@@ -208,7 +217,7 @@ export class GitScanner {
     }
 
     const origin = await repo.getRemote('origin');
-    const refs = ['refs/heads/master:refs/heads/' + branch];
+    const refs = ['refs/heads/master:refs/heads/' + remoteBranch];
     await origin.push(refs, {
       callbacks: !sshParams ? undefined : {
         credentials: (url, username) => {
@@ -218,11 +227,14 @@ export class GitScanner {
     });
   }
 
-  async resetOnRemote(branch: string, sshParams?: SshParams) {
-    const remoteBranch = 'refs/remotes/origin/' + branch;
+  async resetOnRemote(remoteBranch: string, sshParams?: SshParams) {
+    if (!remoteBranch) {
+      remoteBranch = 'master';
+    }
+    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
 
     const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git push to: ${remoteUrl}#${branch}`);
+    this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
 
     const repo = await Repository.open(this.rootPath);
 
@@ -236,7 +248,7 @@ export class GitScanner {
       }
     });
 
-    const commitToReset = await repo.getReferenceCommit(remoteBranch);
+    const commitToReset = await repo.getReferenceCommit(remoteBranchRef);
     await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {});
   }
 
@@ -256,7 +268,9 @@ export class GitScanner {
       await Remote.delete(repo, 'origin');
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
-    await Remote.create(repo, 'origin', url);
+    if (url) {
+      await Remote.create(repo, 'origin', url);
+    }
   }
 
   async diff(fileName: string) {
@@ -299,17 +313,27 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return [];
       }
+      this.logger.error(err.message);
       return [];
     }
   }
 
-  async history(fileName: string) {
+  async history(fileName: string, remoteBranch: string) {
     if (fileName.startsWith('/')) {
       fileName = fileName.substring(1);
     }
 
     try {
       const repo = await Repository.open(this.rootPath);
+
+      const headCommit = await this.getBranchCommit('HEAD');
+
+      let remoteCommit;
+      if (remoteBranch) {
+        const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
+        remoteCommit = await this.getBranchCommit(remoteBranchRef);
+      }
+
       const firstCommitOnMaster = await repo.getMasterCommit();
 
       const walker = repo.createRevWalk();
@@ -321,11 +345,14 @@ export class GitScanner {
         const resultingArrayOfCommits = await walker.fileHistoryWalk(fileName, 500);
         for (const entry of resultingArrayOfCommits) {
           const author = entry.commit.author();
+          const commitId = entry.commit.id().tostrS();
           const item = {
             date: entry.commit.date(),
             author_name: author.name() + ' <' + author.email() + '>',
             message: entry.commit.message(),
-            id: entry.commit.id().tostrS()
+            id: commitId,
+            head: headCommit == commitId,
+            remote: remoteCommit == commitId
           };
           retVal.push(item);
         }
@@ -334,11 +361,14 @@ export class GitScanner {
 
         for (const commit of resultingArrayOfCommits) {
           const author = commit.author();
+          const commitId = commit.id().tostrS();
           const item = {
             date: commit.date(),
             author_name: author.name() + ' <' + author.email() + '>',
             message: commit.message(),
-            id: commit.id().tostrS()
+            id: commitId,
+            head: headCommit == commitId,
+            remote: remoteCommit == commitId
           };
           retVal.push(item);
         }
@@ -349,7 +379,8 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return [];
       }
-      return [];
+      this.logger.error(err.message);
+      throw err;
     }
   }
 
@@ -389,12 +420,16 @@ export class GitScanner {
   }
 
   async getBranchCommit(branch: string) {
-    const repo = await Repository.open(this.rootPath);
-    const commit = await repo.getBranchCommit(branch);
-    if (!commit) {
+    try {
+      const repo = await Repository.open(this.rootPath);
+      const commit = await repo.getBranchCommit(branch);
+      if (!commit) {
+        return null;
+      }
+      return commit.id().tostrS();
+    } catch (err) {
       return null;
     }
-    return commit.id().tostrS();
   }
 
   async autoCommit() {

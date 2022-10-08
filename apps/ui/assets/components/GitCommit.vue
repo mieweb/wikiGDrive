@@ -21,7 +21,6 @@
 
     <form>
       <div class="container d-flex flex-column w-vh-toolbar">
-
         <GitToolBar :active-tab="activeTab" />
 
         <div v-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
@@ -30,6 +29,8 @@
             <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
           </div>
         </div>
+        <div v-else class="flex-grow-1 overflow-scroll">
+        </div>
 
         <div class="card" v-if="isSomethingChecked">
           <div class="card-body">
@@ -37,14 +38,20 @@
               <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
             </div>
             <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
-            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Commit and Push</button>
+            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
             <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
+            <span v-if="!git_remote_url">
+              No git remote, go to <router-link :to="{ name: 'drive', params: { driveId }, hash: '#git_settings' }">settings</router-link>
+            </span>
           </div>
         </div>
-        <div v-else>
+        <div v-else class="card">
           <div class="card-body">
             <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
             <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
+            <span v-if="!git_remote_url">
+              No git remote, go to <router-link :to="{ name: 'drive', params: { driveId }, hash: '#git_settings' }">settings</router-link>
+            </span>
           </div>
         </div>
       </div>
@@ -189,6 +196,15 @@ export default {
 
         window.location.hash = '#git_log';
       } catch (err) {
+        if (err.message === 'cannot push non-fastforwardable reference') {
+          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
+            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+              method: 'post'
+            });
+            window.location.hash = '#git_log';
+          }
+          return;
+        }
         if (err.message === 'rebase conflict') {
           if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
             await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {

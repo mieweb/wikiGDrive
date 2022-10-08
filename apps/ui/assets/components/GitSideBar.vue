@@ -8,7 +8,7 @@
       @toggleDir="toggleDir"
       @selected="$emit('setCurrentDiff', $event)"
   />
-  <div v-else-if="gitChanges === null"><i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i> Loading...</div>
+  <div v-else-if="gitChanges === null"><i class="fa-solid fa-rotate fa-spin"></i> Loading...</div>
   <div v-else>No changes to commit</div>
 </template>
 <script>
