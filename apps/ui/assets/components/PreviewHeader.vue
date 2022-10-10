@@ -31,24 +31,30 @@
     </div>
   </form>
 
-  <div class="row py-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
-    <div class="col-12 text-end">
+  <div class="d-flex py-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
+    <div class="flex-grow-1"></div>
+    <div>
+      <button @click.prevent.stop="openExternal(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Edit" title="Edit">
+        <i class="fa-solid fa-file-pen me-1"></i>
+      </button>
+
       <button v-if="activeTab !== 'html'" @click.prevent.stop="setActiveTab('html')" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview" title="Preview">
         <i class="fa-brands fa-html5 me-1"></i>
       </button>
       <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
         <i class="fa-brands fa-markdown me-1"></i>
       </button>
-      <a v-if="selectedFile.previewUrl" :href="selectedFile.previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
-        <i class="fa-regular fa-window-maximize me-1"></i>
-      </a>
       <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
         <i class="fa fa-download me-1"></i>
       </button>
       <button v-if="selectedFile.id && isImage(selectedFile)" @click.prevent.stop="downloadImage(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download image" title="Download image" >
         <i class="fa fa-download me-1"></i>
       </button>
-
+      <a v-if="selectedFile.previewUrl" :href="selectedFile.previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
+        <i class="fa-regular fa-window-maximize me-1"></i>
+      </a>
+    </div>
+    <div class="ms-5">
       <button v-if="drive.tocFilePath" @click.prevent.stop="goToPath(drive.tocFilePath)" class="btn btn-white text-primary ml-1" type="button" aria-label="Table of Contents" title="Table of Contents">
         <i class="fa-solid fa-list"></i>
       </button>
@@ -131,6 +137,18 @@ export default {
           fileId
         }
       });
+    },
+    openExternal(file) {
+      if (file.id === 'UNKNOWN') {
+        return;
+      }
+      if (this.isFolder(file)) {
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+      } else
+      if (file.id) {
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+
+      }
     }
   }
 };

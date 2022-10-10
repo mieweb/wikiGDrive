@@ -59,7 +59,7 @@ export class DriveController extends Controller {
     const transformedTree = markdownTreeProcessor.getTree();
 
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
-    const navFile = transformedTree.find(item => item.path === '/.navigation.md');
+    const navFile = transformedTree.find(item => item.path === '/.navigation.md' || item.path === '/navigation.md');
 
     const contentPrefix = userConfigService.config.transform_subdir ? `/${userConfigService.config.transform_subdir}` : '';
 
