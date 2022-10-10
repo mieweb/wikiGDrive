@@ -431,7 +431,7 @@ export class TransformContainer extends Container {
   async loadNavigationHierarchy(): Promise<NavigationHierarchy> {
     const googleFiles: GoogleFile[] = await this.filesService.readJson('.folder-files.json') || [];
 
-    const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation');
+    const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation' || googleFile.name === 'navigation');
     if (navigationFile) {
       const processor = new OdtProcessor(this.filesService, navigationFile.id);
       await processor.load();
