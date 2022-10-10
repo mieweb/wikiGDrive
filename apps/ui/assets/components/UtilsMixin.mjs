@@ -141,19 +141,14 @@ export const UtilsMixin = {
       event.target.select();
     },
     async syncSingle(selectedFile) {
-      try {
-        await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
-          method: 'post'
-        });
-        // eslint-disable-next-line no-empty
-      } finally {
-      }
+      await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
+        method: 'post'
+      });
     },
     async syncAll() {
       await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
         method: 'post'
       });
-      window.location.hash = '';
     },
     async renderPreview() {
       await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
@@ -166,13 +161,9 @@ export const UtilsMixin = {
       });
     },
     async transformSingle(selectedFile) {
-      try {
-        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
-          method: 'post'
-        });
-        // eslint-disable-next-line no-empty
-      } finally {
-      }
+      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
+        method: 'post'
+      });
     },
     async transform(selectedFile) {
       await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
