@@ -24,6 +24,7 @@ import {fileURLToPath} from 'url';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
 import {LunrIndexer} from '../search/LunrIndexer';
 import {GitScanner} from '../../git/GitScanner';
+import {JobManagerContainer} from '../job/JobManagerContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -249,8 +250,11 @@ export class TransformContainer extends Container {
         continue;
       }
 
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+
       const task = new TaskLocalFileTransform(
         this.logger,
+        jobManagerContainer,
         realFileName,
         googleFolder,
         googleFile,

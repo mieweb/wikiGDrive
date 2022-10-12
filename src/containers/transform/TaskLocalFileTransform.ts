@@ -12,14 +12,8 @@ import {UnMarshaller} from '../../odt/UnMarshaller';
 import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
 import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
-import { Worker } from 'worker_threads';
-import {fileURLToPath} from 'url';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const SINGLE_THREADED_TRANSFORM = true;
+import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer';
+import {JobManagerContainer} from '../job/JobManagerContainer';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -45,6 +39,7 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
 
 export class TaskLocalFileTransform extends QueueTask {
   constructor(protected logger: winston.Logger,
+              private jobManagerContainer: JobManagerContainer,
               private realFileName: string,
               private googleFolder: FileContentService,
               private googleFile: GoogleFile,
@@ -127,57 +122,51 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async generateDocument(localFile: MdFile, googleFile: GoogleFile, hierarchy: NavigationHierarchy) {
-    const processor = new OdtProcessor(this.googleFolder, localFile.id);
-    await processor.load();
-    await processor.unzipAssets(this.destinationDirectory, this.realFileName);
-
-    const content = processor.getContentXml();
-
-    const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-    const document = parser.unmarshal(content);
-
-    const parserStyles = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentStyles');
-    const styles: DocumentStyles = parserStyles.unmarshal(processor.getStylesXml());
-    if (!styles) {
-      throw Error('No styles unmarshalled');
-    }
-
+    let frontMatter;
     let markdown;
     let links = [];
 
+    const processor = new OdtProcessor(this.googleFolder, localFile.id);
+    await processor.load();
+    await processor.unzipAssets(this.destinationDirectory, this.realFileName);
+    const content = processor.getContentXml();
+    const stylesXml = processor.getStylesXml();
+
     if (SINGLE_THREADED_TRANSFORM) {
+      const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
+      const document = parser.unmarshal(content);
+
+      const parserStyles = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentStyles');
+      const styles: DocumentStyles = parserStyles.unmarshal(stylesXml);
+      if (!styles) {
+        throw Error('No styles unmarshalled');
+      }
+
       const converter = new OdtToMarkdown(document, styles);
       converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
       markdown = await converter.convert();
       links = Array.from(converter.links);
+      frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links);
     } else {
       interface WorkerResult {
-        markdown: string;
         links: Array<string>;
+        frontMatter: string;
+        markdown: string;
       }
-      const workerResult: WorkerResult = await new Promise((resolve, reject) => {
-        const worker = new Worker(__dirname + '/../../odt/OdtToMarkdownWorker.ts', {
-          workerData: {
-            realFileName: this.realFileName,
-            document,
-            styles
-          }
-        });
-        worker.on('message', ({ markdown, links }) => resolve({ markdown, links }));
-        worker.on('error', reject);
-        worker.on('exit', (code) => {
-          if (code !== 0) {
-            reject(new Error(
-              `Stopped the Worker Thread with the exit code: ${code}`));
-          }
-        });
+
+      const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
+        localFile,
+        hierarchy,
+        realFileName: this.realFileName,
+        content,
+        stylesXml
       });
 
-      markdown = workerResult.markdown;
       links = workerResult.links;
+      frontMatter = workerResult.frontMatter;
+      markdown = workerResult.markdown;
     }
 
-    const frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links);
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
     if (process.env.VERSION === 'dev') {
       await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
@@ -222,7 +211,8 @@ export class TaskLocalFileTransform extends QueueTask {
       }
       this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
     } catch (err) {
-      this.logger.error('Error transforming ' + localFile.fileName, err);
+      console.error(err);
+      this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.message);
     }
   }
 

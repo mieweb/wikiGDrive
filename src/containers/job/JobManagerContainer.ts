@@ -3,12 +3,16 @@ import {FileId} from '../../model/model';
 import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
 
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
 import {PreviewRendererContainer} from '../preview/PreviewRendererContainer';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {GoogleFile} from '../../model/GoogleFile';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
+import {Worker} from 'worker_threads';
+import {WorkerPool} from './WorkerPool';
+import os from 'os';
+
 const __filename = fileURLToPath(import.meta.url);
 
 export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview';
@@ -85,6 +89,7 @@ function removeOldSingleJobs(fileId) {
 
 export class JobManagerContainer extends Container {
   private driveJobsMap: DriveJobsMap = {};
+  private workerPool: WorkerPool;
 
   constructor(public readonly params: ContainerConfig) {
     super(params);
@@ -92,6 +97,7 @@ export class JobManagerContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
+    this.workerPool = new WorkerPool(os.cpus().length);
   }
 
   async getDriveJobs(driveId): Promise<DriveJobs> {
@@ -112,6 +118,11 @@ export class JobManagerContainer extends Container {
     this.engine.emit(driveId, 'jobs:changed', driveJobs);
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     await driveFileSystem.writeJson('.jobs.json', driveJobs);
+  }
+
+  async scheduleWorker(type: string, payload: any): Promise<any> {
+    return this.workerPool.schedule(type, payload)
+      .catch(err => this.engine.logger.error('Worker error', err));
   }
 
   async schedule(driveId: FileId, job: Job) {
