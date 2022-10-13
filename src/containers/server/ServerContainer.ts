@@ -23,6 +23,7 @@ import {GoogleDriveController} from './routes/GoogleDriveController';
 import {LogsController} from './routes/LogsController';
 import {PreviewController} from './routes/PreviewController';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 
 import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
@@ -143,6 +144,11 @@ export class ServerContainer extends Container {
     await this.initUiServer(app);
 
     const server = http.createServer(app);
+
+    app.use(rateLimit({
+      windowMs: 60 * 1000,
+      max: 30
+    }));
 
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws, req) => {
