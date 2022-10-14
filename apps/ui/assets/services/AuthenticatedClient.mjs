@@ -67,8 +67,9 @@ export class AuthenticatedClient {
     if (isGet) {
       const contentTYpe = (response.headers.get('Content-type') || '');
       if (contentTYpe.startsWith('application/json') || contentTYpe.startsWith('application/vnd.google-apps.folder')) {
-        const json = await response.json();
-        response.json = async () => json;
+        const text = await response.text();
+        response.json = async () => JSON.parse(text);
+        response.text = async () => text;
       }
       this.lastGetReponses[url] = {
         ts: now,

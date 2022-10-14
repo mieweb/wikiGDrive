@@ -1,5 +1,12 @@
 <template>
-  <div class="container-fluid bg-light my-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
+  <div v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
+    <div class="row py-1 align-items-center" v-if="selectedFile.fileName">
+      <div class="col-8">
+        <strong>{{ selectedFile.fileName }}</strong>
+        <span v-if="selectedFile.version">#{{ selectedFile.version }}</span>
+        <span v-if="selectedFile.modifiedTime" class="small text-muted">&nbsp;{{ selectedFile.modifiedTime }}</span>
+      </div>
+    </div>
     <div class="row py-1 align-items-center" v-if="last_job.dateStr">
       <div class="col-8">
         <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync</span>
@@ -8,26 +15,21 @@
         <span v-if="last_job.durationStr" class="small text-muted">&nbsp;({{ last_job.durationStr }})</span>
       </div>
       <div class="col-4 text-end">
-        <button class="btn btn-light" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)">
+        <button class="btn btn-white bg-white text-primary" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)" title="Sync single">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         </button>
-      </div>
-    </div>
-    <div class="row py-1 align-items-center" v-if="selectedFile.fileName">
-      <div class="col-8">
-        <strong>{{ selectedFile.fileName }}</strong>
-        <span v-if="selectedFile.version">#{{ selectedFile.version }}</span>
-        <span v-if="selectedFile.modifiedTime" class="small text-muted">&nbsp;{{ selectedFile.modifiedTime }}</span>
       </div>
     </div>
   </div>
 
   <form class="row py-1" @submit.prevent="commitSingle" v-if="selectedFile">
-    <div class="input-group mb-1">
-      <input v-model="commitMsg" type="text" class="form-control border-light" placeholder="Commit message..." aria-label="Commit message" aria-describedby="commit-button">
-      <button class="btn btn-white bg-white text-primary" type="submit" id="commit-button" title="Commit button">
-        <i class="fa-solid fa-code-commit"></i>
-      </button>
+    <div class="col">
+      <div class="input-group mb-1">
+        <input v-model="commitMsg" type="text" class="form-control border-light" placeholder="Commit message..." aria-label="Commit message" aria-describedby="commit-button">
+        <button class="btn btn-white bg-white text-primary" type="submit" id="commit-button" title="Commit button">
+          <i class="fa-solid fa-code-commit"></i>
+        </button>
+      </div>
     </div>
   </form>
 

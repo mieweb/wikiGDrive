@@ -1,3 +1,21 @@
+export async function disableElement(event, handler) {
+  const origAttr = event.target.getAttribute('disabled');
+  if ('disabled' === origAttr) {
+    return;
+  }
+
+  try {
+    event.target.setAttribute('disabled', 'disabled');
+    return await handler();
+  } finally {
+    if (origAttr) {
+      event.target.setAttribute('disabled', origAttr);
+    } else {
+      event.target.removeAttribute('disabled');
+    }
+  }
+}
+
 export const UtilsMixin = {
   computed: {
     isGDocsPreview() {
@@ -141,33 +159,38 @@ export const UtilsMixin = {
       event.target.select();
     },
     async syncSingle(selectedFile) {
-      await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
-        method: 'post'
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
+          method: 'post'
+        });
       });
     },
-    async syncAll() {
-      await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
-        method: 'post'
+    async syncAll(event) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}`, {
+          method: 'post'
+        });
       });
     },
-    async renderPreview() {
-      await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
-        method: 'post'
+    async renderPreview(event) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
+          method: 'post'
+        });
       });
     },
-    async transformAll() {
-      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}`, {
-        method: 'post'
+    async transformAll(event) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}`, {
+          method: 'post'
+        });
       });
     },
-    async transformSingle(selectedFile) {
-      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
-        method: 'post'
-      });
-    },
-    async transform(selectedFile) {
-      await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
-        method: 'post'
+    async transformSingle(event, selectedFile) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
+          method: 'post'
+        });
       });
     },
     downloadOdt(fileId) {
