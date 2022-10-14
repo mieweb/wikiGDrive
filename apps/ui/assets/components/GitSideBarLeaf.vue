@@ -13,7 +13,7 @@
         <span v-else>
           <input name="filePath" type="checkbox" :value="file.path" @click="$emit('toggleDir', file.path)" :checked="checkedDirs[file.path]" />
         </span>
-        <span class="file-name m-1" @click="$emit('selected', '/' + file.path)">{{ file.fileName }}</span>
+        <span class="file-name m-1" @click="$emit('selected', file)">{{ file.fileName }}</span>
       </div>
       <GitSideBarLeaf
           v-if="file.children"

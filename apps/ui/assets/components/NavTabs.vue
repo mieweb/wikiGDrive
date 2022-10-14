@@ -24,8 +24,11 @@
       </a>
     </li>
     <li :class="{ 'active': activeTab.startsWith('git_') }" class="wgd-nav-item">
-      <a @click.prevent.stop="setActiveTab('git_commit')">
+      <a class="position-relative" @click.prevent.stop="setActiveTab('git_commit')">
         <i class="fa-brands fa-git-square"></i>
+        <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">
+           <span class="badge" v-if="gitStats.unstaged">{{gitStats.unstaged}}</span>
+        </span>
       </a>
     </li>
     <li :class="{ 'active': activeTab === 'sync' }" class="wgd-nav-item">
