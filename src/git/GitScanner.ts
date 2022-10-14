@@ -453,7 +453,7 @@ export class GitScanner {
     }
 
     if (originalIgnore.length !== toIgnore.length) {
-      fs.writeFileSync(ignorePath, toIgnore.join('\n'));
+      fs.writeFileSync(ignorePath, toIgnore.join('\n') + '\n');
     }
 
     if (!await this.isRepo()) {

@@ -30,6 +30,10 @@
           </div>
         </div>
         <div v-else class="flex-grow-1 overflow-scroll">
+          <h5>Git Diff</h5>
+          <p>
+            Select single file on the left to see diff
+          </p>
         </div>
 
         <GitFooter v-if="isSomethingChecked" :checked="checked">
@@ -120,12 +124,23 @@ export default {
     await this.fetch();
   },
   methods: {
-    async setCurrentDiff(path) {
+    async setCurrentDiff(file) {
       this.diffs = [];
+
+      if (!file) {
+        return;
+      }
+
+      const path = '/' + file.path;
+      this.selectedPath = path.substring(1);
+
+      if (file.children && file.children.length > 0) {
+        return;
+      }
+
       if (path) {
         this.diffs = await this.GitClientService.getDiff(this.driveId, path);
       }
-      this.selectedPath = path.substring(1);
     },
     async fetch() {
       this.gitChanges = null;
@@ -139,7 +154,11 @@ export default {
         this.toggle(fileName);
       }
 
-      this.setCurrentDiff(this.selectedFile?.fileName ? this.historyPath : '');
+      if (this.selectedFile?.fileName) {
+        this.setCurrentDiff({ path: this.historyPath });
+      } else {
+        this.setCurrentDiff(null);
+      }
 
       const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
       this.user_config = await responseConfig.json();
