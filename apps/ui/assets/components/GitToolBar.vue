@@ -1,20 +1,30 @@
 <template>
   <ul class="nav nav-tabs mt-2">
     <ToolButton
-        v-if="gitInitialized"
+        v-if="gitStats.initialized"
         :active="activeTab === 'git_log'"
         @click="setActiveTab('git_log')"
         title="History"
-        icon="fa-solid fa-timeline"
-    />
+        icon="fa-solid fa-timeline">
+      <span class="badge" v-if="gitStats.headAhead > 0">
+        {{ gitStats.headAhead }} commits ahead remote
+      </span>
+      <span class="badge" v-if="gitStats.headAhead < 0">
+        {{ -gitStats.headAhead }} commits behind remote
+      </span>
+    </ToolButton>
 
     <ToolButton
-        v-if="gitInitialized"
+        v-if="gitStats.initialized"
         :active="activeTab === 'git_commit'"
         @click="setActiveTab('git_commit')"
         title="Commit"
-        icon="fa-solid fa-code-commit"
-    />
+        icon="fa-solid fa-code-commit" >
+
+      <span class="badge" v-if="gitStats.unstaged > 0">
+        {{ gitStats.unstaged }} unstaged files
+      </span>
+    </ToolButton>
 
     <div class="flex-grow-1"></div>
 

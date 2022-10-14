@@ -1,6 +1,9 @@
 <template>
   <li v-if="'nav-item' === type" class="nav-item">
-    <a class="nav-link" :class="{ active: active }" aria-current="page" href="" @click="click"><i v-if="icon" :class="icon"></i> {{ title }}</a>
+    <a class="nav-link" :class="{ active: active }" aria-current="page" href="" @click="click">
+      <i v-if="icon" :class="icon"></i>
+      {{ title }}<slot></slot>
+    </a>
   </li>
   <li v-else-if="'list-group-item' === type" class="list-group-item">
     <a :href="href" target="_blank">

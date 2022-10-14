@@ -22,7 +22,7 @@
     </div>
   </div>
 
-  <form class="row py-1" @submit.prevent="commitSingle" v-if="selectedFile">
+  <form class="row py-1" @submit.prevent="commitSingle" v-if="selectedFile.status">
     <div class="col">
       <div class="input-group mb-1">
         <input v-model="commitMsg" type="text" class="form-control border-light" placeholder="Commit message..." aria-label="Commit message" aria-describedby="commit-button">

@@ -11,10 +11,11 @@ import {UserConfigService} from '../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {WorkerPool} from './WorkerPool';
 import os from 'os';
+import {GitScanner} from '../../git/GitScanner';
 
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview' | 'git_pull' | 'git_push';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -45,6 +46,15 @@ export interface DriveJobsMap {
 
 function notCompletedJob(job: Job) {
   return ['waiting', 'running'].includes(job.state);
+}
+
+function removeOldByType(type: string) {
+  return (job: Job) => {
+    if (job.type !== type) {
+      return true;
+    }
+    return !(job.state === 'failed' || job.state === 'done');
+  };
 }
 
 function removeOldRenderPreview() {
@@ -174,6 +184,18 @@ export class JobManagerContainer extends Container {
         });
         driveJobs.jobs.push(job);
         break;
+      case 'git_pull':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'git_pull' && notCompletedJob(subJob))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
+      case 'git_push':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'git_push' && notCompletedJob(subJob))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
     }
 
     await this.setDriveJobs(driveId, driveJobs);
@@ -219,6 +241,26 @@ export class JobManagerContainer extends Container {
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
           this.runJob(driveId, currentJob)
             .then(() => {
+              if (currentJob.type === 'git_pull') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git pull done',
+                  type: 'git_pull:done',
+                  links: {
+                    '#git_log': 'View git history'
+                  },
+                });
+              }
+              if (currentJob.type === 'git_push') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git push done',
+                  type: 'git_push:done',
+                  links: {
+                    '#git_log': 'View git history'
+                  },
+                });
+              }
               if (currentJob.type === 'render_preview') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
               }
@@ -253,15 +295,52 @@ export class JobManagerContainer extends Container {
             })
             .catch(err => {
               const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+              console.error('Job failed', err);
               logger.error(err);
+
+              if (currentJob.type === 'git_pull') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git pull failed',
+                  type: 'git_pull:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
+                });
+              }
+              if (currentJob.type === 'git_push') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git push failed',
+                  type: 'git_push:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
+                });
+              }
+
               if (currentJob.type === 'render_preview') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Render failed',
+                  type: 'render_preview:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  }
+                });
               }
               if (currentJob.type === 'transform') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Transform failed',
                   type: 'transform:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
                   payload: currentJob.payload || 'all'
                 });
               }
@@ -271,6 +350,10 @@ export class JobManagerContainer extends Container {
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync all failed',
                   type: 'sync:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
                   payload: 'all'
                 });
               }
@@ -279,6 +362,7 @@ export class JobManagerContainer extends Container {
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync failed',
                   type: 'sync:failed',
+                  err: err.message,
                   payload: currentJob.payload
                 });
               }
@@ -383,6 +467,65 @@ export class JobManagerContainer extends Container {
     }
   }
 
+  private async gitPull(driveId: FileId) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId });
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const userConfigService = new UserConfigService(googleFileSystem);
+      const userConfig = await userConfigService.load();
+
+      const publicKey = await userConfigService.getDeployKey();
+      const privateKey = await userConfigService.getDeployPrivateKey();
+      const passphrase = 'sekret';
+
+      await gitScanner.pullBranch(userConfig.remote_branch, {
+        publicKey, privateKey, passphrase
+      });
+
+      return {};
+    } catch (err) {
+      logger.error(err.message, err);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
+  private async gitPush(driveId: FileId) {
+    const logger = this.engine.logger.child({filename: __filename, driveId});
+
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const userConfigService = new UserConfigService(googleFileSystem);
+      const userConfig = await userConfigService.load();
+
+      const publicKey = await userConfigService.getDeployKey();
+      const privateKey = await userConfigService.getDeployPrivateKey();
+      const passphrase = 'sekret';
+
+      await gitScanner.pushBranch(userConfig.remote_branch, {
+        publicKey, privateKey, passphrase
+      });
+
+      return {};
+    } catch (err) {
+      logger.error(err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
   private async scheduleRetry(driveId: FileId, changesToFetch, markdownTreeProcessor: MarkdownTreeProcessor) {
     if (changesToFetch.length === 0) {
       return;
@@ -415,24 +558,25 @@ export class JobManagerContainer extends Container {
   private async runJob(driveId: FileId, job: Job) {
     const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
     logger.info('runJob ' + driveId + ' ' + JSON.stringify(job));
-    try {
-      switch (job.type) {
-        case 'sync':
-          await this.sync(driveId, [ job.payload ]);
-          break;
-        case 'sync_all':
-          await this.sync(driveId);
-          break;
-        case 'transform':
-          await this.transform(driveId, job.payload ? [ job.payload ] : [] );
-          break;
-        case 'render_preview':
-          await this.renderPreview(driveId);
-          break;
-      }
-    } catch (err) {
-      logger.error(err.message);
-      console.error('Job failed', err);
+    switch (job.type) {
+      case 'sync':
+        await this.sync(driveId, [ job.payload ]);
+        break;
+      case 'sync_all':
+        await this.sync(driveId);
+        break;
+      case 'transform':
+        await this.transform(driveId, job.payload ? [ job.payload ] : [] );
+        break;
+      case 'render_preview':
+        await this.renderPreview(driveId);
+        break;
+      case 'git_pull':
+        await this.gitPull(driveId);
+        break;
+      case 'git_push':
+        await this.gitPush(driveId);
+        break;
     }
   }
 

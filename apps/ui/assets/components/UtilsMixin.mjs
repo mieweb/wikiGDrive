@@ -90,13 +90,13 @@ export const UtilsMixin = {
       return this.$root.drive || {};
     },
     driveId() {
-      return this.$root.drive.id;
+      return this.drive.id;
     },
-    gitInitialized() {
-      return this.$root.drive?.git?.initialized || false;
+    gitStats() {
+      return this.$root.gitStats;
     },
     github_url() {
-      const remote_url = this.$root.drive?.git?.remote_url || '';
+      const remote_url = this.gitStats?.remote_url || '';
       if (remote_url.startsWith('git@github.com:')) {
         return remote_url.replace('git@github.com:', 'https://github.com/')
           .replace(/.git$/, '');

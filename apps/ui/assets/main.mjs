@@ -30,6 +30,14 @@ const app = Vue.createApp({
   },
   mixins: [ModalsMixin, ToastsMixin],
   template: '<App />',
+  computed: {
+    gitStats() {
+      return Object.assign({
+        initialized: false,
+        remote_url: ''
+      }, this.drive.gitStats);
+    }
+  },
   methods: {
     async changeDrive(toDriveId) {
       try {

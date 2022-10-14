@@ -2,6 +2,7 @@ import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, Ro
 import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
+import {JobManagerContainer} from '../../job/JobManagerContainer';
 
 interface CommitPost {
   message: string;
@@ -11,7 +12,7 @@ interface CommitPost {
 
 export default class GitController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService) {
+  constructor(subPath: string, private readonly filesService: FileContentService, private jobManagerContainer: JobManagerContainer) {
     super(subPath);
   }
 
@@ -81,60 +82,22 @@ export default class GitController extends Controller {
 
   @RoutePost('/:driveId/pull')
   async pull(@RouteParamPath('driveId') driveId: string) {
-    try {
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-      await gitScanner.initialize();
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'git_pull',
+      title: 'Git Pull'
+    });
 
-      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-      const userConfigService = new UserConfigService(googleFileSystem);
-      const userConfig = await userConfigService.load();
-
-      const publicKey = await userConfigService.getDeployKey();
-      const privateKey = await userConfigService.getDeployPrivateKey();
-      const passphrase = 'sekret';
-
-      await gitScanner.pullBranch(userConfig.remote_branch, {
-        publicKey, privateKey, passphrase
-      });
-
-      return {};
-    } catch (err) {
-      this.logger.error(err.message, err);
-      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
-        return { error: 'Failed to authenticate' };
-      }
-      throw err;
-    }
+    return { driveId };
   }
 
   @RoutePost('/:driveId/push')
   async push(@RouteParamPath('driveId') driveId: string) {
-    try {
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-      await gitScanner.initialize();
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'git_push',
+      title: 'Git Push'
+    });
 
-      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-      const userConfigService = new UserConfigService(googleFileSystem);
-      const userConfig = await userConfigService.load();
-
-      const publicKey = await userConfigService.getDeployKey();
-      const privateKey = await userConfigService.getDeployPrivateKey();
-      const passphrase = 'sekret';
-
-      await gitScanner.pushBranch(userConfig.remote_branch, {
-        publicKey, privateKey, passphrase
-      });
-
-      return {};
-    } catch (err) {
-      this.logger.error(err.message);
-      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
-        return { error: 'Failed to authenticate' };
-      }
-      throw err;
-    }
+    return { driveId };
   }
 
   @RoutePost('/:driveId/reset_remote')

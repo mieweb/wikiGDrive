@@ -129,7 +129,9 @@ export default {
     async active_job() {
       if (this.active_job === '') {
         await this.fetch();
-        await this.$refs.filesTree.refresh();
+        if (this.$refs.filesTree) {
+          await this.$refs.filesTree.refresh();
+        }
       }
     }
   },

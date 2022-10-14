@@ -1,6 +1,14 @@
 <template>
+  <ul class="nav files-list border-bottom dark">
+    <li class="nav-item fs-4">
+      <div class="files-list__item">
+        <i class="fa-brands fa-github"></i>&nbsp; Files to commit
+      </div>
+    </li>
+  </ul>
+
   <GitSideBarLeaf
-      v-if="gitChanges !== null && gitChanges.length > 0"
+      v-if="gitChanges && gitChanges.length > 0"
       :tree="tree"
       :checked="checked"
       :checkedDirs="checkedDirs"

@@ -32,17 +32,21 @@
           Git log empty
         </div>
       </div>
+
     </div>
+
+    <GitFooter></GitFooter>
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import GitToolBar from './GitToolBar.vue';
+import GitFooter from './GitFooter.vue';
 
 export default {
   name: 'GitLog',
   mixins: [UtilsMixin],
-  components: {GitToolBar},
+  components: {GitToolBar, GitFooter},
   props: {
     activeTab: {
       type: String
