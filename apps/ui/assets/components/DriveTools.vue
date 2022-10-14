@@ -43,7 +43,7 @@
       <li class="list-group-item" v-else-if="treeVersion && treeVersion !== GIT_SHA">
         Markdowns were generated with version: <em>{{treeVersion}}</em>.<br/>
         WikiGDrive is now running: <em>{{GIT_SHA}}</em>.<br/>
-        <a class="btn btn-outline-secondary me-2" @click.prevent="transformAllAndGoToSync">Update your entire tree now?</a>
+        <a class="btn btn-outline-secondary me-2" @click.prevent="transformAll">Update your entire tree now?</a>
       </li>
     </ul>
   </div>
@@ -78,12 +78,6 @@ export default {
   computed: {
     GIT_SHA() {
       return this.drive.GIT_SHA;
-    }
-  },
-  methods: {
-    async transformAllAndGoToSync() {
-      await this.transformAll();
-      this.setActiveTab('sync');
     }
   }
 };
