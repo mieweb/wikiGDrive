@@ -104,7 +104,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync';
     },
     jobs() {
       return this.$root.jobs || [];

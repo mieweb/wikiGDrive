@@ -11,6 +11,11 @@ import * as VueRouter from 'vue-router';
 
 import App from './App.vue';
 import {ModalsMixin} from './modals/ModalsMixin.mjs';
+import {ToastsMixin} from './modals/ToastsMixin.mjs';
+
+function completedJob(job) {
+  return !['waiting', 'running'].includes(job.state);
+}
 
 const app = Vue.createApp({
   data: {
@@ -23,7 +28,7 @@ const app = Vue.createApp({
   components: {
     'App': App
   },
-  mixins: [ModalsMixin],
+  mixins: [ModalsMixin, ToastsMixin],
   template: '<App />',
   methods: {
     async changeDrive(toDriveId) {
@@ -49,7 +54,7 @@ const app = Vue.createApp({
       this.jobs = jobs;
       this.jobsMap = {};
       for (const job of jobs) {
-        if (!['waiting', 'running'].includes(job.state)) {
+        if (completedJob(job)) {
           continue;
         }
 

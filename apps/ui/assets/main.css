@@ -140,3 +140,7 @@ pre[class*=language-] {
 .is-warning {
   background: var(--bs-warning);
 }
+
+a[disabled] {
+  cursor: not-allowed !important;
+}

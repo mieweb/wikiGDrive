@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import {ContainerEngine} from '../../ContainerEngine';
-import {DriveJobs, JobManagerContainer} from '../job/JobManagerContainer';
+import {DriveJobs, JobManagerContainer, Toast} from '../job/JobManagerContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
@@ -15,6 +15,9 @@ export class SocketManager {
   constructor(private engine: ContainerEngine) {
     this.engine.subscribe('jobs:changed', (driveId, driveJobs: DriveJobs) => {
       this.onJobsChanged(driveId, driveJobs);
+    });
+    this.engine.subscribe('toasts:added', (driveId, toast: Toast) => {
+      this.onToastsAdded(driveId, toast);
     });
     this.engine.subscribe('changes:changed', (driveId, changes: GoogleFile[]) => {
       this.onChangesChanged(driveId, changes);
@@ -53,6 +56,19 @@ export class SocketManager {
     ws.on('close', () => {
       this.socketsMap[driveId].delete(ws);
     });
+  }
+
+  private onToastsAdded(driveId: FileId, toast: Toast) {
+    if (!this.socketsMap[driveId]) {
+      return;
+    }
+
+    for (const socket of this.socketsMap[driveId]) {
+      socket.send(JSON.stringify({
+        cmd: 'toasts:added',
+        payload: toast
+      }));
+    }
   }
 
   private onJobsChanged(driveId: FileId, driveJobs: DriveJobs) {

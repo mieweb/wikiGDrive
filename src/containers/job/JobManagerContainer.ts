@@ -9,7 +9,6 @@ import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {GoogleFile} from '../../model/GoogleFile';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
-import {Worker} from 'worker_threads';
 import {WorkerPool} from './WorkerPool';
 import os from 'os';
 
@@ -30,6 +29,11 @@ export interface Job {
   startAfter?: number;
 }
 
+export interface Toast {
+  title: string;
+  message: string;
+}
+
 export interface DriveJobs {
   driveId: FileId;
   jobs: Job[];
@@ -37,6 +41,10 @@ export interface DriveJobs {
 
 export interface DriveJobsMap {
   [driveId: FileId]: DriveJobs;
+}
+
+function notCompletedJob(job: Job) {
+  return ['waiting', 'running'].includes(job.state);
 }
 
 function removeOldRenderPreview() {
@@ -133,33 +141,37 @@ export class JobManagerContainer extends Container {
 
     switch (job.type) {
       case 'sync':
-        for (const subJob of driveJobs.jobs) {
-          if (subJob.type === 'sync_all' && !['failed', 'done'].includes(subJob.state)) {
-            return;
-          }
-          if (subJob.type === job.type && subJob.payload === job.payload && !['failed', 'done'].includes(subJob.state)) {
-            return;
-          }
+        if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all' && notCompletedJob(subJob))) {
+          return;
+        }
+        if (driveJobs.jobs.find(subJob => subJob.type === 'sync' && subJob.payload === job.payload && notCompletedJob(job))) {
+          return;
         }
         driveJobs.jobs.push(job);
         break;
       case 'sync_all':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all' && !['failed', 'done'].includes(subJob.state))) {
+        if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all' && notCompletedJob(subJob))) {
           return;
         }
         driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'running');
         driveJobs.jobs.push(job);
         break;
       case 'render_preview':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'render_preview' && !['failed', 'done'].includes(subJob.state))) {
+        if (driveJobs.jobs.find(subJob => subJob.type === 'render_preview' && notCompletedJob(subJob))) {
           return;
         }
         driveJobs.jobs.push(job);
         break;
       case 'transform':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'transform' && !['failed', 'done'].includes(subJob.state))) {
+        if (driveJobs.jobs.find(subJob => subJob.type === 'transform' && notCompletedJob(subJob))) {
           return;
         }
+        this.engine.emit(driveId, 'toasts:added', {
+          title: 'Transform scheduled',
+          message: JSON.stringify(job, null, 2),
+          type: 'transform:scheduled',
+          payload: job.payload ? job.payload : 'all'
+        });
         driveJobs.jobs.push(job);
         break;
     }
@@ -212,13 +224,28 @@ export class JobManagerContainer extends Container {
               }
               if (currentJob.type === 'transform') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Transform done',
+                  type: 'transform:done',
+                  payload: currentJob.payload || 'all'
+                });
               }
               if (currentJob.type === 'sync_all') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Sync all done',
+                  type: 'sync:done',
+                  payload: 'all'
+                });
               }
               if (currentJob.type === 'sync') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Sync done',
+                  type: 'sync:done',
+                  payload: currentJob.payload
+                });
               }
               currentJob.state = 'done';
               currentJob.finished = +new Date();
@@ -232,13 +259,28 @@ export class JobManagerContainer extends Container {
               }
               if (currentJob.type === 'transform') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Transform failed',
+                  type: 'transform:failed',
+                  payload: currentJob.payload || 'all'
+                });
               }
               if (currentJob.type === 'sync_all') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Sync all failed',
+                  type: 'sync:failed',
+                  payload: 'all'
+                });
               }
               if (currentJob.type === 'sync') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Sync failed',
+                  type: 'sync:failed',
+                  payload: currentJob.payload
+                });
               }
               currentJob.state = 'failed';
               currentJob.finished = +new Date();

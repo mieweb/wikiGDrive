@@ -31,39 +31,58 @@
       </table>
     </div>
 
-    <div class="container-fluid bg-light my-1">
-      <div class="row py-1 align-items-center" v-if="last_job.dateStr">
-        <div class="col-8">
-          <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync </span>
-          <span v-else class="fw-bold">Last synced </span>
-          <span class="small text-muted">{{ last_job.dateStr }} </span>
-          <span v-if="last_job.durationStr" class="small text-muted">&nbsp;{{ last_job.durationStr }}</span>
+    <div class="container bg-light my-1">
+
+      <h4>Jobs</h4>
+
+      <div class="card">
+        <div class="card-body">
+
+          <div class="row py-1 align-items-center" v-if="last_job.dateStr">
+            <div class="col-8">
+              <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync </span>
+              <span v-else class="fw-bold">Last synced </span>
+              <span class="small text-muted">{{ last_job.dateStr }} </span>
+              <span v-if="last_job.durationStr" class="small text-muted">&nbsp;{{ last_job.durationStr }}</span>
+            </div>
+            <div v-if="last_transform.durationStr" class="col-8">
+              <span class="fw-bold">Last transform took</span>
+              <span class="small text-muted">&nbsp;{{ last_transform.durationStr }}</span>
+            </div>
+          </div>
+
+          <table class="table table-bordered jobs-list mt-3" v-if="active_jobs.length > 0">
+            <thead>
+              <th>Job</th>
+              <th>Progress</th>
+            </thead>
+            <tbody>
+            <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
+              <td>{{ job.title }}</td>
+              <td>
+                <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
+                <span v-else>{{ job.state }}</span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+
+          <div v-if="active_jobs.length === 0" class="mt-3">
+            No active jobs
+          </div>
         </div>
-        <div v-if="last_transform.durationStr" class="col-8">
-          <span class="fw-bold">Last transform took</span>
-          <span class="small text-muted">&nbsp;{{ last_transform.durationStr }}</span>
+
+      </div>
+      <div class="card-footer" v-if="active_jobs.length === 0">
+        <div class="btn-group">
+          <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
+          <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
         </div>
       </div>
     </div>
-
-    <div class="btn-group" v-if="!syncing">
-      <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
-      <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', selectedFile)">Transform Single Markdown</a>
-      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
-      <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
-    </div>
-    <table class="table table-bordered jobs-list" v-else>
-      <tbody>
-        <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
-          <td>{{ job.title }}</td>
-          <td>
-            <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
-            <span v-else>{{ job.state }}</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </template>
 <script>
