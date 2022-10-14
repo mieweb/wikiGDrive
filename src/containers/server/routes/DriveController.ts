@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamPath, RouteParamUser} from './Controller';
+import {Controller, RouteGet, RouteParamPath, RouteParamUser, RouteResponse} from './Controller';
 import {GitScanner} from '../../../git/GitScanner';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
 import {UserConfigService} from '../../google_folder/UserConfigService';
@@ -6,11 +6,15 @@ import {FileContentService} from '../../../utils/FileContentService';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {GoogleAuthService} from '../../../google/GoogleAuthService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
+import {AuthConfig} from '../../../model/AccountJson';
+import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
+import {Container} from '../../../ContainerEngine';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
               private readonly filesService: FileContentService,
-              private readonly folderRegistryContainer: FolderRegistryContainer) {
+              private readonly folderRegistryContainer: FolderRegistryContainer,
+              private readonly authContainer: Container) {
     super(subPath);
   }
 
@@ -49,8 +53,6 @@ export class DriveController extends Controller {
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const initialized = await gitScanner.isRepo();
-
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
@@ -65,14 +67,67 @@ export class DriveController extends Controller {
 
     return {
       ...drive,
-      git: {
-        initialized,
-        remote_branch: userConfig.remote_branch,
-        remote_url: initialized ? await gitScanner.getRemoteUrl() : null
-      },
+      gitStats: await gitScanner.getStats(userConfig),
       tocFilePath: tocFile ? contentPrefix + tocFile.path : null,
       navFilePath: navFile ? contentPrefix + navFile.path : null
     };
+  }
+
+  @RouteGet('/:driveId/file/(:fileId).odt')
+  @RouteResponse('stream', {}, 'application/vnd.oasis.opendocument.text')
+  async downloadOdt(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string) {
+    try {
+      const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+
+      const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+      await markdownTreeProcessor.load();
+      const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+      if (file && drivePath) {
+        const odtPath = drivePath + '.odt';
+        if (await driveFileSystem.exists(odtPath)) {
+          driveFileSystem.createReadStream(odtPath).pipe(this.res);
+          return;
+        }
+      }
+
+      this.res.status(404).json({});
+    } catch (err) {
+      if (err.message === 'Drive not shared with wikigdrive') {
+        const authConfig: AuthConfig = this.authContainer['authConfig'];
+        this.res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
+        return;
+      }
+      throw err;
+    }
+  }
+
+  @RouteGet('/:driveId/transformed/(:fileId)')
+  @RouteResponse('stream', {}, 'image')
+  async downloadTransformed(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string) {
+    try {
+      const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
+
+      const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+      await markdownTreeProcessor.load();
+      const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+      if (file && drivePath) {
+        const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
+        if (await driveFileSystem.exists(filePath)) {
+          this.res.header('Content-Disposition', `attachment; filename="${file['name']}.${googleMimeToExt(file.mimeType, '')}"`);
+          driveFileSystem.createReadStream(filePath).pipe(this.res);
+          return;
+        }
+      }
+
+      this.res.status(404).json({});
+    } catch (err) {
+      if (err.message === 'Drive not shared with wikigdrive') {
+        const authConfig: AuthConfig = this.authContainer['authConfig'];
+        this.res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
+        return;
+      }
+      throw err;
+    }
   }
 
 }

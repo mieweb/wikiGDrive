@@ -308,10 +308,12 @@ export class ServerContainer extends Container {
   }
 
   async initRouter(app) {
-    const driveController = new DriveController('/api/drive', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
+    const driveController = new DriveController('/api/drive', this.filesService,
+      <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.authContainer);
     app.use('/api/drive', authenticate(this.logger), await driveController.getRouter());
 
-    const gitController = new GitController('/api/git', this.filesService);
+    const gitController = new GitController('/api/git', this.filesService,
+      <JobManagerContainer>this.engine.getContainer('job_manager'));
     app.use('/api/git', authenticate(this.logger), await gitController.getRouter());
 
     const folderController = new FolderController('/api/file', this.filesService);
@@ -334,66 +336,6 @@ export class ServerContainer extends Container {
 
     const previewController = new PreviewController('/preview', this.logger);
     app.use('/preview', authenticate(this.logger), await previewController.getRouter());
-
-    app.get('/api/drive/:driveId/file/(:fileId).odt', authenticate(this.logger, 2), async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const fileId = req.params.fileId;
-
-        const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-
-        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
-        await markdownTreeProcessor.load();
-        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
-        if (file && drivePath) {
-          const odtPath = drivePath + '.odt';
-          if (await driveFileSystem.exists(odtPath)) {
-            driveFileSystem.createReadStream(odtPath).pipe(res);
-            return;
-          }
-        }
-
-        res.status(404).json({});
-      } catch (err) {
-        if (err.message === 'Drive not shared with wikigdrive') {
-          const authConfig: AuthConfig = this.authContainer['authConfig'];
-          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
-          return;
-        }
-        next(err);
-      }
-    });
-
-    app.get('/api/drive/:driveId/transformed/(:fileId)', authenticate(this.logger, 2), async (req, res, next) => {
-      try {
-        const driveId = req.params.driveId;
-        const fileId = req.params.fileId;
-
-        const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-
-        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
-        await markdownTreeProcessor.load();
-        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
-        if (file && drivePath) {
-          const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
-          if (await driveFileSystem.exists(filePath)) {
-            res.header('Content-Disposition', `attachment; filename="${file['name']}.${googleMimeToExt(file.mimeType, '')}"`);
-            driveFileSystem.createReadStream(filePath).pipe(res);
-            return;
-          }
-        }
-
-        res.status(404).json({});
-      } catch (err) {
-        if (err.message === 'Drive not shared with wikigdrive') {
-          const authConfig: AuthConfig = this.authContainer['authConfig'];
-          res.status(404).json({ not_registered: true, share_email: authConfig.share_email });
-          return;
-        }
-        next(err);
-      }
-    });
-
 
     app.get('/api/ps', async (req, res, next) => {
       try {

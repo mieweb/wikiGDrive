@@ -32,28 +32,13 @@
         <div v-else class="flex-grow-1 overflow-scroll">
         </div>
 
-        <div class="card" v-if="isSomethingChecked">
-          <div class="card-body">
-            <div class="input-groups">
-              <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
-            </div>
-            <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
-            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
-            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
-            <span v-if="!git_remote_url">
-              No git remote, go to <router-link :to="{ name: 'drive', params: { driveId }, hash: '#git_settings' }">settings</router-link>
-            </span>
+        <GitFooter v-if="isSomethingChecked" :checked="checked">
+          <div class="input-groups">
+            <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
-        </div>
-        <div v-else class="card">
-          <div class="card-body">
-            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="working.push" class="fa-solid fa-rotate fa-spin"></i> Push</button>
-            <button :disabled="Object.keys(working).length > 0" v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="working.pull" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
-            <span v-if="!git_remote_url">
-              No git remote, go to <router-link :to="{ name: 'drive', params: { driveId }, hash: '#git_settings' }">settings</router-link>
-            </span>
-          </div>
-        </div>
+          <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
+        </GitFooter>
+        <GitFooter v-else :checked="checked"></GitFooter>
       </div>
     </form>
   </BaseLayout>
@@ -68,12 +53,14 @@ import NavTabs from './NavTabs.vue';
 import GitSideBar from './GitSideBar.vue';
 import GitToolBar from './GitToolBar.vue';
 import NavSearch from './NavSearch.vue';
+import GitFooter from './GitFooter.vue';
 const Prism = window['Prism'];
 Prism.manual = true;
 
 export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
+    GitFooter,
     GitToolBar,
     GitSideBar,
     BaseLayout,
@@ -217,99 +204,6 @@ export default {
         window.location.hash = '#drive_logs';
       } finally {
         delete this.working.commit;
-      }
-    },
-    async pull() {
-      try {
-        this.working.pull = true;
-        const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/pull`, {
-          method: 'post',
-          headers: {
-            'Content-type': 'application/json'
-          },
-          body: JSON.stringify({})
-        });
-        const json = await response.json();
-        await this.fetch();
-        if (json.error) {
-          alert(json.error);
-          window.location.hash = '#drive_logs';
-        } else {
-          alert('Pull completed');
-          window.location.hash = '#git_log';
-        }
-      } catch (err) {
-        if (err.message === 'cannot push non-fastforwardable reference') {
-          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
-          }
-          return;
-        }
-        if (err.message === 'rebase conflict') {
-          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
-          }
-          return;
-        }
-        window.location.hash = '#drive_logs';
-      } finally {
-        delete this.working.pull;
-      }
-    },
-    async push() {
-      try {
-        const checkedFileNames = Object.keys(this.checked);
-        if (checkedFileNames.length > 0) {
-          await this.submitCommit();
-        }
-
-        this.working.push = true;
-
-        const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/push`, {
-          method: 'post',
-          headers: {
-            'Content-type': 'application/json'
-          },
-          body: JSON.stringify({})
-        });
-
-        const json = await response.json();
-        await this.fetch();
-        if (json.error) {
-          alert(json.error);
-          window.location.hash = '#drive_logs';
-        } else {
-          alert('Push completed');
-          window.location.hash = '#git_log';
-        }
-      } catch (err) {
-        if (err.message === 'cannot push non-fastforwardable reference') {
-          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
-          }
-          return;
-        }
-        if (err.message === 'rebase conflict') {
-          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
-          }
-          return;
-        }
-        window.location.hash = '#drive_logs';
-      } finally {
-        delete this.working.push;
       }
     },
     toggle(path) {

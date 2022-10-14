@@ -5,7 +5,7 @@ export const ToastsMixin = {
     };
   },
   methods: {
-    $addToast(toast) {
+    async $addToast(toast) {
       switch (toast.type) {
         case 'transform:scheduled':
           this.$removeToastMatching(item => item.type.startsWith('transform:'));
@@ -18,6 +18,31 @@ export const ToastsMixin = {
           break;
         case 'sync:done':
       }
+
+      if (toast.type.startsWith('git_push:') || toast.type.startsWith('git_pull:')) {
+        this.$removeToastMatching(item => item.type.startsWith('git_push:') || item.type.startsWith('git_pull:'));
+      }
+
+      if (toast.err === 'cannot push non-fastforwardable reference') {
+        if (window.confirm('Git error: ' + toast.err + '. Do you want to reset git repository with remote branch?')) {
+          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+            method: 'post'
+          });
+          window.location.hash = '#git_log';
+        }
+        return;
+      }
+
+      if (toast.err === 'rebase conflict') {
+        if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
+          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+            method: 'post'
+          });
+          window.location.hash = '#git_log';
+        }
+        return;
+      }
+
       this.toasts.unshift(toast);
       this.$emit('change', this.toasts);
 

@@ -31,8 +31,7 @@
       </table>
     </div>
 
-    <div class="container bg-light my-1">
-
+    <div>
       <h4>Jobs</h4>
 
       <div class="card">

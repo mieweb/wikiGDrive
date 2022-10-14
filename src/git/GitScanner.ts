@@ -6,6 +6,8 @@ import {StatusFile} from 'nodegit/status-file';
 import NodeGit from 'nodegit';
 const { Cred, Remote, Repository, Revwalk, Signature, Diff, Reset } = NodeGit;
 import {rebaseBranches} from './rebaseBranches';
+import {UserConfig} from '../containers/google_folder/UserConfigService';
+import {Commit} from 'nodegit/commit';
 
 export interface GitChange {
   path: string;
@@ -538,6 +540,65 @@ export class GitScanner {
       }
       this.logger.error(err.message);
     }
+  }
 
+  async getStats(userConfig: UserConfig) {
+    let initialized = false;
+    let headAhead = 0;
+    let unstaged = 0;
+
+    try {
+      const repo = await wrapError(async () => await Repository.open(this.rootPath));
+      initialized = true;
+
+      if (userConfig.remote_branch) {
+        try {
+          const remoteBranchRef = 'refs/remotes/origin/' + userConfig.remote_branch;
+
+          const headCommit = await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference('HEAD')));
+          const headCommitId = headCommit.id().tostrS();
+          const remoteCommit = await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(remoteBranchRef)));
+          const remoteCommitId = remoteCommit.id().tostrS();
+
+          let headIdx = -1;
+          let remoteIdx = -1;
+
+          const walker = repo.createRevWalk();
+          walker.push(headCommit.id());
+          walker.sorting(Revwalk.SORT.REVERSE);
+          const commits: Commit[] = await wrapError(async () => await walker.commitWalk(500));
+          for (let idx = 0; idx < commits.length; idx++) {
+            const commitId = commits[idx].id().tostrS();
+            if (commitId === headCommitId) {
+              headIdx = idx;
+            }
+            if (commitId === remoteCommitId) {
+              remoteIdx = idx;
+            }
+            if (headIdx !== -1 && remoteIdx !== 1) {
+              headAhead = headIdx - remoteIdx;
+              break;
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
+        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
+      }));
+      const diffStats = await diff.getStats();
+      unstaged = diffStats.filesChanged().valueOf();
+    } catch (err) { // eslint-disable no-empty
+    }
+
+    return {
+      initialized,
+      headAhead,
+      unstaged,
+      remote_branch: userConfig.remote_branch,
+      remote_url: initialized ? await this.getRemoteUrl() : null
+    };
   }
 }
