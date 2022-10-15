@@ -14,6 +14,7 @@
       :checkedDirs="checkedDirs"
       :selectedPath="selectedPath"
       @toggleDir="toggleDir"
+      @toggle="$emit('toggle', $event)"
       @selected="$emit('setCurrentDiff', $event)"
   />
   <div v-else-if="gitChanges === null"><i class="fa-solid fa-rotate fa-spin"></i> Loading...</div>

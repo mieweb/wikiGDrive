@@ -51,6 +51,8 @@ export const ToastsMixin = {
           this.$removeToastMatching(item => item.type === toast.type && item.payload === toast.payload);
         }, 5000);
       }
+
+      this.emitter.emit(toast.type, toast);
     },
     $removeToast() {
       if (this.toasts.length === 0) return;

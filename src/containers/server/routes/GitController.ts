@@ -3,6 +3,7 @@ import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
 import {JobManagerContainer} from '../../job/JobManagerContainer';
+import {ContainerEngine} from '../../../ContainerEngine';
 
 interface CommitPost {
   message: string;
@@ -12,7 +13,8 @@ interface CommitPost {
 
 export default class GitController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService, private jobManagerContainer: JobManagerContainer) {
+  constructor(subPath: string, private readonly filesService: FileContentService,
+              private jobManagerContainer: JobManagerContainer, private engine: ContainerEngine) {
     super(subPath);
   }
 
@@ -72,6 +74,14 @@ export default class GitController extends Controller {
       await gitScanner.initialize();
 
       await gitScanner.commit(message, filePaths, removeFilePaths, user);
+
+      this.engine.emit(driveId, 'toasts:added', {
+        title: 'Commit done',
+        type: 'commit:done',
+        links: {
+          '#git_log': 'View git history'
+        },
+      });
 
       return {};
     } catch (err) {

@@ -8,14 +8,18 @@ import {SearchClientService} from './services/SearchClientService.mjs';
 
 import * as Vue from 'vue';
 import * as VueRouter from 'vue-router';
+import mitt from 'mitt';
 
 import App from './App.vue';
 import {ModalsMixin} from './modals/ModalsMixin.mjs';
 import {ToastsMixin} from './modals/ToastsMixin.mjs';
+import {CachedFileClientService} from './services/CachedFileClientService.mjs';
 
 function completedJob(job) {
   return !['waiting', 'running'].includes(job.state);
 }
+
+const emitter = mitt();
 
 const app = Vue.createApp({
   data: {
@@ -37,6 +41,23 @@ const app = Vue.createApp({
         remote_url: ''
       }, this.drive.gitStats);
     }
+  },
+  created() {
+    this.authenticatedClient.app = this.$root;
+    this.emitter.on('*', (type) => {
+      switch (type) {
+        case 'transform:done':
+        case 'git_pull:done':
+        case 'git_push:done':
+        case 'commit:done':
+          this.FileClientService.clearCache();
+          if (this.drive?.id) {
+            this.changeDrive(this.drive.id);
+          }
+          this.emitter.emit('tree:changed');
+          break;
+      }
+    });
   },
   methods: {
     async changeDrive(toDriveId) {
@@ -109,20 +130,13 @@ app.directive('grow', {
 });
 
 const authenticatedClient = new AuthenticatedClient(null);
-app.mixin({
-  data() {
-    if (!authenticatedClient.app) {
-      authenticatedClient.app = this.$root;
-    }
-    return {
-      authenticatedClient,
-      DriveClientService: new DriveClientService(authenticatedClient),
-      FileClientService: new FileClientService(authenticatedClient),
-      GitClientService: new GitClientService(authenticatedClient),
-      SearchClientService: new SearchClientService(authenticatedClient)
-    }
-  }
-});
+
+app.config.globalProperties.emitter = emitter;
+app.config.globalProperties.authenticatedClient = authenticatedClient;
+app.config.globalProperties.DriveClientService = new DriveClientService(authenticatedClient);
+app.config.globalProperties.FileClientService = new CachedFileClientService(authenticatedClient);
+app.config.globalProperties.GitClientService = new GitClientService(authenticatedClient);
+app.config.globalProperties.SearchClientService = new SearchClientService(authenticatedClient);
 
 const router = new VueRouter.createRouter({
   history: VueRouter.createWebHistory(),
@@ -168,6 +182,7 @@ router.beforeEach(async (to, from, next) => {
   const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
   const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
   if (toDriveId !== fromDriveId) {
+    vm.FileClientService.clearCache();
     await vm.changeDrive(toDriveId);
   }
   next();

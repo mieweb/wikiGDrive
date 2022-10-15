@@ -116,7 +116,6 @@ export default {
         filePath
       });
       this.commitMsg = '';
-      window.location.hash = '#git_log';
     },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     fetch() {},

@@ -7,13 +7,11 @@ import path from 'path';
 import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {FileId} from '../../model/model';
 import {saveRunningInstance} from './loadRunningInstance';
-import {AuthConfig} from '../../model/AccountJson';
 import {urlToFolderId} from '../../utils/idParsers';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {fileURLToPath} from 'url';
-import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
 import GitController from './routes/GitController';
 import FolderController from './routes/FolderController';
 import {ConfigController} from './routes/ConfigController';
@@ -313,7 +311,7 @@ export class ServerContainer extends Container {
     app.use('/api/drive', authenticate(this.logger), await driveController.getRouter());
 
     const gitController = new GitController('/api/git', this.filesService,
-      <JobManagerContainer>this.engine.getContainer('job_manager'));
+      <JobManagerContainer>this.engine.getContainer('job_manager'), this.engine);
     app.use('/api/git', authenticate(this.logger), await gitController.getRouter());
 
     const folderController = new FolderController('/api/file', this.filesService);

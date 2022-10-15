@@ -40,7 +40,7 @@
           <div class="input-groups">
             <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
-          <button :disabled="Object.keys(working).length > 0" type="button" class="btn btn-primary" @click="submitCommit"><i v-if="working.commit" class="fa-solid fa-rotate fa-spin"></i> Commit</button>
+          <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
         </GitFooter>
         <GitFooter v-else :checked="checked"></GitFooter>
       </div>
@@ -49,7 +49,7 @@
 
 </template>
 <script>
-import {UtilsMixin} from './UtilsMixin.mjs';
+import {disableElement, UtilsMixin} from './UtilsMixin.mjs';
 import {GitMixin} from './GitMixin.mjs';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NavBar from './NavBar.vue';
@@ -88,7 +88,6 @@ export default {
       checked: {},
       gitChanges: null,
       message: '',
-      working: {},
       diffs: [],
       selectedPath: '',
       isSomethingChecked: false
@@ -167,20 +166,18 @@ export default {
       window.open(url, '_blank');
     },
     async submitCommit() {
-      try {
-        this.working.commit = true;
+      if (!this.message) {
+        alert('No commit message');
+        return;
+      }
 
-        if (!this.message) {
-          alert('No commit message');
-          return;
-        }
+      const checkedFileNames = Object.keys(this.checked);
+      if (checkedFileNames.length === 0) {
+        alert('No files selected');
+        return;
+      }
 
-        const checkedFileNames = Object.keys(this.checked);
-        if (checkedFileNames.length === 0) {
-          alert('No files selected');
-          return;
-        }
-
+      await disableElement(event, async () => {
         const filePath = [];
         const removeFilePath = [];
 
@@ -193,37 +190,35 @@ export default {
           }
         }
 
-        await this.commit({
-          message: this.message,
-          filePath: filePath,
-          removeFilePath: removeFilePath
-        });
-        this.message = '';
-
-        window.location.hash = '#git_log';
-      } catch (err) {
-        if (err.message === 'cannot push non-fastforwardable reference') {
-          if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
+        try {
+          await this.commit({
+            message: this.message,
+            filePath: filePath,
+            removeFilePath: removeFilePath
+          });
+          this.message = '';
+        } catch (err) {
+          if (err.message === 'cannot push non-fastforwardable reference') {
+            if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
+              await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+                method: 'post'
+              });
+              window.location.hash = '#git_log';
+            }
+            return;
           }
-          return;
-        }
-        if (err.message === 'rebase conflict') {
-          if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
-            await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-              method: 'post'
-            });
-            window.location.hash = '#git_log';
+          if (err.message === 'rebase conflict') {
+            if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
+              await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+                method: 'post'
+              });
+              window.location.hash = '#git_log';
+            }
+            return;
           }
-          return;
+          window.location.hash = '#drive_logs';
         }
-        window.location.hash = '#drive_logs';
-      } finally {
-        delete this.working.commit;
-      }
+      });
     },
     toggle(path) {
       if (this.checked[path]) {

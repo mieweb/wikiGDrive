@@ -120,19 +120,14 @@ export default {
   created() {
     this.fetch();
     this.rootFolder = this.$root.drive;
+    this.emitter.on('tree:changed', () => {
+      this.fetch();
+    });
   },
   watch: {
     async $route() {
       await this.fetch();
       this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
-    },
-    async active_job() {
-      if (this.active_job === '') {
-        await this.fetch();
-        if (this.$refs.filesTree) {
-          await this.$refs.filesTree.refresh();
-        }
-      }
     }
   },
   mounted() {

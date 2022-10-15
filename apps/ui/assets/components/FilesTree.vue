@@ -7,7 +7,7 @@
       </div>
     </li>
   </ul>
-  <FilesTreeLeaf folderPath="/" v-if="!notRegistered" @selected="$emit('selected', $event)" ref="rootLeaf" />
+  <FilesTreeLeaf folderPath="/" v-if="!notRegistered" @selected="$emit('selected', $event)" />
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
@@ -31,11 +31,6 @@ export default {
         return this.$route.path.replace(`/drive/${driveId}${this.folderPath}`, '');
       }
       return this.$route.path.replace(`/drive/${driveId}${this.folderPath}/`, '');
-    }
-  },
-  methods: {
-    refresh() {
-      this.$refs.rootLeaf.fetchFolder();
     }
   },
   emits: ['collapse', 'sync'],

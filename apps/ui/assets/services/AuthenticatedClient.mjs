@@ -20,6 +20,7 @@ export class AuthenticatedClient {
     const now = +new Date();
 
     const isGet = Object.keys(params).length === 0;
+/*
     if (isGet && this.lastGetReponses[url]) {
       if (now - this.lastGetReponses[url].ts < 1000) {
         return this.lastGetReponses[url].response;
@@ -27,6 +28,7 @@ export class AuthenticatedClient {
         delete this.lastGetReponses[url];
       }
     }
+*/
 
     if (!params.headers) {
       params.headers = {};
