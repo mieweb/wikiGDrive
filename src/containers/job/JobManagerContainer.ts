@@ -154,7 +154,7 @@ export class JobManagerContainer extends Container {
         if (driveJobs.jobs.find(subJob => subJob.type === 'sync_all' && notCompletedJob(subJob))) {
           return;
         }
-        if (driveJobs.jobs.find(subJob => subJob.type === 'sync' && subJob.payload === job.payload && notCompletedJob(job))) {
+        if (driveJobs.jobs.find(subJob => subJob.type === 'sync' && subJob.payload === job.payload && notCompletedJob(subJob))) {
           return;
         }
         driveJobs.jobs.push(job);
