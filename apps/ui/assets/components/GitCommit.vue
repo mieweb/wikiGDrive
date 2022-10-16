@@ -103,9 +103,9 @@ export default {
     historyPath() {
       if (this.folderPath) {
         const folderPath = this.folderPath.replace(/\/$/, '');
-        return folderPath + '/' + (this.selectedFile?.fileName || '');
+        return folderPath + (this.selectedFile?.path || '');
       } else {
-        return '/' + (this.selectedFile?.fileName || '');
+        return this.selectedFile?.path || '/';
       }
     }
   },
@@ -130,7 +130,7 @@ export default {
         return;
       }
 
-      const path = '/' + file.path;
+      const path = file.path.startsWith('/') ? file.path : '/' + file.path;
       this.selectedPath = path.substring(1);
 
       if (file.children && file.children.length > 0) {
@@ -153,7 +153,7 @@ export default {
         this.toggle(fileName);
       }
 
-      if (this.selectedFile?.fileName) {
+      if (this.selectedFile?.path) {
         this.setCurrentDiff({ path: this.historyPath });
       } else {
         this.setCurrentDiff(null);
