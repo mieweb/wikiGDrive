@@ -144,3 +144,8 @@ pre[class*=language-] {
 a[disabled] {
   cursor: not-allowed !important;
 }
+
+.badge-primary {
+  color: var(--bs-white);
+  background-color: var(--bs-primary);
+}
