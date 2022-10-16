@@ -4,13 +4,14 @@ import {NavigationHierarchy} from '../generateNavigationHierarchy';
 import {MdFile} from '../../../model/LocalFile';
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
 
-export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarchy: NavigationHierarchy, links: string[]) {
+export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarchy: NavigationHierarchy, links: string[],
+                                            fm_without_version = false) {
   const obj = {
     id: localFile.id,
     title: localFile.title,
-    date: localFile.modifiedTime,
-    version: localFile.version,
-    lastAuthor: localFile.lastAuthor,
+    date: !fm_without_version ? localFile.modifiedTime : undefined,
+    version: !fm_without_version ? localFile.version : undefined,
+    lastAuthor: !fm_without_version ? localFile.lastAuthor : undefined,
     mimeType: localFile.mimeType,
     links,
     // url: htmlPath,

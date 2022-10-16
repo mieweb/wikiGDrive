@@ -14,6 +14,7 @@ import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
 import {LocalLinks} from './LocalLinks';
 import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer';
 import {JobManagerContainer} from '../job/JobManagerContainer';
+import {UserConfig} from '../google_folder/UserConfigService';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -46,7 +47,8 @@ export class TaskLocalFileTransform extends QueueTask {
               private destinationDirectory: FileContentService,
               private localFile: LocalFile,
               private hierarchy: NavigationHierarchy,
-              private localLinks: LocalLinks
+              private localLinks: LocalLinks,
+              private userConfig: UserConfig
               ) {
     super(logger);
 
@@ -146,7 +148,7 @@ export class TaskLocalFileTransform extends QueueTask {
       converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
       markdown = await converter.convert();
       links = Array.from(converter.links);
-      frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links);
+      frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
     } else {
       interface WorkerResult {
         links: Array<string>;
@@ -159,7 +161,8 @@ export class TaskLocalFileTransform extends QueueTask {
         hierarchy,
         realFileName: this.realFileName,
         content,
-        stylesXml
+        stylesXml,
+        fm_without_version: this.userConfig.fm_without_version
       });
 
       links = workerResult.links;

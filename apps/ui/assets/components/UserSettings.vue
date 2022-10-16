@@ -28,6 +28,22 @@
           <button class="btn btn-danger" type="button" @click="nukeContentDir()"><i class="fa-solid fa-explosion"></i> Nuke markdown directory</button>
 
           <div class="form-group">
+            <label>Autosync</label>
+            <select class="form-control" @change="user_config.auto_sync = !user_config.auto_sync">
+              <option :selected="!user_config.auto_sync" value="">Disabled</option>
+              <option :selected="user_config.auto_sync" value="enabled">Enabled</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Frontmatter without version and date</label>
+            <select class="form-control" @change="user_config.fm_without_version = !user_config.fm_without_version">
+              <option :selected="!user_config.fm_without_version" value="">Disabled</option>
+              <option :selected="user_config.fm_without_version" value="enabled">Enabled</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label>Config.toml for preview</label>
             <textarea v-grow class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
           </div>

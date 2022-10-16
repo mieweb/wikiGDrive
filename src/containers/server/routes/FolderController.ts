@@ -52,8 +52,9 @@ export class ShareErrorHandler extends ErrorHandler {
   }
 }
 
+export const CACHE_PATH = '.private/cached_git_status.json';
+
 async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
-  const CACHE_PATH = '.private/cached_git_status.json';
 
   let mtime = 0;
   try {
