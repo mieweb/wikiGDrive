@@ -31,6 +31,8 @@ export class UserConfig {
   hugo_theme?: HugoTheme;
   config_toml?: string;
   transform_subdir?: string;
+  auto_sync?: boolean;
+  fm_without_version?: boolean;
 }
 
 export class UserConfigService {

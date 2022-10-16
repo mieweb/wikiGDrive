@@ -25,6 +25,7 @@ import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
 import {LunrIndexer} from '../search/LunrIndexer';
 import {GitScanner} from '../../git/GitScanner';
 import {JobManagerContainer} from '../job/JobManagerContainer';
+import {UserConfigService} from '../google_folder/UserConfigService';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -175,6 +176,7 @@ export class TransformContainer extends Container {
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
   private transformSubDir: string;
+  private userConfigService: UserConfigService;
 
   private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
 
@@ -186,6 +188,8 @@ export class TransformContainer extends Container {
   async mount2(fileService: FileContentService, destFileService: FileContentService): Promise<void> {
     this.filesService = fileService;
     this.generatedFileService = destFileService;
+    this.userConfigService = new UserConfigService(this.filesService);
+    await this.userConfigService.load();
   }
 
   async init(engine: ContainerEngine): Promise<void> {
@@ -261,7 +265,8 @@ export class TransformContainer extends Container {
         destinationDirectory,
         localFile,
         this.hierarchy,
-        this.localLinks
+        this.localLinks,
+        this.userConfigService.config
       );
       queueTransformer.addTask(task);
     }

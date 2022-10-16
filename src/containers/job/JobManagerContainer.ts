@@ -12,6 +12,8 @@ import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {WorkerPool} from './WorkerPool';
 import os from 'os';
 import {GitScanner} from '../../git/GitScanner';
+import {FileContentService} from '../../utils/FileContentService';
+import {CACHE_PATH} from '../server/routes/FolderController';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -42,6 +44,10 @@ export interface DriveJobs {
 
 export interface DriveJobsMap {
   [driveId: FileId]: DriveJobs;
+}
+
+async function clearCachedChanges(googleFileSystem: FileContentService) {
+  await googleFileSystem.remove(CACHE_PATH);
 }
 
 function notCompletedJob(job: Job) {
@@ -560,24 +566,32 @@ export class JobManagerContainer extends Container {
     logger.info('runJob ' + driveId + ' ' + JSON.stringify(job));
     switch (job.type) {
       case 'sync':
-        await this.sync(driveId, [ job.payload ]);
+        await this.sync(driveId, job.payload.split(','));
         break;
       case 'sync_all':
         await this.sync(driveId);
         break;
       case 'transform':
         await this.transform(driveId, job.payload ? [ job.payload ] : [] );
+        await this.clearGitCache(driveId);
         break;
       case 'render_preview':
         await this.renderPreview(driveId);
         break;
       case 'git_pull':
         await this.gitPull(driveId);
+        await this.clearGitCache(driveId);
         break;
       case 'git_push':
         await this.gitPush(driveId);
+        await this.clearGitCache(driveId);
         break;
     }
+  }
+
+  async clearGitCache(driveId: FileId) {
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+    await clearCachedChanges(googleFileSystem);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function

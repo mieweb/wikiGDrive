@@ -8,6 +8,7 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {GoogleFile} from '../../model/GoogleFile';
 import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
+import {JobManagerContainer} from '../job/JobManagerContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -73,6 +74,23 @@ export class WatchChangesContainer extends Container {
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     await driveFileSystem.writeJson('.changes.json', changes);
     this.engine.emit(driveId, 'changes:changed', changes);
+
+    const fileIdsString = changes.map(change => change.id).join(',');
+
+    const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+    await jobManagerContainer.schedule(driveId, {
+      type: 'sync',
+      payload: fileIdsString,
+      title: 'Syncing file: ' + fileIdsString
+    });
+    await jobManagerContainer.schedule(driveId, {
+      type: 'transform',
+      title: 'Transform markdown'
+    });
+    await jobManagerContainer.schedule(driveId, {
+      type: 'render_preview',
+      title: 'Render preview'
+    });
   }
 
   async startWatching(driveId: string) {

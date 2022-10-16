@@ -10,6 +10,8 @@ interface ConfigBody {
     config_toml?: string;
     transform_subdir?: string;
     hugo_theme: HugoTheme;
+    auto_sync: boolean;
+    fm_without_version: boolean;
   };
   remote_url: string;
 }
@@ -87,6 +89,8 @@ export class ConfigController extends Controller {
     if (body.config?.transform_subdir) {
       userConfigService.config.transform_subdir = body.config?.transform_subdir;
     }
+    userConfigService.config.auto_sync = !!body.config?.auto_sync;
+    userConfigService.config.fm_without_version = !!body.config?.fm_without_version;
 
     await userConfigService.save();
 
