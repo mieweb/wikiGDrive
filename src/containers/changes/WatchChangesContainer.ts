@@ -75,22 +75,24 @@ export class WatchChangesContainer extends Container {
     await driveFileSystem.writeJson('.changes.json', changes);
     this.engine.emit(driveId, 'changes:changed', changes);
 
-    const fileIdsString = changes.map(change => change.id).join(',');
+    if (changes.length > 0) {
+      const fileIdsString = changes.map(change => change.id).join(',');
 
-    const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
-    await jobManagerContainer.schedule(driveId, {
-      type: 'sync',
-      payload: fileIdsString,
-      title: 'Syncing file: ' + fileIdsString
-    });
-    await jobManagerContainer.schedule(driveId, {
-      type: 'transform',
-      title: 'Transform markdown'
-    });
-    await jobManagerContainer.schedule(driveId, {
-      type: 'render_preview',
-      title: 'Render preview'
-    });
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+      await jobManagerContainer.schedule(driveId, {
+        type: 'sync',
+        payload: fileIdsString,
+        title: 'Syncing file: ' + fileIdsString
+      });
+      await jobManagerContainer.schedule(driveId, {
+        type: 'transform',
+        title: 'Transform markdown'
+      });
+      await jobManagerContainer.schedule(driveId, {
+        type: 'render_preview',
+        title: 'Render preview'
+      });
+    }
   }
 
   async startWatching(driveId: string) {
