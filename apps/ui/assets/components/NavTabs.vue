@@ -27,7 +27,7 @@
       <a class="position-relative" @click.prevent.stop="setActiveTab('git_commit')">
         <i class="fa-brands fa-git-square"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="gitStats.unstaged > 0">
-           <span class="badge" v-if="gitStats.unstaged">{{gitStats.unstaged}}</span>
+           <span class="badge badge-primary" v-if="gitStats.unstaged">{{gitStats.unstaged}}</span>
         </span>
       </a>
     </li>
@@ -35,7 +35,7 @@
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">
-           <span class="badge">{{fileChanges.length}}</span>
+           <span class="badge badge-primary">{{fileChanges.length}}</span>
         </span>
       </a>
     </li>
