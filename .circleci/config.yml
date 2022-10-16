@@ -10,8 +10,8 @@ jobs:
             - run: npm install
       - run: npm link nodegit
       - run: npm run lint
-      - run: mkdir /home/circleci/tmp
-      - run: TMPDIR=/home/circleci/tmp npm run test
+      - run: mkdir $HOME/tmp
+      - run: TMPDIR=$HOME/tmp npm run test
 
 workflows:
   version: 2
