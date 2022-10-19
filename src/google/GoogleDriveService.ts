@@ -251,7 +251,7 @@ export class GoogleDriveService {
       });
     } catch (err) {
       if (!err.isQuotaError && err?.code != 404) {
-        this.logger.error(err);
+        this.logger.error(err.message);
       }
       err.message = 'Error export document ' + (err.isQuotaError ? '(quota)' : '') + ': ' + file.id + ' ' + file.name;
       err.file = file;

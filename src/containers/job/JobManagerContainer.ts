@@ -302,7 +302,7 @@ export class JobManagerContainer extends Container {
             .catch(err => {
               const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
               console.error('Job failed', err);
-              logger.error(err);
+              logger.error(err.message);
 
               if (currentJob.type === 'git_pull') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
