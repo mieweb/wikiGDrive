@@ -319,11 +319,11 @@ export class TransformContainer extends Container {
       }
     }
 
+    await queueTransformer.finished();
+
     await this.createRedirs(contentFileService);
     await this.writeToc(contentFileService);
     await this.rewriteLinks(contentFileService);
-
-    await queueTransformer.finished();
 
     await this.localLog.save();
     await this.localLinks.save();
