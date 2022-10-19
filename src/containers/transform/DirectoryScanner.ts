@@ -140,8 +140,8 @@ export class DirectoryScanner {
         // const localPath = existingDirectory.getVirtualPath() + realFileName;
         const localFile = this.parseMarkdown(markdown, realFileName);
         if (localFile) {
-          if (!localFile.modifiedTime) localFile.modifiedTime = yamlFile.modifiedTime;
-          if (!localFile.version) localFile.version = yamlFile.version;
+          if (!localFile.modifiedTime) localFile.modifiedTime = yamlFile?.modifiedTime;
+          if (!localFile.version) localFile.version = yamlFile?.version;
           this.files[realFileName] = localFile;
         }
       } else {
