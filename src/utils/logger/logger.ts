@@ -148,7 +148,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
   process
     .on('unhandledRejection', async (reason: any) => {
       console.error('unhandledRejection', reason);
-      logger.error('unhandledRejection: ' + reason.message, reason);
+      logger.error('unhandledRejection: ' + reason.stack ? reason.stack : reason.message, reason);
 
       if (reason?.response?.data?.error === 'invalid_grant') {
         eventBus.emit('panic:invalid_grant');

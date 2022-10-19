@@ -187,7 +187,7 @@ export class GitScanner {
       }
 
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
       throw err;
     }
   }
@@ -355,7 +355,7 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return [];
       }
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
       return [];
     }
   }
@@ -421,7 +421,7 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return [];
       }
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
       throw err;
     }
   }
@@ -538,7 +538,7 @@ export class GitScanner {
       if (err.message.indexOf('does not have any commits yet') > 0) {
         return ;
       }
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
     }
   }
 
