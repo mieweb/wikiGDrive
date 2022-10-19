@@ -543,7 +543,7 @@ export class JobManagerContainer extends Container {
     const filesToRetry = [];
     for (const change of changesToFetch) {
       const [treeItem] = await markdownTreeProcessor.findById(change.id);
-      if (treeItem.modifiedTime && treeItem.modifiedTime < change.modifiedTime) {
+      if (treeItem?.modifiedTime && treeItem.modifiedTime < change.modifiedTime) {
         filesToRetry.push(change);
       }
     }
