@@ -117,8 +117,7 @@ export class PreviewRendererContainer extends Container {
         this.logger.info(writable.getBuffer().toString());
       }
     } catch (err) {
-      console.error(err);
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
     }
 
     // fs.unlinkSync(`${tempDir}/config.toml`);

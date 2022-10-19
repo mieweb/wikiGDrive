@@ -85,7 +85,7 @@ export default class GitController extends Controller {
 
       return {};
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
       throw err;
     }
   }
@@ -131,7 +131,7 @@ export default class GitController extends Controller {
 
       return {};
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }

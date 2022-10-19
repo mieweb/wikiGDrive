@@ -302,7 +302,7 @@ export class JobManagerContainer extends Container {
             .catch(err => {
               const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
               console.error('Job failed', err);
-              logger.error(err.message);
+              logger.error(err.stack ? err.stack : err.message);
 
               if (currentJob.type === 'git_pull') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
@@ -378,7 +378,7 @@ export class JobManagerContainer extends Container {
             });
         }
       } catch (err) {
-        this.engine.logger.error(err.message);
+        this.engine.logger.error(err.stack ? err.stack : err.message);
       }
     }, 100);
   }
@@ -494,7 +494,7 @@ export class JobManagerContainer extends Container {
 
       return {};
     } catch (err) {
-      logger.error(err.message, err);
+      logger.error(err.stack ? err.stack : err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }

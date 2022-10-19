@@ -214,8 +214,7 @@ export class TaskLocalFileTransform extends QueueTask {
       }
       this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
     } catch (err) {
-      console.error(err);
-      this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.message);
+      this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.stack ? err.stack : err.message);
     }
   }
 

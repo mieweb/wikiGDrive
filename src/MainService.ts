@@ -101,11 +101,7 @@ export class MainService {
     this.eventBus.on('panic', (error) => {
       throw error;
       /*
-      if (error.stack) {
-        this.logger.error(error.stack);
-      } else {
-        this.logger.error(error.message);
-      }
+      this.logger.error(error.stack ? error.stack : error.message);
       console.error(error.message);
       process.exit(1);
       */

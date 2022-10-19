@@ -22,7 +22,7 @@ export class QueueDownloader {
     this.q = queue<QueueTask, QueueTaskError>(async (queueTask) => this.processQueueTask(queueTask), CONCURRENCY);
 
     this.q.error((err: QueueTaskError, queueTask) => {
-      this.logger.error(err.message);
+      this.logger.error(err.stack ? err.stack : err.message);
 
       if (403 === err.code) {
         // this.progress.failed++;
