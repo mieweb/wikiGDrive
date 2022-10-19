@@ -24,7 +24,7 @@ export class QueueTransformer {
     this.q = queue<QueueTask, QueueTaskError>(async (queueTask) => this.processQueueTask(queueTask), CONCURRENCY);
 
     this.q.error((err: QueueTaskError, queueTask) => {
-      this.logger.error(err);
+      this.logger.error(err.message);
 
       if (403 === err.code) {
         // this.progress.failed++;
