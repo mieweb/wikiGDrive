@@ -147,5 +147,5 @@ a[disabled] {
 
 .badge-primary {
   color: var(--bs-white);
-  background-color: var(--bs-primary);
+  background-color: var(--bs-danger);
 }
