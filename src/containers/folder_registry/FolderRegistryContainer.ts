@@ -38,8 +38,11 @@ export class FolderRegistryContainer extends Container {
     this.logger = engine.logger.child({ filename: __filename });
 
     this.folders = await this.filesService.readJson('folders.json') || {};
-
-    await this.refreshDrives();
+    try {
+      await this.refreshDrives();
+    } catch (err) {
+      this.logger.error(err.stack ? err.stack : err.message);
+    }
   }
 
   async refreshDrives() {
@@ -122,7 +125,11 @@ export class FolderRegistryContainer extends Container {
 
   async run() {
     setInterval(async () => {
-      await this.refreshDrives();
+      try {
+        await this.refreshDrives();
+      } catch (err) {
+        this.logger.error(err.stack ? err.stack : err.message);
+      }
     }, 60*1000);
   }
 
