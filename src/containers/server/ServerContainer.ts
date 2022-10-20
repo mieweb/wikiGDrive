@@ -384,6 +384,11 @@ export class ServerContainer extends Container {
           title: 'Transform Markdown'
         });
 
+        await jobManagerContainer.schedule(driveId, {
+          type: 'render_preview',
+          title: 'Render preview'
+        });
+
         res.json({ driveId });
       } catch (err) {
         next(err);

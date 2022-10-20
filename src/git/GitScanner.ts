@@ -163,6 +163,8 @@ export class GitScanner {
     try {
       const remoteCommit = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
 
+      await this.resetOnLocal();
+
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
       if (!headCommit) {
