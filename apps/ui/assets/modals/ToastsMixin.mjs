@@ -25,7 +25,7 @@ export const ToastsMixin = {
 
       if (toast.err === 'cannot push non-fastforwardable reference') {
         if (window.confirm('Git error: ' + toast.err + '. Do you want to reset git repository with remote branch?')) {
-          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+          await this.authenticatedClient.fetchApi(`/api/git/${this.drive.id}/reset_remote`, {
             method: 'post'
           });
           window.location.hash = '#git_log';
@@ -33,9 +33,9 @@ export const ToastsMixin = {
         return;
       }
 
-      if (toast.err === 'this patch has already been applied' || toast.err === 'rebase conflict') {
+      if (toast.err === 'no merge base found' || toast.err === 'this patch has already been applied' || toast.err === 'rebase conflict') {
         if (window.confirm('Rebase conflict. Do you want to reset git repository with remote branch?')) {
-          await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+          await this.authenticatedClient.fetchApi(`/api/git/${this.drive.id}/reset_remote`, {
             method: 'post'
           });
           window.location.hash = '#git_log';

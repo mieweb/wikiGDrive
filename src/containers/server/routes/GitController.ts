@@ -96,16 +96,6 @@ export default class GitController extends Controller {
       type: 'git_pull',
       title: 'Git Pull'
     });
-
-    await this.jobManagerContainer.schedule(driveId, {
-      type: 'transform',
-      title: 'Transform markdown'
-    });
-    await this.jobManagerContainer.schedule(driveId, {
-      type: 'render_preview',
-      title: 'Render preview'
-    });
-
     return { driveId };
   }
 
@@ -136,6 +126,34 @@ export default class GitController extends Controller {
 
       await gitScanner.resetOnRemote(userConfig.remote_branch, {
         publicKey, privateKey, passphrase
+      });
+
+      await this.jobManagerContainer.schedule(driveId, {
+        type: 'transform',
+        title: 'Transform markdown'
+      });
+
+      return {};
+    } catch (err) {
+      this.logger.error(err.stack ? err.stack : err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
+  @RoutePost('/:driveId/reset_local')
+  async resetLocal(@RouteParamPath('driveId') driveId: string) {
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+      await gitScanner.resetOnLocal();
+
+      await this.jobManagerContainer.schedule(driveId, {
+        type: 'transform',
+        title: 'Transform markdown'
       });
 
       return {};
