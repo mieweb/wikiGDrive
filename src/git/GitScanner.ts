@@ -49,7 +49,7 @@ export async function wrapError<T>(asyncFunc: () => T): Promise<T> {
     if (errMsg && errMsg.errorFunction) {
       const err = new Error(errMsg.message);
       const stackList = err.stack.split('\n');
-      err.stack = stackList.slice(0, 1).concat(stackList.slice(3)).join('\n');
+      err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
       for (const k in errMsg) {
         err[k] = errMsg[k];
       }
@@ -276,7 +276,7 @@ export class GitScanner {
     const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
 
     const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
+    this.logger.info(`git reset on remote: ${remoteUrl}#${remoteBranch}`);
 
     const repo = await wrapError(async () => await Repository.open(this.rootPath));
 
