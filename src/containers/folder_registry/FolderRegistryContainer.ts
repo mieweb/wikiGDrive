@@ -37,16 +37,29 @@ export class FolderRegistryContainer extends Container {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename });
 
+    this.folders = await this.filesService.readJson('folders.json') || {};
+
+    await this.refreshDrives();
+  }
+
+  async refreshDrives() {
+    const oldDrives = Object.values(await this.getFolders());
+
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
-
-    this.folders = {};
-    const folders = await this.filesService.readJson('folders.json') || {};
-
     const drives = await apiContainer.listDrives();
-    for (const folderId in folders) {
-      const drive = drives.find(drive => drive.id === folderId);
-      if (drive) {
-        this.folders[folderId] = drive;
+
+    for (const newDrive of drives) {
+      if (!oldDrives.find(oldDrive => oldDrive.id === newDrive.id)) {
+        try {
+          await this.registerFolder(newDrive.id);
+        } catch (err) {
+          this.logger.error(err.stack ? err.stack : err.message);
+        }
+      }
+    }
+    for (const oldDrive of oldDrives) {
+      if (!drives.find(newDrive => newDrive.id === oldDrive.id)) {
+        await this.unregisterFolder(oldDrive.id);
       }
     }
   }
@@ -103,13 +116,14 @@ export class FolderRegistryContainer extends Container {
     await this.filesService.remove(folderId + '_transform/.git');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   async flushData() {
     await this.filesService.writeJson('folders.json', this.folders);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   async run() {
+    setInterval(async () => {
+      await this.refreshDrives();
+    }, 60*1000);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
