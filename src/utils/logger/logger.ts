@@ -154,14 +154,11 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
         eventBus.emit('panic:invalid_grant');
         return;
       }
-      process.exit(1);
     })
     .on('uncaughtException', err => {
       console.error('uncaughtException', err);
       logger.error('Uncaught Exception thrown', err);
-      process.exit(1);
     });
-
 
   return logger;
 }
