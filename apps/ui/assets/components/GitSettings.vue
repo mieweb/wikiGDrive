@@ -19,6 +19,8 @@
         </div>
 
         <button class="btn btn-danger" type="button" @click="nukeGitDir()"><i class="fa-solid fa-explosion"></i> Nuke .git directory</button>
+        <button class="btn btn-danger" type="button" @click="resetOnLocal">Reset on local</button>
+        <button v-if="remote_url" class="btn btn-danger" type="button" @click="resetOnRemote">Reset on remote</button>
 
         <div v-if="github_url">
           To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'" target="_blank">Deploy keys</a>.<br />
@@ -121,6 +123,20 @@ export default {
       });
 
       window.location.reload();
+    },
+    async resetOnLocal() {
+      if (window.confirm('Are you sure?')) {
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_local`, {
+          method: 'post'
+        });
+      }
+    },
+    async resetOnRemote() {
+      if (window.confirm('Are you sure?')) {
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+          method: 'post'
+        });
+      }
     }
   }
 };

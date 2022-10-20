@@ -246,7 +246,7 @@ export class JobManagerContainer extends Container {
           currentJob.started = now;
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
           this.runJob(driveId, currentJob)
-            .then(() => {
+            .then(async () => {
               if (currentJob.type === 'git_pull') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -255,6 +255,11 @@ export class JobManagerContainer extends Container {
                   links: {
                     '#git_log': 'View git history'
                   },
+                });
+
+                await this.schedule(driveId, {
+                  type: 'transform',
+                  title: 'Transform markdown'
                 });
               }
               if (currentJob.type === 'git_push') {
@@ -276,6 +281,11 @@ export class JobManagerContainer extends Container {
                   title: 'Transform done',
                   type: 'transform:done',
                   payload: currentJob.payload || 'all'
+                });
+
+                await this.schedule(driveId, {
+                  type: 'render_preview',
+                  title: 'Render preview'
                 });
               }
               if (currentJob.type === 'sync_all') {
