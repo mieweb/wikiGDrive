@@ -5,7 +5,7 @@ if (!process.env.BUILD_TIME) {
   process.env.BUILD_TIME = new Date().toISOString();
 }
 if (!process.env.VERSION) {
-  process.env.VERSION = 'dev';
+  process.env.VERSION = process.env.GIT_SHA || 'dev';
 }
 
 export default defineConfig({
