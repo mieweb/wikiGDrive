@@ -30,7 +30,7 @@ export class TocGenerator {
       const file = files[realFileName];
       let lineStart = '*';
       for (let i = 0; i <= level; i++) {
-        lineStart = ' ' + lineStart;
+        lineStart = '   ' + lineStart;
       }
 
       if (file.type === 'directory') {
