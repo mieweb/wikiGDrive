@@ -97,6 +97,15 @@ export default class GitController extends Controller {
       title: 'Git Pull'
     });
 
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'transform',
+      title: 'Transform markdown'
+    });
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'render_preview',
+      title: 'Render preview'
+    });
+
     return { driveId };
   }
 
