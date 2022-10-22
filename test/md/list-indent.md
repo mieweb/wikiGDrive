@@ -1,16 +1,16 @@
 1. If not already there, navigate to the <strong>Health Surveillance</strong> menu of the Control Panel.
 2. Using the information acquired in the Health Surveillance Matrix, begin entering the appropriate actions to each of the respective panels, as needed, clicking <strong>Add Panel</strong>. Otherwise, click <strong>Edit</strong> on an existing panel action to make any necessary changes.
-
-![](10000201000004BE0000011D30E30AE192655040.png)
+  
+![](10000201000004BE0000011D30E30AE192655040.png)  
 
 
 3. When adding action items to panels, the [Representative Event panel action](#tyjcwt) is usually added to the panel first. Fill out all of the necessary fields according to the information acquired in the Health Surveillance matrix, and click <strong>Submit</strong> to save the panel action to the panel.
    1. <strong>Action Name</strong>: Required field. The Action Name is usually the name of a test/procedure that is the component/action of the panel. The name will be displayed listings and dialogues throughout the system.
    2. <strong>Lead Time</strong>: The Lead Time translates to the number of days prior to the Trigger Date the panel action becomes visible and is created within the system. This defines how many days before the Trigger Date that the panel/orders will populate on the Due List. Keep Lead Times consistent when setting multiple action items in a panel; otherwise, each component of the panel will have different Due Dates if there are different Lead Times on each. Emails can be configured to send email notifications, as needed, with a list of associated charts/employees that will be due. The recipient has the time between receiving the email and the panel action Trigger Date to notify Health Services of any issues or mistakes with the list. Emails to the member/chart will not be sent until the actual Trigger Date. (Email reminders are separately configured on a per client basis. Email notification may not apply to all clients).
 
-{{% tip %}} 
-   If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.
-   ![](1000020100000311000001824A182983854F26CB.png)
+{{% tip %}}  
+   If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.  
+   ![](1000020100000311000001824A182983854F26CB.png)  
 {{% /tip %}}
 
    3. <strong>Required for Certification</strong>: Select this to indicate the panel action is required for members of the panel. Leave unchecked if the panel action is voluntary. If checked, a panel member failing or becoming overdue for the action will become de-certified from the panel.
@@ -21,8 +21,8 @@
    7. <strong>Trigger Date</strong>: On what date should the panel action trigger? Use the drop-down to select one of the following Trigger Dates:
       1. <strong>Date of Birth</strong>: Triggers the panel action on the panel member's date of birth, on a schedule determined by the starting age and frequency. Assumes the panel member's DOB has been captured in the chart demographics.
       2. <strong>Other Action (Triggered)</strong>: The Other Action (Triggered) trigger date allows users to trigger a panel action at the same time as another action item, indicated in this panel action. For example, an action to trigger an Audiogram may be for Entry, Routine, or Exit actions; if checked, other actions may use this panel action as a trigger. This option must be selected for the action to display in the Related Action list. The Related Action list displays when then Trigger Date is set to Other Action (Triggered) or Prior Action (Completed). Additionally, action items can be configured to trigger with the Representative Events, as needed, if that programming is utilized. This allows all action items to trigger together for a panel. Triggers with all the same date are usually tied to representative event.
-
-      ![](100002010000033B00000036339CF669B6C2B512.png)
+  
+      ![](100002010000033B00000036339CF669B6C2B512.png)  
 
       3. <strong>Point in Time</strong>: The Point in Time trigger date allows users to trigger an action item on the same day and month, each year (must be MM/DD format).
       4. <strong>Panel Expiration</strong>: Triggers on the expiration date specified in the panel status. Most panels will be configured with a representative event as the
@@ -33,10 +33,10 @@
       1. <strong>Current Panel Only</strong>: This is a checkbox that is associated with the Valid For field. If checked, this panel action will be triggered, regardless of whether the same encounter or procedure was completed for a different panel. For example, if a panel member is included in both the Asbestos panel and Benzene panel, and both require a Chest Xray, then {{% system-name %}} would (by default) only populate Chest Xray once on the Due List. With the Current Panel Only option selected, in this example, the Chest Xray will display twice, once for each panel.
    12. <strong>Grace Period</strong>: Day, Weeks, Months, Years. Use the drop-down to define how much time the panel member is allotted to complete the panel action, from the time it is visible till the time it is considered overdue. Periodic email notifications can be set up with scheduled jobs, if preferred. The Grace Period is <strong>before</strong> the Due Date, meaning the Grace Period is the amount of time before the Due Date that the invitations, emails, and questionnaire become available. The panel member gets notified at the point of the Grace Period plus Lead Time.
 
-{{% note %}} 
-   Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.
+{{% note %}}  
+   Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.  
 {{% /note %}}
 
    13. <strong>Instructions</strong>: Free text instructions for a provider to perform this action item, if necessary. Could be instructions or pass/fail criteria, etc.
-    
+
 
