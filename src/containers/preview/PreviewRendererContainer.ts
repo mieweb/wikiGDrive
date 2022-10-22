@@ -61,7 +61,7 @@ export class PreviewRendererContainer extends Container {
       let result;
 
       if (themeId) {
-        this.logger.info(`docker run
+        this.logger.info(`docker run 
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir"
@@ -69,6 +69,7 @@ export class PreviewRendererContainer extends Container {
         --env THEME_ID=${themeId}
         --env THEME_SUBPATH=${themeSubPath}
         --env THEME_URL=${themeUrl}
+        ${process.env.RENDER_IMAGE}
         `);
 
         result = await docker.run(process.env.RENDER_IMAGE, [], writable, {
