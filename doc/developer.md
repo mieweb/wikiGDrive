@@ -129,3 +129,10 @@ wikigdrive --service_account /service_account.json  drives
 `-- readme.md
 
 ```
+
+Cool trick to watch changes as they happen in a document:
+
+```
+cd /var/lib/docker/volumes/wikiGDriveDevelop/_data/0APmwe3yIhGabUk9PVA
+watch -d odt2txt 1WfXOsKmPgOtdsZxXdl6RpqMrlkQP2O1GrprnaFxK0oE.odt
+```
