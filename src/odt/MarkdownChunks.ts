@@ -148,7 +148,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/P':
           return '\n';
         case 'BR/':
-          return '\n';
+          return '  \n';
         case 'PRE':
           return '\n```'+ (chunk.payload?.lang || '') +'\n';
         case '/PRE':

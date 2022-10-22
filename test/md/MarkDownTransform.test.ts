@@ -113,6 +113,12 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown));
   });
 
+  it('test ./line-breaks', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/line-breaks.md').toString();
+    const markdown = await transformOdt('line-breaks');
+    assert.ok(compareTexts(testMarkdown, markdown, false));
+  });
+
 });
 
 async function transformOdt(id: string) {

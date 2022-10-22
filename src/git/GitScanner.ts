@@ -268,7 +268,9 @@ export class GitScanner {
 
     const repo = await wrapError(async () => await Repository.open(this.rootPath));
     const commitToReset = await wrapError(async () => await repo.getHeadCommit());
-    await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+    if (commitToReset) {
+      await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+    }
   }
 
   async resetOnRemote(remoteBranch: string, sshParams?: SshParams) {

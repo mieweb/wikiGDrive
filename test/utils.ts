@@ -8,8 +8,13 @@ export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
 }
 
+function trailSpacesReplacer(x) {
+  x = x.replace(/\n/g, '');
+  return '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'.substring(0, x.length);
+}
+
 export function compareTexts(input, output, ignoreWhitespace = true) {
-  if (!ignoreWhitespace) {
+  if (ignoreWhitespace) {
     input = input.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
     output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
   }
@@ -19,11 +24,11 @@ export function compareTexts(input, output, ignoreWhitespace = true) {
 
   for (const part of diff) {
     if (part.added) {
-      console.log(chalk.green(part.value));
+      console.log(chalk.green(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
     if (part.removed) {
-      console.log(chalk.red(part.value));
+      console.log(chalk.red(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
     console.log(part.value);

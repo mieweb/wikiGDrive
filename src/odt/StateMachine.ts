@@ -1,4 +1,4 @@
-import {isClosing, isOpening, MarkdownChunks, MarkdownTagChunk, OutputMode, TAG, TagPayload} from './MarkdownChunks';
+import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks';
 import {fixCharacters, spaces} from './utils';
 import slugify from 'slugify';
 
@@ -37,6 +37,14 @@ function isPreBeginMacro(innerTxt: string) {
 
 function isPreEndMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% /pre ') && innerTxt.endsWith(' %}}');
+}
+
+function isBeginMacro(innerTxt: string) {
+  return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
+}
+
+function isEndMacro(innerTxt: string) {
+  return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }
 
 export class StateMachine {
@@ -239,7 +247,18 @@ export class StateMachine {
       this.markdownChunks.removeChunk(payload.position);
     }
     if (tag === '/P' && this.parentLevel?.tag === 'TD') {
-      this.markdownChunks.removeChunk(payload.position);
+      this.markdownChunks.chunks[payload.position] = {
+        isTag: true,
+        mode: this.currentMode,
+        tag: 'BR/',
+        payload: {}
+      };
+    }
+    if (tag === '/TD') {
+      const prevChunk = this.markdownChunks.chunks[payload.position - 1];
+      if (prevChunk.isTag && prevChunk.tag === 'BR/') {
+        this.markdownChunks.removeChunk(payload.position - 1);
+      }
     }
 
     if (tag === '/I') {
@@ -607,7 +626,72 @@ export class StateMachine {
             mode: 'md',
             payload: {}
           });
+        }
+      }
+    }
+
+    let previousParaPosition = 0;
+    const macros = [];
+    for (let position = 0; position < this.markdownChunks.length - 1; position++) {
+      const chunk = this.markdownChunks.chunks[position];
+
+      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === 'P') {
+        previousParaPosition = position;
+        continue;
+      }
+
+      if (chunk.isTag === false && chunk.mode === 'md' && isBeginMacro(chunk.text)) {
+        macros.push(chunk.text);
+        continue;
+      }
+
+      if (chunk.isTag === false && chunk.mode === 'md' && isEndMacro(chunk.text)) {
+        continue;
+      }
+
+      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === '/P') {
+        const nextChunk = this.markdownChunks.chunks[position + 1];
+
+        if (macros.length > 0) {
           continue;
+        }
+
+        if (nextChunk.isTag && nextChunk.mode === 'md' && nextChunk.tag === 'P') {
+
+          let nextParaClosing = 0;
+          for (let position2 = position + 1; position2 < this.markdownChunks.length; position2++) {
+            const chunk2 = this.markdownChunks.chunks[position2];
+            if (chunk2.isTag && chunk2.mode === 'md' && chunk2.tag === '/P') {
+              nextParaClosing = position2;
+              break;
+            }
+          }
+
+          if (nextParaClosing > 0) {
+            const innerText = this.markdownChunks.extractText(position, nextParaClosing);
+            if (innerText.length === 0) {
+              continue;
+            }
+          }
+
+          if (previousParaPosition > 0) {
+            const innerText = this.markdownChunks.extractText(previousParaPosition, position);
+            if (innerText.length === 0) {
+              continue;
+            }
+            if (innerText.endsWith(' %}}')) {
+              continue;
+            }
+          }
+
+          this.markdownChunks.chunks.splice(position, 2, {
+            isTag: true,
+            tag: 'BR/',
+            mode: 'md',
+            payload: {}
+          });
+          position--;
+          previousParaPosition = 0;
         }
       }
     }
