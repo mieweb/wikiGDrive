@@ -152,6 +152,7 @@ export default {
       }
     },
     isGoogleId(id) {
+      if (!id) return false;
       if (id.length === 0) return false;
       if (id.indexOf(':') > -1) return false;
 
