@@ -36,7 +36,7 @@
   <div class="d-flex py-1" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
     <div class="flex-grow-1"></div>
     <div>
-      <button @click.prevent.stop="openExternal(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Edit" title="Edit">
+      <button v-if="isGoogleId(selectedFile.id)" @click.prevent.stop="openExternal(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Edit" title="Edit">
         <i class="fa-solid fa-file-pen me-1"></i>
       </button>
 
@@ -150,6 +150,12 @@ export default {
         this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
 
       }
+    },
+    isGoogleId(id) {
+      if (id.length === 0) return false;
+      if (id.indexOf(':') > -1) return false;
+
+      return true;
     }
   }
 };
