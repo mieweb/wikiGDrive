@@ -124,7 +124,7 @@ export default class GitController extends Controller {
       const privateKey = await userConfigService.getDeployPrivateKey();
       const passphrase = 'sekret';
 
-      await gitScanner.resetOnRemote(userConfig.remote_branch, {
+      await gitScanner.resetTORemote(userConfig.remote_branch, {
         publicKey, privateKey, passphrase
       });
 
@@ -149,7 +149,7 @@ export default class GitController extends Controller {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
       const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
-      await gitScanner.resetOnLocal();
+      await gitScanner.resetToLocal();
 
       await this.jobManagerContainer.schedule(driveId, {
         type: 'transform',

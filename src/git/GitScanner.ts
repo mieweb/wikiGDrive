@@ -163,7 +163,7 @@ export class GitScanner {
     try {
       const remoteCommit = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
 
-      await this.resetOnLocal();
+      await this.resetToLocal();
 
       this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
 
@@ -263,7 +263,7 @@ export class GitScanner {
     }));
   }
 
-  async resetOnLocal() {
+  async resetToLocal() {
     this.logger.info('git reset local');
 
     const repo = await wrapError(async () => await Repository.open(this.rootPath));
@@ -273,7 +273,7 @@ export class GitScanner {
     }
   }
 
-  async resetOnRemote(remoteBranch: string, sshParams?: SshParams) {
+  async resetTORemote(remoteBranch: string, sshParams?: SshParams) {
     if (!remoteBranch) {
       remoteBranch = 'master';
     }

@@ -46,7 +46,7 @@ const app = Vue.createApp({
     this.authenticatedClient.app = this.$root;
     this.emitter.on('*', (type) => {
       switch (type) {
-        case 'transform:done':
+        case 'render_preview:done':
         case 'git_pull:done':
         case 'git_push:done':
         case 'commit:done':

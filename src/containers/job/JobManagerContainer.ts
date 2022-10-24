@@ -274,6 +274,10 @@ export class JobManagerContainer extends Container {
               }
               if (currentJob.type === 'render_preview') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Render done',
+                  type: 'render_preview:done',
+                });
               }
               if (currentJob.type === 'transform') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());

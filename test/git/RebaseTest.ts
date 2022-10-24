@@ -367,7 +367,7 @@ describe('RebaseTest', () => {
         }
       }
 
-      await scannerLocal.resetOnRemote('main');
+      await scannerLocal.resetTORemote('main');
 
       await scannerLocal.pushBranch('main');
 
