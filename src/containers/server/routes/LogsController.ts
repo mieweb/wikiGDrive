@@ -12,9 +12,9 @@ export class LogsController extends Controller {
     const options: QueryOptions = {
       from: new Date(+from || +new Date() - (24 * 60 * 60 * 1000)),
       until: new Date(),
-      // limit: 100,
+      limit: 1000,
       // start: 0,
-      order: 'asc',
+      order: 'desc',
       fields: undefined//['message']
     };
 
@@ -28,7 +28,7 @@ export class LogsController extends Controller {
       }
     }));
 
-    return results['dailyRotateFile'];
+    return results['dailyRotateFile'].reverse();
   }
 
 }
