@@ -114,7 +114,7 @@ export class WatchChangesContainer extends Container {
         }
         this.lastToken[driveId] = changes.token;
       } catch (err) {
-        this.logger.error(err.stack ? err.stack : err.message);
+        this.logger.warn(err.message);
       }
     }, 3000);
   }
