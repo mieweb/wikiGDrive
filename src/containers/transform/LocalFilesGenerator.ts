@@ -1,5 +1,5 @@
 import slugify from 'slugify';
-import {BinaryFile, DrawingFile, Directory, LocalFile, MdFile} from '../../model/LocalFile';
+import {BinaryFile, DrawingFile, Directory, LocalFile, MdFile, ShortcutFile} from '../../model/LocalFile';
 import { GoogleFile, MimeTypes } from '../../model/GoogleFile';
 import {googleMimeToExt} from './TaskLocalFileTransform';
 
@@ -81,6 +81,20 @@ export class LocalFilesGenerator {
               fileName: desiredLocalPath,
             };
             retVal.push(drawingFile);
+          }
+          break;
+        case MimeTypes.SHORTCUT:
+          {
+            const shortcutFile: ShortcutFile = {
+              type: 'shortcut',
+              id: googleFile.id,
+              title: googleFile.name,
+              modifiedTime: googleFile.modifiedTime,
+              version: +googleFile.version,
+              mimeType: MimeTypes.SHORTCUT,
+              fileName: desiredLocalPath,
+            };
+            retVal.push(shortcutFile);
           }
           break;
         default:
