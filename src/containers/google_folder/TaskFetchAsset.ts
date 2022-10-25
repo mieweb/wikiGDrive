@@ -19,7 +19,8 @@ export class TaskFetchAsset extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    const targetPath = this.file.id + '.' + googleMimeToExt(this.file.mimeType, this.file.name);
+    const ext = googleMimeToExt(this.file.mimeType, this.file.name);
+    const targetPath = this.file.id + (ext ? '.' + ext : '');
 
     if (this.file.md5Checksum) {
       const localMd5 = await this.fileService.md5File(targetPath);

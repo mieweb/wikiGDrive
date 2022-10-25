@@ -38,11 +38,15 @@ export interface BinaryFile extends CommonFileData { // TODO md5?
   type: 'binary';
 }
 
+export interface ShortcutFile extends CommonFileData {
+  type: 'shortcut';
+}
+
 export interface Directory extends CommonFileData {
   type: 'directory';
 }
 
-export type LocalFile = MdFile | RedirFile | ConflictFile | Directory | DrawingFile | BinaryFile;
+export type LocalFile = MdFile | RedirFile | ConflictFile | Directory | DrawingFile | BinaryFile | ShortcutFile;
 
 export function isRedirect(file: LocalFile) {
   return file.type === 'redir';

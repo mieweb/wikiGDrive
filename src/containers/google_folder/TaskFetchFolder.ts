@@ -181,6 +181,9 @@ export class TaskFetchFolder extends QueueTask {
             ));
             break;
 
+          case MimeTypes.SHORTCUT:
+            break;
+
           default:
             tasks.push(new TaskFetchAsset(
               this.logger,

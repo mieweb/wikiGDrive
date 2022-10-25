@@ -30,6 +30,8 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
       return 'svg';
     case 'application/vnd.google-apps.document':
       return 'odt';
+    case 'text/csv':
+      return 'csv';
   }
 
   if (fileName.indexOf('.') > -1) {

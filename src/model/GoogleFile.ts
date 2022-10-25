@@ -30,7 +30,8 @@ export const MimeTypes = {
   FORM_MIME: 'application/vnd.google-apps.form',
   PRESENTATION_MIME: 'application/vnd.google-apps.presentation',
   APPS_SCRIPT: 'application/vnd.google-apps.script',
-  MARKDOWN: 'text/x-markdown'
+  MARKDOWN: 'text/x-markdown',
+  SHORTCUT: 'application/vnd.google-apps.shortcut'
 };
 export const MimeToExt = {
   'image/svg+xml': '.svg',
