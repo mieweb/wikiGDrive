@@ -585,7 +585,9 @@ export class GitScanner {
             }
           }
         } catch (err) {
-          console.error(err);
+          if (!err.message.startsWith('no reference found for shorthand')) {
+            this.logger.warn(err.message);
+          }
         }
       }
 
