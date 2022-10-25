@@ -12,7 +12,6 @@
           :selectedPath="selectedPath"
           :gitChanges="gitChanges"
           :checked="checked"
-          @toggleCheckAll="toggleCheckAll"
           @toggle="toggle"
           @setCurrentDiff="setCurrentDiff"
           @collapse="collapse"
@@ -80,6 +79,9 @@ export default {
     folderPath: {
       type: String
     },
+    contentDir: {
+      type: String
+    },
     selectedFile: Object
   },
   data() {
@@ -101,9 +103,9 @@ export default {
       return Object.keys(this.checked).length === this.gitChanges?.length;
     },
     historyPath() {
-      if (this.folderPath) {
-        const folderPath = this.folderPath.replace(/\/$/, '');
-        return folderPath + (this.selectedFile?.path || '');
+      if (this.contentDir) {
+        const contentDir = this.contentDir.replace(/\/$/, '');
+        return contentDir + (this.selectedFile?.path || '');
       } else {
         return this.selectedFile?.path || '/';
       }
@@ -133,6 +135,8 @@ export default {
       const path = file.path.startsWith('/') ? file.path : '/' + file.path;
       this.selectedPath = path.substring(1);
 
+      this.$router.push('/drive/' + this.driveId + path + '#git_commit');
+
       if (file.children && file.children.length > 0) {
         return;
       }
@@ -156,7 +160,8 @@ export default {
       if (this.selectedFile?.path) {
         this.setCurrentDiff({ path: this.historyPath });
       } else {
-        this.setCurrentDiff(null);
+        await this.setCurrentDiff(null);
+        this.selectedPath = this.historyPath.substr(1);
       }
 
       const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);

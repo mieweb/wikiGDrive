@@ -158,6 +158,8 @@ export default class FolderController extends Controller {
 
     this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
     this.res.setHeader('wgd-tree-version', treeVersion);
+    const contentDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '/';
+    this.res.setHeader('wgd-content-dir', contentDir);
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send('Not exist in transformedFileSystem');

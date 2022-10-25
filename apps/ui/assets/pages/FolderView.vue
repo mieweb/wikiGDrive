@@ -1,5 +1,5 @@
 <template>
-  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
+  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
 
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
@@ -15,6 +15,11 @@
 
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
+      <div v-if="notFound" class="container">
+        <div class="alert alert-warning text-wrap">
+          404 NOT FOUND: {{ notFound }}
+        </div>
+      </div>
 
       <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
@@ -34,7 +39,7 @@
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
-      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id"
+      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
                   :folderPath="folderPath"
                   :selectedFile="selectedFile"
                   :selected-folder="selectedFolder"
@@ -91,12 +96,14 @@ export default {
     return {
       rootFolder: {},
       folderPath: '',
+      contentDir: '',
       activeTab: DEFAULT_TAB,
       files: [],
       selectedFile: {},
       selectedFolder: {},
       treeEmpty: false,
-      treeVersion: null
+      treeVersion: null,
+      notFound: false
     };
   },
   computed: {
@@ -136,6 +143,7 @@ export default {
   methods: {
     async fetchFolder(driveId, filePath) {
       const pathContent = await this.FileClientService.getFile('/' + driveId + filePath);
+      this.contentDir = pathContent.contentDir;
       this.folderPath = filePath;
       this.files = pathContent.files || [];
       this.treeEmpty = pathContent.treeEmpty;
@@ -170,11 +178,11 @@ export default {
           this.selectedFolder = await this.fetchFolder(driveId, dirPath);
           this.selectedFile = {};
         }
-        this.notRegistered = false;
+        this.notFound = false;
       } catch (err) {
         if (err.code === 404) {
           this.shareEmail = err.share_email || this.drive.share_email;
-          this.notRegistered = true;
+          this.notFound = filePath;
         }
       }
     }

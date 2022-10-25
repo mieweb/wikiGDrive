@@ -38,6 +38,7 @@ export default {
       checkedDirs: {}
     };
   },
+  emits: ['toggle', 'collapse', 'setCurrentDiff'],
   watch: {
     gitChanges() {
       const retVal = [];

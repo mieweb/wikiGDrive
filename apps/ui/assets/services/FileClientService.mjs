@@ -12,7 +12,8 @@ export class FileClientService {
       googleId: response.headers.get('wgd-google-id'),
       mimeType: response.headers.get('Content-type').split(';')[0].trim(),
       treeEmpty: response.headers.get('wgd-tree-empty') === 'true',
-      treeVersion: response.headers.get('wgd-tree-version')
+      treeVersion: response.headers.get('wgd-tree-version'),
+      contentDir: response.headers.get('wgd-content-dir'),
     };
 
     if (retVal.mimeType === 'application/vnd.google-apps.folder') {

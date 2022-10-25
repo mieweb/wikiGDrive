@@ -1,5 +1,5 @@
 <template>
-  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :content-dir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" />
 
   <BaseLayout v-else :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
@@ -65,6 +65,7 @@ export default {
     return {
       activeTab: DEFAULT_TAB,
       folderPath: '',
+      contentDir: '',
       selectedFile: {},
       selectedFolder: {},
       notRegistered: false
@@ -109,6 +110,7 @@ export default {
 
           const contentDir = (response.headers.get('wgd-content-dir') || '/').replace(/\/$/, '');
           this.folderPath = contentDir + path.substring(0, path.length - fileName.length);
+          this.contentDir = contentDir;
           this.selectedFile = {
             id: fileId,
             fileName,
