@@ -273,7 +273,7 @@ export class GitScanner {
     }
   }
 
-  async resetTORemote(remoteBranch: string, sshParams?: SshParams) {
+  async resetToRemote(remoteBranch: string, sshParams?: SshParams) {
     if (!remoteBranch) {
       remoteBranch = 'master';
     }
