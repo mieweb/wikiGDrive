@@ -594,8 +594,7 @@ export class GitScanner {
       const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
         flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
       }));
-      const diffStats = await diff.getStats();
-      unstaged = diffStats.filesChanged().valueOf();
+      unstaged = diff.numDeltas();
     } catch (err) { // eslint-disable no-empty
     }
 
