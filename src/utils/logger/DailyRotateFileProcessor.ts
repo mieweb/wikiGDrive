@@ -86,36 +86,45 @@ export class DailyRotateFileProcessor {
   }
 
   async query() {
-    for (const logFile of this.logFiles) {
-      await this.processLogFile(logFile);
-    }
-
-    this.results.sort((a, b) => {
-      const d1 = new Date(a.timestamp).getTime();
-      const d2 = new Date(b.timestamp).getTime();
-
-      return d1 > d2 ? 1 : d1 < d2 ? -1 : 0;
-    });
-
-    if (this.options.order === 'desc') {
-      this.results = this.results.reverse();
-    }
+    const retVal = [];
+    const logFiles = (this.options.order === 'desc') ? this.logFiles.reverse() : this.logFiles;
 
     const start = this.options.start || 0;
-    const limit = this.options.limit || this.results.length;
+    const limit = this.options.limit || 100;
 
-    this.results = this.results.slice(start, start + limit);
+    for (const logFile of logFiles) {
+      this.results = [];
 
-    if (this.options.fields) {
-      this.results = this.results.map((log) => {
-        const obj = {};
-        this.options.fields.forEach((key) => {
-          obj[key] = log[key];
-        });
-        return obj;
+      await this.processLogFile(logFile);
+
+      this.results.sort((a, b) => {
+        const d1 = new Date(a.timestamp).getTime();
+        const d2 = new Date(b.timestamp).getTime();
+
+        return d1 > d2 ? 1 : d1 < d2 ? -1 : 0;
       });
+
+      if (this.options.order === 'desc') {
+        this.results = this.results.reverse();
+      }
+
+      if (this.options.fields) {
+        this.results = this.results.map((log) => {
+          const obj = {};
+          this.options.fields.forEach((key) => {
+            obj[key] = log[key];
+          });
+          return obj;
+        });
+      }
+
+      if (retVal.length > start + limit) {
+        break;
+      }
+
+      retVal.push(...this.results);
     }
 
-    return this.results;
+    return retVal.slice(start, start + limit);
   }
 }
