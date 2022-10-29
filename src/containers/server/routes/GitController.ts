@@ -156,4 +156,22 @@ export default class GitController extends Controller {
     }
   }
 
+  @RoutePost('/:driveId/remove_untracked')
+  async removeUntracked(@RouteParamPath('driveId') driveId: string) {
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+      await gitScanner.removeUntracked();
+
+      return {};
+    } catch (err) {
+      this.logger.error(err.stack ? err.stack : err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
 }

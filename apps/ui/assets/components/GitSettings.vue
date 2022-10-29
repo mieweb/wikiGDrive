@@ -19,8 +19,9 @@
         </div>
 
         <button class="btn btn-danger" type="button" @click="nukeGitDir()"><i class="fa-solid fa-explosion"></i> Nuke .git directory</button>
-        <button class="btn btn-danger" type="button" @click="resetToLocal">Reset to local</button>
-        <button v-if="remote_url" class="btn btn-danger" type="button" @click="resetToRemote">Reset to remote</button>
+        <button class="btn btn-warning" type="button" @click="resetToLocal">Reset to local</button>
+        <button v-if="remote_url" class="btn btn-warning" type="button" @click="resetToRemote">Reset to remote</button>
+        <button class="btn btn-warning" type="button" @click="removeUntracked">Remove untracked files</button>
 
         <div v-if="github_url">
           To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'" target="_blank">Deploy keys</a>.<br />
@@ -134,6 +135,13 @@ export default {
     async resetToRemote() {
       if (window.confirm('Are you sure?')) {
         await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
+          method: 'post'
+        });
+      }
+    },
+    async removeUntracked() {
+      if (window.confirm('Are you sure?')) {
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/remove_untracked`, {
           method: 'post'
         });
       }
