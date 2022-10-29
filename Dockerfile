@@ -1,4 +1,4 @@
-FROM bitmeal/nodegit:0.27-16-alpine
+FROM bitmeal/nodegit:0.27-18-alpine
 
 RUN apk add --no-cache bash openssh-keygen
 WORKDIR /usr/src/app
