@@ -8,14 +8,23 @@ export class LogsController extends Controller {
   }
 
   @RouteGet('/:driveId')
-  async getConfig(@RouteParamPath('driveId') driveId: string, @RouteParamQuery('from') from: number) {
+  async getConfig(@RouteParamPath('driveId') driveId: string,
+                  @RouteParamQuery('from') from?: number,
+                  @RouteParamQuery('until') until?: number,
+                  @RouteParamQuery('order') order?: 'desc' | 'asc'
+                  ) {
+
+    if (!until && !from) {
+      return [];
+    }
+
     const options: QueryOptions = {
-      from: new Date(+from || +new Date() - (24 * 60 * 60 * 1000)),
-      until: new Date(),
+      from: from ? new Date(+from) : undefined,
+      until: until ? new Date(+until) : undefined,
+      order: order || 'asc',
+      start: 0,
       limit: 1000,
-      // start: 0,
-      order: 'desc',
-      fields: undefined//['message']
+      fields: undefined
     };
 
     options['driveId'] = driveId;
