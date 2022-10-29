@@ -88,9 +88,12 @@ export class GoogleAuthService {
       client_id,
       redirect_uri,
       access_type: 'offline',
-      prompt: 'consent',
+      include_granted_scopes: 'true',
+      prompt: 'consent select_account',
       response_type: 'code',
       scope: [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/drive.install'
       ].join(' '),
       state

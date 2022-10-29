@@ -255,6 +255,19 @@ export class ServerContainer extends Container {
         next(err);
       }
     });
+
+    app.get('/driveui', async (req, res, next) => {
+      try {
+        if (!req.query.state) {
+          throw new Error('No state query parameter');
+        }
+        const state = new URLSearchParams(req.query.state);
+
+        res.json({ state });
+      } catch (err) {
+        next(err);
+      }
+    });
   }
 
   async initAuth(app) {
@@ -290,21 +303,20 @@ export class ServerContainer extends Container {
         const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
         const serverUrl = protocol + hostname;
 
-        if (!req.query.not_popup) {
-          openerRedirect(res, req.url + '&not_popup=1');
-          return;
-        }
-
         if (!req.query.state) {
           throw new Error('No state query parameter');
         }
         const state = new URLSearchParams(req.query.state);
-
         const driveui = state.get('driveui');
         if (driveui) {
           const googleAuthService = new GoogleAuthService();
           const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
           res.json({ driveui, token });
+          return;
+        }
+
+        if (!req.query.not_popup) {
+          openerRedirect(res, req.url + '&not_popup=1');
           return;
         }
 
