@@ -220,18 +220,6 @@ export class DailyRotateFile extends Transport {
     // starting row offset
     options.start = options.start || 0;
 
-    // now
-    options.until = options.until || new Date;
-    if (typeof options.until !== 'object') {
-      options.until = new Date(options.until);
-    }
-
-    // now - 24
-    options.from = options.from || (options.until - (24 * 60 * 60 * 1000));
-    if (typeof options.from !== 'object') {
-      options.from = new Date(options.from);
-    }
-
     // 'asc' or 'desc'
     options.order = options.order || 'desc';
 
@@ -243,7 +231,17 @@ export class DailyRotateFile extends Transport {
     if (fs.existsSync(dirname)) {
       const logFiles = fs.readdirSync(dirname)
         .filter((file) => {
-          return path.basename(file).match(fileRegex);
+          const base = path.basename(file);
+          if (!base.match(fileRegex)) return false;
+          if (base.indexOf('-combined.log') === -1) return false;
+
+          const fileDate = new Date(base.substring(0, 10));
+
+          if (+fileDate <= 0) return false;
+          if (options.from && +fileDate < +options.from - 3 * 24 * 3600 * 1000) return false;
+          if (options.until && +fileDate > +options.until - 3 * 24 * 3600 * 1000) return false;
+
+          return true;
         })
         .map(file => path.join(dirname, file));
 

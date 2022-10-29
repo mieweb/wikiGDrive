@@ -15,7 +15,7 @@
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-        <LogsViewer v-if="activeTab === 'drive_logs'" />
+        <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" v-model="logsState" />
         <UserSettings v-if="activeTab === 'drive_config'" />
 
         <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
@@ -68,7 +68,11 @@ export default {
       contentDir: '',
       selectedFile: {},
       selectedFolder: {},
-      notRegistered: false
+      notRegistered: false,
+      logsState: {
+        from: +new Date() - 3600 * 1000,
+        until: +new Date()
+      }
     };
   },
   created() {

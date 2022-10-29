@@ -1,29 +1,58 @@
-import {PassThrough} from 'stream';
-import fs from 'fs';
+import {PassThrough, Readable, Transform} from 'stream';
+import fs, {ReadStream} from 'fs';
 import zlib from 'zlib';
+import {FileId} from '../../model/model';
+
+interface LogLine {
+  level: 'error' | 'info' | 'debug';
+  message: string;
+  timestamp: number;
+  filename: string;
+  driveId: FileId;
+  payload?: {[key: string]: string | number};
+}
 
 export class DailyRotateFileProcessor {
-  private results: any[];
 
   constructor(private logFiles: string[], private options) {
-    this.results = [];
   }
 
-  createReadStream(logFile: string) {
+  createReadStream(logFile: string): [ReadStream, Readable] {
+    const readStream = fs.createReadStream(logFile);
+
     if (logFile.endsWith('.gz')) {
       const stream = new PassThrough();
-      fs.createReadStream(logFile).pipe(zlib.createGunzip()).pipe(stream);
-      return stream;
+      readStream.pipe(zlib.createGunzip()).pipe(stream);
+      return [readStream, stream];
     } else {
-      return fs.createReadStream(logFile, {
-        encoding: 'utf8'
-      });
+      return [readStream, readStream];
     }
   }
 
-  processLogFile(logFile) {
+  stringToLogLine(buff: string) {
+    try {
+      const log: LogLine = JSON.parse(buff);
+      if (!log || typeof log !== 'object') {
+        return null;
+      }
+
+      const time = new Date(log.timestamp);
+      log.timestamp = +time;
+
+      if (this.options.level && this.options.level !== log.level) {
+        return null;
+      }
+
+      return log;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  processLogFile(logFile): Promise<LogLine[]> {
     return new Promise((resolve, reject) => {
-      const stream = this.createReadStream(logFile);
+      const results = [];
+      const [readStream, stream] = this.createReadStream(logFile);
 
       stream.on('error', (err) => {
         if (stream.readable) {
@@ -31,7 +60,7 @@ export class DailyRotateFileProcessor {
         }
 
         if (err['code'] === 'ENOENT') {
-          resolve(null);
+          resolve(results);
         } else {
           reject(err);
         }
@@ -43,11 +72,27 @@ export class DailyRotateFileProcessor {
         const l = dataArr.length - 1;
 
         for (let i = 0; i < l; i++) {
-          try {
-            this.add(dataArr[i]);
-          } catch (e) {
-            stream.emit('error', e);
+          const logLine = this.stringToLogLine(dataArr[i]);
+          if (!logLine) continue;
+
+          if (this.options.from && logLine.timestamp < this.options.from) {
+            if (this.options.order === 'desc') {
+              buff = '';
+              readStream.close();
+              return;
+            }
+            continue;
           }
+          if (this.options.until && logLine.timestamp > this.options.until) {
+            if (this.options.order === 'asc') {
+              buff = '';
+              readStream.close();
+              return;
+            }
+            continue;
+          }
+
+          results.push(logLine);
         }
 
         buff = dataArr[l];
@@ -55,34 +100,23 @@ export class DailyRotateFileProcessor {
 
       stream.on('end', () => {
         if (buff) {
-          try {
-            this.add(buff);
-            // eslint-disable-next-line no-empty
-          } catch (onlyAttempt) {}
+          const logLine = this.stringToLogLine(buff);
+          if (!logLine) return;
+
+          if (this.options.from && logLine.timestamp < this.options.from) {
+            return;
+          }
+          if (this.options.until && logLine.timestamp > this.options.until) {
+            return;
+          }
+
+          results.push(logLine);
         }
 
-        resolve(null);
+        resolve(results);
       });
 
     });
-  }
-
-  add(buff: string) {
-      const log = JSON.parse(buff);
-      if (!log || typeof log !== 'object') {
-        return;
-      }
-
-      const time = new Date(log.timestamp);
-      log.timestamp = +time;
-      const options = this.options;
-      if ((options.from && time < options.from) ||
-        (options.until && time > options.until) ||
-        (options.level && options.level !== log.level)) {
-        return;
-      }
-
-      this.results.push(log);
   }
 
   async query() {
@@ -93,11 +127,9 @@ export class DailyRotateFileProcessor {
     const limit = this.options.limit || 100;
 
     for (const logFile of logFiles) {
-      this.results = [];
+      let results: LogLine[] = await this.processLogFile(logFile);
 
-      await this.processLogFile(logFile);
-
-      this.results.sort((a, b) => {
+      results.sort((a, b) => {
         const d1 = new Date(a.timestamp).getTime();
         const d2 = new Date(b.timestamp).getTime();
 
@@ -105,24 +137,18 @@ export class DailyRotateFileProcessor {
       });
 
       if (this.options.order === 'desc') {
-        this.results = this.results.reverse();
-      }
-
-      if (this.options.fields) {
-        this.results = this.results.map((log) => {
-          const obj = {};
-          this.options.fields.forEach((key) => {
-            obj[key] = log[key];
-          });
-          return obj;
-        });
+        results = results.reverse();
       }
 
       if (retVal.length > start + limit) {
         break;
       }
 
-      retVal.push(...this.results);
+      retVal.push(...results);
+
+      if (this.options.length <= retVal.length) {
+        break;
+      }
     }
 
     return retVal.slice(start, start + limit);
