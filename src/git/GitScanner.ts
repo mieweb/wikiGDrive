@@ -173,6 +173,8 @@ export class GitScanner {
 
         const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
         await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+        await this.removeUntracked();
+
         return;
       }
 
@@ -182,8 +184,6 @@ export class GitScanner {
       } catch (err) {
         if (NodeGit.Error.CODE.ECONFLICT === err.errno) {
           this.logger.error('Conflict');
-          // await NodeGit.Reset.reset(repo, commit, NodeGit.Reset.TYPE.HARD, {});
-          // TODO reset
         }
         throw err;
       }
@@ -232,6 +232,8 @@ export class GitScanner {
 
         const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
         await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+        await this.removeUntracked();
+
         return;
       }
 
@@ -270,6 +272,7 @@ export class GitScanner {
     const commitToReset = await wrapError(async () => await repo.getHeadCommit());
     if (commitToReset) {
       await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+      await this.removeUntracked();
     }
   }
 
@@ -296,6 +299,7 @@ export class GitScanner {
 
     const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
     await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+    await this.removeUntracked();
   }
 
   async getRemoteUrl(): Promise<string> {
@@ -591,6 +595,7 @@ export class GitScanner {
         }
       }
 
+      const s = await repo.getStatus();
       const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
         flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
       }));
@@ -605,5 +610,17 @@ export class GitScanner {
       remote_branch: userConfig.remote_branch,
       remote_url: initialized ? await this.getRemoteUrl() : null
     };
+  }
+
+  async removeUntracked() {
+    const repo = await wrapError(async () => await Repository.open(this.rootPath));
+    const status = await repo.getStatus();
+    for (const item of status) {
+      if (!item.isNew()) {
+        continue;
+      }
+      const filePath = path.join(this.rootPath, item.path());
+      fs.unlinkSync(filePath);
+    }
   }
 }
