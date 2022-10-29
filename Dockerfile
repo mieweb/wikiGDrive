@@ -1,6 +1,6 @@
 FROM bitmeal/nodegit:0.27-18-alpine
 
-RUN apk add --no-cache bash openssh-keygen
+RUN apk add --no-cache bash openssh-keygen git-lfs
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
