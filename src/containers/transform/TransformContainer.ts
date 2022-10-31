@@ -295,6 +295,8 @@ export class TransformContainer extends Container {
     this.hierarchy = await this.loadNavigationHierarchy();
 
     const processed = new Set<string>();
+    const previouslyFailed = new Set<string>();
+
     let retry = true;
     while (retry) {
       retry = false;
@@ -313,7 +315,24 @@ export class TransformContainer extends Container {
           }
         }
         if (filterFilesIds.size > 0) {
+          if (previouslyFailed.size === filterFilesIds.size) {
+            let shouldBreak = true;
+            for (const fileId of previouslyFailed) {
+              if (filterFilesIds.has(fileId)) {
+                shouldBreak = false;
+                break;
+              }
+            }
+            if (shouldBreak) {
+              break;
+            }
+          }
+
           this.filterFilesIds = Array.from(filterFilesIds);
+          previouslyFailed.clear();
+          for (const fileId of filterFilesIds) {
+            previouslyFailed.add(fileId);
+          }
           retry = true;
         }
       }

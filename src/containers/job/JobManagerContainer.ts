@@ -14,6 +14,7 @@ import os from 'os';
 import {GitScanner} from '../../git/GitScanner';
 import {FileContentService} from '../../utils/FileContentService';
 import {CACHE_PATH} from '../server/routes/FolderController';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -217,8 +218,10 @@ export class JobManagerContainer extends Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async run() {
-    for (const driveId in this.driveJobsMap) {
-      const driveJobs = this.driveJobsMap[driveId];
+    const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+    const folders = await folderRegistryContainer.getFolders();
+    for (const driveId in folders) {
+      const driveJobs = await this.getDriveJobs(driveId);
       if (driveJobs.jobs) {
         driveJobs.jobs = [];
         await this.setDriveJobs(driveId, {
