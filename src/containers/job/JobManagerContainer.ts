@@ -135,7 +135,7 @@ export class JobManagerContainer extends Container {
     return this.driveJobsMap[driveId];
   }
 
-  async setDriveJobs(driveId, driveJobs) {
+  async setDriveJobs(driveId, driveJobs: DriveJobs) {
     if (driveJobs) {
       this.driveJobsMap[driveId] = driveJobs;
     }
@@ -217,6 +217,15 @@ export class JobManagerContainer extends Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async run() {
+    for (const driveId in this.driveJobsMap) {
+      const driveJobs = this.driveJobsMap[driveId];
+      if (driveJobs.jobs) {
+        driveJobs.jobs = [];
+        await this.setDriveJobs(driveId, {
+          driveId, jobs: []
+        });
+      }
+    }
     setInterval(async () => {
       try {
         const now = +new Date();
