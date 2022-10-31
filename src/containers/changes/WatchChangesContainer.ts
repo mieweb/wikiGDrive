@@ -9,6 +9,7 @@ import {GoogleFile} from '../../model/GoogleFile';
 import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 import {JobManagerContainer} from '../job/JobManagerContainer';
+import {UserConfigService} from '../google_folder/UserConfigService';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -75,7 +76,10 @@ export class WatchChangesContainer extends Container {
     await driveFileSystem.writeJson('.changes.json', changes);
     this.engine.emit(driveId, 'changes:changed', changes);
 
-    if (changes.length > 0) {
+    const userConfigService = new UserConfigService(driveFileSystem);
+    await userConfigService.load();
+
+    if (changes.length > 0 && userConfigService.config.auto_sync) {
       const fileIdsString = changes.map(change => change.id).join(',');
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
