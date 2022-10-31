@@ -75,6 +75,8 @@ export default class GitController extends Controller {
 
       await gitScanner.commit(message, filePaths, removeFilePaths, user);
 
+      this.engine.emit(driveId, 'commit:done', { driveId });
+
       this.engine.emit(driveId, 'toasts:added', {
         title: 'Commit done',
         type: 'commit:done',
@@ -120,12 +122,8 @@ export default class GitController extends Controller {
       const userConfigService = new UserConfigService(googleFileSystem);
       const userConfig = await userConfigService.load();
 
-      const publicKey = await userConfigService.getDeployKey();
-      const privateKey = await userConfigService.getDeployPrivateKey();
-      const passphrase = 'sekret';
-
       await gitScanner.resetToRemote(userConfig.remote_branch, {
-        publicKey, privateKey, passphrase
+        privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
       });
 
       return {};

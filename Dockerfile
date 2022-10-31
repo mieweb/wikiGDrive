@@ -1,11 +1,10 @@
-FROM bitmeal/nodegit:0.27-18-alpine
+FROM node:18-alpine
 
-RUN apk add --no-cache bash openssh-keygen git-lfs
+RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
 RUN npm install
-RUN ln -sf /usr/local/lib/node_modules/nodegit/ /usr/src/app/node_modules/nodegit
 RUN npm install --location=global ts-node
 
 COPY . ./

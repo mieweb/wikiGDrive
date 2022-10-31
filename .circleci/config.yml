@@ -1,14 +1,13 @@
 jobs:
   test:
     docker:
-      - image: bitmeal/nodegit:0.27-18-alpine
+      - image: node:18-alpine
     steps:
       - checkout
       - run: apk add git
       - node/with-cache:
           steps:
             - run: npm install
-      - run: npm link nodegit
       - run: npm run lint
       - run: mkdir $HOME/tmp
       - run: TMPDIR=$HOME/tmp npm run test

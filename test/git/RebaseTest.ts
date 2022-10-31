@@ -283,7 +283,6 @@ describe('RebaseTest', () => {
       }
 
       await scannerSecond.pullBranch('main');
-      logger.info('333');
 
       {
         const history = await scannerSecond.history('');
@@ -303,9 +302,9 @@ describe('RebaseTest', () => {
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
     } finally {
-      fs.rmSync(localRepoDir, { recursive: true, force: true });
-      fs.rmSync(githubRepoDir, { recursive: true, force: true });
-      fs.rmSync(secondRepoDir, { recursive: true, force: true });
+      // fs.rmSync(localRepoDir, { recursive: true, force: true });
+      // fs.rmSync(githubRepoDir, { recursive: true, force: true });
+      // fs.rmSync(secondRepoDir, { recursive: true, force: true });
     }
   });
 
@@ -381,6 +380,8 @@ describe('RebaseTest', () => {
 
       {
         const history = await scannerLocal.history('');
+
+        console.log('historyhistory', history);
 
         assert.equal(2, history.length);
         assert.equal('Change on second repo', history[0].message);

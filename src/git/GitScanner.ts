@@ -2,12 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import {Logger} from 'winston';
-import {StatusFile} from 'nodegit/status-file';
-import NodeGit from 'nodegit';
-const { Cred, Remote, Repository, Revwalk, Signature, Diff, Reset } = NodeGit;
-import {rebaseBranches} from './rebaseBranches';
 import {UserConfig} from '../containers/google_folder/UserConfigService';
-import {Commit} from 'nodegit/commit';
+import {exec} from 'child_process';
 
 export interface GitChange {
   path: string;
@@ -15,48 +11,23 @@ export interface GitChange {
     isNew: boolean;
     isModified: boolean;
     isDeleted: boolean;
-    isRenamed: boolean;
   };
 }
 
 interface SshParams {
-  publicKey: string;
-  privateKey: string;
-  passphrase: string;
+  privateKeyFile: string;
 }
 
-export function wrapErrorSync<T>(asyncFunc: () => T): T {
-  try {
-    return asyncFunc();
-  } catch (errMsg) {
-    if (errMsg && errMsg.errorFunction) {
-      const err = new Error(errMsg.message);
-      const stackList = err.stack.split('\n');
-      err.stack = stackList.slice(0, 1).concat(stackList.slice(3)).join('\n');
-      for (const k in errMsg) {
-        err[k] = errMsg[k];
-      }
-      throw err;
-    }
-    throw errMsg;
-  }
+function sanitize(txt) {
+  txt = txt.replace(/[;"|]/g, '');
+  return txt;
 }
 
-export async function wrapError<T>(asyncFunc: () => T): Promise<T> {
-  try {
-    return await asyncFunc();
-  } catch (errMsg) {
-    if (errMsg && errMsg.errorFunction) {
-      const err = new Error(errMsg.message);
-      const stackList = err.stack.split('\n');
-      err.stack = stackList.slice(0, 1).concat(stackList.slice(3)).join('\n');
-      for (const k in errMsg) {
-        err[k] = errMsg[k];
-      }
-      throw err;
-    }
-    throw errMsg;
-  }
+interface ExecOpts {
+  env?: {
+    [k: string]: string
+  };
+  skipLogger?: boolean;
 }
 
 export class GitScanner {
@@ -64,9 +35,42 @@ export class GitScanner {
   constructor(private logger: Logger, public readonly rootPath: string, private email: string) {
   }
 
+  private exec(command: string, opts: ExecOpts = { env: {}, skipLogger: false }): Promise<{ stdout: string, stderr: string }> {
+    const err = new Error();
+    const stackList = err.stack.split('\n');
+
+    return new Promise((resolve, reject) => {
+      if (!opts.skipLogger) {
+        this.logger.info(command);
+      }
+
+      exec(command, { cwd: this.rootPath, env: opts.env }, (error, stdout, stderr) => {
+        if (stdout) {
+          if (!opts.skipLogger) {
+            this.logger.info(stdout);
+          }
+        }
+        if (stderr) {
+          if (!opts.skipLogger) {
+            this.logger.error(stderr);
+          }
+        }
+        if (error) {
+          const err = new Error(error.message);
+          err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
+          return reject(err);
+        }
+
+        resolve({
+          stdout, stderr
+        });
+      });
+    });
+  }
+
   async isRepo() {
     try {
-      await wrapError(async () => await Repository.open(this.rootPath));
+      await this.exec('git status', { skipLogger: true });
       return true;
     } catch (err) {
       return false;
@@ -74,63 +78,107 @@ export class GitScanner {
   }
 
   async changes(): Promise<GitChange[]> {
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-
-    const status: StatusFile[] = await wrapError(async () => await repo.getStatus());
     const retVal = [];
-    for (const item of status) {
-      const row = {
-        path: item.path(),
-        state: {
-          isNew: !!item.isNew(),
-          isModified: !!item.isModified(),
-          isDeleted: !!item.isDeleted(),
-          isRenamed: !!item.isRenamed()
-        }
-      };
-      retVal.push(row);
+
+    const result = await this.exec('git status', { skipLogger: true });
+    let mode = 0;
+
+    for (const line of result.stdout.split('\n')) {
+      if (line.trim().startsWith('(use ')) {
+        continue;
+      }
+
+      switch (mode) {
+        case 0:
+          if (line.startsWith('Untracked files:')) {
+            mode = 1;
+          }
+          if (line.startsWith('Changes not staged for commit:')) {
+            mode = 2;
+          }
+          break;
+        case 1:
+          if (line.trim().length === 0) {
+            mode = 0;
+            break;
+          }
+
+          retVal.push({
+            path: line.trim(),
+            state: {
+              isNew: true,
+              isDeleted: false,
+              isModified: false
+            }
+          });
+          break;
+        case 2:
+          if (line.trim().length === 0) {
+            mode = 0;
+            break;
+          }
+
+          if (line.trim().startsWith('deleted:')) {
+            retVal.push({
+              path: line.trim().substring('deleted:'.length).trim(),
+              state: {
+                isNew: false,
+                isDeleted: true,
+                isModified: false
+              }
+            });
+          } else
+          if (line.trim().startsWith('modified:')) {
+            retVal.push({
+              path: line.trim().substring('modified:'.length).trim(),
+              state: {
+                isNew: false,
+                isDeleted: false,
+                isModified: true
+              }
+            });
+          } else
+          if (line.trim().startsWith('new file:')) {
+            retVal.push({
+              path: line.trim().substring('new file:'.length).trim(),
+              state: {
+                isNew: true,
+                isDeleted: false,
+                isModified: false
+              }
+            });
+          }
+      }
     }
     return retVal;
   }
 
   async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
-    this.logger.info(`git commit: ${message}`);
+    addedFiles = addedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
+      .filter(fileName => !! fileName);
+    removedFiles = removedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
+      .filter(fileName => !! fileName);
 
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-    const index = await wrapError(async () => await repo.refreshIndex());
 
-    for (let fileName of addedFiles) {
-      if (fileName.startsWith('/')) {
-        fileName = fileName.substring(1);
-      }
-      if (fileName) {
-        await wrapError(async () => await index.addByPath(fileName));
-      }
+    for (const fileName of addedFiles) {
+      await this.exec(`git add "${sanitize(fileName)}"`, { skipLogger: true });
     }
-    for (let fileName of removedFiles) {
-      if (fileName.startsWith('/')) {
-        fileName = fileName.substring(1);
-      }
-      if (fileName) {
-        await wrapError(async () => await index.removeByPath(fileName));
-      }
+    for (const fileName of removedFiles) {
+      await this.exec(`git rm "${sanitize(fileName)}"`, { skipLogger: true });
     }
 
-    await wrapError(async () => await index.write());
+    await this.exec(`git commit -m "${sanitize(message)}"`, {
+      env: {
+        GIT_AUTHOR_NAME: committer.name,
+        GIT_AUTHOR_EMAIL: committer.email,
+        GIT_COMMITTER_NAME: committer.name,
+        GIT_COMMITTER_EMAIL: committer.email
+      }
+    });
 
-    const oid = await wrapError(async () => await index.writeTree());
-    const parent = await wrapError(async () => await repo.getHeadCommit());
+    const res = await this.exec('git rev-parse HEAD', { skipLogger: true });
 
-    const parents = [];
-    if (parent) {
-      parents.push(parent);
-    }
-
-    const author = Signature.now(committer.name, committer.email);
-
-    const commitId = await wrapError(async () => await repo.createCommit('HEAD', author, author, message, oid, parents));
-
-    return commitId.tostrS();
+    return res.stdout.trim();
   }
 
   async pullBranch(remoteBranch: string, sshParams?: SshParams) {
@@ -138,60 +186,11 @@ export class GitScanner {
       remoteBranch = 'master';
     }
 
-    const committer = Signature.now('WikiGDrive', this.email);
-    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
-
-    const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git pull from: ${remoteUrl}#${remoteBranch}`);
-
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-
-    this.logger.info('git fetch origin');
-
-    await wrapError(async () => await repo.fetch('origin', {
-      callbacks: !sshParams ? undefined : {
-        credentials: (url, username) => {
-          return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
-        }
+    await this.exec(`git pull --rebase origin ${remoteBranch}:master`, {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
-    }));
-
-    const headCommit = await wrapError(async () => await repo.getHeadCommit());
-
-    this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
-
-    try {
-      const remoteCommit = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
-
-      await this.resetToLocal();
-
-      this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
-
-      if (!headCommit) {
-        const reference = await wrapError(async () => await repo.createBranch('master', remoteCommit));
-        await wrapError(async () => await repo.checkoutBranch(reference));
-
-        const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
-        await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
-        await this.removeUntracked();
-
-        return;
-      }
-
-      try {
-        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranchRef}, onto master`);
-        await rebaseBranches(this.logger, repo, 'master', remoteBranchRef, remoteBranchRef, committer, null);
-      } catch (err) {
-        if (NodeGit.Error.CODE.ECONFLICT === err.errno) {
-          this.logger.error('Conflict');
-        }
-        throw err;
-      }
-
-    } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
-      throw err;
-    }
+    });
   }
 
   async pushBranch(remoteBranch: string, sshParams?: SshParams) {
@@ -199,128 +198,90 @@ export class GitScanner {
       remoteBranch = 'master';
     }
 
-    const committer = Signature.now('WikiGDrive', this.email);
-    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
-
-    const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git push to: ${remoteUrl}#${remoteBranch}`);
-
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-
-    this.logger.info('git fetch origin');
-
-    await wrapError(async () => await repo.fetch('origin', {
-      callbacks: !sshParams ? undefined : {
-        credentials: (url, username) => {
-          return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
-        }
-      }
-    }));
-
-    const headCommit = await wrapError(async () => await repo.getHeadCommit());
-
-    this.logger.info('git head commit: ' + (headCommit ? headCommit.id().tostrS() : 'none'));
+    const committer = {
+      name: 'WikiGDrive',
+      email: this.email
+    };
 
     try {
-      const remoteCommit = await wrapError(async () => await repo.getReferenceCommit('refs/remotes/origin/' + remoteBranch));
+      await this.exec(`git push origin master:${remoteBranch}`, {
+        env: {
+          GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+        }
+      });
+    } catch (err) {
+      if (err.message.indexOf('Updates were rejected because the remote contains work') > -1 ||
+        err.message.indexOf('Updates were rejected because a pushed branch tip is behind its remote') > -1) {
+        await this.exec(`git fetch origin ${remoteBranch}`, {
+          env: {
+            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+          }
+        });
 
-      this.logger.info('git remote commit: ' + (remoteCommit ? remoteCommit.id().tostrS() : 'none'));
+        try {
+          await this.exec(`git rebase origin/${remoteBranch}`, {
+            env: {
+              GIT_AUTHOR_NAME: committer.name,
+              GIT_AUTHOR_EMAIL: committer.email,
+              GIT_COMMITTER_NAME: committer.name,
+              GIT_COMMITTER_EMAIL: committer.email
+            }
+          });
+        } catch (err) {
+          await this.exec('git rebase --abort');
+          if (err.message.indexOf('Resolve all conflicts manually') > -1) {
+            this.logger.error('Conflict');
+          }
+          throw err;
+        }
 
-      if (!headCommit) {
-        const reference = await wrapError(async () => await repo.createBranch('master', remoteCommit));
-        repo.checkoutBranch(reference);
-
-        const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
-        await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
-        await this.removeUntracked();
-
+        await this.exec(`git push origin master:${remoteBranch}`, {
+          env: {
+            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+          }
+        });
         return;
       }
 
-      try {
-        this.logger.info(`git rebasing branch: master, upstream: ${remoteBranchRef}, onto master`);
-        await rebaseBranches(this.logger, repo, 'master', remoteBranchRef, remoteBranchRef, committer, null);
-      } catch (err) {
-        if (NodeGit.Error.CODE.ECONFLICT === err.errno) {
-          this.logger.error('Conflict');
-        }
-        throw err;
-      }
-
-    } catch (err) {
-      if (NodeGit.Error.CODE.ENOTFOUND !== err.errno) {
-        throw err;
-      }
-      // Ignore pull error if remote not found
+      return;
     }
-
-    const origin = await wrapError(async () => await repo.getRemote('origin'));
-    const refs = ['refs/heads/master:refs/heads/' + remoteBranch];
-    await wrapError(async () => await origin.push(refs, {
-      callbacks: !sshParams ? undefined : {
-        credentials: (url, username) => {
-          return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
-        }
-      }
-    }));
   }
 
   async resetToLocal() {
-    this.logger.info('git reset local');
-
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-    const commitToReset = await wrapError(async () => await repo.getHeadCommit());
-    if (commitToReset) {
-      await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
-      await this.removeUntracked();
-    }
+    await this.exec('git reset --hard HEAD');
+    await this.removeUntracked();
   }
 
   async resetToRemote(remoteBranch: string, sshParams?: SshParams) {
     if (!remoteBranch) {
       remoteBranch = 'master';
     }
-    const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
 
-    const remoteUrl = await this.getRemoteUrl();
-    this.logger.info(`git reset on remote: ${remoteUrl}#${remoteBranch}`);
-
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-
-    this.logger.info('git fetch origin');
-
-    await wrapError(async () => await repo.fetch('origin', {
-      callbacks: !sshParams ? undefined : {
-        credentials: (url, username) => {
-          return Cred.sshKeyMemoryNew(username, sshParams.publicKey, sshParams.privateKey, sshParams.passphrase);
-        }
+    await this.exec('git fetch origin', {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
-    }));
+    });
 
-    const commitToReset = await wrapError(async () => await repo.getReferenceCommit(remoteBranchRef));
-    await wrapError(async () => await Reset.reset(repo, commitToReset, Reset.TYPE.HARD, {}));
+    await this.exec(`git reset --hard refs/remotes/origin/${remoteBranch}`);
     await this.removeUntracked();
   }
 
   async getRemoteUrl(): Promise<string> {
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
     try {
-      const origin = await wrapError(async () => await repo.getRemote('origin'));
-      return origin.url();
+      const result = await this.exec('git remote get-url origin', { skipLogger: true });
+      return result.stdout.trim();
     } catch (e) {
       return null;
     }
   }
 
   async setRemoteUrl(url) {
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
     try {
-      await wrapError(async () => await Remote.delete(repo, 'origin'));
+      await this.exec('git remote rm origin', { skipLogger: true });
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
-    if (url) {
-      await wrapError(async () => await Remote.create(repo, 'origin', url));
-    }
+    await this.exec(`git remote add origin "${sanitize(url)}"`, { skipLogger: true });
   }
 
   async diff(fileName: string) {
@@ -329,41 +290,101 @@ export class GitScanner {
     }
 
     try {
-      const repo = await wrapError(async () => await Repository.open(this.rootPath));
-      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
-        pathspec: fileName,
-        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
-      }));
-      const patches = await wrapError(async () => await diff.patches());
+      const untrackedList = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+
+      for (const fileName of untrackedList.stdout.trim().split('\n')) {
+        if (!fileName) {
+          continue;
+        }
+        await this.exec(`git add -N ${sanitize(fileName)}`);
+      }
+
+      const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: true });
 
       const retVal = [];
 
-      for (const patch of patches) {
-        const item = {
-          oldFile: patch.oldFile().path(),
-          newFile: patch.newFile().path(),
-          txt: '',
-        };
+      let mode = 0;
+      let current = null;
+      let currentPatch = '';
+      for (const line of result.stdout.split('\n')) {
+        switch (mode) {
+          case 0:
+            if (line.startsWith('diff --git ')) {
+              mode = 1;
+              current = {
+                oldFile: '',
+                newFile: '',
+                txt: '',
+                patches: []
+              };
+            }
+            break;
 
-        const hunks = await wrapError(async () => await patch.hunks());
-        for (const hunk of hunks) {
-          const lines = await wrapError(async () => await hunk.lines());
+          case 1:
+            if (line.startsWith('--- a/')) {
+              current.oldFile = line.substring('--- a/'.length);
+            }
+            if (line.startsWith('+++ b/')) {
+              current.newFile = line.substring('+++ b/'.length);
+            }
+            if (line.startsWith('@@ ') && line.endsWith(' @@')) {
+              if (currentPatch) {
+                current.patches.push(currentPatch);
+              }
+              currentPatch = '';
+              if (!current.oldFile) {
+                current.oldFile = current.newFile;
+              }
+              if (!current.newFile) {
+                current.newFile = current.oldFile;
+              }
 
-          item.txt += patch.oldFile().path() + ' ' + patch.newFile().path() + '\n';
-          item.txt += hunk.header().trim() + '\n';
-          for (const line of lines) {
-            item.txt += String.fromCharCode(line.origin()) + line.content();
-          }
+              const parts = line.substring(3, line.length-3).split(' ');
+              if (parts.length === 2) {
+                current.txt += `${current.oldFile} ${current.newFile}\n`;
+                mode = 2;
+              }
+            }
+            break;
+
+          case 2:
+            if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
+              current.txt += line + '\n';
+            } else {
+              if (line.startsWith('@@ ') && line.endsWith(' @@')) {
+                if (currentPatch) {
+                  current.patches.push(currentPatch);
+                }
+                currentPatch = '';
+                break;
+              }
+
+              mode = 0;
+              retVal.push(current);
+              current = null;
+
+              if (line.startsWith('diff --git ')) {
+                mode = 1;
+                current = {
+                  oldFile: '',
+                  newFile: '',
+                  txt: ''
+                };
+              }
+            }
+            break;
         }
-        retVal.push(item);
+      }
+
+      if (current) {
+        if (currentPatch) {
+          current.patches.push(currentPatch);
+        }
+        retVal.push(current);
       }
 
       return retVal;
     } catch (err) {
-      if (err.message.indexOf('does not have any commits yet') > 0) {
-        return [];
-      }
-      this.logger.error(err.stack ? err.stack : err.message);
       return [];
     }
   }
@@ -374,63 +395,76 @@ export class GitScanner {
     }
 
     try {
-      const repo = await wrapError(async () => await Repository.open(this.rootPath));
-
-      const headCommit = await this.getBranchCommit('HEAD');
+      const result = await this.exec(
+        `git log --source --pretty="commit %H%d\n\nAuthor: %an <%ae>\nDate: %ct\n\n%B\n" ${sanitize(fileName)}`,
+        { skipLogger: true }
+      );
 
       let remoteCommit;
       if (remoteBranch) {
-        const remoteBranchRef = 'refs/remotes/origin/' + remoteBranch;
+        const remoteBranchRef = 'origin/' + remoteBranch;
         remoteCommit = await this.getBranchCommit(remoteBranchRef);
       }
 
-      const firstCommitOnMaster = await wrapError(async () => repo.getMasterCommit());
-
-      const walker = repo.createRevWalk();
-      walker.push(firstCommitOnMaster.id());
-      walker.sorting(Revwalk.SORT.TIME);
+      const createCommit = (line) => {
+        const parts = line.substring('commit '.length).split(' ');
+        return {
+          id: parts[0],
+          author_name: '',
+          message: '',
+          date: null,
+          head: parts.length > 1 && parts[1].startsWith('(HEAD'),
+          remote: remoteCommit === parts[0]
+        };
+      };
 
       const retVal = [];
-      if (fileName) {
-        const resultingArrayOfCommits = await wrapError(async () => await walker.fileHistoryWalk(fileName, 500));
-        for (const entry of resultingArrayOfCommits) {
-          const author = entry.commit.author();
-          const commitId = entry.commit.id().tostrS();
-          const item = {
-            date: entry.commit.date(),
-            author_name: author.name() + ' <' + author.email() + '>',
-            message: entry.commit.message(),
-            id: commitId,
-            head: headCommit == commitId,
-            remote: remoteCommit == commitId
-          };
-          retVal.push(item);
-        }
-      } else {
-        const resultingArrayOfCommits = await wrapError(async () => await walker.commitWalk(500));
+      let currentCommit = null;
+      let mode = 0;
+      for (const line of result.stdout.split('\n')) {
+        switch (mode) {
+          case 0:
+            if (line.startsWith('commit ')) {
+              mode = 1;
+              currentCommit = createCommit(line);
+            }
+            break;
+          case 1:
+            if (line.startsWith('Author: ')) {
+              mode = 2;
+              currentCommit.author_name = line.substring('Author: '.length).trim();
+            }
+            break;
+          case 2:
+            if (line.startsWith('Date: ')) {
+              mode = 3;
+              currentCommit.date = new Date(1000 * parseInt(line.substring('Date: '.length).trim()));
+            }
+            break;
+          case 3:
+            if (line.startsWith('commit ')) {
+              mode = 1;
+              retVal.push(currentCommit);
+              currentCommit = createCommit(line);
+              break;
+            }
 
-        for (const commit of resultingArrayOfCommits) {
-          const author = commit.author();
-          const commitId = commit.id().tostrS();
-          const item = {
-            date: commit.date(),
-            author_name: author.name() + ' <' + author.email() + '>',
-            message: commit.message(),
-            id: commitId,
-            head: headCommit == commitId,
-            remote: remoteCommit == commitId
-          };
-          retVal.push(item);
+            if (!line.trim()) {
+              break;
+            }
+
+            currentCommit.message += (currentCommit.message ? '\n' : '') + line.trim();
+            break;
         }
+      }
+
+      if (currentCommit) {
+        retVal.push(currentCommit);
       }
 
       return retVal;
-    } catch (err) {
-      if (err.message.indexOf('does not have any commits yet') > 0) {
-        return [];
-      }
-      this.logger.error(err.stack ? err.stack : err.message);
-      throw err;
+    } catch (e) {
+      return [];
     }
   }
 
@@ -465,142 +499,119 @@ export class GitScanner {
     }
 
     if (!await this.isRepo()) {
-      await wrapError(async () => await Repository.init(this.rootPath, 0));
+      await this.exec('git init -b master', { skipLogger: true });
     }
   }
 
   async getBranchCommit(branch: string): Promise<string> {
     try {
-      const repo = await wrapError(async () => await Repository.open(this.rootPath));
-      const commit = await wrapError(async () => await repo.getBranchCommit(branch));
-      if (!commit) {
-        return null;
-      }
-      return commit.id().tostrS();
+      const res = await this.exec(`git rev-parse ${branch}`, { skipLogger: true });
+      return res.stdout.trim();
     } catch (err) {
       return null;
     }
   }
 
   async autoCommit() {
-    try {
-      const repo = await wrapError(async () => await Repository.open(this.rootPath));
-      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
-        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
-      }));
-      const patches = await wrapError(async () => await diff.patches());
+    const patches = await this.diff('/');
 
-      const dontCommit = new Set<string>();
-      const toCommit = new Set<string>();
+    const dontCommit = new Set<string>();
+    const toCommit = new Set<string>();
 
-      for (const patch of patches) {
-        const item = {
-          oldFile: patch.oldFile().path(),
-          newFile: patch.newFile().path(),
-          txt: '',
-        };
+    for (const patch of patches) {
+      const item = {
+        oldFile: patch.oldFile,
+        newFile: patch.newFile,
+        txt: '',
+      };
 
-        const hunks = await wrapError(async () => await patch.hunks());
-        for (const hunk of hunks) {
-          const lines = await wrapError(async () => await hunk.lines());
-
-          for (const line of lines) {
-            if (' ' === String.fromCharCode(line.origin())) {
-              continue;
-            }
-            item.txt += line.content();
-          }
+      for (const line of patch.txt.split('\n')) {
+        if ('-' !== line.substring(0, 1) && '+' !== line.substring(0, 1)) {
+          continue;
         }
-
-        const txtWithoutVersion = item.txt
-          .split('\n')
-          .filter(line => !!line)
-          .filter(line => !line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:'))
-          .join('\n')
-          .trim();
-
-        if (txtWithoutVersion.length === 0 && item.txt.length > 0 && patch.oldFile().path() === patch.newFile().path()) {
-          toCommit.add(patch.newFile().path());
-        } else {
-          dontCommit.add(patch.oldFile().path());
-          dontCommit.add(patch.newFile().path());
-        }
+        item.txt += line.substring(1) + '\n';
       }
 
-      for (const k of dontCommit.values()) {
-        toCommit.delete(k);
-      }
+      const txtWithoutVersion = item.txt
+        .split('\n')
+        .filter(line => !!line)
+        .filter(line => !line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:'))
+        .join('\n')
+        .trim();
 
-      if (toCommit.size > 0) {
-        this.logger.info(`Auto committing ${toCommit.size} files`);
-        const addedFiles: string[] = Array.from(toCommit.values());
-        const committer = {
-          name: 'WikiGDrive',
-          email: this.email
-        };
-        await this.commit('Auto commit for file version change', addedFiles, [], committer);
+      if (txtWithoutVersion.length === 0 && item.txt.length > 0 && patch.oldFile === patch.newFile) {
+        toCommit.add(patch.newFile);
+      } else {
+        dontCommit.add(patch.oldFile);
+        dontCommit.add(patch.newFile);
       }
+    }
 
-      return;
-    } catch (err) {
-      if (err.message.indexOf('does not have any commits yet') > 0) {
-        return ;
-      }
-      this.logger.error(err.stack ? err.stack : err.message);
+    for (const k of dontCommit.values()) {
+      toCommit.delete(k);
+    }
+
+    if (toCommit.size > 0) {
+      this.logger.info(`Auto committing ${toCommit.size} files`);
+      const addedFiles: string[] = Array.from(toCommit.values());
+      const committer = {
+        name: 'WikiGDrive',
+        email: this.email
+      };
+      await this.commit('Auto commit for file version change', addedFiles, [], committer);
     }
   }
 
   async getStats(userConfig: UserConfig) {
-    let initialized = false;
+    let initialized: boolean;
     let headAhead = 0;
     let unstaged = 0;
 
     try {
-      const repo = await wrapError(async () => await Repository.open(this.rootPath));
-      initialized = true;
-
       if (userConfig.remote_branch) {
-        try {
-          const remoteBranchRef = 'refs/remotes/origin/' + userConfig.remote_branch;
+        const result = await this.exec(`git rev-list --left-right --count master...origin/${userConfig.remote_branch}`, {
+          skipLogger: true
+        });
+        const parts = result.stdout.split(' ');
+        headAhead = parseInt(parts[0]) || 0;
+      }
+      // eslint-disable-next-line no-empty
+    } catch (ignore) {}
 
-          const headCommit = await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference('HEAD')));
-          const headCommitId = headCommit.id().tostrS();
-          const remoteCommit = await wrapError(async () => await NodeGit.AnnotatedCommit.fromRef(repo, await repo.getReference(remoteBranchRef)));
-          const remoteCommitId = remoteCommit.id().tostrS();
+    try {
+      const result = await this.exec('git status', { skipLogger: true });
 
-          let headIdx = -1;
-          let remoteIdx = -1;
+      let mode = 0;
+      for (const line of result.stdout.split('\n')) {
+        if (line.startsWith('Your branch is ahead of')) {
+          const idx = line.indexOf(' by ');
+          headAhead = parseInt(line.substring(idx + ' by '.length).split(' ')[0]) || 0;
+        }
 
-          const walker = repo.createRevWalk();
-          walker.push(headCommit.id());
-          walker.sorting(Revwalk.SORT.REVERSE);
-          const commits: Commit[] = await wrapError(async () => await walker.commitWalk(500));
-          for (let idx = 0; idx < commits.length; idx++) {
-            const commitId = commits[idx].id().tostrS();
-            if (commitId === headCommitId) {
-              headIdx = idx;
+        switch (mode) {
+          case 0:
+            if (line.startsWith('Untracked files:')) {
+              mode = 1;
             }
-            if (commitId === remoteCommitId) {
-              remoteIdx = idx;
-            }
-            if (headIdx !== -1 && remoteIdx !== 1) {
-              headAhead = headIdx - remoteIdx;
+            break;
+          case 1:
+            if (line.trim().startsWith('(use "git add ')) {
               break;
             }
-          }
-        } catch (err) {
-          if (!err.message.startsWith('no reference found for shorthand')) {
-            this.logger.warn(err.message);
-          }
+
+            if (!line.trim()) {
+              mode = 0;
+              break;
+            }
+
+            unstaged++;
+            break;
         }
       }
 
-      const s = await repo.getStatus();
-      const diff = await wrapError(async () => await Diff.indexToWorkdir(repo, null, {
-        flags: Diff.OPTION.SHOW_UNTRACKED_CONTENT | Diff.OPTION.RECURSE_UNTRACKED_DIRS
-      }));
-      unstaged = diff.numDeltas();
-    } catch (err) { // eslint-disable no-empty
+      initialized = true;
+    } catch (err) {
+      initialized = false;
     }
 
     return {
@@ -613,13 +624,36 @@ export class GitScanner {
   }
 
   async removeUntracked() {
-    const repo = await wrapError(async () => await Repository.open(this.rootPath));
-    const status = await repo.getStatus();
-    for (const item of status) {
-      if (!item.isNew()) {
-        continue;
+    const result = await this.exec('git status', { skipLogger: true });
+    let mode = 0;
+
+    const untracked = [];
+
+    for (const line of result.stdout.split('\n')) {
+      switch (mode) {
+        case 0:
+          if (line.startsWith('Untracked files:')) {
+            mode = 1;
+          }
+          break;
+        case 1:
+          if (line.trim().length === 0) {
+            mode = 2;
+            break;
+          }
+
+          if (line.trim().startsWith('(use ')) {
+            break;
+          }
+
+          untracked.push(line.trim());
+
+          break;
       }
-      const filePath = path.join(this.rootPath, item.path());
+    }
+
+    for (const fileName of untracked) {
+      const filePath = path.join(this.rootPath, fileName);
       fs.unlinkSync(filePath);
     }
   }

@@ -96,7 +96,7 @@ async function addGitData(treeItems: TreeItem[], changes: GitChange[], contentFi
       if (change.state.isNew) {
         treeItem['status'] = 'N';
       } else
-      if (change.state.isModified || change.state.isRenamed) {
+      if (change.state.isModified) {
         treeItem['status'] = 'M';
       } else
       if (change.state.isDeleted) {
@@ -199,7 +199,10 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-preview-url', previewUrl);
 
       if (await transformedFileSystem.isDirectory(filePath)) {
-        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+        const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+        await gitScanner.initialize();
+
+        const changes = await gitScanner.changes();
         await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
@@ -240,7 +243,10 @@ export default class FolderController extends Controller {
            })
         };
 
-        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+        const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+        await gitScanner.initialize();
+
+        const changes = await gitScanner.changes();
         await addGitData(treeItem.children, changes, '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
