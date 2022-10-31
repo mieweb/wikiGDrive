@@ -9,9 +9,7 @@ Copy and adjust .env.example .env
 ```
 sudo apt install libkrb5-dev libssh2-1-dev
 
-npm install -g nodegit
 npm install
-npm link nodegit
 
 wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json server 3000
 ```

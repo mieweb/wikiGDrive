@@ -19,14 +19,8 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Install nodegit
-        run: npm install -g nodegit
-
       - name: Install node_modules
         run: npm install
-
-      - name: Link nodegit
-        run: npm link nodegit
 
       - name: Test
         run: npm run test

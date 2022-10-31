@@ -1,27 +1,30 @@
 import path from 'path';
 import fs from 'fs';
-import {spawn} from 'child_process';
+import {exec} from 'child_process';
 import {FileContentService} from '../../utils/FileContentService';
 import {HugoTheme} from '../server/routes/ConfigController';
 
-async function execAsync(cmd, params: string[] = []) {
-  const process = spawn(cmd, params);
+async function execAsync(command: string) {
+  const err = new Error();
+  const stackList = err.stack.split('\n');
 
-  process.stdout.on('data', (data) => {
-    console.log(data.toString());
-  });
-
-  process.stderr.on('data', (data) => {
-    console.error(data.toString());
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    process.on('exit', (code) => {
-      if (code) {
-        reject(code);
-      } else {
-        resolve();
+  await new Promise<{ stdout: string, stderr: string }>((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (stdout) {
+        console.log(stdout);
       }
+      if (stderr) {
+        console.error(stderr);
+      }
+      if (error) {
+        const err = new Error(error.message);
+        err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
+        return reject(err);
+      }
+
+      resolve({
+        stdout, stderr
+      });
     });
   });
 }
@@ -59,6 +62,13 @@ export class UserConfigService {
     await this.genKeys();
   }
 
+  async getDeployPrivateKeyPath() {
+    if (await this.fileService.exists('.private/id_rsa')) {
+      return path.join(this.fileService.getRealPath(), '.private', 'id_rsa');
+    }
+    return null;
+  }
+
   async getDeployPrivateKey() {
     if (await this.fileService.exists('.private/id_rsa')) {
       return await this.fileService.readFile('.private/id_rsa');
@@ -89,6 +99,6 @@ export class UserConfigService {
     if (fs.existsSync(`${privatePath}/id_rsa.pub`)) {
       fs.unlinkSync(`${privatePath}/id_rsa.pub`);
     }
-    await execAsync('ssh-keygen', ['-t', 'ecdsa', '-b', '521', '-f', `${privatePath}/id_rsa`, '-q',  '-N', 'sekret']);
+    await execAsync(`ssh-keygen -t ecdsa -b 521 -f ${privatePath}/id_rsa -q -N ""`);
   }
 }

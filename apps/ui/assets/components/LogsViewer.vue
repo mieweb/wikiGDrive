@@ -162,6 +162,11 @@ export default {
       this.fetchNewer();
     }, 2000);
     await this.fetchOlder();
+
+    if (this.logs.length > 0) {
+      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
+    }
+
     this.handleScroll();
     // Prism.highlightElement(this.$refs.code);
   },

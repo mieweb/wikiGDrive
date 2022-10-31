@@ -46,7 +46,7 @@ export interface DriveJobsMap {
   [driveId: FileId]: DriveJobs;
 }
 
-async function clearCachedChanges(googleFileSystem: FileContentService) {
+export async function clearCachedChanges(googleFileSystem: FileContentService) {
   await googleFileSystem.remove(CACHE_PATH);
 }
 
@@ -395,6 +395,10 @@ export class JobManagerContainer extends Container {
         this.engine.logger.error(err.stack ? err.stack : err.message);
       }
     }, 100);
+
+    this.engine.subscribe('commit:done', async (driveId) => {
+      await this.clearGitCache(driveId);
+    });
   }
 
   private async transform(folderId: FileId, filesIds: FileId[] = []) {
@@ -498,12 +502,8 @@ export class JobManagerContainer extends Container {
       const userConfigService = new UserConfigService(googleFileSystem);
       const userConfig = await userConfigService.load();
 
-      const publicKey = await userConfigService.getDeployKey();
-      const privateKey = await userConfigService.getDeployPrivateKey();
-      const passphrase = 'sekret';
-
       await gitScanner.pullBranch(userConfig.remote_branch, {
-        publicKey, privateKey, passphrase
+        privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
       });
 
       return {};
@@ -528,12 +528,8 @@ export class JobManagerContainer extends Container {
       const userConfigService = new UserConfigService(googleFileSystem);
       const userConfig = await userConfigService.load();
 
-      const publicKey = await userConfigService.getDeployKey();
-      const privateKey = await userConfigService.getDeployPrivateKey();
-      const passphrase = 'sekret';
-
       await gitScanner.pushBranch(userConfig.remote_branch, {
-        publicKey, privateKey, passphrase
+        privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
       });
 
       return {};
@@ -591,6 +587,7 @@ export class JobManagerContainer extends Container {
         break;
       case 'render_preview':
         await this.renderPreview(driveId);
+        await this.clearGitCache(driveId);
         break;
       case 'git_pull':
         await this.gitPull(driveId);
