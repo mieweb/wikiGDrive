@@ -69,12 +69,7 @@ export class GitScanner {
   }
 
   async isRepo() {
-    try {
-      await this.exec('git status', { skipLogger: true });
-      return true;
-    } catch (err) {
-      return false;
-    }
+    return fs.existsSync(path.join(this.rootPath, '.git'));
   }
 
   async changes(): Promise<GitChange[]> {
