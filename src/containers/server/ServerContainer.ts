@@ -31,6 +31,7 @@ import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {Logger} from 'vite';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
+import opentelemetry from '@opentelemetry/api';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,6 +136,17 @@ export class ServerContainer extends Container {
       res.header('GIT_SHA', process.env.GIT_SHA);
       next();
     });
+
+    if (process.env.ZIPKIN_URL) {
+      app.use((req, res, next) => {
+        const span = opentelemetry.trace.getActiveSpan();
+        if (span) {
+          const traceId = span.spanContext().traceId;
+          res.header('trace-id', traceId);
+        }
+        next();
+      });
+    }
 
     await this.initRouter(app);
     await this.initAuth(app);
