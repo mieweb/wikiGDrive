@@ -3,7 +3,7 @@
 import path from 'path';
 import fs from 'fs';
 import minimist from 'minimist';
-import {MainService} from './MainService';
+import {addTelemetry} from './telemetry';
 import dotenv from 'dotenv';
 import {CliParams} from './model/CliParams';
 import {fileURLToPath} from 'url';
@@ -90,6 +90,7 @@ async function main() {
     server_port: +argv['server']
   };
 
+  const {MainService} = await import('./MainService');
   const mainService = new MainService(params);
 
   try {
@@ -103,6 +104,7 @@ async function main() {
 }
 
 dotenv.config();
+addTelemetry(process.env.ZIPKIN_SERVICE || 'wikigdrive');
 
 main()
   .then(() => {
