@@ -5,7 +5,6 @@ import winston from 'winston';
 
 import {createLogger} from './utils/logger/logger';
 import {ContainerEngine} from './ContainerEngine';
-import {ServerContainer} from './containers/server/ServerContainer';
 import {GoogleFolderContainer} from './containers/google_folder/GoogleFolderContainer';
 import {GoogleApiContainer} from './containers/google_api/GoogleApiContainer';
 import {FileContentService} from './utils/FileContentService';
@@ -21,6 +20,7 @@ import {JobManagerContainer} from './containers/job/JobManagerContainer';
 import fetch from 'node-fetch';
 import {WatchChangesContainer} from './containers/changes/WatchChangesContainer';
 import {UserConfigService} from './containers/google_folder/UserConfigService';
+import {ServerContainer} from './containers/server/ServerContainer';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
