@@ -10,9 +10,12 @@ import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 import {JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
+import {type FileId} from '../../model/model';
+import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry';
 
 const __filename = fileURLToPath(import.meta.url);
 
+@TelemetryClass()
 export class WatchChangesContainer extends Container {
   private logger: winston.Logger;
   private auth: OAuth2Client & HasQuotaLimiter;
@@ -20,6 +23,7 @@ export class WatchChangesContainer extends Container {
   private lastToken: { [driveId: string]: string } = {};
   private intervals: { [driveId: string]: NodeJS.Timer } = {};
 
+  @TelemetryMethodDisable()
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename });
@@ -99,6 +103,7 @@ export class WatchChangesContainer extends Container {
     }
   }
 
+  @TelemetryMethodDisable()
   async startWatching(driveId: string) {
     if (this.intervals[driveId]) {
       return;
@@ -106,21 +111,25 @@ export class WatchChangesContainer extends Container {
     this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
     this.intervals[driveId] = setInterval(async () => {
       try {
-        const changes = await this.googleDriveService.watchChanges(this.auth, this.lastToken[driveId], driveId);
-        if (changes.files.length > 0) {
-          let dbChanges = await this.getChanges(driveId);
-          for (const file of changes.files) {
-            dbChanges = dbChanges.filter(f => f.id !== file.id);
-            dbChanges.push(file);
-          }
-
-          await this.setChanges(driveId, dbChanges);
-        }
-        this.lastToken[driveId] = changes.token;
+        await this.watchDriveChanges(driveId);
       } catch (err) {
         this.logger.warn(err.message);
       }
     }, 3000);
+  }
+
+  @TelemetryMethod({ paramsCount: 1 })
+  async watchDriveChanges(driveId: FileId) {
+    const changes = await this.googleDriveService.watchChanges(this.auth, this.lastToken[driveId], driveId);
+    if (changes.files.length > 0) {
+      let dbChanges = await this.getChanges(driveId);
+      for (const file of changes.files) {
+        dbChanges = dbChanges.filter(f => f.id !== file.id);
+        dbChanges.push(file);
+      }
+      await this.setChanges(driveId, dbChanges);
+    }
+    this.lastToken[driveId] = changes.token;
   }
 
   stopWatching(driveId) {
@@ -131,6 +140,7 @@ export class WatchChangesContainer extends Container {
     this.intervals[driveId] = null;
   }
 
+  @TelemetryMethodDisable()
   async run() {
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     const folders = await folderRegistryContainer.getFolders();

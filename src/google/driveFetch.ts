@@ -4,6 +4,7 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {Readable} from 'stream';
 import {SimpleFile} from '../model/GoogleFile';
 import {HasQuotaLimiter} from './AuthClient';
+import opentelemetry from '@opentelemetry/api';
 
 async function handleReadable(obj): Promise<string> {
   if (obj instanceof Readable) {
@@ -186,12 +187,21 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
   }
   const accessToken = await auth.getAccessToken();
 
+  let traceparent;
+  if (process.env.ZIPKIN_URL) {
+    const span = opentelemetry.trace.getActiveSpan();
+    if (span) {
+      traceparent = span.spanContext().traceId;
+    }
+  }
+
   const quotaLimiter = auth.getQuotaLimiter();
   if (!quotaLimiter) {
     const response = await fetch(url, {
       method,
       headers: {
-        Authorization: 'Bearer ' + accessToken.token.trim()
+        Authorization: 'Bearer ' + accessToken.token.trim(),
+        traceparent
       }
     });
 
@@ -208,7 +218,8 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
         const response = await fetch(url, {
           method,
           headers: {
-            Authorization: 'Bearer ' + accessToken.token.trim()
+            Authorization: 'Bearer ' + accessToken.token.trim(),
+            traceparent
           }
         });
 
