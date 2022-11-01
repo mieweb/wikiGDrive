@@ -54,16 +54,19 @@ export class ShareErrorHandler extends ErrorHandler {
 
 export const CACHE_PATH = '.private/cached_git_status.json';
 
-async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
+const workingJobs = {};
 
+async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
   let mtime = 0;
   try {
-    mtime += await transformedFileSystem.getMtime('.git');
+    const mtimeGit = await transformedFileSystem.getMtime('.git/refs/head/master');
+    if (mtime < mtimeGit) mtime = mtimeGit;
     // eslint-disable-next-line no-empty
   } catch (ignore) {}
 
   try {
-    mtime += await contentFileService.getMtime('');
+    const mtimeContent = await contentFileService.getMtime('.tree.json');
+    if (mtime < mtimeContent) mtime = mtimeContent;
     // eslint-disable-next-line no-empty
   } catch (ignore) {}
 
@@ -74,15 +77,31 @@ async function getCachedChanges(logger: Logger, transformedFileSystem: FileConte
     }
   }
 
-  const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-  await gitScanner.initialize();
+  if (workingJobs[contentFileService.getRealPath()]) {
+    return workingJobs[contentFileService.getRealPath()];
+  }
 
-  const changes = await gitScanner.changes();
-  await googleFileSystem.writeJson(CACHE_PATH, {
-    mtime: mtime,
-    changes
+  // eslint-disable-next-line no-async-promise-executor
+  workingJobs[contentFileService.getRealPath()] = new Promise(async (resolve, reject) => {
+    try {
+      const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      const changes = await gitScanner.changes();
+      await googleFileSystem.writeJson(CACHE_PATH, {
+        mtime: mtime,
+        changes
+      });
+
+      delete workingJobs[contentFileService.getRealPath()];
+      resolve(changes);
+    } catch (err) {
+      delete workingJobs[contentFileService.getRealPath()];
+      reject(err);
+    }
   });
-  return changes;
+
+  return workingJobs[contentFileService.getRealPath()];
 }
 
 async function addGitData(treeItems: TreeItem[], changes: GitChange[], contentFilePath: string) {
@@ -199,10 +218,7 @@ export default class FolderController extends Controller {
       this.res.setHeader('wgd-preview-url', previewUrl);
 
       if (await transformedFileSystem.isDirectory(filePath)) {
-        const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-        await gitScanner.initialize();
-
-        const changes = await gitScanner.changes();
+        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
@@ -243,10 +259,7 @@ export default class FolderController extends Controller {
            })
         };
 
-        const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-        await gitScanner.initialize();
-
-        const changes = await gitScanner.changes();
+        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
         await addGitData(treeItem.children, changes, '');
         treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
         await outputDirectory(this.res, treeItem);
