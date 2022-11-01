@@ -10,9 +10,9 @@ import { Resource } from '@opentelemetry/resources';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { SimpleSpanProcessor, AlwaysOnSampler } from '@opentelemetry/sdk-trace-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import {ClientRequest, IncomingMessage, ServerResponse} from 'http';
 
 import {GitScanner} from './git/GitScanner';
-import {ClientRequest, IncomingMessage, ServerResponse} from 'http';
 
 export class ClassInstrumentation extends InstrumentationBase {
   private className: string;
@@ -71,14 +71,14 @@ export function addTelemetry(serviceName: string) {
       new HttpInstrumentation({
         ignoreIncomingPaths: [ /^\/assets/ ],
         ignoreOutgoingUrls: [ (url) => url.startsWith(process.env.ZIPKIN_URL) ],
-        applyCustomAttributesOnSpan(span: Span, request: ClientRequest | IncomingMessage) {
+        applyCustomAttributesOnSpan(span: Span, request: ClientRequest | IncomingMessage, response: ServerResponse) {
           if (request['path']) {
             span.updateName('http_client ' + request.method + ' ' + request['host'] + request['path'].replace(/\?.*/, ''));
           }
           if (request['originalUrl']) {
             span.updateName('http_server ' + request.method + ' ' + request['originalUrl'].replace(/\?.*/, ''));
           }
-        }
+        },
       }),
       new ExpressInstrumentation()
     ],
