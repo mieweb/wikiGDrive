@@ -148,6 +148,7 @@ export class GitScanner {
               }
             });
           }
+          break;
       }
     }
     return retVal;
@@ -593,6 +594,9 @@ export class GitScanner {
             if (line.startsWith('Untracked files:')) {
               mode = 1;
             }
+            if (line.startsWith('Changes not staged for commit:')) {
+              mode = 2;
+            }
             break;
           case 1:
             if (line.trim().startsWith('(use "git add ')) {
@@ -605,6 +609,19 @@ export class GitScanner {
             }
 
             unstaged++;
+            break;
+          case 2:
+            if (line.trim().length === 0) {
+              mode = 0;
+              break;
+            }
+
+            if (line.trim().startsWith('modified:')) {
+              unstaged++;
+            } else
+            if (line.trim().startsWith('new file:')) {
+              unstaged++;
+            }
             break;
         }
       }
