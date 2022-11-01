@@ -4,6 +4,7 @@ import path from 'path';
 import {Logger} from 'winston';
 import {UserConfig} from '../containers/google_folder/UserConfigService';
 import {exec} from 'child_process';
+import {TelemetryMethod} from '../telemetry';
 
 export interface GitChange {
   path: string;
@@ -35,6 +36,7 @@ export class GitScanner {
   constructor(private logger: Logger, public readonly rootPath: string, private email: string) {
   }
 
+  @TelemetryMethod({ paramsCount: 1 })
   private exec(command: string, opts: ExecOpts = { env: {}, skipLogger: false }): Promise<{ stdout: string, stderr: string }> {
     const err = new Error();
     const stackList = err.stack.split('\n');

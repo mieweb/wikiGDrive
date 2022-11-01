@@ -104,7 +104,7 @@ async function main() {
 }
 
 dotenv.config();
-addTelemetry(process.env.ZIPKIN_SERVICE || 'wikigdrive');
+await addTelemetry(process.env.ZIPKIN_SERVICE || 'wikigdrive', __dirname)
 
 main()
   .then(() => {
