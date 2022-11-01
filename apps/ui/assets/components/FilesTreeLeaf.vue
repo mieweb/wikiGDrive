@@ -63,6 +63,9 @@ export default {
     }
   },
   created() {
+    this.emitter.on('tree:changed', () => {
+      this.fetchFolder();
+    });
     this.fetchFolder();
   },
   watch: {
