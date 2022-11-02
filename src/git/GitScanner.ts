@@ -77,77 +77,63 @@ export class GitScanner {
   async changes(): Promise<GitChange[]> {
     const retVal = [];
 
-    const result = await this.exec('git status', { skipLogger: true });
-    let mode = 0;
-
-    for (const line of result.stdout.split('\n')) {
-      if (line.trim().startsWith('(use ')) {
-        continue;
-      }
-
-      switch (mode) {
-        case 0:
-          if (line.startsWith('Untracked files:')) {
-            mode = 1;
-          }
-          if (line.startsWith('Changes not staged for commit:')) {
-            mode = 2;
-          }
-          break;
-        case 1:
-          if (line.trim().length === 0) {
-            mode = 0;
-            break;
-          }
-
+    try {
+      const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
+      for (const line of result.stdout.split('\n')) {
+        const parts = line.split(/\s/);
+        const path = parts[parts.length - 1];
+        if (line.match(/^A\s/)) {
           retVal.push({
-            path: line.trim(),
+            path,
             state: {
               isNew: true,
               isDeleted: false,
               isModified: false
             }
           });
-          break;
-        case 2:
-          if (line.trim().length === 0) {
-            mode = 0;
-            break;
-          }
-
-          if (line.trim().startsWith('deleted:')) {
-            retVal.push({
-              path: line.trim().substring('deleted:'.length).trim(),
-              state: {
-                isNew: false,
-                isDeleted: true,
-                isModified: false
-              }
-            });
-          } else
-          if (line.trim().startsWith('modified:')) {
-            retVal.push({
-              path: line.trim().substring('modified:'.length).trim(),
-              state: {
-                isNew: false,
-                isDeleted: false,
-                isModified: true
-              }
-            });
-          } else
-          if (line.trim().startsWith('new file:')) {
-            retVal.push({
-              path: line.trim().substring('new file:'.length).trim(),
-              state: {
-                isNew: true,
-                isDeleted: false,
-                isModified: false
-              }
-            });
-          }
-          break;
+        }
+        if (line.match(/^M\s/)) {
+          retVal.push({
+            path,
+            state: {
+              isNew: false,
+              isDeleted: false,
+              isModified: true
+            }
+          });
+        }
+        if (line.match(/^D\s/)) {
+          retVal.push({
+            path,
+            state: {
+              isNew: false,
+              isDeleted: true,
+              isModified: false
+            }
+          });
+        }
+      }
+    } catch (err) {
+      if (!err.message.indexOf('fatal: bad revision')) {
+        throw err;
       }
     }
+
+    const untrackedResult = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+    for (const line of untrackedResult.stdout.split('\n')) {
+      if (!line.trim()) {
+        continue;
+      }
+      retVal.push({
+        path: line.trim(),
+        state: {
+          isNew: true,
+          isDeleted: false,
+          isModified: false
+        }
+      });
+    }
+
     return retVal;
   }
 
@@ -560,72 +546,59 @@ export class GitScanner {
     }
   }
 
-  async getStats(userConfig: UserConfig) {
-    let initialized: boolean;
-    let headAhead = 0;
-    let unstaged = 0;
+  async countAhead(remoteBranch: string) {
+    let retVal = 0;
 
     try {
-      if (userConfig.remote_branch) {
-        const result = await this.exec(`git rev-list --left-right --count master...origin/${userConfig.remote_branch}`, {
-          skipLogger: true
-        });
-        const parts = result.stdout.split(' ');
-        headAhead = parseInt(parts[0]) || 0;
+      const result = await this.exec(`git log origin/${remoteBranch}..HEAD`, {
+        skipLogger: true
+      });
+      for (const line of result.stdout.split('\n')) {
+          if (line.startsWith('commit ')) {
+            retVal++;
+          }
       }
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
 
+    return retVal;
+  }
+
+  async getStats(userConfig: UserConfig) {
+    let initialized = true;
+    const headAhead = userConfig.remote_branch ? await this.countAhead(userConfig.remote_branch) : 0;
+    let unstaged = 0;
+
     try {
-      const result = await this.exec('git status', { skipLogger: true });
-
-      let mode = 0;
-      for (const line of result.stdout.split('\n')) {
-        if (line.startsWith('Your branch is ahead of')) {
-          const idx = line.indexOf(' by ');
-          headAhead = parseInt(line.substring(idx + ' by '.length).split(' ')[0]) || 0;
+      const untrackedResult = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+      for (const line of untrackedResult.stdout.split('\n')) {
+        if (!line.trim()) {
+          continue;
         }
+        unstaged++;
+      }
+    } catch (err) {
+      if (err.message.indexOf('fatal: not a git repository')) {
+        initialized = false;
+      } else {
+        throw err;
+      }
+    }
 
-        switch (mode) {
-          case 0:
-            if (line.startsWith('Untracked files:')) {
-              mode = 1;
-            }
-            if (line.startsWith('Changes not staged for commit:')) {
-              mode = 2;
-            }
-            break;
-          case 1:
-            if (line.trim().startsWith('(use "git add ')) {
-              break;
-            }
-
-            if (!line.trim()) {
-              mode = 0;
-              break;
-            }
-
-            unstaged++;
-            break;
-          case 2:
-            if (line.trim().length === 0) {
-              mode = 0;
-              break;
-            }
-
-            if (line.trim().startsWith('modified:')) {
-              unstaged++;
-            } else
-            if (line.trim().startsWith('new file:')) {
-              unstaged++;
-            }
-            break;
+    try {
+      const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
+      for (const line of result.stdout.split('\n')) {
+        if (line.match(/^A\s/)) {
+          unstaged++;
+        }
+        if (line.match(/^M\s/)) {
+          unstaged++;
         }
       }
-
-      initialized = true;
     } catch (err) {
-      initialized = false;
+      if (!err.message.indexOf('fatal: bad revision')) {
+        throw err;
+      }
     }
 
     return {

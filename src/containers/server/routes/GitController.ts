@@ -73,6 +73,16 @@ export default class GitController extends Controller {
       const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
+      const fileAssetsPaths = filePaths
+        .filter(path => path.endsWith('.md'))
+        .map(path => path.substring(0, path.length - 3) + '.assets');
+      const removeFileAssetsPaths = removeFilePaths
+        .filter(path => path.endsWith('.md'))
+        .map(path => path.substring(0, path.length - 3) + '.assets');
+
+      filePaths.push(...fileAssetsPaths);
+      removeFilePaths.push(...removeFileAssetsPaths);
+
       await gitScanner.commit(message, filePaths, removeFilePaths, user);
 
       this.engine.emit(driveId, 'commit:done', { driveId });
