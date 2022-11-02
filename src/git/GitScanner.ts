@@ -311,7 +311,7 @@ export class GitScanner {
             if (line.startsWith('+++ b/')) {
               current.newFile = line.substring('+++ b/'.length);
             }
-            if (line.startsWith('@@ ') && line.endsWith(' @@')) {
+            if (line.startsWith('@@ ') && line.lastIndexOf(' @@') > 2) {
               if (currentPatch) {
                 current.patches.push(currentPatch);
               }
@@ -323,7 +323,7 @@ export class GitScanner {
                 current.newFile = current.oldFile;
               }
 
-              const parts = line.substring(3, line.length-3).split(' ');
+              const parts = line.substring(3, line.lastIndexOf(' @@')).split(' ');
               if (parts.length === 2) {
                 current.txt += `${current.oldFile} ${current.newFile}\n`;
                 mode = 2;
@@ -335,7 +335,7 @@ export class GitScanner {
             if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
               current.txt += line + '\n';
             } else {
-              if (line.startsWith('@@ ') && line.endsWith(' @@')) {
+              if (line.startsWith('@@ ') && line.lastIndexOf(' @@') > 2) {
                 if (currentPatch) {
                   current.patches.push(currentPatch);
                 }
