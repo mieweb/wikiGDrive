@@ -18,7 +18,7 @@ export class SearchController extends Controller {
 
   @RouteGet('/:driveId')
   @RouteErrorHandler(new ShareErrorHandler())
-  async search(@RouteParamPath('driveId') driveId: string, @RouteParamQuery('q') query: string) {
+  async search(@RouteParamPath('driveId') driveId: string, @RouteParamQuery('q') queryParam: string) {
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
@@ -35,11 +35,14 @@ export class SearchController extends Controller {
     const store = lunrData.store || {};
     const lunrIndex = lunr.Index.load(lunrData.index);
 
-    query = (query || '').trim().replace(/:/g, ' ');
+    queryParam = (queryParam || '').trim().replace(/:/g, ' ');
 
-    let result = lunrIndex.search(query);
-    if (result.length === 0 && query.indexOf('*') === -1) {
-      result = lunrIndex.search(query.split(/\s+/g).map(w => w.length > 2 ? w + '*' : w).join(' '));
+    let result = lunrIndex.search(queryParam);
+    if (result.length === 0 && queryParam.indexOf('*') === -1) {
+      result = lunrIndex.search(queryParam.split(/\s+/g).map(w => w.length > 2 ? w + '*' : w).join(' '));
+    }
+    if (result.length === 0 && queryParam.replace(/[_-]*/g, '').length > 10) {
+      result = lunrIndex.search(queryParam.replace(/[_-]*/g, ''));
     }
 
     return { result: result.map((doc) => ({

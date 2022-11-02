@@ -12,6 +12,9 @@ export class LunrIndexer {
   constructor() {
     this.lunrBuilder = new lunr.Builder();
     this.lunrBuilder.ref('path');
+    this.lunrBuilder.field('id2', { extractor: (doc) => {
+        return doc['id'] ? doc['id'].replace(/[_-]*/g, '') : undefined;
+    }});
     this.lunrBuilder.field('id');
     this.lunrBuilder.field('title');
     this.store = {};
