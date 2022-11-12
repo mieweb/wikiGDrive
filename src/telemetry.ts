@@ -80,6 +80,7 @@ export class ClassInstrumentation extends InstrumentationBase {
       }
 
       this.classPrototype[methodName] = async function (...args) {
+        const stackTrace = new Error().stack.split('\n').splice(2);
         const tracer = opentelemetry.trace.getTracer(
           provider.resource.attributes[SemanticResourceAttributes.SERVICE_NAME].toString(),
           '1.0'
@@ -105,7 +106,9 @@ export class ClassInstrumentation extends InstrumentationBase {
           try {
             return await origMethod.apply(this, args);
           } catch (err) {
+            err.stack = [err.message].concat(stackTrace).join('\n');
             span.recordException(err);
+            throw err;
           } finally {
             span.end();
           }

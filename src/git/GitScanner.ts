@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import {exec, spawn} from 'child_process';
 
 import {Logger} from 'winston';
 import {UserConfig} from '../containers/google_folder/UserConfigService';
-import {exec} from 'child_process';
 import {TelemetryMethod} from '../telemetry';
 
 export interface GitChange {
@@ -143,12 +143,13 @@ export class GitScanner {
     removedFiles = removedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
       .filter(fileName => !! fileName);
 
-
-    for (const fileName of addedFiles) {
-      await this.exec(`git add "${sanitize(fileName)}"`, { skipLogger: true });
+    const addParam = addedFiles.map(fileName => `"${sanitize(fileName)}"`).join(' ');
+    const rmParam = removedFiles.map(fileName => `"${sanitize(fileName)}"`).join(' ');
+    if (addParam) {
+      await this.exec(`git add ${addParam}`);
     }
-    for (const fileName of removedFiles) {
-      await this.exec(`git rm "${sanitize(fileName)}"`, { skipLogger: true });
+    if (rmParam) {
+      await this.exec(`git rm ${rmParam}`);
     }
 
     await this.exec(`git commit -m "${sanitize(message)}"`, {
@@ -369,7 +370,13 @@ export class GitScanner {
 
       return retVal;
     } catch (err) {
-      return [];
+      if (err.message.indexOf('fatal: bad revision') > -1) {
+        return [];
+      }
+      if (err.message.indexOf('unknown revision or path not in the working tree.') > -1) {
+        return [];
+      }
+      throw err;
     }
   }
 
@@ -497,38 +504,129 @@ export class GitScanner {
   }
 
   async autoCommit() {
-    const patches = await this.diff('/');
-
     const dontCommit = new Set<string>();
     const toCommit = new Set<string>();
 
-    for (const patch of patches) {
-      const item = {
-        oldFile: patch.oldFile,
-        newFile: patch.newFile,
-        txt: '',
-      };
+    try {
+      const untrackedList = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
 
-      for (const line of patch.txt.split('\n')) {
-        if ('-' !== line.substring(0, 1) && '+' !== line.substring(0, 1)) {
+      for (const fileName of untrackedList.stdout.trim().split('\n')) {
+        if (!fileName) {
           continue;
         }
-        item.txt += line.substring(1) + '\n';
+        await this.exec(`git add -N ${sanitize(fileName)}`);
       }
 
-      const txtWithoutVersion = item.txt
-        .split('\n')
-        .filter(line => !!line)
-        .filter(line => !line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:'))
-        .join('\n')
-        .trim();
+      const childProcess = spawn('git',
+        ['diff', '--minimal'],
+        { cwd: this.rootPath, env: {} });
+      const promise = new Promise((resolve, reject) => {
+        childProcess.on('close', resolve);
+      });
 
-      if (txtWithoutVersion.length === 0 && item.txt.length > 0 && patch.oldFile === patch.newFile) {
-        toCommit.add(patch.newFile);
-      } else {
-        dontCommit.add(patch.oldFile);
-        dontCommit.add(patch.newFile);
+      let idx;
+      let buff = '';
+      let mode = 0;
+      let current = null;
+
+      const flushCurrent = (current) => {
+        if (current) {
+          if (current.doAutoCommit) {
+            if (current.oldFile) toCommit.add(current.oldFile);
+            if (current.newFile) toCommit.add(current.newFile);
+          } else {
+            dontCommit.add(current.oldFile);
+            dontCommit.add(current.newFile);
+          }
+        }
+        return null;
+      };
+
+      const processLine = (line) => {
+        switch (mode) {
+          case 0:
+            if (line.startsWith('diff --git ')) {
+              mode = 1;
+              current = {
+                doAutoCommit: true,
+                oldFile: '',
+                newFile: ''
+              };
+              return;
+            }
+            break;
+          case 1:
+            if (line.startsWith('--- a/')) {
+              current.oldFile = line.substring('--- a/'.length);
+            }
+            if (line.startsWith('+++ b/')) {
+              current.newFile = line.substring('+++ b/'.length);
+            }
+            if (line.startsWith('@@ ') && line.lastIndexOf(' @@') > 2) {
+              const parts = line.substring(3, line.lastIndexOf(' @@')).split(' ');
+              if (parts.length === 2) {
+                mode = 2;
+              }
+            }
+            break;
+          case 2:
+            if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
+              if (line.startsWith('+') || line.startsWith('-')) {
+                line = line.substring(1);
+                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:')) {
+                  current.doAutoCommit = false;
+                }
+              }
+
+            } else {
+              if (line.startsWith('@@ ') && line.lastIndexOf(' @@') > 2) {
+                break;
+              }
+
+              mode = 0;
+              current = flushCurrent(current);
+
+              if (line.startsWith('diff --git ')) {
+                mode = 1;
+                current = {
+                  doAutoCommit: true,
+                  oldFile: '',
+                  newFile: ''
+                };
+              }
+            }
+        }
+      };
+
+      for await (const chunk of childProcess.stdout) {
+        buff += chunk;
+
+        while ((idx = buff.indexOf('\n')) > -1) {
+          const line = buff.substring(0, idx);
+          processLine(line);
+          buff = buff.substring(idx + 1);
+        }
       }
+
+      while ((idx = buff.indexOf('\n')) > -1) {
+        const line = buff.substring(0, idx);
+        processLine(line);
+        buff = buff.substring(idx + 1);
+      }
+
+      let error = '';
+      for await (const chunk of childProcess.stderr) {
+        error += chunk;
+      }
+
+      const exitCode = await promise;
+      if (exitCode) {
+        throw new Error( `subprocess error exit ${exitCode}, ${error}`);
+      }
+
+      current = flushCurrent(current);
+    } catch (err) {
+      this.logger.warn(err.message);
     }
 
     for (const k of dontCommit.values()) {
