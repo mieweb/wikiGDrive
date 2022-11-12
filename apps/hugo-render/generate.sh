@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 cd /site
 
@@ -27,7 +27,7 @@ then
     rm -rf /site/resources/_gen
 fi
 
-if [ -f generate-local.sh ]
+if [[ -f generate-local.sh ]]
 then
   ./generate-local.sh
 else
