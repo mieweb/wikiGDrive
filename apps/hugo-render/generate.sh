@@ -20,8 +20,6 @@ then
   fi
 fi
 
-cat /site/tmp_dir/config.toml
-
 if [[ -d /site/resources/_gen ]]
 then
     rm -rf /site/resources/_gen
@@ -31,6 +29,7 @@ if [[ -f generate-local.sh ]]
 then
   ./generate-local.sh
 else
+  cat /site/tmp_dir/config.toml
   hugo --config=/site/tmp_dir/config.toml --verbose
 fi
 
