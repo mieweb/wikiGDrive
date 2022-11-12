@@ -52,14 +52,12 @@ export class GitScanner {
             this.logger.info(stdout);
           }
         }
-        if (stderr) {
-          if (!opts.skipLogger) {
-            this.logger.error(stderr);
-          }
-        }
-        if (error) {
-          const err = new Error(error.message);
+        if (error || stderr) {
+          const err = new Error("Failed exec:" + command + "\n" + error.message);
           err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
+          if (!opts.skipLogger) { 
+            this.logger.error(err);
+          }
           return reject(err);
         }
 
