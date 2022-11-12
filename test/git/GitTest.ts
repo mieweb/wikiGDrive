@@ -39,7 +39,6 @@ describe('GitTest', () => {
 
       {
         const files = fs.readdirSync(scannerLocal.rootPath);
-        // console.log(files);
         assert.equal(files.length, 2);
         assert.ok(files.includes('.git'));
         assert.ok(files.includes('.gitignore'));
@@ -193,8 +192,41 @@ describe('GitTest', () => {
 
       {
         const changes = await scannerLocal.changes();
-        console.log(changes);
         assert.equal(changes.length, 1);
+      }
+    } finally {
+      fs.rmSync(localRepoDir, { recursive: true, force: true });
+    }
+  });
+
+  it('test autoCommit huge', async () => {
+    const localRepoDir: string = createTmpDir();
+
+    try {
+      const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+      await scannerLocal.initialize();
+
+      await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
+
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.txt'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
+
+      const writeStream = fs.createWriteStream(path.join(scannerLocal.rootPath, 'test_huge.txt'));
+      for (let i = 0; i < 100000; i++) {
+        writeStream.write('1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n');
+      }
+      writeStream.close();
+
+      {
+        const changes = await scannerLocal.changes();
+        assert.equal(changes.length, 3);
+      }
+
+      await scannerLocal.autoCommit();
+
+      {
+        const changes = await scannerLocal.changes();
+        assert.equal(changes.length, 2);
       }
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
@@ -325,9 +357,6 @@ describe('GitTest', () => {
       assert.equal(history[0].head, true);
       assert.equal(history[0].remote, false);
 
-      console.log('mmm', await scannerSecond.getBranchCommit('master'));
-      console.log('hhh', history[1]);
-
       assert.equal(history[1].author_name, 'Bob <bob@example.tld>');
       assert.equal(history[1].message.trim(), 'Second commit');
       assert.equal(history[1].head, false);
@@ -389,7 +418,6 @@ describe('GitTest', () => {
 
       {
         const stats = await scannerLocal.getStats({ remote_branch: 'main' });
-        console.log(stats);
         assert.equal(stats.initialized, true);
         assert.equal(stats.headAhead, 1);
         assert.equal(stats.unstaged, 1);
