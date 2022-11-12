@@ -61,14 +61,14 @@ export class PreviewRendererContainer extends Container {
       let result;
 
       if (themeId) {
-        this.logger.info(`docker run 
-        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
-        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public"
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir"
-        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/
-        --env THEME_ID=${themeId}
-        --env THEME_SUBPATH=${themeSubPath}
-        --env THEME_URL=${themeUrl}
+        this.logger.info(`DockerAPI:\ndocker run \\
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/${themeId}/ \\
+        --env THEME_ID=${themeId} \\
+        --env THEME_SUBPATH=${themeSubPath} \\
+        --env THEME_URL=${themeUrl} \\
         ${process.env.RENDER_IMAGE}
         `);
 
@@ -88,12 +88,12 @@ export class PreviewRendererContainer extends Container {
           ]
         });
       } else {
-        this.logger.info(`docker run
-        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site"
-        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content"
-        -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public"
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir"
-        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/
+        this.logger.info(`DockerAPI:\ndocker run \\
+        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site" \\
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/ \\
         ${process.env.RENDER_IMAGE}
         `);
 
