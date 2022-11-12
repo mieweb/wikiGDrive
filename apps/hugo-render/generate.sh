@@ -27,7 +27,10 @@ then
     rm -rf /site/resources/_gen
 fi
 
-hugo --config=/site/tmp_dir/config.toml --verbose
+if [ -f generate-local.sh ]
+  ./generate-local.sh
+else
+  hugo --config=/site/tmp_dir/config.toml --verbose
 
 CODE=$?
 
