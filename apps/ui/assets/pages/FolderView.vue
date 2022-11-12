@@ -105,8 +105,8 @@ export default {
       treeVersion: null,
       notFound: false,
       logsState: {
-        from: +new Date() - 3600 * 1000,
-        until: +new Date()
+        from: undefined,
+        until: undefined
       }
     };
   },

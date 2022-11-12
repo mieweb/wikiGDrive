@@ -87,8 +87,13 @@ export default {
       this.logs = [];
     },
     async fetchOlder() {
-      const until = this.innerValue.from || +new Date();
-      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?order=desc&until=` + (until - 1));
+      const until = this.innerValue.from || undefined;
+      const urlParams = new URLSearchParams();
+      urlParams.append('order', 'desc');
+      if (until > 0) {
+        urlParams.append(until, String(until - 1));
+      }
+      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?` + urlParams.toString());
       const logs = await response.json();
       if (logs.length === 0) {
         return;
@@ -154,6 +159,9 @@ export default {
       return `<a target="github" href="${url}">${baseName}</a>`;
     },
     dateStr(v) {
+      if (!v) {
+        return '';
+      }
       return new Date(v).toISOString();
     }
   },
