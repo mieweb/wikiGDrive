@@ -15,7 +15,11 @@ export class LogsController extends Controller {
                   ) {
 
     if (!until && !from) {
-      return [];
+      if (order === 'desc') {
+        until = +new Date();
+      } else {
+        from = +new Date();
+      }
     }
 
     const options: QueryOptions = {

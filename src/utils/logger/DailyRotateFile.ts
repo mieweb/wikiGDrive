@@ -239,7 +239,7 @@ export class DailyRotateFile extends Transport {
 
           if (+fileDate <= 0) return false;
           if (options.from && +fileDate < +options.from - 3 * 24 * 3600 * 1000) return false;
-          if (options.until && +fileDate > +options.until - 3 * 24 * 3600 * 1000) return false;
+          if (options.until && +fileDate > +options.until + 3 * 24 * 3600 * 1000) return false;
 
           return true;
         })
