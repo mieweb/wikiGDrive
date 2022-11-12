@@ -1,4 +1,4 @@
-FROM alpine
+FROM node
 MAINTAINER Grzegorz Godlewski <gg@gitgis.com>
 
 ADD site/ /site
