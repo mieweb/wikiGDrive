@@ -68,10 +68,10 @@ export default {
         retVal = retVal.filter(item => 'error' === item.level);
       }
       if (this.innerValue.from > 0) {
-        retVal = retVal.filter(item =>  item.timestamp > this.innerValue.from);
+        retVal = retVal.filter(item =>  item.timestamp >= this.innerValue.from);
       }
       if (this.innerValue.to > 0) {
-        retVal = retVal.filter(item =>  item.timestamp < this.innerValue.to);
+        retVal = retVal.filter(item =>  item.timestamp <= this.innerValue.to);
       }
       return retVal;
     }
@@ -106,6 +106,7 @@ export default {
       this.logs.unshift(...logs);
 
       this.innerValue.from = logs[0].timestamp;
+      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
       this.$emit('update:modelValue', this.innerValue);
 
       this.$nextTick(() => {
@@ -116,7 +117,10 @@ export default {
       });
     },
     async fetchNewer() {
-      const from = this.innerValue.to || +new Date();
+      if (!this.innerValue.to) {
+        return;
+      }
+      const from = this.innerValue.to;
       const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?order=asc&from=` + (from + 1));
       const logs = await response.json();
       if (logs.length === 0) {
@@ -127,7 +131,7 @@ export default {
 
       this.logs.push(...logs);
 
-      this.innerValue.to = logs[logs.length - 1].timestamp;
+      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
       this.$emit('update:modelValue', this.innerValue);
 
       if (logs.length > 0) {
