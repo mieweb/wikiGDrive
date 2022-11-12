@@ -93,7 +93,7 @@ export class PreviewRendererContainer extends Container {
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/_manual \\
+        --env BASE_URL=${process.env.DOMAIN}/preview/${driveId}/_manual/ \\
         ${process.env.RENDER_IMAGE}
         `);
 
@@ -107,7 +107,7 @@ export class PreviewRendererContainer extends Container {
             ]
           },
           Env: [
-            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/_manual`
+            `BASE_URL=${process.env.DOMAIN}/preview/${driveId}/_manual/`
           ]
         });
       }
