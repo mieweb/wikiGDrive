@@ -10,8 +10,8 @@ ENV THEME_URL=""
 VOLUME ["/site/content"]
 VOLUME ["/site/public"]
 
-RUN apk add --no-cache hugo git nodejs npm
-RUN npm i -g postcss postcss-cli
+RUN apk add --no-cache git nodejs npm
+RUN npm i -g postcss postcss-cli hugo-extended
 
 RUN git clone https://github.com/budparr/gohugo-theme-ananke.git /themes/ananke
 RUN git clone https://github.com/mieweb/docs.git /themes/wc-eh-docs
