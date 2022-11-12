@@ -27,7 +27,7 @@ fi
 
 if [[ -f generate-wikigdrive.sh ]]
 then
-  ./generate-local.sh
+  ./generate-wikigdrive.sh
 else
   cat /site/tmp_dir/config.toml
   hugo --config=/site/tmp_dir/config.toml --verbose
