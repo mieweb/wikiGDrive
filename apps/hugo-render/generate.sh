@@ -25,7 +25,7 @@ then
     rm -rf /site/resources/_gen
 fi
 
-if [[ -f generate-local.sh ]]
+if [[ -f generate-wikigdrive.sh ]]
 then
   ./generate-local.sh
 else
