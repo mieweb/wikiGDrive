@@ -53,12 +53,14 @@ export class GitScanner {
           }
         }
         if (error || stderr) {
-          const err = new Error('Failed exec:' + command + '\n' + (stderr ? stderr : error.message)  );  
+          const err = new Error('Failed exec:' + command + '\n' + (stderr ? stderr : error.message)  );
           err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
           if (!opts.skipLogger) { 
             this.logger.error(err);
           }
-          return reject(err);
+          if (error) {
+            return reject(err);
+          }
         }
 
         resolve({
