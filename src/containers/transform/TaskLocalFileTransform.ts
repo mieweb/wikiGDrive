@@ -147,7 +147,11 @@ export class TaskLocalFileTransform extends QueueTask {
       }
 
       const converter = new OdtToMarkdown(document, styles);
-      converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
+      if (this.realFileName === '_index.md') {
+        converter.setPicturesDir('./' + this.realFileName.replace('.md', '.assets/'));
+      } else {
+        converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
+      }
       markdown = await converter.convert();
       links = Array.from(converter.links);
       frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
