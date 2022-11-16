@@ -57,7 +57,7 @@ export class QuotaLimiter {
       ts: 0
     };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
-      this.logger.info('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+      this.logger.debug('QuotaError, exponential slowdown: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
     }
   }
 
@@ -75,7 +75,7 @@ export class QuotaLimiter {
       ts: 0
     };
     if (this.setLimit(newLimits.queries, newLimits.seconds)) {
-      this.logger.info('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
+      this.logger.debug('Speedup: ' + newLimits.queries + ' queries per ' + newLimits.seconds + ' sec');
       this.oldCounter = this.counter;
     }
   }
