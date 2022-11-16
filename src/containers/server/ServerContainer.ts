@@ -248,40 +248,6 @@ export class ServerContainer extends Container {
         next(err);
       }
     });
-/*
-    app.get('/driveui/response', async (req, res, next) => {
-      try {
-        const hostname = req.header('host');
-        const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-        const serverUrl = protocol + hostname;
-
-        const googleAuthService = new GoogleAuthService();
-        const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/driveui/response`, req.query.code);
-
-        res.json({test: 1, token});
-/!*
-
-
-        const driveId = req.params.driveId;
-        const redirectTo = req.query.redirectTo;
-
-
-        const state = new URLSearchParams(filterParams({
-          driveId: driveId !== 'none' ? (driveId || '') : '',
-          redirectTo
-        })).toString();
-
-        const authUrl = await googleAuthService.getWebDriveInstallUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/driveui/install2`, state);
-        if (process.env.VERSION === 'dev') {
-          console.debug(authUrl);
-        }
-
-        res.redirect(authUrl);
-*!/
-      } catch (err) {
-        next(err);
-      }
-    });*/
   }
 
   async initAuth(app) {
@@ -326,10 +292,8 @@ export class ServerContainer extends Container {
           throw new Error('No state query parameter');
         }
         const state = new URLSearchParams(req.query.state);
-        console.log('state', state);
 
         const driveui = state.get('driveui');
-        console.log(driveui);
         if (driveui) {
           const googleAuthService = new GoogleAuthService();
           const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
