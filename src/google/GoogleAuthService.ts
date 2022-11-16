@@ -83,6 +83,20 @@ export class GoogleAuthService {
     }).toString();
   }
 
+  async getWebDriveInstallUrl(client_id: string, redirect_uri: string, state: string): Promise<string> {
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id,
+      redirect_uri,
+      access_type: 'offline',
+      prompt: 'consent',
+      response_type: 'code',
+      scope: [
+        'https://www.googleapis.com/auth/drive.install'
+      ].join(' '),
+      state
+    }).toString();
+  }
+
   async getWebToken(client_id: string, client_secret: string, redirect_uri: string, code: string): Promise<GoogleAuth> {
     const body = new URLSearchParams({
       client_id,
