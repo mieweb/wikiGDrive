@@ -80,7 +80,7 @@ export default {
       window.open('https://drive.google.com/drive/u/0/folders/' + folderId);
     },
     async submit() {
-      const response = await fetch('/api/share_drive', {
+      const json = await this.authenticatedClient.fetchApi('/api/share_drive', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -90,7 +90,6 @@ export default {
           url: this.url
         })
       });
-      const json = await response.json();
       if (json.driveId) {
         await this.$router.push({ name: 'drive', params: { driveId: json.driveId } });
       } else {
