@@ -24,7 +24,7 @@
             <td>{{ trace.kind }}</td>
             <td>{{ dateStr(trace.timestamp / 1000) }}</td>
             <td class="text-end">{{ trace.duration / 1000 }}ms</td>
-            <td><a target="zipkin" :href="ZIPKIN_URL + '/zipkin/traces/' + trace.traceId">{{ trace.traceId }}</a></td>
+            <td><a target="zipkin" :href="ZIPKIN_URL + '/traces/' + trace.traceId">{{ trace.traceId }}</a></td>
             <td class="text-end">{{ trace.spans.length }}</td>
             <td>{{ trace.name }}</td>
           </tr>
@@ -65,8 +65,9 @@ export default {
           if (spans.length === 0) {
             return null;
           }
+          spans.sort((a, b) => a.timestamp - b.timestamp);
           return {
-              ...spans[spans.length - 1],
+              ...spans[0],
               spans
           };
         })
@@ -75,9 +76,8 @@ export default {
   },
   methods: {
     async fetch() {
-      const response = await fetch(ZIPKIN_URL + '/zipkin/api/v2/traces?limit=100');
+      const response = await fetch(ZIPKIN_URL + '/api/v2/traces?limit=100');
       const json = await response.json();
-      console.log(json);
       this.traces = json;
     },
     dateStr(v) {

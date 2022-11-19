@@ -40,7 +40,7 @@ jobs:
           -v /home/githubactions/wikigdrive/env.develop:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -e "GIT_SHA=${GITHUB_SHA}" \
-          -e "ZIPKIN_URL=http://zipkin:9411" \
+          -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=wikigdrive-develop" \
           --link=zipkin:zipkin \
           --publish 127.0.0.1:4000:3000 \
