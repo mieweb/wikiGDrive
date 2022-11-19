@@ -1,7 +1,6 @@
 'use strict';
 
 import {AuthenticatedClient} from "./services/AuthenticatedClient.mjs";
-import {FileClientService} from './services/FileClientService.mjs';
 import {DriveClientService} from './services/DriveClientService.mjs';
 import {GitClientService} from './services/GitClientService.mjs';
 import {SearchClientService} from './services/SearchClientService.mjs';
@@ -14,6 +13,7 @@ import App from './App.vue';
 import {ModalsMixin} from './modals/ModalsMixin.mjs';
 import {ToastsMixin} from './modals/ToastsMixin.mjs';
 import {CachedFileClientService} from './services/CachedFileClientService.mjs';
+import {addTelemetry} from './telemetry.ts';
 
 function completedJob(job) {
   return !['waiting', 'running'].includes(job.state);
@@ -187,3 +187,5 @@ router.beforeEach(async (to, from, next) => {
   }
   next();
 });
+
+addTelemetry(app);

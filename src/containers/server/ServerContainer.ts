@@ -116,6 +116,7 @@ export class ServerContainer extends Container {
       if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
         const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
           .toString()
+          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
           .replace(/GIT_SHA/g, process.env.GIT_SHA);
         res.status(200).header('Content-type', 'text/html').end(indexHtml);
       } else {
@@ -139,6 +140,11 @@ export class ServerContainer extends Container {
 
     if (process.env.ZIPKIN_URL) {
       app.use((req, res, next) => {
+        if (req.header('traceparent')) {
+          next();
+          return;
+        }
+
         const span = opentelemetry.trace.getActiveSpan();
         if (span) {
           const traceId = span.spanContext().traceId;
@@ -181,6 +187,7 @@ export class ServerContainer extends Container {
           if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
             const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
               .toString()
+              .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
               .replace(/GIT_SHA/g, process.env.GIT_SHA);
             res.status(404).header('Content-type', 'text/html').end(indexHtml);
           } else {

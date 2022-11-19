@@ -14,6 +14,13 @@
         icon="fa-solid fa-computer me-1"
         title="Logs"
     />
+    <ToolButton
+        v-if="!isGDocsPreview && ZIPKIN_URL"
+        :active="activeTab === 'performance'"
+        :to="{ name: 'drive', params: { driveId }, hash: '#performance' }"
+        icon="fa-solid fa-gauge me-1"
+        title="Performance"
+    />
 
     <div class="flex-grow-1"></div>
 
@@ -30,6 +37,9 @@
 import {UtilsMixin} from './UtilsMixin.mjs';
 import ToolButton from './ToolButton.vue';
 
+const metaEl = document.querySelector('meta[name=ZIPKIN_URL]');
+const ZIPKIN_URL = metaEl ? metaEl.getAttribute('content') : undefined;
+
 export default {
   mixins: [UtilsMixin],
   components: {ToolButton},
@@ -37,6 +47,9 @@ export default {
     activeTab: {
       type: String
     }
+  },
+  data() {
+    return { ZIPKIN_URL };
   }
 };
 </script>

@@ -138,3 +138,17 @@ watch -d odt2txt 1WfXOsKmPgOtdsZxXdl6RpqMrlkQP2O1GrprnaFxK0oE.odt
 Another cool trick to see diffs in images:
 * https://github.com/ewanmellor/git-diff-image
 
+
+## Zipkin telemetry setup
+
+Start zipkin with:
+
+```
+ocker run -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
+```
+
+Set app env var to:
+
+```
+ZIPKIN_URL=http://localhost:9411`
+```
