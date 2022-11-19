@@ -27,6 +27,7 @@
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" v-model="logsState" />
+      <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
       <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
@@ -63,6 +64,7 @@ import IframePreview from '../components/IframePreview.vue';
 import NavTabs from '../components/NavTabs.vue';
 import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
+import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
 import GitLog from '../components/GitLog.vue';
@@ -86,6 +88,7 @@ export default {
     ImagePreview,
     IframePreview,
     LogsViewer,
+    ZipkinViewer,
     ChangesViewer,
     UserSettings,
     GitLog,
@@ -115,7 +118,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync';
     },
     jobs() {
       return this.$root.jobs || [];

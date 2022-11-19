@@ -31,7 +31,7 @@
         </span>
       </a>
     </li>
-    <li :class="{ 'active': activeTab === 'sync' }" class="wgd-nav-item">
+    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'sync'].includes(activeTab) }" class="wgd-nav-item">
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">

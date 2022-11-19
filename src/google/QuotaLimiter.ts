@@ -2,6 +2,8 @@
 
 import EventEmitter from 'events';
 import winston from 'winston';
+import opentelemetry, {SpanKind} from '@opentelemetry/api';
+import {Context} from '@opentelemetry/api/build/src/context/types';
 
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;
@@ -135,22 +137,44 @@ export class QuotaLimiter {
       availableQuota--;
       notStartedJob.ts = now;
       this.running++;
-      process.nextTick(() => {
+      process.nextTick(async () => {
         if (!notStartedJob.skipCounter) {
           this.counter++;
         }
 
-        notStartedJob.func()
-          .then(() => {
+        if (process.env.ZIPKIN_URL && notStartedJob.func['parentCtx']) {
+          const parentCtx: Context = notStartedJob.func['parentCtx'];
+          const serviceName = process.env.ZIPKIN_SERVICE || 'wikigdrive';
+          const tracer = opentelemetry.trace.getTracer(
+            serviceName,
+            '1.0'
+          );
+
+          const spanName = 'QuotaLimiter';
+          await tracer.startActiveSpan(spanName, { kind: SpanKind.INTERNAL }, parentCtx, async (span) => {
+            try {
+              await notStartedJob.func();
+              this.running--;
+            } catch (err) {
+              if (err.isQuotaError && this.currentLimit) {
+                this.slowdown();
+              }
+              this.running--;
+            } finally {
+              span.end();
+            }
+          });
+        } else {
+          try {
+            await notStartedJob.func();
             this.running--;
-          })
-          .catch(async (err) => {
+          } catch (err) {
             if (err.isQuotaError && this.currentLimit) {
               this.slowdown();
             }
-
             this.running--;
-          });
+          }
+        }
       });
     }
   }

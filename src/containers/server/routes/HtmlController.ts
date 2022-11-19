@@ -10,6 +10,7 @@ export default class HtmlController extends Controller {
 
     this.indexHtml = fs.readFileSync(path.resolve(HTML_DIR, 'index.html'))
       .toString()
+      .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
       .replace(/GIT_SHA/g, process.env.GIT_SHA);
   }
 

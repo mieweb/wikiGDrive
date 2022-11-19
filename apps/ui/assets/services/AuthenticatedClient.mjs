@@ -44,7 +44,9 @@ export class AuthenticatedClient {
       case 401:
         {
           if (params.optional_login) {
-            return [];
+            return {
+              json: async () => ([])
+            };
           }
 
           const json = await response.json();

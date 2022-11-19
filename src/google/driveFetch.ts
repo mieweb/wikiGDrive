@@ -238,6 +238,10 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
       job.skipCounter = true;
     }
 
+    if (process.env.ZIPKIN_URL) {
+      job.parentCtx = opentelemetry.context.active();
+    }
+
     quotaLimiter.addJob(job);
   });
 

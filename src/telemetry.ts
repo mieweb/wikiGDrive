@@ -1,4 +1,4 @@
-import opentelemetry, {propagation, ROOT_CONTEXT, Span} from '@opentelemetry/api';
+import opentelemetry, {Span, SpanKind} from '@opentelemetry/api';
 import {ZipkinExporter} from '@opentelemetry/exporter-zipkin';
 import {InstrumentationBase, registerInstrumentations} from '@opentelemetry/instrumentation';
 import {HttpInstrumentation} from '@opentelemetry/instrumentation-http';
@@ -98,7 +98,7 @@ export class ClassInstrumentation extends InstrumentationBase {
           spanName += ')';
         }
 
-        return tracer.startActiveSpan(spanName, async (span) => {
+        return tracer.startActiveSpan(spanName, { kind: SpanKind.INTERNAL }, async (span) => {
           const branch = 'develop';
           const url = `https://github.com/mieweb/wikiGDrive/blob/${branch}/src${instrumentation.path}`;
           span.setAttribute('src', url);

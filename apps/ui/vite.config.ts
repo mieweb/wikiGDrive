@@ -24,6 +24,7 @@ export default defineConfig({
   define: {
     'import.meta.env.GIT_SHA': JSON.stringify(process.env.GIT_SHA),
     'import.meta.env.BUILD_TIME': JSON.stringify(process.env.BUILD_TIME),
-    'import.meta.env.VERSION': JSON.stringify(process.env.VERSION)
+    'import.meta.env.VERSION': JSON.stringify(process.env.VERSION),
+    'import.meta.env.VITE_APP_ZIPKIN_SERVICE': JSON.stringify(process.env.ZIPKIN_SERVICE)
   }
 });
