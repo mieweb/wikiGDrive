@@ -1,9 +1,9 @@
 <template>
   <li v-if="'nav-item' === type" class="nav-item">
-    <a class="nav-link" :class="{ active: active }" aria-current="page" href="" @click="click">
+    <router-link class="nav-link" :class="{ active: active }" aria-current="page" @click.prevent="click" :to="to">
       <i v-if="icon" :class="icon"></i>
       {{ title }}<slot></slot>
-    </a>
+    </router-link>
   </li>
   <li v-else-if="'list-group-item' === type" class="list-group-item">
     <a :href="href" target="_blank">
@@ -11,7 +11,7 @@
       {{ title }}
     </a>
   </li>
-  <a v-else class="btn btn-white text-primary ml-1" @click="click" href="" :aria-label="title" :title="title"
+  <a v-else class="btn btn-white text-primary ml-1" @click.prevent="click" href="" :aria-label="title" :title="title"
      :class="{ 'border-bottom': active, 'border-active': active }">
     <i v-if="icon" :class="icon"></i>
     <span v-else>{{title}}</span>
