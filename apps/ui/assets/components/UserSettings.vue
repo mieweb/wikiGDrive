@@ -45,7 +45,7 @@
 
           <div class="form-group">
             <label>Config.toml for preview</label>
-            <textarea v-grow class="form-control" rows="10" v-model="user_config.config_toml"></textarea>
+            <CodeEditor v-model="user_config.config_toml" lang="toml" />
           </div>
         </form>
       </div>
@@ -60,11 +60,12 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.mjs';
 import StatusToolBar from './StatusToolBar.vue';
+import CodeEditor from './CodeEditor.vue';
 
 export default {
   mixins: [UtilsMixin],
   components: {
-    StatusToolBar
+    StatusToolBar, CodeEditor
   },
   props: {
     activeTab: {
