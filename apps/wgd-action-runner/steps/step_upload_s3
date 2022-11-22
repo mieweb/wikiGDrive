@@ -1,0 +1,6 @@
+#!/bin/bash -x
+
+# TODO validate ENV
+
+s3cmd sync --add-header="Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" --acl-public --guess-mime-type --no-mime-magic --delete-removed --exclude "*.css" /site/public/ s3://$BUCKET
+s3cmd sync --add-header="Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" --acl-public --delete-removed -m "text/css" --exclude "*" --include "*.css" /site/public/ s3://$BUCKET

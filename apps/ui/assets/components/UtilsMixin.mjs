@@ -174,7 +174,7 @@ export const UtilsMixin = {
     },
     async renderPreview(event) {
       await disableElement(event, async () => {
-        await this.authenticatedClient.fetchApi(`/api/render_preview/${this.driveId}`, {
+        await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/transform`, {
           method: 'post'
         });
       });

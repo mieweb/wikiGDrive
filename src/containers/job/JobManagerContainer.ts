@@ -4,7 +4,6 @@ import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
 
 import {fileURLToPath} from 'url';
-import {PreviewRendererContainer} from '../preview/PreviewRendererContainer';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {GoogleFile} from '../../model/GoogleFile';
 import {UserConfigService} from '../google_folder/UserConfigService';
@@ -15,10 +14,11 @@ import {GitScanner} from '../../git/GitScanner';
 import {FileContentService} from '../../utils/FileContentService';
 import {CACHE_PATH} from '../server/routes/FolderController';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
+import {ActionRunnerContainer} from '../action/ActionRunnerContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'transform' | 'render_preview' | 'git_pull' | 'git_push';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'run_action';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -55,18 +55,9 @@ function notCompletedJob(job: Job) {
   return ['waiting', 'running'].includes(job.state);
 }
 
-function removeOldByType(type: string) {
+function removeOldByType(type: JobType) {
   return (job: Job) => {
     if (job.type !== type) {
-      return true;
-    }
-    return !(job.state === 'failed' || job.state === 'done');
-  };
-}
-
-function removeOldRenderPreview() {
-  return (job: Job) => {
-    if (job.type !== 'render_preview') {
       return true;
     }
     return !(job.state === 'failed' || job.state === 'done');
@@ -173,8 +164,8 @@ export class JobManagerContainer extends Container {
         driveJobs.jobs = driveJobs.jobs.filter(subJob => subJob.state === 'running');
         driveJobs.jobs.push(job);
         break;
-      case 'render_preview':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'render_preview' && notCompletedJob(subJob))) {
+      case 'run_action':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'run_action' && notCompletedJob(subJob))) {
           return;
         }
         driveJobs.jobs.push(job);
@@ -257,23 +248,8 @@ export class JobManagerContainer extends Container {
           currentJob.state = 'running';
           currentJob.started = now;
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
-          this.runJob(driveId, currentJob)
+          this.runJob(driveId, currentJob, driveJobs)
             .then(async () => {
-              if (currentJob.type === 'git_pull') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Git pull done',
-                  type: 'git_pull:done',
-                  links: {
-                    '#git_log': 'View git history'
-                  },
-                });
-
-                await this.schedule(driveId, {
-                  type: 'transform',
-                  title: 'Transform markdown'
-                });
-              }
               if (currentJob.type === 'git_push') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -282,26 +258,6 @@ export class JobManagerContainer extends Container {
                   links: {
                     '#git_log': 'View git history'
                   },
-                });
-              }
-              if (currentJob.type === 'render_preview') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Render done',
-                  type: 'render_preview:done',
-                });
-              }
-              if (currentJob.type === 'transform') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Transform done',
-                  type: 'transform:done',
-                  payload: currentJob.payload || 'all'
-                });
-
-                await this.schedule(driveId, {
-                  type: 'render_preview',
-                  title: 'Render preview'
                 });
               }
               if (currentJob.type === 'sync_all') {
@@ -323,24 +279,9 @@ export class JobManagerContainer extends Container {
               }
               currentJob.state = 'done';
               currentJob.finished = +new Date();
-              this.setDriveJobs(driveId, driveJobs);
+              await this.setDriveJobs(driveId, driveJobs);
             })
             .catch(err => {
-              const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
-              console.error('Job failed', err);
-              logger.error(err.stack ? err.stack : err.message);
-
-              if (currentJob.type === 'git_pull') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Git pull failed',
-                  type: 'git_pull:failed',
-                  err: err.message,
-                  links: {
-                    '#drive_logs': 'View logs'
-                  },
-                });
-              }
               if (currentJob.type === 'git_push') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -350,30 +291,6 @@ export class JobManagerContainer extends Container {
                   links: {
                     '#drive_logs': 'View logs'
                   },
-                });
-              }
-
-              if (currentJob.type === 'render_preview') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldRenderPreview());
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Render failed',
-                  type: 'render_preview:failed',
-                  err: err.message,
-                  links: {
-                    '#drive_logs': 'View logs'
-                  }
-                });
-              }
-              if (currentJob.type === 'transform') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
-                this.engine.emit(driveId, 'toasts:added', {
-                  title: 'Transform failed',
-                  type: 'transform:failed',
-                  err: err.message,
-                  links: {
-                    '#drive_logs': 'View logs'
-                  },
-                  payload: currentJob.payload || 'all'
                 });
               }
               if (currentJob.type === 'sync_all') {
@@ -398,6 +315,11 @@ export class JobManagerContainer extends Container {
                   payload: currentJob.payload
                 });
               }
+
+              const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+              console.error('Job failed', err);
+              logger.error(err.stack ? err.stack : err.message);
+
               currentJob.state = 'failed';
               currentJob.finished = +new Date();
               this.setDriveJobs(driveId, driveJobs);
@@ -490,16 +412,22 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async renderPreview(folderId: FileId) {
-    const previewRendererContainer = new PreviewRendererContainer({
-      name: folderId
+  private async runAction(folderId: FileId, type: string) {
+    const runActionContainer = new ActionRunnerContainer({
+      name: folderId,
+      type
     });
-    await previewRendererContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
-    await this.engine.registerContainer(previewRendererContainer);
+    const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
+    const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
+    await runActionContainer.mount2(
+      googleFileSystem,
+      generatedFileService
+    );
+    await this.engine.registerContainer(runActionContainer);
     try {
-      await previewRendererContainer.run(folderId);
+      await runActionContainer.run(folderId);
     } finally {
-      await this.engine.unregisterContainer(previewRendererContainer.params.name);
+      await this.engine.unregisterContainer(runActionContainer.params.name);
     }
   }
 
@@ -583,27 +511,99 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async runJob(driveId: FileId, job: Job) {
+  private async runJob(driveId: FileId, currentJob: Job, driveJobs: DriveJobs) {
     const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
-    logger.info('runJob ' + driveId + ' ' + JSON.stringify(job));
-    switch (job.type) {
+    logger.info('runJob ' + driveId + ' ' + JSON.stringify(currentJob));
+    switch (currentJob.type) {
       case 'sync':
-        await this.sync(driveId, job.payload.split(','));
+        await this.sync(driveId, currentJob.payload.split(','));
         break;
       case 'sync_all':
         await this.sync(driveId);
         break;
       case 'transform':
-        await this.transform(driveId, job.payload ? [ job.payload ] : [] );
-        await this.clearGitCache(driveId);
+        try {
+          await this.transform(driveId, currentJob.payload ? [ currentJob.payload ] : [] );
+          await this.clearGitCache(driveId);
+
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Transform done',
+            type: 'transform:done',
+            payload: currentJob.payload || 'all'
+          });
+
+          await this.schedule(driveId, {
+            type: 'run_action',
+            title: 'Run action',
+            payload: currentJob.type
+          });
+        } catch (err) {
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Transform failed',
+            type: 'transform:failed',
+            err: err.message,
+            links: {
+              '#drive_logs': 'View logs'
+            },
+            payload: currentJob.payload || 'all'
+          });
+          throw err;
+        }
         break;
-      case 'render_preview':
-        await this.renderPreview(driveId);
-        await this.clearGitCache(driveId);
+      case 'run_action':
+        try {
+          await this.runAction(driveId, currentJob.payload);
+          await this.clearGitCache(driveId);
+
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Action done',
+            type: 'run_action:done',
+          });
+        } catch (err) {
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Action failed',
+            type: 'run_action:failed',
+            err: err.message,
+            links: {
+              '#drive_logs': 'View logs'
+            }
+          });
+          throw err;
+        } finally {
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('run_action'));
+        }
         break;
       case 'git_pull':
-        await this.gitPull(driveId);
-        await this.clearGitCache(driveId);
+        try {
+          await this.gitPull(driveId);
+          await this.clearGitCache(driveId);
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Git pull done',
+            type: 'git_pull:done',
+            links: {
+              '#git_log': 'View git history'
+            },
+          });
+
+          await this.schedule(driveId, {
+            type: 'transform',
+            title: 'Transform markdown'
+          });
+        } catch (err) {
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Git pull failed',
+            type: 'git_pull:failed',
+            err: err.message,
+            links: {
+              '#drive_logs': 'View logs'
+            },
+          });
+          throw err;
+        }
         break;
       case 'git_push':
         await this.gitPush(driveId);

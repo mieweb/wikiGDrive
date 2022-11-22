@@ -416,14 +416,15 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/render_preview/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
+    app.post('/api/run_action/:driveId/:type', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
-          type: 'render_preview',
-          title: 'Render preview'
+          type: 'run_action',
+          title: 'Run action',
+          payload: req.params.type
         });
 
         res.json({ driveId });
@@ -440,11 +441,6 @@ export class ServerContainer extends Container {
         await jobManagerContainer.schedule(driveId, {
           type: 'transform',
           title: 'Transform Markdown'
-        });
-
-        await jobManagerContainer.schedule(driveId, {
-          type: 'render_preview',
-          title: 'Render preview'
         });
 
         res.json({ driveId });
@@ -484,10 +480,6 @@ export class ServerContainer extends Container {
           type: 'transform',
           title: 'Transform markdown'
         });
-        await jobManagerContainer.schedule(driveId, {
-          type: 'render_preview',
-          title: 'Render preview'
-        });
 
         res.json({ driveId });
       } catch (err) {
@@ -520,10 +512,6 @@ export class ServerContainer extends Container {
           type: 'transform',
           payload: fileId,
           title: 'Transform markdown'
-        });
-        await jobManagerContainer.schedule(driveId, {
-          type: 'render_preview',
-          title: 'Render preview'
         });
 
         res.json({ driveId, fileId });

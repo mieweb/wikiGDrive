@@ -29,6 +29,7 @@
       <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" v-model="logsState" />
       <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
       <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
+      <ActionsEditor v-if="activeTab === 'actions'" :active-tab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
@@ -72,6 +73,7 @@ import GitCommit from '../components/GitCommit.vue';
 import DriveTools from '../components/DriveTools.vue';
 import NavBar from '../components/NavBar.vue';
 import GitSettings from '../components/GitSettings.vue';
+import ActionsEditor from '../components/ActionsEditor.vue';
 
 export default {
   name: 'FolderView',
@@ -91,6 +93,7 @@ export default {
     ZipkinViewer,
     ChangesViewer,
     UserSettings,
+    ActionsEditor,
     GitLog,
     GitCommit
   },
@@ -118,7 +121,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'actions';
     },
     jobs() {
       return this.$root.jobs || [];

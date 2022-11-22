@@ -4,7 +4,7 @@ import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
 
-interface ConfigBody {
+export interface ConfigBody {
   config: {
     remote_branch: string;
     config_toml?: string;
@@ -12,6 +12,7 @@ interface ConfigBody {
     hugo_theme: HugoTheme;
     auto_sync: boolean;
     fm_without_version: boolean;
+    actions_yaml?: string;
   };
   remote_url: string;
 }
@@ -88,6 +89,9 @@ export class ConfigController extends Controller {
     }
     if (body.config?.transform_subdir) {
       userConfigService.config.transform_subdir = body.config?.transform_subdir;
+    }
+    if (body.config?.actions_yaml) {
+      userConfigService.config.actions_yaml = body.config?.actions_yaml;
     }
     userConfigService.config.auto_sync = !!body.config?.auto_sync;
     userConfigService.config.fm_without_version = !!body.config?.fm_without_version;
