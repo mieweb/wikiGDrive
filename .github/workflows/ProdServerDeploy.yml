@@ -25,8 +25,8 @@ jobs:
         push_image_and_stages: false
         build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
-    - name: Build hugo rederer
-      run: docker build -t "hugo-render:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/hugo-render
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
     - name: Stop
       run: docker stop wikigdrive-prod

@@ -96,10 +96,6 @@ export class WatchChangesContainer extends Container {
         type: 'transform',
         title: 'Transform markdown'
       });
-      await jobManagerContainer.schedule(driveId, {
-        type: 'render_preview',
-        title: 'Render preview'
-      });
     }
   }
 

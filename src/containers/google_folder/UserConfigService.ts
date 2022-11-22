@@ -1,8 +1,11 @@
 import path from 'path';
 import fs from 'fs';
 import {exec} from 'child_process';
+import yaml from 'js-yaml';
 import {FileContentService} from '../../utils/FileContentService';
 import {HugoTheme} from '../server/routes/ConfigController';
+import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter';
+import {DEFAULT_ACTIONS} from '../action/ActionRunnerContainer';
 
 async function execAsync(command: string) {
   const err = new Error();
@@ -36,6 +39,7 @@ export class UserConfig {
   transform_subdir?: string;
   auto_sync?: boolean;
   fm_without_version?: boolean;
+  actions_yaml?: string;
 }
 
 export class UserConfigService {
@@ -54,6 +58,10 @@ export class UserConfigService {
       };
       await this.save();
     }
+    if (!this.config.actions_yaml) {
+      this.config.actions_yaml = yaml.dump(DEFAULT_ACTIONS, FRONTMATTER_DUMP_OPTS);
+    }
+
     return this.config;
   }
 

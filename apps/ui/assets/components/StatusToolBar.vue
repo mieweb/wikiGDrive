@@ -26,6 +26,13 @@
 
     <ToolButton
         v-if="!isGDocsPreview"
+        :active="activeTab === 'actions'"
+        :to="{ name: 'drive', params: { driveId }, hash: '#actions' }"
+        icon="fa-solid fa-circle-play"
+        title="Actions"
+    />
+    <ToolButton
+        v-if="!isGDocsPreview"
         :active="activeTab === 'drive_config'"
         :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }"
         icon="fa-solid fa-gear me-1"

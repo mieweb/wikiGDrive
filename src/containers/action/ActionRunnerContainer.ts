@@ -1,0 +1,216 @@
+import {Container, ContainerEngine} from '../../ContainerEngine';
+import {FileId} from '../../model/model';
+import winston from 'winston';
+import Docker from 'dockerode';
+import {fileURLToPath} from 'url';
+import {BufferWritable} from '../../utils/BufferWritable';
+import {UserConfigService} from '../google_folder/UserConfigService';
+import yaml from 'js-yaml';
+import {GitScanner} from '../../git/GitScanner';
+import {FileContentService} from '../../utils/FileContentService';
+
+const __filename = fileURLToPath(import.meta.url);
+
+export interface ActionStep {
+  name?: string;
+  uses: string;
+  env?: {[key: string]: string};
+}
+
+export interface ActionDefinition {
+  on: string;
+  steps: Array<ActionStep>;
+}
+
+export const DEFAULT_ACTIONS: ActionDefinition[] = [
+  {
+    on: 'transform',
+    steps: [
+      {
+        name: 'auto_commit',
+        uses: 'auto_commit',
+      },
+      {
+        name: 'render_hugo',
+        uses: 'render_hugo',
+      }
+    ]
+  }
+];
+
+export class ActionRunnerContainer extends Container {
+  private logger: winston.Logger;
+  private generatedFileService: FileContentService;
+  private userConfigService: UserConfigService;
+
+  async init(engine: ContainerEngine): Promise<void> {
+    await super.init(engine);
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+  }
+
+  async convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {
+    const actionDefs: ActionDefinition[] = actionYaml ? yaml.load(actionYaml) : DEFAULT_ACTIONS;
+    return actionDefs;
+  }
+
+  async mount2(fileService: FileContentService, destFileService: FileContentService): Promise<void> {
+    this.filesService = fileService;
+    this.generatedFileService = destFileService;
+    this.userConfigService = new UserConfigService(this.filesService);
+    await this.userConfigService.load();
+  }
+
+  async runDocker(driveId: FileId, step: ActionStep, config): Promise<number> {
+    if (!process.env.ACTION_IMAGE) {
+      this.logger.error('No env.ACTION_IMAGE');
+      return -1;
+    }
+    if (!process.env.VOLUME_DATA) {
+      this.logger.error('No env.VOLUME_DATA');
+      return -1;
+    }
+    if (!process.env.VOLUME_PREVIEW) {
+      this.logger.error('No env.VOLUME_PREVIEW');
+      return -1;
+    }
+    if (!process.env.DOMAIN) {
+      this.logger.error('No env.DOMAIN');
+      return -1;
+    }
+
+    let code = 0;
+    const themeUrl = config?.hugo_theme?.url || '';
+    const themeSubPath = config?.hugo_theme?.path || '';
+
+    const contentDir = config.transform_subdir ?
+      `/${driveId}_transform/${config.transform_subdir}` :
+      `/${driveId}_transform`;
+    const docker = new Docker({socketPath: '/var/run/docker.sock'});
+
+    const themeId = config?.hugo_theme?.id || '';
+    const configToml = config?.config_toml || '#relativeURLs = true\n' +
+      'languageCode = "en-us"\n' +
+      'title = "My New Hugo Site"\n';
+
+    await this.filesService.mkdir('tmp_dir');
+
+    if (themeId) {
+      const configTomlPrefix = `theme="${themeId}"\n`;
+      await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
+    } else {
+      await this.filesService.writeFile('tmp_dir/config.toml', configToml);
+    }
+
+    try {
+      const writable = new BufferWritable();
+
+      let result;
+
+      if (themeId) {
+        const env = ['render_hugo', 'exec'].includes(step.uses) ? Object.assign({
+          CONFIG_TOML: '/site/tmp_dir/config.toml',
+          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
+          THEME_ID: themeId,
+          THEME_SUBPATH: themeSubPath,
+          THEME_URL: themeUrl,
+        }, step.env) : Object.assign({}, step.env);
+
+        this.logger.info(`DockerAPI:\ndocker run \\
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+        ${Object.keys(env).map(key => `--env ${key}=${env[key]}`).join(' ')} \\
+        ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
+        `);
+
+        result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
+          HostConfig: {
+            Binds: [
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
+              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+            ]
+          },
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+        });
+      } else {
+        const env = ['render_hugo', 'exec'].includes(step.uses) ? Object.assign({
+          CONFIG_TOML: '/site/tmp_dir/config.toml',
+          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
+        }, step.env) : Object.assign({}, step.env);
+
+        this.logger.info(`DockerAPI:\ndocker run \\
+        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site" \\
+        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
+        -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+        ${Object.keys(env).map(key => `--env ${key}=${env[key]}`).join(' ')} \\
+        ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
+        `);
+
+        result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
+          HostConfig: {
+            Binds: [
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/site`,
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
+              `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+            ]
+          },
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+        });
+      }
+
+      if (result?.length > 0 && result[0].StatusCode > 0) {
+        this.logger.error(writable.getBuffer().toString());
+        code = result[0].StatusCode;
+      } else {
+        this.logger.info(writable.getBuffer().toString());
+      }
+    } catch (err) {
+      this.logger.error(err.stack ? err.stack : err.message);
+    }
+    return code;
+  }
+
+  async run(driveId: FileId) {
+    const config = this.userConfigService.config;
+
+    const actionDefs = await this.convertActionYaml(config.actions_yaml);
+    for (const actionDef of actionDefs) {
+      if (actionDef.on !== this.params['type']) {
+        continue;
+      }
+
+      if (!Array.isArray(actionDef.steps)) {
+        throw new Error('No action steps');
+      }
+
+      for (const step of actionDef.steps) {
+        this.logger.info('Step: ' + (step.name || step.uses));
+        let lastCode = 0;
+        switch (step.uses) {
+          case 'auto_commit':
+            {
+              const gitScanner = new GitScanner(this.logger, this.generatedFileService.getRealPath(), 'wikigdrive@wikigdrive.com');
+              await gitScanner.initialize();
+              await gitScanner.autoCommit();
+            }
+            break;
+          default:
+            lastCode = await this.runDocker(driveId, step, config);
+            break;
+        }
+        if (0 !== lastCode) {
+          break;
+        }
+      }
+    }
+
+    // fs.unlinkSync(`${tempDir}/config.toml`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async destroy(): Promise<void> {
+  }
+}
