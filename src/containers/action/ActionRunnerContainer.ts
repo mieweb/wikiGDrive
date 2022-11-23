@@ -35,6 +35,17 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
         uses: 'render_hugo',
       }
     ]
+  },
+  {
+    on: 'branch',
+    steps: [
+      {
+        uses: 'commit_branch'
+      },
+      {
+        uses: 'push_branch'
+      }
+    ]
   }
 ];
 
@@ -101,31 +112,44 @@ export class ActionRunnerContainer extends Container {
       await this.filesService.writeFile('tmp_dir/config.toml', configToml);
     }
 
+    const committer = {
+      name: this.params.user_name || 'WikiGDrive',
+      email: this.params.user_email || 'wikigdrive@wikigdrive.com'
+    };
+
+    const additionalEnv = this.payloadToEnv();
+
     try {
       const writable = new BufferWritable();
 
       let result;
 
       if (themeId) {
-        const env = ['render_hugo', 'exec'].includes(step.uses) ? Object.assign({
+        const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
           CONFIG_TOML: '/site/tmp_dir/config.toml',
           BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
           THEME_ID: themeId,
           THEME_SUBPATH: themeSubPath,
           THEME_URL: themeUrl,
-        }, step.env) : Object.assign({}, step.env);
+          GIT_AUTHOR_NAME: committer.name,
+          GIT_AUTHOR_EMAIL: committer.email,
+          GIT_COMMITTER_NAME: committer.name,
+          GIT_COMMITTER_EMAIL: committer.email
+        }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
+        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-        ${Object.keys(env).map(key => `--env ${key}=${env[key]}`).join(' ')} \\
+        ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
         ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
 
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
             Binds: [
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
               `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
               `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
@@ -134,23 +158,29 @@ export class ActionRunnerContainer extends Container {
           Env: Object.keys(env).map(key => `${key}=${env[key]}`)
         });
       } else {
-        const env = ['render_hugo', 'exec'].includes(step.uses) ? Object.assign({
+        const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
           CONFIG_TOML: '/site/tmp_dir/config.toml',
           BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
-        }, step.env) : Object.assign({}, step.env);
+          GIT_AUTHOR_NAME: committer.name,
+          GIT_AUTHOR_EMAIL: committer.email,
+          GIT_COMMITTER_NAME: committer.name,
+          GIT_COMMITTER_EMAIL: committer.email
+        }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
-        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site" \\
-        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
-        -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-        ${Object.keys(env).map(key => `--env ${key}=${env[key]}`).join(' ')} \\
-        ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
+          -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
+          -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site" \\
+          -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
+          -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
+          -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+          ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
+          ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
 
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
             Binds: [
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
               `${process.env.VOLUME_DATA}/${driveId}_transform:/site`,
               `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
               `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
@@ -176,9 +206,14 @@ export class ActionRunnerContainer extends Container {
   async run(driveId: FileId) {
     const config = this.userConfigService.config;
 
+    const gitScanner = new GitScanner(this.logger, this.generatedFileService.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
+    const ownerRepo = await gitScanner.getOwnerRepo();
+
     const actionDefs = await this.convertActionYaml(config.actions_yaml);
     for (const actionDef of actionDefs) {
-      if (actionDef.on !== this.params['type']) {
+      if (actionDef.on !== this.params['trigger']) {
         continue;
       }
 
@@ -188,12 +223,24 @@ export class ActionRunnerContainer extends Container {
 
       for (const step of actionDef.steps) {
         this.logger.info('Step: ' + (step.name || step.uses));
+
+        if (!step.env) {
+          step.env = {};
+        }
+        step.env['OWNER_REPO'] = ownerRepo;
+
         let lastCode = 0;
         switch (step.uses) {
+          case 'push_branch':
+            {
+              const additionalEnv = this.payloadToEnv();
+              await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
+                privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
+              }, `wgd/${additionalEnv['BRANCH']}`);
+            }
+            break;
           case 'auto_commit':
             {
-              const gitScanner = new GitScanner(this.logger, this.generatedFileService.getRealPath(), 'wikigdrive@wikigdrive.com');
-              await gitScanner.initialize();
               await gitScanner.autoCommit();
             }
             break;
@@ -212,5 +259,22 @@ export class ActionRunnerContainer extends Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async destroy(): Promise<void> {
+  }
+
+  private payloadToEnv() {
+    const additionalEnv = {};
+    additionalEnv['REMOTE_BRANCH'] = this.userConfigService.config?.remote_branch || 'master';
+
+    if (this.params.payload) {
+      try {
+        const payload = JSON.parse(this.params.payload);
+        additionalEnv['BRANCH'] = payload.branch;
+        additionalEnv['MESSAGE'] = payload.message;
+        additionalEnv['FILES'] = payload.filePath.join(' ');
+      } catch (err) {
+        this.logger.error(err.stack ? err.stack : err.message);
+      }
+    }
+    return additionalEnv;
   }
 }

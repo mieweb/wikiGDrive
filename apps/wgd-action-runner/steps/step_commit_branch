@@ -1,0 +1,16 @@
+#!/bin/sh -x
+
+cd /repo
+
+git stash clear
+git stash push
+
+git stash apply stash@{0}
+
+git branch -D wgd/$BRANCH
+git checkout -b wgd/$BRANCH
+git commit -m "$MESSAGE" $FILES
+git checkout master
+
+git reset --hard
+git stash apply stash@{0}

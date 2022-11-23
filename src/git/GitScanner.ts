@@ -54,9 +54,9 @@ export class GitScanner {
         }
         if (error || stderr) {
           const err = new Error('Failed exec:' + command + '\n' + (stderr ? stderr : error.message)  );
-          err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
-          if (!opts.skipLogger) { 
-            this.logger.error(err);
+          err.stack = [err.message].concat(stackList.slice(2)).join('\n');
+          if (!opts.skipLogger) {
+            this.logger.error(err.stack ? err.stack : err.message);
           }
           if (error) {
             return reject(err);
@@ -178,9 +178,18 @@ export class GitScanner {
     });
   }
 
-  async pushBranch(remoteBranch: string, sshParams?: SshParams) {
+  async pushBranch(remoteBranch: string, sshParams?: SshParams, localBranch = 'master') {
     if (!remoteBranch) {
       remoteBranch = 'master';
+    }
+
+    if (localBranch !== 'master') {
+      await this.exec(`git push --force origin ${localBranch}:${remoteBranch}`, {
+        env: {
+          GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+        }
+      });
+      return;
     }
 
     const committer = {
@@ -250,6 +259,20 @@ export class GitScanner {
 
     await this.exec(`git reset --hard refs/remotes/origin/${remoteBranch}`);
     await this.removeUntracked();
+  }
+
+  async getOwnerRepo(): Promise<string> {
+    let remoteUrl = await this.getRemoteUrl() || '';
+
+    if (remoteUrl.endsWith('.git')) {
+      remoteUrl = remoteUrl.substring(0, remoteUrl.length - 4);
+    }
+    if (remoteUrl.startsWith('git@github.com:')) {
+      remoteUrl = remoteUrl.substring('git@github.com:'.length);
+      return remoteUrl;
+    }
+
+    return '';
   }
 
   async getRemoteUrl(): Promise<string> {
