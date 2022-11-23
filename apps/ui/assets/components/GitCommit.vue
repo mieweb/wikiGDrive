@@ -40,6 +40,7 @@
             <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
           </div>
           <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
+          <button type="button" class="btn btn-primary" @click="submitCommitBranch">Commit into Branch</button>
         </GitFooter>
         <GitFooter v-else :checked="checked"></GitFooter>
       </div>
@@ -170,7 +171,40 @@ export default {
     open(url) {
       window.open(url, '_blank');
     },
-    async submitCommit() {
+    async submitCommitBranch(event) {
+      if (!this.message) {
+        alert('No commit message');
+        return;
+      }
+
+      const checkedFileNames = Object.keys(this.checked);
+      if (checkedFileNames.length === 0) {
+        alert('No files selected');
+        return;
+      }
+
+      const branch = window.prompt('Enter branch name');
+
+      await disableElement(event, async () => {
+        const filePath = [];
+
+        for (const checkedFileName of checkedFileNames) {
+          const change = this.gitChanges.find(change => change.path === checkedFileName);
+          if (!change?.state?.isDeleted) {
+            filePath.push(checkedFileName);
+          }
+        }
+
+        await this.commitBranch({
+          branch,
+          message: this.message,
+          filePath: filePath,
+          removeFilePath: []
+        });
+        this.message = '';
+      });
+    },
+    async submitCommit(event) {
       if (!this.message) {
         alert('No commit message');
         return;

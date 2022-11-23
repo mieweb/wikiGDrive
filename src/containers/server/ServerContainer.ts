@@ -416,7 +416,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/run_action/:driveId/:type', authenticate(this.logger, 2), async (req, res, next) => {
+    app.post('/api/run_action/:driveId/:trigger', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = req.params.driveId;
 
@@ -424,7 +424,9 @@ export class ServerContainer extends Container {
         await jobManagerContainer.schedule(driveId, {
           type: 'run_action',
           title: 'Run action',
-          payload: req.params.type
+          trigger: req.params.trigger,
+          payload: req.body ? JSON.stringify(req.body) : '',
+          user: req.user
         });
 
         res.json({ driveId });

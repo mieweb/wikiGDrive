@@ -20,6 +20,20 @@ export const GitMixin = {
       } else {
         alert('Commited');
       }
+    },
+    async commitBranch({ branch, message, filePath, removeFilePath }) {
+      await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/branch`, {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          branch,
+          filePath,
+          removeFilePath,
+          message: message
+        })
+      });
     }
   }
 };

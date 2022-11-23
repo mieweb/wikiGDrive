@@ -26,11 +26,16 @@ export interface Job {
   type: JobType;
   state?: JobState;
   title: string;
+  trigger?: string;
   payload?: string;
   ts?: number; // scheduled at
   started?: number; // started at
   finished?: number; // finished at
   startAfter?: number;
+  user?: {
+    name: string,
+    email: string
+  }
 }
 
 export interface Toast {
@@ -412,10 +417,13 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async runAction(folderId: FileId, type: string) {
+  private async runAction(folderId: FileId, trigger: string, payload: string, user?: { name: string, email: string }) {
     const runActionContainer = new ActionRunnerContainer({
       name: folderId,
-      type
+      trigger,
+      payload,
+      user_name: user?.name || 'WikiGDrive',
+      user_email: user?.email || 'wikigdrive@wikigdrive.com'
     });
     const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
     const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
@@ -536,7 +544,7 @@ export class JobManagerContainer extends Container {
           await this.schedule(driveId, {
             type: 'run_action',
             title: 'Run action',
-            payload: currentJob.type
+            trigger: currentJob.type
           });
         } catch (err) {
           driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
@@ -554,7 +562,7 @@ export class JobManagerContainer extends Container {
         break;
       case 'run_action':
         try {
-          await this.runAction(driveId, currentJob.payload);
+          await this.runAction(driveId, currentJob.trigger, currentJob.payload, currentJob.user);
           await this.clearGitCache(driveId);
 
           this.engine.emit(driveId, 'toasts:added', {

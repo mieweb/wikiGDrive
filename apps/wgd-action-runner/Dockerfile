@@ -11,7 +11,7 @@ VOLUME ["/site/content"]
 VOLUME ["/site/public"]
 
 RUN apt-get update
-RUN apt-get install -y git nodejs python3 python3-pip
+RUN apt-get install -y git nodejs curl python3 python3-pip
 RUN pip3 install s3cmd
 RUN npm i -g postcss postcss-cli hugo-extended
 
