@@ -178,6 +178,10 @@ export class GitScanner {
     });
   }
 
+  async pushToDir(dir: string, localBranch = 'master') {
+    await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
+  }
+
   async pushBranch(remoteBranch: string, sshParams?: SshParams, localBranch = 'master') {
     if (!remoteBranch) {
       remoteBranch = 'master';

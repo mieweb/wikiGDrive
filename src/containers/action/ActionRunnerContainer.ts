@@ -8,6 +8,7 @@ import {UserConfigService} from '../google_folder/UserConfigService';
 import yaml from 'js-yaml';
 import {GitScanner} from '../../git/GitScanner';
 import {FileContentService} from '../../utils/FileContentService';
+import * as path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -53,6 +54,7 @@ export class ActionRunnerContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
   private userConfigService: UserConfigService;
+  private tempFileService: FileContentService;
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
@@ -64,14 +66,15 @@ export class ActionRunnerContainer extends Container {
     return actionDefs;
   }
 
-  async mount2(fileService: FileContentService, destFileService: FileContentService): Promise<void> {
+  async mount3(fileService: FileContentService, destFileService: FileContentService, tempFileService: FileContentService): Promise<void> {
     this.filesService = fileService;
     this.generatedFileService = destFileService;
+    this.tempFileService = tempFileService;
     this.userConfigService = new UserConfigService(this.filesService);
     await this.userConfigService.load();
   }
 
-  async runDocker(driveId: FileId, step: ActionStep, config): Promise<number> {
+  async runDocker(driveId: FileId, generatedFileService: FileContentService, step: ActionStep, config): Promise<number> {
     if (!process.env.ACTION_IMAGE) {
       this.logger.error('No env.ACTION_IMAGE');
       return -1;
@@ -93,9 +96,11 @@ export class ActionRunnerContainer extends Container {
     const themeUrl = config?.hugo_theme?.url || '';
     const themeSubPath = config?.hugo_theme?.path || '';
 
+    const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
+
     const contentDir = config.transform_subdir ?
-      `/${driveId}_transform/${config.transform_subdir}` :
-      `/${driveId}_transform`;
+      `/${driveIdTransform}/${config.transform_subdir}` :
+      `/${driveIdTransform}`;
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
     const themeId = config?.hugo_theme?.id || '';
@@ -169,7 +174,7 @@ export class ActionRunnerContainer extends Container {
 
         this.logger.info(`DockerAPI:\ndocker run \\
           -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
-          -v "${process.env.VOLUME_DATA}/${driveId}_transform:/site" \\
+          -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site" \\
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
           -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
           -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
@@ -181,7 +186,7 @@ export class ActionRunnerContainer extends Container {
           HostConfig: {
             Binds: [
               `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
-              `${process.env.VOLUME_DATA}/${driveId}_transform:/site`,
+              `${process.env.VOLUME_DATA}/${driveIdTransform}:/site`,
               `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
               `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
@@ -217,6 +222,11 @@ export class ActionRunnerContainer extends Container {
         continue;
       }
 
+      if (actionDef.on === 'commit') {
+        await gitScanner.pushToDir(this.tempFileService.getRealPath());
+      }
+      const generatedFileService = actionDef.on === 'commit' ? this.tempFileService : this.generatedFileService;
+
       if (!Array.isArray(actionDef.steps)) {
         throw new Error('No action steps');
       }
@@ -245,7 +255,7 @@ export class ActionRunnerContainer extends Container {
             }
             break;
           default:
-            lastCode = await this.runDocker(driveId, step, config);
+            lastCode = await this.runDocker(driveId, generatedFileService, step, config);
             break;
         }
         if (0 !== lastCode) {

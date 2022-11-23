@@ -99,6 +99,14 @@ export default class GitController extends Controller {
         },
       });
 
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+      await jobManagerContainer.schedule(driveId, {
+        type: 'run_action',
+        title: 'Run action',
+        trigger: 'commit',
+        user
+      });
+
       return {};
     } catch (err) {
       this.logger.error(err.stack ? err.stack : err.message);
