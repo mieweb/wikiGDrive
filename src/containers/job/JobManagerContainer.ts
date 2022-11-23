@@ -15,6 +15,8 @@ import {FileContentService} from '../../utils/FileContentService';
 import {CACHE_PATH} from '../server/routes/FolderController';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {ActionRunnerContainer} from '../action/ActionRunnerContainer';
+import fs from 'fs';
+import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -427,14 +429,18 @@ export class JobManagerContainer extends Container {
     });
     const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
     const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
-    await runActionContainer.mount2(
+    const tempPath = fs.mkdtempSync(path.join(this.filesService.getRealPath(), 'temp-'));
+    const tempFileService = new FileContentService(tempPath);
+    await runActionContainer.mount3(
       googleFileSystem,
-      generatedFileService
+      generatedFileService,
+      tempFileService
     );
     await this.engine.registerContainer(runActionContainer);
     try {
       await runActionContainer.run(folderId);
     } finally {
+      fs.rmSync(tempPath, { recursive: true, force: true });
       await this.engine.unregisterContainer(runActionContainer.params.name);
     }
   }
