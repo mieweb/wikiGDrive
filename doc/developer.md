@@ -32,9 +32,10 @@ https://console.cloud.google.com/iam-admin/serviceaccounts/details/1031846960952
 * [Link to the keys](https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333/keys?project=wikigdrive)
 * last key used is dcb0a0d690d0a5ac24b42a3f1962bf9802c36882 and is in [here](https://github.com/mieweb/wikiGDrive/blob/a0f1427018e71576d696c1b0d42a926de13854d7/.github/workflows/ProdServerDeploy.yml#L43)
 
-## Add On Service
+## Add On Service - Google MarketPlace
 
-Add On: https://google-drive-iframe.wikigdrive.com/
+This is for configuring Google Apps and their Console to permit the Google Marketplace to the store.
+
 See [app_script](../app_script)
 
 
