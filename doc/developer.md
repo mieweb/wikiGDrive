@@ -36,7 +36,7 @@ https://console.cloud.google.com/iam-admin/serviceaccounts/details/1031846960952
 
 This is for configuring Google Apps and their Console to permit the Google Marketplace to the store.
 
-See [app_script](../app_script)
+See [app_script](../apps/app-script)
 
 
 ## Runner
