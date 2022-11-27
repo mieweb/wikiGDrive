@@ -600,7 +600,7 @@ export class GitScanner {
             if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
               if (line.startsWith('+') || line.startsWith('-')) {
                 line = line.substring(1);
-                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:')) {
+                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:')) {
                   current.doAutoCommit = false;
                 }
               }
