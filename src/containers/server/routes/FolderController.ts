@@ -1,7 +1,7 @@
 import {
   Controller, ErrorHandler,
   RouteErrorHandler,
-  RouteParamPath,
+  RouteParamPath, RouteParamsMethod,
   RouteResponse,
   RouteUse
 } from './Controller';
@@ -15,6 +15,7 @@ import {DirectoryScanner} from '../../transform/DirectoryScanner';
 import {GitChange, GitScanner} from '../../../git/GitScanner';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {Logger} from 'winston';
+import {clearCachedChanges} from '../../job/JobManagerContainer';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -158,10 +159,28 @@ export default class FolderController extends Controller {
     super(subPath);
   }
 
+  async removeFolder(driveId: string, contentFileService: FileContentService, filePath: string) {
+    if (filePath.length < 2) {
+      return { removed: false };
+    }
+
+    const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+    await transformedFileSystem.remove(filePath);
+
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+    await clearCachedChanges(googleFileSystem);
+
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.regenerateTree(driveId);
+    await markdownTreeProcessor.save();
+
+    return { removed: true, filePath };
+  }
+
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder(@RouteParamPath('driveId') driveId: string) {
+  async getFolder(@RouteParamsMethod() method: string, @RouteParamPath('driveId') driveId: string) {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
@@ -169,6 +188,12 @@ export default class FolderController extends Controller {
     await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+
+    if (method === 'delete') {
+      const result = await this.removeFolder(driveId, contentFileService, filePath);
+      this.res.status(200).send(JSON.stringify(result));
+      return;
+    }
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();

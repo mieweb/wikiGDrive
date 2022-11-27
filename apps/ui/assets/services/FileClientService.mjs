@@ -46,6 +46,12 @@ export class FileClientService {
     return this.currentFetches[path];
   }
 
+  async removeFile(path) {
+    const response = await this.authenticatedClient.fetchApi(`/api/file${path}`, {
+      method: 'delete'
+    });
+  }
+
   async getBacklinks(driveId, fileId) {
     const response = await this.authenticatedClient.fetchApi(`/api/backlinks/${driveId}/${fileId}`);
     return await response.json();

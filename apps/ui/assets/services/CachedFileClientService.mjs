@@ -18,4 +18,18 @@ export class CachedFileClientService extends FileClientService {
     return this.cache[path];
   }
 
+  async removeFile(path) {
+    await super.removeFile(path);
+
+    const parts = path.split('/');
+    parts.pop();
+    const parentDir = parts.join('/')
+    delete this.cache[parentDir];
+    for (const key in this.cache) {
+      if (key.startsWith(parentDir + '/')) {
+        delete this.cache[key];
+      }
+    }
+  }
+
 }
