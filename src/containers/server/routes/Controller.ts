@@ -55,6 +55,12 @@ export interface ControllerRouteParamQuery {
   docs?: RouteDoc;
 }
 
+export interface ControllerRouteParamMethod {
+  type: 'method';
+  parameterIndex: number;
+  docs?: RouteDoc;
+}
+
 export interface ControllerRouteParamPath {
   type: 'path';
   parameterIndex: number;
@@ -64,7 +70,7 @@ export interface ControllerRouteParamPath {
 
 type ControllerRouteParam = ControllerRouteParamGetAll | ControllerRouteParamQuery
   | ControllerRouteParamBody | ControllerRouteParamPath | ControllerRouteParamStream
-  | ControllerRouteParamRelated | ControllerRouteParamUser;
+  | ControllerRouteParamRelated | ControllerRouteParamUser | ControllerRouteParamMethod;
 
 export interface RouteDoc {
   description?: string;
@@ -248,6 +254,9 @@ export class Controller implements ControllerCallContext {
                 break;
               case 'query':
                 args[param.parameterIndex] = req.query[param.name];
+                break;
+              case 'method':
+                args[param.parameterIndex] = req.method.toLowerCase();
                 break;
             }
           }
@@ -491,6 +500,18 @@ export function RouteParamQuery(name: string, docs: RouteDoc = {}) {
       type: 'query',
       parameterIndex,
       name,
+      docs
+    };
+    route.params.push(param);
+  };
+}
+
+export function RouteParamsMethod(docs: RouteDoc = {}) {
+  return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
+    const route = targetClass.getRoute(targetClass, methodProp);
+    const param: ControllerRouteParamMethod = {
+      type: 'method',
+      parameterIndex,
       docs
     };
     route.params.push(param);

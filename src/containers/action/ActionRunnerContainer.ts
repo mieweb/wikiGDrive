@@ -147,6 +147,7 @@ export class ActionRunnerContainer extends Container {
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources" \\
         ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
         ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
@@ -157,7 +158,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
               `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
               `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
           Env: Object.keys(env).map(key => `${key}=${env[key]}`)
@@ -178,6 +180,7 @@ export class ActionRunnerContainer extends Container {
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
           -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
           -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
+          -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources" \\
           ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
           ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
@@ -189,7 +192,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveIdTransform}:/site`,
               `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
               `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
           Env: Object.keys(env).map(key => `${key}=${env[key]}`)

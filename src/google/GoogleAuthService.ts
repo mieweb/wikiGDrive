@@ -76,6 +76,7 @@ export class GoogleAuthService {
       access_type: 'offline',
       prompt: 'consent',
       response_type: 'code',
+      include_granted_scopes: 'true',
       scope: [
         'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/drive.readonly'
       ].join(' '),
@@ -88,9 +89,9 @@ export class GoogleAuthService {
       client_id,
       redirect_uri,
       access_type: 'offline',
-      include_granted_scopes: 'true',
       prompt: 'consent select_account',
       response_type: 'code',
+      include_granted_scopes: 'true',
       scope: [
         'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/userinfo.profile',
@@ -144,8 +145,9 @@ export class GoogleAuthService {
     const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id,
       // redirect_uri: ,
-      access_type: 'offline',
       // response_type: 'code',
+      access_type: 'offline',
+      include_granted_scopes: 'true',
       scope: SCOPES.join(' '),
     }).toString();
 
