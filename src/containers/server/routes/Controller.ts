@@ -439,7 +439,7 @@ export function RouteParamBody(docs: RouteDoc = {}) {
   };
 }
 
-export function RouteParamStream(docs: RouteDoc) {
+export function RouteParamStream(docs: RouteDoc = {}) {
   return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
     const route = targetClass.getRoute(targetClass, methodProp);
     const param: ControllerRouteParamStream = {
@@ -506,7 +506,7 @@ export function RouteParamQuery(name: string, docs: RouteDoc = {}) {
   };
 }
 
-export function RouteParamsMethod(docs: RouteDoc = {}) {
+export function RouteParamMethod(docs: RouteDoc = {}) {
   return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
     const route = targetClass.getRoute(targetClass, methodProp);
     const param: ControllerRouteParamMethod = {

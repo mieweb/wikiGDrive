@@ -83,7 +83,7 @@ export class MarkdownTreeProcessor {
 
   private async findInTree(callBack: CallBack<TreeItem>, children: Array<TreeItem>, curPath = ''): Promise<TreeItemTuple> {
     for (const file of children) {
-      const part = file['id'];
+      const part = file['realFileName'];
       if (callBack(file)) {
         return [ file, curPath ? curPath + '/' + part : part ];
       }
@@ -95,7 +95,7 @@ export class MarkdownTreeProcessor {
       }
 
       if (file.children) {
-        const part = file['id'];
+        const part = file['realFileName'];
         const tuple = await this.findInTree(callBack, file.children, curPath ? curPath + '/' + part : part);
         if (tuple?.length > 0) {
           return tuple;
