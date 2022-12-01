@@ -1,7 +1,7 @@
 import {
   Controller, ErrorHandler,
   RouteErrorHandler,
-  RouteParamPath, RouteParamsMethod,
+  RouteParamPath, RouteParamMethod,
   RouteResponse,
   RouteUse
 } from './Controller';
@@ -180,7 +180,7 @@ export default class FolderController extends Controller {
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder(@RouteParamsMethod() method: string, @RouteParamPath('driveId') driveId: string) {
+  async getFolder(@RouteParamMethod() method: string, @RouteParamPath('driveId') driveId: string) {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');

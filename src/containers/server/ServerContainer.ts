@@ -32,6 +32,8 @@ import {Logger} from 'vite';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
 import opentelemetry from '@opentelemetry/api';
+import {DriveUiController} from './routes/DriveUiController';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,7 +158,6 @@ export class ServerContainer extends Container {
 
     await this.initRouter(app);
     await this.initAuth(app);
-    await this.initInstallDriveUi(app);
 
     await this.initUiServer(app);
 
@@ -228,48 +229,6 @@ export class ServerContainer extends Container {
     });
   }
 
-  async initInstallDriveUi(app) {
-    app.get('/driveui/install', async (req, res, next) => {
-      try {
-        const hostname = req.header('host');
-        const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-        const serverUrl = protocol + hostname;
-        const driveId = req.params.driveId;
-        const redirectTo = req.query.redirectTo;
-
-        const googleAuthService = new GoogleAuthService();
-
-        const state = new URLSearchParams(filterParams({
-          driveui: 1,
-          driveId: driveId !== 'none' ? (driveId || '') : '',
-          redirectTo
-        })).toString();
-
-        const authUrl = await googleAuthService.getWebDriveInstallUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/auth`, state);
-        if (process.env.VERSION === 'dev') {
-          console.debug(authUrl);
-        }
-
-        res.redirect(authUrl);
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.get('/driveui', async (req, res, next) => {
-      try {
-        if (!req.query.state) {
-          throw new Error('No state query parameter');
-        }
-        const state = new URLSearchParams(req.query.state);
-
-        res.json({ state });
-      } catch (err) {
-        next(err);
-      }
-    });
-  }
-
   async initAuth(app) {
     app.get('/auth/:driveId', async (req, res, next) => {
       try {
@@ -309,9 +268,7 @@ export class ServerContainer extends Container {
         const state = new URLSearchParams(req.query.state);
         const driveui = state.get('driveui');
         if (driveui) {
-          const googleAuthService = new GoogleAuthService();
-          const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
-          res.json({ driveui, token });
+          res.redirect('/driveui/installed');
           return;
         }
 
@@ -404,6 +361,9 @@ export class ServerContainer extends Container {
 
     const previewController = new PreviewController('/preview', this.logger);
     app.use('/preview', authenticate(this.logger), await previewController.getRouter());
+
+    const driveUiController = new DriveUiController('/driveui', this.logger, this.filesService, <GoogleApiContainer>this.authContainer);
+    app.use('/driveui', await driveUiController.getRouter());
 
     app.get('/api/ps', async (req, res, next) => {
       try {

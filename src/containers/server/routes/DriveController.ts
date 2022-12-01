@@ -9,6 +9,7 @@ import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {AuthConfig} from '../../../model/AccountJson';
 import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
 import {Container} from '../../../ContainerEngine';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -79,9 +80,9 @@ export class DriveController extends Controller {
     try {
       const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
 
-      const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
-      await markdownTreeProcessor.load();
-      const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+      const googleTreeProcessor = new GoogleTreeProcessor(driveFileSystem);
+      await googleTreeProcessor.load();
+      const [file, drivePath] = await googleTreeProcessor.findById(fileId);
       if (file && drivePath) {
         const odtPath = drivePath + '.odt';
         if (await driveFileSystem.exists(odtPath)) {
@@ -107,9 +108,9 @@ export class DriveController extends Controller {
     try {
       const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
 
-      const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
-      await markdownTreeProcessor.load();
-      const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+      const googleTreeProcessor = new GoogleTreeProcessor(driveFileSystem);
+      await googleTreeProcessor.load();
+      const [file, drivePath] = await googleTreeProcessor.findById(fileId);
       if (file && drivePath) {
         const filePath = `${drivePath}.${googleMimeToExt(file.mimeType, '')}`;
         if (await driveFileSystem.exists(filePath)) {
