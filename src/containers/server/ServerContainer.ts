@@ -268,6 +268,8 @@ export class ServerContainer extends Container {
         const state = new URLSearchParams(req.query.state);
         const driveui = state.get('driveui');
         if (driveui) {
+          const googleAuthService = new GoogleAuthService();
+          await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
           res.redirect('/driveui/installed');
           return;
         }
