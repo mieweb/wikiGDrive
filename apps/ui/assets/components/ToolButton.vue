@@ -1,9 +1,13 @@
 <template>
   <li v-if="'nav-item' === type" class="nav-item">
-    <router-link class="nav-link" :class="{ active: active }" aria-current="page" @click.prevent="click" :to="to">
+    <router-link v-if="to" class="nav-link" :class="{ active: active }" aria-current="page" @click.prevent="click" :to="to">
       <i v-if="icon" :class="icon"></i>
       {{ title }}<slot></slot>
     </router-link>
+    <a v-else class="nav-link" :class="{ active: active }" aria-current="page" @click.prevent="click">
+      <i v-if="icon" :class="icon"></i>
+      {{ title }}<slot></slot>
+    </a>
   </li>
   <li v-else-if="'list-group-item' === type" class="list-group-item">
     <a :href="href" target="_blank">
@@ -20,6 +24,7 @@
 <script>
 export default {
   name: 'ToolButton',
+  emits: ['click'],
   props: {
     active: Boolean,
     to: Object,
