@@ -43,6 +43,7 @@ export default {
   name: 'FilesTreeLeaf',
   components: { ContextMenu },
   mixins: [ UtilsMixin ],
+  emits: ['selected', 'collapse', 'sync'],
   props: {
     folderPath: {
       type: String
