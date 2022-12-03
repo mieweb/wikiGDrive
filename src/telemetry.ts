@@ -19,6 +19,10 @@ let provider: NodeTracerProvider;
 
 export function TelemetryClass() {
   return function (classObj) {
+    if (!process.env.ZIPKIN_URL) {
+      return;
+    }
+
     const stackTrace = new Error().stack.split('\n');
     if (stackTrace.length < 3) {
       return;
