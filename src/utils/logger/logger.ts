@@ -9,10 +9,12 @@ const __dirname = path.dirname(__filename);
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
-function getStackInfo(stackIndex) {
+function getStackInfo(stackIndex, stackOffset = 0) {
   // get call stack, and analyze it
   // get all file, method, and line numbers
-  const stackList = (new Error()).stack.split('\n').slice(3);
+  const stackList = (new Error()).stack.split('\n')
+    .filter(line => line.indexOf('src/telemetry.ts') === -1)
+    .slice(3 + stackOffset);
 
   // stack trace format:
   // http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
@@ -69,7 +71,7 @@ export function instrumentLogger(logger, childOpts = {}) {
   for (const funcName of ['info', 'error', 'warn']) {
     const originMethod = logger[funcName];
     logger[funcName] = (msg, payload) => {
-      const stackInfo = getStackInfo(0);
+      const stackInfo = getStackInfo(0, payload ? payload.stackOffset : 0 || 0);
       if (!payload?.filename && stackInfo) {
         let filename = path.relative(PROJECT_ROOT, stackInfo.path);
         if (stackInfo.line) {

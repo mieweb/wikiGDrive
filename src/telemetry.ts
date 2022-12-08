@@ -102,21 +102,22 @@ export class ClassInstrumentation extends InstrumentationBase {
           spanName += ')';
         }
 
-        return tracer.startActiveSpan(spanName, { kind: SpanKind.INTERNAL }, async (span) => {
+        const span = tracer.startSpan(spanName, { kind: SpanKind.INTERNAL });
+
+        try {
           const branch = 'develop';
           const url = `https://github.com/mieweb/wikiGDrive/blob/${branch}/src${instrumentation.path}`;
           span.setAttribute('src', url);
 
-          try {
-            return await origMethod.apply(this, args);
-          } catch (err) {
-            err.stack = [err.message].concat(stackTrace).join('\n');
-            span.recordException(err);
-            throw err;
-          } finally {
-            span.end();
-          }
-        });
+          return await origMethod.apply(this, args);
+        } catch (err) {
+          err.stack = [err.message].concat(stackTrace).join('\n');
+          span.recordException(err);
+          throw err;
+        } finally {
+          span.end();
+        }
+
       };
       this.classPrototype[methodName].origMethod = origMethod;
     }
