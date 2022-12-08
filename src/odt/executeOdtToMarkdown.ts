@@ -13,7 +13,7 @@ export async function executeOdtToMarkdown(workerData) {
     throw Error('No styles unmarshalled');
   }
 
-  const converter = new OdtToMarkdown(document, styles);
+  const converter = new OdtToMarkdown(document, styles, workerData.fileNameMap);
   if (workerData.realFileName === '_index.md') {
     converter.setPicturesDir('./' + workerData.realFileName.replace('.md', '.assets/'));
   } else {

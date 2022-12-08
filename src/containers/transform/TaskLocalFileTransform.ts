@@ -130,11 +130,12 @@ export class TaskLocalFileTransform extends QueueTask {
     let markdown;
     let links = [];
 
-    const processor = new OdtProcessor(this.googleFolder, localFile.id);
+    const processor = new OdtProcessor(this.googleFolder, localFile.id, true);
     await processor.load();
     await processor.unzipAssets(this.destinationDirectory, this.realFileName);
     const content = processor.getContentXml();
     const stylesXml = processor.getStylesXml();
+    const fileNameMap = processor.getFileNameMap();
 
     if (SINGLE_THREADED_TRANSFORM) {
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
@@ -146,7 +147,7 @@ export class TaskLocalFileTransform extends QueueTask {
         throw Error('No styles unmarshalled');
       }
 
-      const converter = new OdtToMarkdown(document, styles);
+      const converter = new OdtToMarkdown(document, styles, fileNameMap);
       if (this.realFileName === '_index.md') {
         converter.setPicturesDir('./' + this.realFileName.replace('.md', '.assets/'));
       } else {
@@ -166,6 +167,7 @@ export class TaskLocalFileTransform extends QueueTask {
         localFile,
         hierarchy,
         realFileName: this.realFileName,
+        fileNameMap,
         content,
         stylesXml,
         fm_without_version: this.userConfig.fm_without_version
