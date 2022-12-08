@@ -553,6 +553,9 @@ export class GitScanner {
         if (!fileName) {
           continue;
         }
+        if (!fileName.endsWith('.md')) {
+          continue;
+        }
         await this.exec(`git add -N ${sanitize(fileName)}`);
       }
 
@@ -679,6 +682,16 @@ export class GitScanner {
         name: 'WikiGDrive',
         email: this.email
       };
+
+      const fileAssetsPaths = [];
+      for (const addedFilePath of addedFiles.filter(addedFilePath => addedFilePath.endsWith('.md'))) {
+        const assetsPath = addedFilePath.substring(0, addedFilePath.length - 3) + '.assets';
+        if (fs.existsSync(path.join(this.rootPath, assetsPath))) {
+          fileAssetsPaths.push(assetsPath);
+        }
+      }
+      addedFiles.push(...fileAssetsPaths);
+
       await this.commit('Auto commit for file version change', addedFiles, [], committer);
     }
   }
