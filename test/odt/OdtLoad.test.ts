@@ -24,7 +24,7 @@ describe('OdtLoad', () => {
 
     // console.log(JSON.stringify(document, null, 2));
 
-    const converter = new OdtToMarkdown(document, new DocumentStyles());
+    const converter = new OdtToMarkdown(document, new DocumentStyles(), processor.getFileNameMap());
     const md = await converter.convert();
     assert.ok(md);
   });

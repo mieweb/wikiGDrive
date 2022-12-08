@@ -22,11 +22,15 @@ import {StateMachine} from './StateMachine';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils';
 import {extractPath} from './extractPath';
 
-function baseFileName(fileName) {
+function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
 }
 
 const COURIER_FONTS = ['Courier New', 'Courier'];
+
+interface FileNameMap {
+  [name: string]: string
+}
 
 export class OdtToMarkdown {
 
@@ -36,7 +40,7 @@ export class OdtToMarkdown {
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
   private picturesDir = '';
 
-  constructor(private document: DocumentContent, private documentStyles: DocumentStyles) {
+  constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
     this.stateMachine = new StateMachine(this.chunks);
   }
 
@@ -310,7 +314,9 @@ export class OdtToMarkdown {
       return;
     }
     if (drawFrame.image) {
-      const imageLink = this.picturesDir + baseFileName(drawFrame.image.href);
+      const baseFileName = getBaseFileName(drawFrame.image.href);
+      const fileName = this.fileNameMap[baseFileName] || baseFileName;
+      const imageLink = this.picturesDir + fileName;
       const altText = drawFrame.description?.value || '';
       const svgId = urlToFolderId(altText);
 

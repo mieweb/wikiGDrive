@@ -1,14 +1,25 @@
 import {FileContentService} from '../utils/FileContentService';
 import JSZip from 'jszip';
+import crypto from 'crypto';
+
+function getExt(fileName) {
+  const idx = fileName.lastIndexOf('.');
+  if (idx > -1) {
+    return fileName.substring(idx);
+  }
+  return '';
+}
 
 export class OdtProcessor {
   private readonly fileName: string;
   private contentXml: string;
   private stylesXml: string;
   private files: { [p: string]: JSZip.JSZipObject };
+  private fileNameMap: { [name: string]: string };
 
-  constructor(private fileSystem: FileContentService, private fileId: string) {
+  constructor(private fileSystem: FileContentService, private fileId: string, private contentAddressable = false) {
     this.fileName = fileId + '.odt';
+    this.fileNameMap = {};
   }
 
   async load() {
@@ -42,7 +53,18 @@ export class OdtProcessor {
       const entry = this.files[relativePath];
       const buffer = await entry.async('nodebuffer');
       const fileName = relativePath.split('/').pop();
-      await assetsDirectory.writeBuffer(fileName, buffer);
+
+      const ext = getExt(fileName);
+      if (this.contentAddressable && ext) {
+        const hash = crypto.createHash('md5');
+        hash.setEncoding('hex');
+        hash.write(buffer);
+        hash.end();
+        this.fileNameMap[fileName] = hash.read() + ext;
+      } else {
+        this.fileNameMap[fileName] = fileName;
+      }
+      await assetsDirectory.writeBuffer(this.fileNameMap[fileName], buffer);
     }
   }
 
@@ -52,6 +74,10 @@ export class OdtProcessor {
 
   getStylesXml() {
     return this.stylesXml;
+  }
+
+  getFileNameMap() {
+    return this.fileNameMap;
   }
 
 }
