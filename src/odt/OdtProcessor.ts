@@ -43,6 +43,7 @@ export class OdtProcessor {
   async unzipAssets(destinationDirectory: FileContentService, destinationName: string) {
     const assetsDirectory = await destinationDirectory.getSubFileService(destinationName.replace('.md', '.assets'));
     await assetsDirectory.mkdir('');
+    const written = [];
     for (const relativePath in this.files) {
       if (!relativePath.endsWith('.png') && !relativePath.endsWith('.jpg')) {
         continue;
@@ -64,7 +65,15 @@ export class OdtProcessor {
       } else {
         this.fileNameMap[fileName] = fileName;
       }
+      written.push(this.fileNameMap[fileName]);
       await assetsDirectory.writeBuffer(this.fileNameMap[fileName], buffer);
+    }
+
+    const files = await assetsDirectory.list('');
+    for (const file of files) {
+      if (written.indexOf(file) === -1) {
+        await assetsDirectory.remove(file);
+      }
     }
   }
 
