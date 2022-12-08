@@ -37,37 +37,49 @@ export class GitScanner {
   }
 
   @TelemetryMethod({ paramsCount: 1 })
-  private exec(command: string, opts: ExecOpts = { env: {}, skipLogger: false }): Promise<{ stdout: string, stderr: string }> {
+  private async exec(command: string, opts: ExecOpts = { env: {}, skipLogger: false }): Promise<{ stdout: string, stderr: string }> {
     const err = new Error();
     const stackList = err.stack.split('\n');
 
-    return new Promise((resolve, reject) => {
-      if (!opts.skipLogger) {
-        this.logger.info(command);
-      }
+    if (!opts.skipLogger) {
+      this.logger.info(command, { stackOffset: 1 });
+    }
 
-      exec(command, { cwd: this.rootPath, env: opts.env }, (error, stdout, stderr) => {
-        if (stdout) {
-          if (!opts.skipLogger) {
-            this.logger.info(stdout);
-          }
-        }
-        if (error || stderr) {
-          const err = new Error('Failed exec:' + command + '\n' + (stderr ? stderr : error.message)  );
-          err.stack = [err.message].concat(stackList.slice(2)).join('\n');
-          if (!opts.skipLogger) {
-            this.logger.error(err.stack ? err.stack : err.message);
-          }
+    let [ stdout, stderr ] = [ null, null ];
+
+    try {
+      await new Promise((resolve, reject) => {
+        exec(command, { cwd: this.rootPath, env: opts.env }, (error, stdoutResult, stderrResult) => {
+          stdout = stdoutResult;
+          stderr = stderrResult;
           if (error) {
-            return reject(err);
+            return reject(error);
           }
-        }
-
-        resolve({
-          stdout, stderr
+          resolve({
+            stdout, stderr
+          });
         });
       });
-    });
+      return { stdout, stderr };
+    } catch (error) {
+      const err = new Error('Failed exec:' + command + '\n' + (error.message)  );
+      err.stack = [err.message].concat(stackList.slice(2)).join('\n');
+      if (!opts.skipLogger) {
+        this.logger.error(err.stack ? err.stack : err.message);
+      }
+      throw error;
+    } finally {
+      if (stderr) {
+        if (!opts.skipLogger) {
+          this.logger.error(stderr);
+        }
+      }
+      if (stdout) {
+        if (!opts.skipLogger) {
+          this.logger.info(stdout);
+        }
+      }
+    }
   }
 
   async isRepo() {
