@@ -320,6 +320,9 @@ export class GitScanner {
         if (!fileName) {
           continue;
         }
+        if (fileName.indexOf('.assets/') > -1) {
+          continue;
+        }
         await this.exec(`git add -N ${sanitize(fileName)}`);
       }
 
