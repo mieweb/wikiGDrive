@@ -9,6 +9,14 @@ export class NotFoundError extends Error {
   }
 }
 
+export class ResponseError extends Error {
+  constructor(message, status, json) {
+    super(message);
+    this.json = json;
+    this.status = status;
+  }
+}
+
 export class AuthenticatedClient {
 
   constructor(app) {
@@ -42,6 +50,7 @@ export class AuthenticatedClient {
 
     switch (response.status) {
       case 401:
+      case 403:
         {
           if (params.optional_login) {
             return {
@@ -58,8 +67,8 @@ export class AuthenticatedClient {
               },
             });
           }
+          throw new ResponseError(url + ' ' + response.statusText, response.status, json);
         }
-        throw new Error(url + ' ' + response.statusText);
       case 404:
         throw new NotFoundError(response.statusText, { share_email });
       case 501:

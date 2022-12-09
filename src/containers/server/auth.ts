@@ -117,11 +117,7 @@ export function authenticate(logger: Logger, idx = 0) {
         }
 
         const accessToken = signToken(req.user, driveId);
-        res.cookie('accessToken', accessToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'none'
-        });
+        setAccessCookie(res, accessToken);
       }
 
       next();
@@ -141,4 +137,12 @@ export function authenticate(logger: Logger, idx = 0) {
       next(err);
     }
   };
+}
+
+export function setAccessCookie(res, accessToken) {
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none'
+  });
 }

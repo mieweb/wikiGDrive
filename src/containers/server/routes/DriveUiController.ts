@@ -1,7 +1,7 @@
 import {
   Controller,
   RouteErrorHandler,
-  RouteGet,
+  RouteGet, RouteParamPath,
   RouteParamQuery,
   RouteResponse
 } from './Controller';
@@ -105,4 +105,26 @@ export class DriveUiController extends Controller {
 
     this.res.redirect(authUrl);
   }
+
+  @RouteGet('/share/:driveId')
+  @RouteErrorHandler(new ShareErrorHandler())
+  @RouteResponse('stream')
+  async getShare(@RouteParamPath('driveId') driveId: string) {
+    const serverUrl = process.env.DOMAIN;
+    const googleAuthService = new GoogleAuthService();
+
+    const state = new URLSearchParams(filterParams({
+      shareId: driveId,
+      // driveId: driveId !== 'none' ? (driveId || '') : '',
+      // redirectTo
+    })).toString();
+
+    const authUrl = await googleAuthService.getWebDriveInstallUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/auth`, state);
+    if (process.env.VERSION === 'dev') {
+      console.debug(authUrl);
+    }
+
+    this.res.redirect(authUrl);
+  }
+
 }

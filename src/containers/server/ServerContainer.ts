@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, Request, Response, NextFunction} from 'express';
+import express, {Express, Request, Response} from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
@@ -25,10 +25,10 @@ import rateLimit from 'express-rate-limit';
 
 import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
-import * as fs from 'fs';
-import {authenticate, AuthError, signToken} from './auth';
-import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {Logger} from 'vite';
+import * as fs from 'fs';
+import {authenticate, AuthError, setAccessCookie, signToken} from './auth';
+import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
 import opentelemetry from '@opentelemetry/api';
@@ -113,18 +113,16 @@ export class ServerContainer extends Container {
       customLogger: customLogger
     });
     app.use(viteInstance.middlewares);
+  }
 
-    app.use((req: express.Request, res: express.Response) => {
-      if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
-        const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-        res.status(200).header('Content-type', 'text/html').end(indexHtml);
-      } else {
-        res.status(404).json({});
-      }
-    });
+  private handleStaticHtml(path: string) {
+    if (path.startsWith('/drive') || path.startsWith('/gdocs') || path.startsWith('/auth') || path === '/' || path.startsWith('/share-drive')) {
+      return fs.readFileSync(HTML_DIR + '/index.html')
+        .toString()
+        .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
+        .replace(/GIT_SHA/g, process.env.GIT_SHA);
+    }
+    return null;
   }
 
   private async startServer(port) {
@@ -156,17 +154,17 @@ export class ServerContainer extends Container {
       });
     }
 
+    app.use(rateLimit({
+      windowMs: 60 * 1000,
+      max: 3000
+    }));
+
     await this.initRouter(app);
     await this.initAuth(app);
 
     await this.initUiServer(app);
 
     const server = http.createServer(app);
-
-    app.use(rateLimit({
-      windowMs: 60 * 1000,
-      max: 30
-    }));
 
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws, req) => {
@@ -180,19 +178,27 @@ export class ServerContainer extends Container {
       this.socketManager.addSocketConnection(ws, parts[2]);
     });
 
-    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
+    app.use((req: express.Request, res: express.Response) => {
+      const indexHtml = this.handleStaticHtml(req.path);
+      if (indexHtml) {
+        res.status(200).header('Content-type', 'text/html').end(indexHtml);
+      } else {
+        res.status(404).json({});
+      }
+    });
+
+    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response) => {
       const code = err.status || 501;
       res.header('wgd-share-email', this.params.share_email || '');
       switch(code) {
         case 404:
-          if (req.path.startsWith('/drive') || req.path.startsWith('/gdocs') || req.path.startsWith('/auth') || req.path === '/') {
-            const indexHtml = fs.readFileSync(HTML_DIR + '/index.html')
-              .toString()
-              .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-              .replace(/GIT_SHA/g, process.env.GIT_SHA);
-            res.status(404).header('Content-type', 'text/html').end(indexHtml);
-          } else {
-            res.status(code).send({ code, message: err.message });
+          {
+            const indexHtml = this.handleStaticHtml(req.path);
+            if (indexHtml) {
+              res.status(404).header('Content-type', 'text/html').end(indexHtml);
+            } else {
+              res.status(code).send({ code, message: err.message });
+            }
           }
           return;
         case 401:
@@ -220,8 +226,8 @@ export class ServerContainer extends Container {
           console.error(err);
       }
 
-      res.header('Content-type', 'text/plain');
-      res.status(code).send(err.message);
+      res.header('Content-type', 'application/json');
+      res.status(code).send({ message: err.message });
     });
 
     server.listen(port, () => {
@@ -274,6 +280,14 @@ export class ServerContainer extends Container {
           return;
         }
 
+        const shareId = state.get('shareId');
+        if (shareId) {
+          const googleAuthService = new GoogleAuthService();
+          const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
+          console.log(token);
+          return;
+        }
+
         if (!req.query.not_popup) {
           openerRedirect(res, req.url + '&not_popup=1');
           return;
@@ -298,21 +312,13 @@ export class ServerContainer extends Container {
           const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
           if (drive.id) {
             const accessToken = signToken(googleUser, driveId);
-            res.cookie('accessToken', accessToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: 'none'
-            });
+            setAccessCookie(res, accessToken);
             res.redirect(redirectTo || '/');
             return;
           }
         } else {
           const accessToken = signToken(googleUser, '');
-          res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none'
-          });
+          setAccessCookie(res, accessToken);
           res.redirect(redirectTo || '/');
           return;
         }

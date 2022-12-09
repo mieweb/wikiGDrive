@@ -108,6 +108,9 @@ const app = Vue.createApp({
         this.changesMap[change.id] = change;
       }
     }
+  },
+  errorCaptured(err) {
+    console.error(err);
   }
 });
 
@@ -160,6 +163,11 @@ const router = new VueRouter.createRouter({
       path: '/logs',
       name: 'logs',
       component: () => import('./pages/LogsView.vue')
+    },
+    {
+      path: '/share-drive/:driveId',
+      name: 'share-drive',
+      component: () => import('./pages/ShareView.vue'),
     },
     {
       path: '/',

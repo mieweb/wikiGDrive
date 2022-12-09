@@ -12,7 +12,7 @@ import crypto from 'crypto';
 import {convertResponseToError} from './driveFetch';
 
 const SCOPES = [
-  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.metadata.readonly'
 ];
@@ -77,7 +77,10 @@ export class GoogleAuthService {
       response_type: 'code',
       include_granted_scopes: 'true',
       scope: [
-        'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/drive.readonly'
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/drive.readonly'
       ].join(' '),
       state
     }).toString();
@@ -92,7 +95,7 @@ export class GoogleAuthService {
       response_type: 'code',
       include_granted_scopes: 'true',
       scope: [
-        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.readonly',
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/drive.install'
       ].join(' '),
