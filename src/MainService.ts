@@ -17,7 +17,6 @@ import {AuthConfig} from './model/AccountJson';
 import {loadRunningInstance} from './containers/server/loadRunningInstance';
 import {FolderRegistryContainer} from './containers/folder_registry/FolderRegistryContainer';
 import {JobManagerContainer} from './containers/job/JobManagerContainer';
-import fetch from 'node-fetch';
 import {WatchChangesContainer} from './containers/changes/WatchChangesContainer';
 import {UserConfigService} from './containers/google_folder/UserConfigService';
 import {ServerContainer} from './containers/server/ServerContainer';
@@ -91,7 +90,7 @@ export class MainService {
 
     this.containerEngine = new ContainerEngine(this.logger, this.mainFileService);
 
-    this.eventBus.on('panic:invalid_grant', (error) => {
+    this.eventBus.on('panic:invalid_grant', () => {
       // if (configService) {
       //   await configService.saveGoogleAuth(null);
       //   await configService.flushData();

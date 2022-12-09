@@ -8,7 +8,6 @@ import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {GoogleAuth} from '../model/GoogleAuth';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {ServiceAccountJson} from '../model/AccountJson';
-import fetch from 'node-fetch';
 import crypto from 'crypto';
 import {convertResponseToError} from './driveFetch';
 

@@ -1,4 +1,3 @@
-import fetch, {Response} from 'node-fetch';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 
 import {Readable} from 'stream';
@@ -87,7 +86,7 @@ function jsonToErrorMessage(json): string {
   }
 }
 
-export async function handleGoogleError(err, reject, clientType: string) {
+export async function handleGoogleError(err, reject) {
   if (err.message) {
     err.message = await handleReadable(err.message);
   }
@@ -178,7 +177,7 @@ export async function convertResponseToError(response) {
   });
 }
 
-async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, requestUrl, params) {
+async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, requestUrl, params): Promise<Response> {
   params = filterParams(params);
   const url = requestUrl + '?' + new URLSearchParams(params).toString();
 
@@ -212,7 +211,7 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
     return response;
   }
 
-  const response = await new Promise<Response>(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
+  return await new Promise<Response>(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
     const job = async () => {
       try {
         const response = await fetch(url, {
@@ -244,8 +243,6 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
 
     quotaLimiter.addJob(job);
   });
-
-  return response;
 }
 
 export async function driveFetch(auth: OAuth2Client & HasQuotaLimiter, method, url, params) {
@@ -258,7 +255,7 @@ export async function driveFetch(auth: OAuth2Client & HasQuotaLimiter, method, u
   }
 }
 
-export async function driveFetchStream(auth: OAuth2Client & HasQuotaLimiter, method, url, params): Promise<NodeJS.ReadableStream> {
+export async function driveFetchStream(auth: OAuth2Client & HasQuotaLimiter, method, url, params): Promise<ReadableStream<Uint8Array>> {
   const response = await driveRequest(auth, method, url, params);
   return response.body;
 }

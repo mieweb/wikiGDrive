@@ -191,25 +191,15 @@ export class GoogleDriveService {
     }
   }
 
-  async download(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable) {
+  async download(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable): Promise<void> {
     try {
       const params = {
         fileId: file.id,
         alt: 'media',
         supportsAllDrives: true
       };
-      const res = await driveFetchStream(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}`, params);
-
-      return new Promise<void>((resolve, reject) => {
-        res
-            .on('end', () => {
-              resolve();
-            })
-            .on('error', err => {
-              reject(err);
-            })
-            .pipe(dest);
-      });
+      const res: ReadableStream = await driveFetchStream(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}`, params);
+      await res.pipeTo(Writable.toWeb(dest));
     } catch (err) {
       err.message = 'Error download file: ' + file.id + ' ' + err.message;
       err.file = file;
@@ -217,7 +207,7 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable) {
+  async exportDocument(auth: OAuth2Client & HasQuotaLimiter, file: SimpleFile, dest: Writable): Promise<void> {
     const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
@@ -228,27 +218,8 @@ export class GoogleDriveService {
         // supportsAllDrives: true
       };
       const res = await driveFetchStream(auth, 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
-
-      return await new Promise((resolve, reject) => {
-        let stream = res
-          .on('error', err => {
-            reject(err);
-          });
-
-        if (Array.isArray(dest)) {
-          dest.forEach(pipe => stream = stream.pipe(pipe));
-          stream.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
-            resolve(file);
-          });
-        } else {
-          stream.pipe(dest);
-          dest.on('finish', () => {
-            this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
-            resolve(file);
-          });
-        }
-      });
+      await res.pipeTo(Writable.toWeb(dest));
+      this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
     } catch (err) {
       if (!err.isQuotaError && err?.code != 404) {
         this.logger.error(err.stack ? err.stack : err.message);
