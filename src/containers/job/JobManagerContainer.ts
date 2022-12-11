@@ -20,7 +20,7 @@ import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'run_action';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -201,6 +201,18 @@ export class JobManagerContainer extends Container {
         }
         driveJobs.jobs.push(job);
         break;
+      case 'git_commit':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'git_commit' && notCompletedJob(subJob))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
+      case 'git_reset':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'git_reset' && notCompletedJob(subJob))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
     }
 
     await this.setDriveJobs(driveId, driveJobs);
@@ -257,6 +269,26 @@ export class JobManagerContainer extends Container {
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
           this.runJob(driveId, currentJob, driveJobs)
             .then(async () => {
+              if (currentJob.type === 'git_reset') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_reset'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git reset done',
+                  type: 'git_reset:done',
+                  links: {
+                    '#git_log': 'View git history'
+                  },
+                });
+              }
+              if (currentJob.type === 'git_commit') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_commit'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git commit done',
+                  type: 'git_commit:done',
+                  links: {
+                    '#git_log': 'View git history'
+                  },
+                });
+              }
               if (currentJob.type === 'git_push') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -289,6 +321,28 @@ export class JobManagerContainer extends Container {
               await this.setDriveJobs(driveId, driveJobs);
             })
             .catch(err => {
+              if (currentJob.type === 'git_reset') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_reset'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git reset failed',
+                  type: 'git_reset:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
+                });
+              }
+              if (currentJob.type === 'git_commit') {
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_commit'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Git commit failed',
+                  type: 'git_commit:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
+                });
+              }
               if (currentJob.type === 'git_push') {
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -336,10 +390,6 @@ export class JobManagerContainer extends Container {
         this.engine.logger.error(err.stack ? err.stack : err.message);
       }
     }, 100);
-
-    this.engine.subscribe('commit:done', async (driveId) => {
-      await this.clearGitCache(driveId);
-    });
   }
 
   private async transform(folderId: FileId, filesIds: FileId[] = []) {
@@ -496,6 +546,70 @@ export class JobManagerContainer extends Container {
     }
   }
 
+  private async gitCommit(driveId: FileId, message: string, filePaths: string[], removeFilePaths: string[], user) {
+    const logger = this.engine.logger.child({filename: __filename, driveId});
+
+    const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+    const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
+    const fileAssetsPaths = [];
+    for (const path in filePaths.filter(path => path.endsWith('.md'))) {
+      const assetsPath = path.substring(0, path.length - 3) + '.assets';
+      if (await transformedFileSystem.exists(assetsPath)) {
+        fileAssetsPaths.push(assetsPath);
+      }
+    }
+    const removeFileAssetsPaths = removeFilePaths
+      .filter(path => path.endsWith('.md'))
+      .map(path => path.substring(0, path.length - 3) + '.assets');
+
+    filePaths.push(...fileAssetsPaths);
+    removeFilePaths.push(...removeFileAssetsPaths);
+
+    await gitScanner.commit(message, filePaths, removeFilePaths, user);
+
+    await this.schedule(driveId, {
+      type: 'run_action',
+      title: 'Run action',
+      trigger: 'commit',
+      user
+    });
+  }
+
+  private async gitReset(driveId: FileId, type: string) {
+    const logger = this.engine.logger.child({filename: __filename, driveId});
+
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      switch (type) {
+        case 'local':
+          await gitScanner.resetToLocal();
+          break;
+        case 'remote':
+          {
+            const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+            const userConfigService = new UserConfigService(googleFileSystem);
+            const userConfig = await userConfigService.load();
+
+            await gitScanner.resetToRemote(userConfig.remote_branch, {
+              privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+            });
+          }
+          break;
+      }
+    } catch (err) {
+      logger.error(err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
+
   private async scheduleRetry(driveId: FileId, changesToFetch, markdownTreeProcessor: MarkdownTreeProcessor) {
     if (changesToFetch.length === 0) {
       return;
@@ -621,6 +735,17 @@ export class JobManagerContainer extends Container {
         break;
       case 'git_push':
         await this.gitPush(driveId);
+        await this.clearGitCache(driveId);
+        break;
+      case 'git_commit':
+        {
+          const { message, filePaths, removeFilePaths, user } = JSON.parse(currentJob.payload);
+          await this.gitCommit(driveId, message, filePaths, removeFilePaths, user);
+          await this.clearGitCache(driveId);
+        }
+        break;
+      case 'git_reset':
+        await this.gitReset(driveId, currentJob.payload);
         await this.clearGitCache(driveId);
         break;
     }

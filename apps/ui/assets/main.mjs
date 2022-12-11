@@ -49,7 +49,8 @@ const app = Vue.createApp({
         case 'run_action:done':
         case 'git_pull:done':
         case 'git_push:done':
-        case 'commit:done':
+        case 'git_reset:done':
+        case 'git_commit:done':
           this.FileClientService.clearCache();
           if (this.drive?.id) {
             this.changeDrive(this.drive.id);

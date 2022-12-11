@@ -60,58 +60,22 @@ export default class GitController extends Controller {
 
   @RoutePost('/:driveId/commit')
   async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
-    try {
-      const message = body.message;
-      const filePaths: string[] = Array.isArray(body.filePath)
-        ? body.filePath
-        : (body.filePath ? [body.filePath] : []);
-      const removeFilePaths: string[] = Array.isArray(body.removeFilePath)
-        ? body.removeFilePath
-        : (body.removeFilePath ? [body.removeFilePath] : []);
+    const message = body.message;
+    const filePaths: string[] = Array.isArray(body.filePath)
+      ? body.filePath
+      : (body.filePath ? [body.filePath] : []);
+    const removeFilePaths: string[] = Array.isArray(body.removeFilePath)
+      ? body.removeFilePath
+      : (body.removeFilePath ? [body.removeFilePath] : []);
 
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-      await gitScanner.initialize();
-
-      const fileAssetsPaths = [];
-      for (const path in filePaths.filter(path => path.endsWith('.md'))) {
-        const assetsPath = path.substring(0, path.length - 3) + '.assets';
-        if (await transformedFileSystem.exists(assetsPath)) {
-          fileAssetsPaths.push(assetsPath);
-        }
-      }
-      const removeFileAssetsPaths = removeFilePaths
-        .filter(path => path.endsWith('.md'))
-        .map(path => path.substring(0, path.length - 3) + '.assets');
-
-      filePaths.push(...fileAssetsPaths);
-      removeFilePaths.push(...removeFileAssetsPaths);
-
-      await gitScanner.commit(message, filePaths, removeFilePaths, user);
-
-      this.engine.emit(driveId, 'commit:done', { driveId });
-
-      this.engine.emit(driveId, 'toasts:added', {
-        title: 'Commit done',
-        type: 'commit:done',
-        links: {
-          '#git_log': 'View git history'
-        },
-      });
-
-      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
-      await jobManagerContainer.schedule(driveId, {
-        type: 'run_action',
-        title: 'Run action',
-        trigger: 'commit',
-        user
-      });
-
-      return {};
-    } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
-      throw err;
-    }
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'git_commit',
+      title: 'Git Commit',
+      payload: JSON.stringify({
+        message, filePaths, removeFilePaths, user
+      })
+    });
+    return { driveId, message };
   }
 
   @RoutePost('/:driveId/pull')
@@ -135,45 +99,24 @@ export default class GitController extends Controller {
 
   @RoutePost('/:driveId/reset_remote')
   async resetRemote(@RouteParamPath('driveId') driveId: string) {
-    try {
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-      await gitScanner.initialize();
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'git_reset',
+      title: 'Git Reset to Remote',
+      payload: 'remote'
+    });
 
-      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-      const userConfigService = new UserConfigService(googleFileSystem);
-      const userConfig = await userConfigService.load();
-
-      await gitScanner.resetToRemote(userConfig.remote_branch, {
-        privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
-      });
-
-      return {};
-    } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
-      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
-        return { error: 'Failed to authenticate' };
-      }
-      throw err;
-    }
+    return { driveId, payload: 'remote'};
   }
 
   @RoutePost('/:driveId/reset_local')
   async resetLocal(@RouteParamPath('driveId') driveId: string) {
-    try {
-      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
-      await gitScanner.initialize();
-      await gitScanner.resetToLocal();
+    await this.jobManagerContainer.schedule(driveId, {
+      type: 'git_reset',
+      title: 'Git Reset to Local',
+      payload: 'local'
+    });
 
-      return {};
-    } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
-      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
-        return { error: 'Failed to authenticate' };
-      }
-      throw err;
-    }
+    return { driveId, payload: 'local'};
   }
 
   @RoutePost('/:driveId/remove_untracked')
