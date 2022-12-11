@@ -42,12 +42,11 @@ export class ConfigController extends Controller {
     super(subPath);
   }
 
-  async returnConfig(userConfigService: UserConfigService, gitScanner: GitScanner) {
+  async returnConfig(userConfigService: UserConfigService) {
     const hugo_themes = await loadHugoThemes(this.filesService);
 
     return {
       config: userConfigService.config,
-      remote_url: await gitScanner.getRemoteUrl(),
       public_key: await userConfigService.getDeployKey(),
       hugo_themes
     };
@@ -64,7 +63,10 @@ export class ConfigController extends Controller {
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
 
-    return await this.returnConfig(userConfigService, gitScanner);
+    return {
+      ...await this.returnConfig(userConfigService),
+      remote_url: await gitScanner.getRemoteUrl()
+    };
   }
 
   @RoutePut('/:driveId')
@@ -105,7 +107,10 @@ export class ConfigController extends Controller {
       await gitScanner.setRemoteUrl('');
     }
 
-    return await this.returnConfig(userConfigService, gitScanner);
+    return {
+      ...await this.returnConfig(userConfigService),
+      remote_url: await gitScanner.getRemoteUrl()
+    };
   }
 
   @RoutePost('/:driveId/regenerate_key')
@@ -121,7 +126,10 @@ export class ConfigController extends Controller {
 
     await userConfigService.genKeys(true);
 
-    return await this.returnConfig(userConfigService, gitScanner);
+    return {
+      ...await this.returnConfig(userConfigService),
+      remote_url: await gitScanner.getRemoteUrl()
+    };
   }
 
   @RoutePost('/:driveId/prune_transform')
