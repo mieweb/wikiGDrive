@@ -1,24 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["es2021"],
+    "lib": ["ESNext", "DOM"],
     "module": "ESNext",
     "moduleResolution": "node",
-    "target": "es2021",
+    "target": "ESNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
-  },
-  "ts-node": {
-    "swc": true,
-    "transpileOnly": true,
-    "files": true,
-    "compilerOptions": {
-      "module": "ESNext",
-      "esModuleInterop": true,
-      "moduleResolution": "node"
-    }
   },
   "exclude": [
     "node_modules"

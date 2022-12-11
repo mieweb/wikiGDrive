@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, Request, Response} from 'express';
+import express, {Express, NextFunction, Request, Response} from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
@@ -164,20 +164,6 @@ export class ServerContainer extends Container {
 
     await this.initUiServer(app);
 
-    const server = http.createServer(app);
-
-    const wss = new WebSocketServer({ server });
-    wss.on('connection', (ws, req) => {
-      if (!req.url || !req.url.startsWith('/api/')) {
-        return;
-      }
-      const parts = req.url.split('/');
-      if (!parts[2]) {
-        return;
-      }
-      this.socketManager.addSocketConnection(ws, parts[2]);
-    });
-
     app.use((req: express.Request, res: express.Response) => {
       const indexHtml = this.handleStaticHtml(req.path);
       if (indexHtml) {
@@ -187,7 +173,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response) => {
+    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
       const code = err.status || 501;
       res.header('wgd-share-email', this.params.share_email || '');
       switch(code) {
@@ -228,6 +214,22 @@ export class ServerContainer extends Container {
 
       res.header('Content-type', 'application/json');
       res.status(code).send({ message: err.message });
+
+      next();
+    });
+
+    const server = http.createServer(app);
+
+    const wss = new WebSocketServer({ server });
+    wss.on('connection', (ws, req) => {
+      if (!req.url || !req.url.startsWith('/api/')) {
+        return;
+      }
+      const parts = req.url.split('/');
+      if (!parts[2]) {
+        return;
+      }
+      this.socketManager.addSocketConnection(ws, parts[2]);
     });
 
     server.listen(port, () => {

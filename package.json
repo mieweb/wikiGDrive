@@ -60,6 +60,9 @@
     "url": "https://github.com/mieweb/wikiGDrive/issues"
   },
   "homepage": "https://github.com/mieweb/wikiGDrive#readme",
+  "workspaces": [
+    "apps/ui"
+  ],
   "dependencies": {
     "@opentelemetry/api": "1.3.0",
     "@opentelemetry/context-zone": "1.8.0",
@@ -109,9 +112,6 @@
     "ts-node": "10.9.1",
     "typescript": "4.8.4",
     "vite": "3.0.0",
-    "vue": "3.2.37",
-    "vue-prism-editor": "2.0.0-alpha.2",
-    "vue-router": "4.1.2",
     "winston": "3.6.0",
     "winston-transport": "4.5.0",
     "ws": "8.2.3",
@@ -133,12 +133,10 @@
     "@types/xmldoc": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^5.9.0",
     "@typescript-eslint/parser": "^5.9.0",
-    "caniuse-lite": "1.0.30001317",
     "chai": "4.3.6",
     "chalk": "5.0.1",
     "diff": "5.0.0",
     "eslint": "^8.11.0",
-    "eslint-plugin-vue": "^8.7.1",
     "husky": "7.0.4",
     "jshint": "2.13.4",
     "mocha": "9.2.2",
