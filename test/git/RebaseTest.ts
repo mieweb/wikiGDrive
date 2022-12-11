@@ -24,7 +24,8 @@ const logger = winston.createLogger({
 });
 instrumentLogger(logger);
 
-describe('RebaseTest', () => {
+describe('RebaseTest', function () {
+  this.timeout(5000);
 
   it('test clone', async () => {
     const localRepoDir: string = createTmpDir();
