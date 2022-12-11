@@ -1,0 +1,25 @@
+{
+  "name": "@mieweb/wikigdrive-ui",
+  "version": "2.0.0-alpha",
+  "type": "module",
+  "author": {
+    "name": "Medical Informatics Engineering",
+    "url": "https://www.mieweb.com/"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mieweb/wikiGDrive/issues"
+  },
+  "homepage": "https://github.com/mieweb/wikiGDrive#readme",
+  "dependencies": {
+    "vue": "3.2.45",
+    "vue-prism-editor": "2.0.0-alpha.2",
+    "vue-router": "4.1.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "4.0.0",
+    "eslint-plugin-vue": "8.7.1",
+    "typescript": "4.9.4",
+    "vite": "4.0.0"
+  }
+}
