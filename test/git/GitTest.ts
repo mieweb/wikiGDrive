@@ -24,7 +24,8 @@ const logger = winston.createLogger({
 });
 instrumentLogger(logger);
 
-describe('GitTest', () => {
+describe('GitTest', function () {
+  this.timeout(5000);
 
   it('test initialize', async () => {
     const localRepoDir: string = createTmpDir();
@@ -58,14 +59,14 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'test');
 
       {
         const changes = await scannerLocal.changes();
         assert.equal(changes.length, 2);
       }
 
-      const commitId = await scannerLocal.commit('initial commit', ['.gitignore', 'test1.txt'], [], COMMITER1);
+      const commitId = await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md'], [], COMMITER1);
       assert.equal(commitId.length, 40);
 
       const changes = await scannerLocal.changes();
@@ -81,7 +82,7 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'test');
 
       {
         const changes = await scannerLocal.changes();
@@ -130,26 +131,26 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'line1\nline2\nline3\nline4\n');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'testdel.txt'), 'garbage\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'line1\nline2\nline3\nline4\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'testdel.md'), 'garbage\n');
 
-      await scannerLocal.commit('initial commit', ['.gitignore', 'test1.txt', 'testdel.txt'], [], COMMITER1);
+      await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md', 'testdel.md'], [], COMMITER1);
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'line1\nline2 modified\nline4\nline5\n');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.txt'), 'newone\n');
-      fs.unlinkSync(path.join(scannerLocal.rootPath, 'testdel.txt'));
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'line1\nline2 modified\nline4\nline5\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'newone\n');
+      fs.unlinkSync(path.join(scannerLocal.rootPath, 'testdel.md'));
 
-      const r1 = await scannerLocal.diff('test222.txt');
+      const r1 = await scannerLocal.diff('test222.md');
       assert.equal(r1.length, 0);
 
       const r2 = await scannerLocal.diff('');
       assert.equal(r2.length, 3);
-      assert.equal(r2[0].oldFile, 'test1.txt');
-      assert.equal(r2[0].newFile, 'test1.txt');
+      assert.equal(r2[0].oldFile, 'test1.md');
+      assert.equal(r2[0].newFile, 'test1.md');
 
       const txt = r2[0].txt.trim().split('\n');
 
-      assert.equal(txt[0], 'test1.txt test1.txt');
+      assert.equal(txt[0], 'test1.md test1.md');
       assert.equal(txt[txt.length - 6], ' line1');
       assert.equal(txt[txt.length - 5], '-line2');
       assert.equal(txt[txt.length - 4], '-line3');
@@ -157,13 +158,13 @@ describe('GitTest', () => {
       assert.equal(txt[txt.length - 2], ' line4');
       assert.equal(txt[txt.length - 1], '+line5');
 
-      assert.equal(r2[1].oldFile, 'test2.txt');
-      assert.equal(r2[1].newFile, 'test2.txt');
+      assert.equal(r2[1].oldFile, 'test2.md');
+      assert.equal(r2[1].newFile, 'test2.md');
       const txt2 = r2[1].txt.trim().split('\n');
       assert.equal(txt2[txt2.length - 1], '+newone');
 
-      assert.equal(r2[2].oldFile, 'testdel.txt');
-      assert.equal(r2[2].newFile, 'testdel.txt');
+      assert.equal(r2[2].oldFile, 'testdel.md');
+      assert.equal(r2[2].newFile, 'testdel.md');
       const txt3 = r2[2].txt.trim().split('\n');
       assert.equal(txt3[txt3.length - 1], '-garbage');
     } finally {
@@ -180,8 +181,8 @@ describe('GitTest', () => {
 
       await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.txt'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
 
       {
         const changes = await scannerLocal.changes();
@@ -208,10 +209,10 @@ describe('GitTest', () => {
 
       await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.txt'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.txt'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
 
-      const writeStream = fs.createWriteStream(path.join(scannerLocal.rootPath, 'test_huge.txt'));
+      const writeStream = fs.createWriteStream(path.join(scannerLocal.rootPath, 'test_huge.md'));
       for (let i = 0; i < 100000; i++) {
         writeStream.write('1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890\n');
       }
@@ -244,7 +245,7 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
 
       {
         const changes = await scannerLocal.changes();
@@ -285,7 +286,7 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
 
       {
         const changes = await scannerLocal.changes();
@@ -328,9 +329,9 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-      await scannerLocal.commit('First commit', ['.gitignore', 'file1.txt'], [], COMMITER1);
+      await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
       await scannerLocal.pushBranch('main');
@@ -341,14 +342,14 @@ describe('GitTest', () => {
       await scannerSecond.setRemoteUrl(githubRepoDir);
       await scannerSecond.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.txt'), 'Mod by second');
-      await scannerSecond.commit('Second commit', ['file1.txt'], [], COMMITER2);
+      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
+      await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
 
       await scannerSecond.pushBranch('main');
       await scannerLocal.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Mod by local');
-      await scannerLocal.commit('Third commit', ['file1.txt'], [], COMMITER1);
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
+      await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
       const history = await scannerLocal.history('/', 'main');
       assert.equal(history.length, 3);
@@ -392,9 +393,9 @@ describe('GitTest', () => {
 
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-      await scannerLocal.commit('First commit', ['.gitignore', 'file1.txt'], [], COMMITER1);
+      await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
       await scannerLocal.pushBranch('main');
@@ -405,16 +406,16 @@ describe('GitTest', () => {
       await scannerSecond.setRemoteUrl(githubRepoDir);
       await scannerSecond.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.txt'), 'Mod by second');
-      await scannerSecond.commit('Second commit', ['file1.txt'], [], COMMITER2);
+      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
+      await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
 
       await scannerSecond.pushBranch('main');
       await scannerLocal.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Mod by local');
-      await scannerLocal.commit('Third commit', ['file1.txt'], [], COMMITER1);
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
+      await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'unstaged.txt'), 'unstaged');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'unstaged.md'), 'unstaged');
 
       {
         const stats = await scannerLocal.getStats({ remote_branch: 'main' });
@@ -425,8 +426,8 @@ describe('GitTest', () => {
         assert.equal(stats.remote_url, await scannerSecond.getRemoteUrl());
       }
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Another mod');
-      await scannerLocal.commit('Third commit', ['file1.txt'], [], COMMITER1);
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Another mod');
+      await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
       {
         const stats = await scannerLocal.getStats({ remote_branch: 'main' });
@@ -451,9 +452,9 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-      await scannerLocal.commit('First commit', ['.gitignore', 'file1.txt'], [], COMMITER1);
+      await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
       await scannerLocal.pushBranch('main');
@@ -464,14 +465,14 @@ describe('GitTest', () => {
       await scannerSecond.setRemoteUrl(githubRepoDir);
       await scannerSecond.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.txt'), 'Mod by second');
-      await scannerSecond.commit('Second commit', ['file1.txt'], [], COMMITER2);
+      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
+      await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
 
       await scannerSecond.pushBranch('main');
       await scannerLocal.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Mod by local');
-      await scannerLocal.commit('Third commit', ['file1.txt'], [], COMMITER1);
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
+      await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
       const masterCommit = await scannerLocal.getBranchCommit('master');
@@ -498,9 +499,9 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Initial content');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-      await scannerLocal.commit('First commit', ['.gitignore', 'file1.txt'], [], COMMITER1);
+      await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
 
       await scannerLocal.setRemoteUrl(githubRepoDir);
       await scannerLocal.pushBranch('main');
@@ -511,14 +512,14 @@ describe('GitTest', () => {
       await scannerSecond.setRemoteUrl(githubRepoDir);
       await scannerSecond.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.txt'), 'Mod by second');
-      await scannerSecond.commit('Second commit', ['file1.txt'], [], COMMITER2);
+      fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
+      await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
 
       await scannerSecond.pushBranch('main');
       await scannerLocal.pullBranch('main');
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.txt'), 'Mod by local');
-      await scannerLocal.commit('Third commit', ['file1.txt'], [], COMMITER1);
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
+      await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
       {
         const history = await scannerLocal.history('');
@@ -550,47 +551,47 @@ describe('GitTest', () => {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_mod.txt'), 'test');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_del.txt'), 'test');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_rename.txt'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_mod.md'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_del.md'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_rename.md'), 'test');
 
-      await scannerLocal.commit('initial commit', ['.gitignore', 'test_mod.txt', 'test_del.txt', 'test_rename.txt'], [], COMMITER1);
+      await scannerLocal.commit('initial commit', ['.gitignore', 'test_mod.md', 'test_del.md', 'test_rename.md'], [], COMMITER1);
 
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_new.txt'), 'test');
-      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_mod.txt'), 'mod');
-      fs.unlinkSync(path.join(scannerLocal.rootPath, 'test_del.txt'));
-      fs.renameSync(path.join(scannerLocal.rootPath, 'test_rename.txt'), path.join(scannerLocal.rootPath, 'test_renamed.txt'));
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_new.md'), 'test');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_mod.md'), 'mod');
+      fs.unlinkSync(path.join(scannerLocal.rootPath, 'test_del.md'));
+      fs.renameSync(path.join(scannerLocal.rootPath, 'test_rename.md'), path.join(scannerLocal.rootPath, 'test_renamed.md'));
 
       {
         const changes = await scannerLocal.changes();
         assert.equal(changes.length, 5);
 
         {
-          const change = changes.find(item => item.path === 'test_new.txt');
+          const change = changes.find(item => item.path === 'test_new.md');
           assert.equal(change.state.isNew, true);
           assert.equal(change.state.isDeleted, false);
           assert.equal(change.state.isModified, false);
         }
         {
-          const change = changes.find(item => item.path === 'test_del.txt');
+          const change = changes.find(item => item.path === 'test_del.md');
           assert.equal(change.state.isNew, false);
           assert.equal(change.state.isDeleted, true);
           assert.equal(change.state.isModified, false);
         }
         {
-          const change = changes.find(item => item.path === 'test_rename.txt');
+          const change = changes.find(item => item.path === 'test_rename.md');
           assert.equal(change.state.isNew, false);
           assert.equal(change.state.isDeleted, true);
           assert.equal(change.state.isModified, false);
         }
         {
-          const change = changes.find(item => item.path === 'test_renamed.txt');
+          const change = changes.find(item => item.path === 'test_renamed.md');
           assert.equal(change.state.isNew, true);
           assert.equal(change.state.isDeleted, false);
           assert.equal(change.state.isModified, false);
         }
         {
-          const change = changes.find(item => item.path === 'test_mod.txt');
+          const change = changes.find(item => item.path === 'test_mod.md');
           assert.equal(change.state.isNew, false);
           assert.equal(change.state.isDeleted, false);
           assert.equal(change.state.isModified, true);
