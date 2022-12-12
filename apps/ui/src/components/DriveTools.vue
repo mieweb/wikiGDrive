@@ -25,6 +25,7 @@
           v-if="github_url"
           :active="activeTab === 'git_hub'"
           :href="github_url"
+          target="github"
           title="GitHub"
           icon="fa-brands fa-github"
       />
