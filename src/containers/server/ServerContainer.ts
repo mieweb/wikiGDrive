@@ -112,15 +112,26 @@ export class ServerContainer extends Container {
       },
       customLogger: customLogger
     });
+    this.app.set('viteInstance', viteInstance);
     app.use(viteInstance.middlewares);
   }
 
-  private handleStaticHtml(path: string) {
-    if (path.startsWith('/drive') || path.startsWith('/gdocs') || path.startsWith('/auth') || path === '/' || path.startsWith('/share-drive')) {
-      return fs.readFileSync(HTML_DIR + '/index.html')
-        .toString()
-        .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-        .replace(/GIT_SHA/g, process.env.GIT_SHA);
+  private async handleStaticHtml(reqPath: string, url: string) {
+    if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive')) {
+      const distPath = path.resolve(HTML_DIR, 'dist');
+      if (fs.existsSync(distPath)) {
+        const template = fs.readFileSync(path.join(distPath, 'index.html'));
+        return template;
+      } else {
+        const template = fs.readFileSync(HTML_DIR + '/index.html')
+          .toString()
+          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
+          .replace(/GIT_SHA/g, process.env.GIT_SHA);
+
+        const viteInstance = this.app.get('viteInstance');
+
+        return await viteInstance.transformIndexHtml(url, template);
+      }
     }
     return null;
   }
@@ -162,10 +173,12 @@ export class ServerContainer extends Container {
     await this.initRouter(app);
     await this.initAuth(app);
 
+    const distPath = path.resolve(HTML_DIR, 'dist');
+    app.use(express.static(distPath));
     await this.initUiServer(app);
 
-    app.use((req: express.Request, res: express.Response) => {
-      const indexHtml = this.handleStaticHtml(req.path);
+    app.use(async (req: express.Request, res: express.Response) => {
+      const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
       if (indexHtml) {
         res.status(200).header('Content-type', 'text/html').end(indexHtml);
       } else {
@@ -173,13 +186,13 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.use((err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
+    app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
       const code = err.status || 501;
       res.header('wgd-share-email', this.params.share_email || '');
       switch(code) {
         case 404:
           {
-            const indexHtml = this.handleStaticHtml(req.path);
+            const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
             if (indexHtml) {
               res.status(404).header('Content-type', 'text/html').end(indexHtml);
             } else {

@@ -13,6 +13,8 @@ RUN npm link --location=user
 EXPOSE 3000
 VOLUME /data
 
+RUN cd /usr/src/app/apps/ui && npm install && npm run build
+
 WORKDIR "/usr/src/app"
 
 CMD [ "sh", "-c", "wikigdrive-ts --workdir /data server 3000" ]
