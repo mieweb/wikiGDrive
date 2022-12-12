@@ -31,7 +31,8 @@
     <ToolButton
         v-if="github_url"
         :active="activeTab === 'git_hub'"
-        @click="openWindow(github_url)"
+        :href="github_url"
+        target="github"
         title="GitHub"
         icon="fa-brands fa-github"
     />
