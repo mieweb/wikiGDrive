@@ -446,6 +446,9 @@ export class JobManagerContainer extends Container {
       folderId: folderId,
       apiContainer: 'google_api'
     }, { filesIds });
+
+    downloadContainer.setForceDownloadFilters(filesIds.length === 1);
+
     await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
     downloadContainer.onProgressNotify(({ completed, total }) => {
       if (!this.driveJobsMap[folderId]) {

@@ -23,6 +23,7 @@ export class TaskFetchFolder extends QueueTask {
               private auth: OAuth2Client & HasQuotaLimiter,
               private fileService: FileContentService,
               private file: SimpleFile,
+              private forceDownloadFilters = false,
               private filters: Filters) {
     super(logger);
   }
@@ -81,6 +82,8 @@ export class TaskFetchFolder extends QueueTask {
         }
 */
 
+        const forceDownload = this.forceDownloadFilters || oldFile?.modifiedTime !== file.modifiedTime;
+
         switch (file.mimeType) {
           case MimeTypes.FOLDER_MIME:
             tasks.push(new TaskFetchFolder(
@@ -89,6 +92,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService.getSubFileService(file.id),
               file,
+              this.forceDownloadFilters,
               this.filters
             ));
             break;
@@ -100,7 +104,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime
+              forceDownload
             ));
             break;
 
@@ -111,7 +115,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime
+              forceDownload
             ));
             break;
 
@@ -122,7 +126,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -131,7 +135,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'text/csv', 'csv'
             ));
             break;
@@ -143,7 +147,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -152,7 +156,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'application/pdf', 'pdf'
             ));
             break;
@@ -164,7 +168,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'application/zip', 'zip'
             ));
             break;
@@ -176,7 +180,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime,
+              forceDownload,
               'application/vnd.google-apps.script+json', 'gs'
             ));
             break;
@@ -191,7 +195,7 @@ export class TaskFetchFolder extends QueueTask {
               this.auth,
               await this.fileService,
               file,
-              oldFile?.modifiedTime !== file.modifiedTime
+              forceDownload,
             ));
             break;
         }
