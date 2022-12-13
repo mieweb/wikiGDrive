@@ -5,13 +5,12 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile} from '../../model/GoogleFile';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
-import {HasQuotaLimiter} from '../../google/AuthClient';
 
 export class TaskFetchAsset extends QueueTask {
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
-              private auth: OAuth2Client & HasQuotaLimiter,
+              private auth: OAuth2Client,
               private fileService: FileContentService,
               private file: GoogleFile,
               private _forceDownload: boolean) {

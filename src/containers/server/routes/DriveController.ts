@@ -23,14 +23,8 @@ export class DriveController extends Controller {
   async getDrives(@RouteParamUser() user) {
     const folders = await this.folderRegistryContainer.getFolders();
 
-    const googleDriveService = new GoogleDriveService(this.logger);
-    const googleAuthService = new GoogleAuthService();
-    const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-    googleUserAuth.setCredentials({
-      access_token: user.google_access_token, refresh_token: user.google_refresh_token, expiry_date: user.google_expiry_date
-    });
-
-    const drives = await googleDriveService.listDrives(googleUserAuth);
+    const googleDriveService = new GoogleDriveService(this.logger, null);
+    const drives = await googleDriveService.listDrives(user.google_access_token);
     return drives.map(drive => {
       return {
         folderId: drive.id,

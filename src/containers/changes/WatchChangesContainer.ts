@@ -6,7 +6,6 @@ import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleFile} from '../../model/GoogleFile';
-import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 import {JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
@@ -18,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 @TelemetryClass()
 export class WatchChangesContainer extends Container {
   private logger: winston.Logger;
-  private auth: OAuth2Client & HasQuotaLimiter;
+  private auth: OAuth2Client;
   private googleDriveService: GoogleDriveService;
   private lastToken: { [driveId: string]: string } = {};
   private intervals: { [driveId: string]: NodeJS.Timer } = {};
@@ -30,7 +29,7 @@ export class WatchChangesContainer extends Container {
 
     const googleApiContainer = <GoogleApiContainer>engine.getContainer('google_api');
     this.auth = googleApiContainer.getAuth();
-    this.googleDriveService = new GoogleDriveService(this.logger);
+    this.googleDriveService = new GoogleDriveService(this.logger, googleApiContainer.getQuotaLimiter());
 
     this.engine.subscribe('gdrive:changed', async (driveId) => {
       const folderFilesService = await this.filesService.getSubFileService(driveId, '/');

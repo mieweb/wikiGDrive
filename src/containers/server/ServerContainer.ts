@@ -170,6 +170,11 @@ export class ServerContainer extends Container {
       max: 3000
     }));
 
+    app.use((req: express.Request, res: express.Response, next: NextFunction) => {
+      res.header('wgd-is-logged', req.cookies['accessToken'] ? '1' : '');
+      next();
+    });
+
     await this.initRouter(app);
     await this.initAuth(app);
 
@@ -251,6 +256,10 @@ export class ServerContainer extends Container {
   }
 
   async initAuth(app) {
+    app.post('/auth/logout', async (req, res, next) => {
+      res.clearCookie('accessToken');
+      res.json({ loggedOut: true });
+    });
     app.get('/auth/:driveId', async (req, res, next) => {
       try {
         const hostname = req.header('host');
@@ -317,14 +326,11 @@ export class ServerContainer extends Container {
 
         const googleAuthService = new GoogleAuthService();
         const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
-        const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-        googleUserAuth.setCredentials(token);
-
-        const googleDriveService = new GoogleDriveService(this.logger);
+        const googleDriveService = new GoogleDriveService(this.logger, null);
         const googleUser = await googleAuthService.getUser(token);
 
         if (driveId) {
-          const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
+          const drive = await googleDriveService.getDrive(token.access_token, driveId);
           if (drive.id) {
             const accessToken = signToken(googleUser, driveId);
             setAccessCookie(res, accessToken);
@@ -542,16 +548,8 @@ export class ServerContainer extends Container {
           throw new Error('No DriveId');
         }
 
-        const googleDriveService = new GoogleDriveService(this.logger);
-        const googleAuthService = new GoogleAuthService();
-        const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-        googleUserAuth.setCredentials({
-          access_token: req.user.google_access_token,
-          refresh_token: req.user.google_refresh_token,
-          expiry_date: req.user.google_expiry_date
-        });
-
-        const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
+        const googleDriveService = new GoogleDriveService(this.logger, null);
+        const drive = await googleDriveService.getDrive(req.user.google_access_token, driveId);
 
         const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
         const folder = await folderRegistryContainer.registerFolder(drive.id);

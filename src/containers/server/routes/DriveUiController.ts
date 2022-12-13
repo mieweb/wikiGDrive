@@ -37,8 +37,7 @@ export class DriveUiController extends Controller {
     if (action === 'open' && ids.length > 0) {
       const fileId = ids[0];
 
-      const googleDriveService = new GoogleDriveService(this.logger);
-      // const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+      const googleDriveService = new GoogleDriveService(this.logger, this.googleApiContainer.getQuotaLimiter());
       const auth = this.googleApiContainer.getAuth();
 
       const drives = await this.googleApiContainer.listDrives();
