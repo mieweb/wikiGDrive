@@ -1,53 +1,52 @@
 <template>
   <div class="container" v-if="user_config">
-
     <GitToolBar :active-tab="activeTab" />
 
-    <div class="card" v-if="activeTab === 'git_settings'">
-      <div class="card-body">
-        <div class="form-group">
-          <label>
-            Remote URL
-          </label>
-          <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="remote_url" />
-        </div>
-        <div class="form-group">
-          <label>
-            Remote Branch
-          </label>
-          <input class="form-control" size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
-        </div>
+    <div class="overflow-scroll d-flex flex-row mt-3">
+      <SettingsSidebar />
 
-        <button class="btn btn-danger" type="button" @click="nukeGitDir()"><i class="fa-solid fa-explosion"></i> Nuke .git directory</button>
-        <button class="btn btn-warning" type="button" @click="resetToLocal">Reset to local</button>
-        <button v-if="remote_url" class="btn btn-warning" type="button" @click="resetToRemote">Reset to remote</button>
-        <button class="btn btn-warning" type="button" @click="removeUntracked">Remove untracked files</button>
-
-        <div v-if="github_url">
-          To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'" target="_blank">Deploy keys</a>.<br />
-          Then check <code>Allow write access</code>
-        </div>
-        <div v-if="public_key" class="mt-3">
+      <div class="card flex-column flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
+        <div class="card-body">
           <div class="form-group">
-            <label>Deploy key id_rsa.pub</label>
-            <textarea class="form-control" rows="6" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
+            <label>
+              Remote URL
+            </label>
+            <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="remote_url" />
           </div>
+          <div class="form-group">
+            <label>
+              Remote Branch
+            </label>
+            <input class="form-control" size="50" placeholder="remote_branch, eg: gh-pages" v-model="user_config.remote_branch" />
+          </div>
+
+          <div v-if="github_url">
+            To allow repo push copy below ssh key into GitHub repo -> Settings -> <a :href="github_url + '/settings/keys'" target="_blank">Deploy keys</a>.<br />
+            Then check <code>Allow write access</code>
+          </div>
+          <div v-if="public_key" class="mt-3">
+            <div class="form-group">
+              <label>Deploy key id_rsa.pub</label>
+              <textarea class="form-control" rows="6" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary" type="button" @click="save">Save</button>
+          <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate</button>
         </div>
-        <button class="btn btn-danger" type="button" @click="regenerateKey">Regenerate</button>
       </div>
     </div>
-    <br/>
-    <button class="btn btn-primary" type="button" @click="save">Save</button>
   </div>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.ts';
 import GitToolBar from './GitToolBar.vue';
+import {DangerMixin} from './DangerMixin.ts';
+import SettingsSidebar from './SettingsSidebar.vue';
 
 export default {
-  mixins: [UtilsMixin],
+  mixins: [UtilsMixin, DangerMixin],
   components: {
-    GitToolBar
+    GitToolBar, SettingsSidebar
   },
   props: {
     activeTab: {
@@ -113,38 +112,6 @@ export default {
 
       const json = await response.json();
       await this.processResponse(json);
-    },
-    async nukeGitDir() {
-      if (!window.confirm('Are you sure you want to remove .git directory?')) {
-        return;
-      }
-
-      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}/prune_git`, {
-        method: 'post'
-      });
-
-      window.location.reload();
-    },
-    async resetToLocal() {
-      if (window.confirm('Are you sure?')) {
-        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_local`, {
-          method: 'post'
-        });
-      }
-    },
-    async resetToRemote() {
-      if (window.confirm('Are you sure?')) {
-        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_remote`, {
-          method: 'post'
-        });
-      }
-    },
-    async removeUntracked() {
-      if (window.confirm('Are you sure?')) {
-        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/remove_untracked`, {
-          method: 'post'
-        });
-      }
     }
   }
 };

@@ -28,6 +28,7 @@
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" v-model="logsState" />
       <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
+      <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
       <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
       <ActionsEditor v-if="activeTab === 'actions'" :active-tab="activeTab" />
 
@@ -56,8 +57,8 @@
 <script lang="ts">
 import BaseLayout from '../layout/BaseLayout.vue';
 import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
-import FilesTree from '../components/FilesTree.vue';
 import {UtilsMixin} from '../components/UtilsMixin.ts';
+import FilesTree from '../components/FilesTree.vue';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
@@ -68,6 +69,7 @@ import LogsViewer from '../components/LogsViewer.vue';
 import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
+import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
 import DriveTools from '../components/DriveTools.vue';
@@ -93,6 +95,7 @@ export default {
     ZipkinViewer,
     ChangesViewer,
     UserSettings,
+    DangerSettings,
     ActionsEditor,
     GitLog,
     GitCommit
@@ -121,7 +124,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'actions';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'actions';
     },
     jobs() {
       return this.$root.jobs || [];

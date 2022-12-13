@@ -111,9 +111,9 @@ const app: Vue.App = Vue.createApp({
       }
     }
   },
-/*  errorCaptured(err) {
+  errorCaptured(err) {
     console.error('errorCaptured', err);
-  }*/
+  }
 });
 
 app.directive('grow', {

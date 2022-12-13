@@ -137,6 +137,11 @@ export class ConfigController extends Controller {
     await this.folderRegistryContainer.pruneTransformFolder(driveId);
   }
 
+  @RoutePost('/:driveId/prune_all')
+  async pruneAll(@RouteParamPath('driveId') driveId: string) {
+    await this.folderRegistryContainer.pruneFolder(driveId);
+  }
+
   @RoutePost('/:driveId/prune_git')
   async pruneGit(@RouteParamPath('driveId') driveId: string) {
     await this.folderRegistryContainer.pruneGitFolder(driveId);
