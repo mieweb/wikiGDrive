@@ -40,6 +40,11 @@
           or select one of your <a href="/drive">drives</a>
         </div>
 
+        <div v-if="!loading">
+          <button v-if="!isLogged" class="btn btn-secondary" @click="login">Login</button>
+          <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
+        </div>
+
       </div>
     </template>
   </BaseLayout>
@@ -56,22 +61,24 @@ export default {
       url: '',
       drivesShared: [],
       drivesNotShared: [],
-      loading: false
+      loading: false,
+      isLogged: false
     };
   },
   async created() {
     await this.fetch();
   },
   methods: {
-    async fetch() {
+    async fetch(optional_login = true) {
       this.loading = true;
       try {
-        const drives = await this.DriveClientService.getDrives({ optional_login: true });
+        const drives = await this.DriveClientService.getDrives({ optional_login });
         this.drivesShared = drives.filter(d => !!d.exists);
         this.drivesNotShared = drives.filter(d => !d.exists);
       } finally {
         this.loading = false;
       }
+      this.isLogged = this.authenticatedClient.isLogged;
     },
     selectDrive(driveId) {
       this.$router.push('/drive/' + driveId);
@@ -95,6 +102,20 @@ export default {
       } else {
         alert('Error sharing drive');
       }
+    },
+    async login() {
+      await this.fetch(false);
+    },
+    async logout() {
+      await this.authenticatedClient.fetchApi('/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      this.isLogged = false;
+      await this.fetch();
     }
   }
 };

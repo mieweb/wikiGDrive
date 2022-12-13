@@ -92,10 +92,7 @@ export function authenticate(logger: Logger, idx = 0) {
         console.debug('google_expiry_date', google_expiry_date);
       }
 
-      const googleDriveService = new GoogleDriveService(logger);
-      const googleAuthService = new GoogleAuthService();
-      const googleUserAuth = await googleAuthService.authorizeUserAccount(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      googleUserAuth.setCredentials({ access_token: google_access_token, refresh_token: google_refresh_token, expiry_date: google_expiry_date });
+      const googleDriveService = new GoogleDriveService(logger, null);
 
       req['driveId'] = driveId || '';
       req['logger'] = req['driveId'] ? logger.child({ driveId: req['driveId'] }) : logger;
@@ -111,7 +108,7 @@ export function authenticate(logger: Logger, idx = 0) {
       };
 
       if (driveId && decoded['driveId'] !== driveId) {
-        const drive = await googleDriveService.getDrive(googleUserAuth, driveId);
+        const drive = await googleDriveService.getDrive(google_access_token, driveId);
         if (!drive) {
           return next(redirError(req, 'Unauthorized to read drive: ' + driveId));
         }

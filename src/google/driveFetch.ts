@@ -1,9 +1,7 @@
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
-
 import {Readable} from 'stream';
 import {SimpleFile} from '../model/GoogleFile';
-import {HasQuotaLimiter} from './AuthClient';
 import opentelemetry from '@opentelemetry/api';
+import {QuotaLimiter} from './QuotaLimiter.ts';
 
 async function handleReadable(obj): Promise<string> {
   if (obj instanceof Readable) {
@@ -177,14 +175,9 @@ export async function convertResponseToError(response) {
   });
 }
 
-async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, requestUrl, params): Promise<Response> {
+async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method, requestUrl, params): Promise<Response> {
   params = filterParams(params);
   const url = requestUrl + '?' + new URLSearchParams(params).toString();
-
-  if (process.env.VERSION === 'dev' && auth.credentials.refresh_token !== 'jwt-placeholder') {
-    console.debug('driveRequest auth.credentials', auth.credentials, auth.credentials);
-  }
-  const accessToken = await auth.getAccessToken();
 
   let traceparent;
   if (process.env.ZIPKIN_URL) {
@@ -194,12 +187,11 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
     }
   }
 
-  const quotaLimiter = auth.getQuotaLimiter();
   if (!quotaLimiter) {
     const response = await fetch(url, {
       method,
       headers: {
-        Authorization: 'Bearer ' + accessToken.token.trim(),
+        Authorization: 'Bearer ' + accessToken,
         traceparent
       }
     });
@@ -217,7 +209,7 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
         const response = await fetch(url, {
           method,
           headers: {
-            Authorization: 'Bearer ' + accessToken.token.trim(),
+            Authorization: 'Bearer ' + accessToken,
             traceparent
           }
         });
@@ -230,7 +222,6 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
       } catch (err) {
         reject(err);
       }
-
     };
 
     if (requestUrl.endsWith('drive/v3/files')) {
@@ -245,8 +236,8 @@ async function driveRequest(auth: OAuth2Client & HasQuotaLimiter, method, reques
   });
 }
 
-export async function driveFetch(auth: OAuth2Client & HasQuotaLimiter, method, url, params) {
-  const response = await driveRequest(auth, method, url, params);
+export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params) {
+  const response = await driveRequest(quotaLimiter, accessToken, method, url, params);
   try {
     const body = await response.text();
     return JSON.parse(body);
@@ -255,7 +246,7 @@ export async function driveFetch(auth: OAuth2Client & HasQuotaLimiter, method, u
   }
 }
 
-export async function driveFetchStream(auth: OAuth2Client & HasQuotaLimiter, method, url, params): Promise<ReadableStream<Uint8Array>> {
-  const response = await driveRequest(auth, method, url, params);
+export async function driveFetchStream(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params): Promise<ReadableStream<Uint8Array>> {
+  const response = await driveRequest(quotaLimiter, accessToken, method, url, params);
   return response.body;
 }

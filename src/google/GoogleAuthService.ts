@@ -4,7 +4,7 @@ import readline from 'readline';
 import open from 'open';
 import {promisify} from 'util';
 
-import {HasQuotaLimiter, QuotaAuthClient, QuotaJwtClient} from './AuthClient';
+import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
 import {GoogleAuth} from '../model/GoogleAuth';
 import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {ServiceAccountJson} from '../model/AccountJson';
@@ -39,11 +39,11 @@ export function decrypt(encrypted: string, key: string) {
 
 export class GoogleAuthService {
 
-  async authorizeServiceAccount(service_account_json: ServiceAccountJson): Promise<OAuth2Client & HasQuotaLimiter> {
+  async authorizeServiceAccount(service_account_json: ServiceAccountJson): Promise<OAuth2Client> {
     return new QuotaJwtClient(service_account_json.client_email, null, service_account_json.private_key, SCOPES);
   }
 
-  async authorizeUserAccount(client_id: string, client_secret: string, redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'): Promise<OAuth2Client & HasQuotaLimiter> {
+  async authorizeUserAccount(client_id: string, client_secret: string, redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'): Promise<OAuth2Client> {
     if (!client_id) throw new Error('Unknown: client_id');
     if (!client_secret) throw new Error('Unknown: client_secret');
 

@@ -9,7 +9,6 @@ import {MimeTypes} from '../../model/GoogleFile';
 import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {HasQuotaLimiter} from '../../google/AuthClient';
 import {GoogleTreeProcessor} from './GoogleTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,7 +26,7 @@ export interface GoogleTreeItem {
 export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;
   private googleDriveService: GoogleDriveService;
-  private auth: OAuth2Client & HasQuotaLimiter;
+  private auth: OAuth2Client;
   private filterFilesIds: FileId[];
   private forceDownloadFilters: boolean;
 
@@ -46,8 +45,8 @@ export class GoogleFolderContainer extends Container {
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
-    this.googleDriveService = new GoogleDriveService(this.logger);
     const googleApiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
+    this.googleDriveService = new GoogleDriveService(this.logger, googleApiContainer.getQuotaLimiter());
     this.auth = googleApiContainer.getAuth();
   }
 
