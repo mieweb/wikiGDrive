@@ -267,6 +267,7 @@ export class JobManagerContainer extends Container {
           currentJob.state = 'running';
           currentJob.started = now;
           this.engine.emit(driveId, 'jobs:changed', driveJobs);
+
           this.runJob(driveId, currentJob, driveJobs)
             .then(async () => {
               if (currentJob.type === 'git_reset') {

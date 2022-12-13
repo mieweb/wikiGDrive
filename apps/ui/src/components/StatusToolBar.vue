@@ -33,7 +33,7 @@
     />
     <ToolButton
         v-if="!isGDocsPreview"
-        :active="activeTab === 'drive_config'"
+        :active="['drive_config', 'drive_danger'].includes(activeTab)"
         :to="{ name: 'drive', params: { driveId }, hash: '#drive_config' }"
         icon="fa-solid fa-gear me-1"
         title="Settings"

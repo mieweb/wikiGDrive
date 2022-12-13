@@ -149,3 +149,21 @@ a[disabled] {
   color: var(--bs-white);
   background-color: var(--bs-danger);
 }
+
+.nav-tabs.nav-horizontal .nav-link.active {
+  margin-right: -1px;
+  margin-bottom: initial;
+}
+
+.nav-tabs.nav-horizontal .nav-link.active {
+  border-color: var(--bs-dark) var(--bs-body-bg) var(--bs-dark) var(--bs-dark);
+}
+
+.nav-tabs.nav-horizontal {
+  border-right: 1px solid var(--bs-dark);
+  border-bottom: none;
+}
+
+.border-left-0 {
+  border-left: none;
+}
