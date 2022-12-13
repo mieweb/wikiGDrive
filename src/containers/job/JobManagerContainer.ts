@@ -71,24 +71,6 @@ function removeOldByType(type: JobType) {
   };
 }
 
-function removeOldTransformJobs() {
-  return (job: Job) => {
-    if (job.type !== 'transform') {
-      return true;
-    }
-    return !(job.state === 'failed' || job.state === 'done');
-  };
-}
-
-function removeOldFullSyncJobs() {
-  return (job: Job) => {
-    if (job.type !== 'sync_all') {
-      return true;
-    }
-    return !(job.state === 'failed' || job.state === 'done');
-  };
-}
-
 function removeOldSingleJobs(fileId) {
   if (fileId) {
     return (job: Job) => {
@@ -301,7 +283,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync_all') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('sync_all'));
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync all done',
@@ -356,7 +338,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync_all') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldFullSyncJobs());
+                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('sync_all'));
                 driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync all failed',
@@ -658,7 +640,7 @@ export class JobManagerContainer extends Container {
           await this.transform(driveId, currentJob.payload ? [ currentJob.payload ] : [] );
           await this.clearGitCache(driveId);
 
-          driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('transform'));
           this.engine.emit(driveId, 'toasts:added', {
             title: 'Transform done',
             type: 'transform:done',
@@ -671,7 +653,7 @@ export class JobManagerContainer extends Container {
             trigger: currentJob.type
           });
         } catch (err) {
-          driveJobs.jobs = driveJobs.jobs.filter(removeOldTransformJobs());
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('transform'));
           this.engine.emit(driveId, 'toasts:added', {
             title: 'Transform failed',
             type: 'transform:failed',
