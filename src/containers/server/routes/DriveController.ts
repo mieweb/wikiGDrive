@@ -4,7 +4,6 @@ import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryConta
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
-import {GoogleAuthService} from '../../../google/GoogleAuthService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {AuthConfig} from '../../../model/AccountJson';
 import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';

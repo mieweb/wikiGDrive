@@ -1,23 +1,42 @@
 <template>
   <div>
-    SHARE
+    Loading...
   </div>
 </template>
 <script>
+import {UtilsMixin} from '../components/UtilsMixin.ts';
+
 await import('https://apis.google.com/js/api.js');
 
 export default {
   name: 'ShareView',
-  mounted() {
-    const driveId = this.$route.params.driveId;
-    window.gapi.load('drive-share', () => {
-      console.log('shareClient', driveId);
-      const shareClient = new window.gapi.drive.share.ShareClient();
-      // shareClient.setOAuthToken('${token.access_token}');
-      shareClient.setItemIds([driveId]);
-      console.log(shareClient);
-      shareClient.showSettingsDialog();
-    });
+  mixins: [UtilsMixin],
+  data() {
+    return {
+      google_access_token: null,
+      share_email: null
+    };
+  },
+  async mounted() {
+    const response = await this.authenticatedClient.fetchApi('/api/share-token', { method: 'post'});
+    const json = await response.json();
+    this.google_access_token = json.google_access_token;
+    this.share_email = json.share_email;
+    this.share();
+  },
+  methods: {
+    share() {
+      if (!this.google_access_token) {
+        return;
+      }
+      const driveId = this.$route.params.driveId;
+      window.gapi.load('drive-share', () => {
+        const shareClient = new window.gapi.drive.share.ShareClient();
+        shareClient.setOAuthToken(this.google_access_token);
+        shareClient.setItemIds([driveId]);
+        shareClient.showSettingsDialog();
+      });
+    }
   }
 };
 </script>

@@ -394,6 +394,20 @@ export class ServerContainer extends Container {
     const driveUiController = new DriveUiController('/driveui', this.logger, this.filesService, <GoogleApiContainer>this.authContainer);
     app.use('/driveui', await driveUiController.getRouter());
 
+    app.use('/api/share-token', authenticate(this.logger), (req, res) => {
+      if ('POST' !== req.method) {
+        throw new Error('Incorrect method');
+      }
+      if (req.user) {
+        const { google_access_token } = req.user;
+        if (google_access_token) {
+          res.json({ google_access_token, share_email: this.params.share_email });
+          return;
+        }
+      }
+      res.json({});
+    });
+
     app.get('/api/ps', async (req, res, next) => {
       try {
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
