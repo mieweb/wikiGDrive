@@ -79,8 +79,7 @@ export class GoogleAuthService {
       scope: [
         'https://www.googleapis.com/auth/drive.readonly',
         'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/drive.readonly'
+        'https://www.googleapis.com/auth/userinfo.email'
       ].join(' '),
       state
     }).toString();
