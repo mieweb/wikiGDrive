@@ -37,8 +37,7 @@
             <tr v-for="(item, idx) of drivesNotShared" :key="idx" @click="selectDrive(item.folderId)">
               <td>{{item.name}}</td>
               <td>{{item.folderId}}</td>
-              <td @click.stop="share(item.folderId)">SHARE</td>
-              <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
+              <td @click.stop="share(item.folderId)"><i class="fa fa-share"></i> Share</td>
             </tr>
             </tbody>
           </table>

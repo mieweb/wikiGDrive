@@ -1,5 +1,4 @@
 import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
 import {INITIAL_RETRIES, QueueTask} from './QueueTask';
 import winston from 'winston';
@@ -9,6 +8,7 @@ import {TaskFetchBinary} from './TaskFetchBinary';
 import {TaskFetchAsset} from './TaskFetchAsset';
 import {MimeTypes, SimpleFile} from '../../model/GoogleFile';
 import {FileId} from '../../model/model';
+import {HasAccessToken} from '../../google/AuthClient';
 
 interface Filters {
   filterFoldersIds: FileId[];
@@ -19,7 +19,7 @@ export class TaskFetchFolder extends QueueTask {
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
-              private auth: OAuth2Client,
+              private auth: HasAccessToken,
               private fileService: FileContentService,
               private file: SimpleFile,
               private forceDownloadFilters = false,

@@ -4,7 +4,6 @@ import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
-import {GoogleAuthService} from '../../google/GoogleAuthService';
 import {FileId} from '../../model/model';
 import {saveRunningInstance} from './loadRunningInstance';
 import {urlToFolderId} from '../../utils/idParsers';
@@ -27,13 +26,14 @@ import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
 import {Logger} from 'vite';
 import * as fs from 'fs';
-import {authenticate, AuthError, setAccessCookie, signToken} from './auth';
+import {authenticate, AuthError, GoogleUser, getAuth, setAccessCookie, signToken} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
 import opentelemetry from '@opentelemetry/api';
 import {DriveUiController} from './routes/DriveUiController';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
+import {UserAuthClient} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,10 +44,6 @@ interface TreeItem {
   name: string;
   mimeType: string;
   children?: TreeItem[];
-}
-
-function openerRedirect(res: Response, redirectTo: string) {
-  res.send(`<script>window.opener.authenticated('${redirectTo}');window.close();</script>`);
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
@@ -211,6 +207,7 @@ export class ServerContainer extends Container {
           } else {
             err.redirectTo = '/drive/' + req['driveId'];
           }
+          console.error(err);
           if (req['driveId']) {
             err.authPath = '/auth/' + req['driveId'] + '?redirectTo=' + err.redirectTo;
           } else {
@@ -223,8 +220,9 @@ export class ServerContainer extends Container {
             console.debug('  req[\'driveId\']', req['driveId']);
             console.debug('  req.headers[\'redirect-to\']', req.headers['redirect-to']);
             console.debug('  err.redirectTo', err.redirectTo);
-            console.debug('  err.authPath', err.authPath);          }
-          res.status(code).send({ message: err.message, authPath: err.authPath });
+            console.debug('  err.authPath', err.authPath);
+          }
+          res.status(code).send({ message: err.message, authPath: err.authPath, stack: err.stack });
           return;
         default:
           console.error(err);
@@ -268,14 +266,13 @@ export class ServerContainer extends Container {
         const driveId = req.params.driveId;
         const redirectTo = req.query.redirectTo;
 
-        const googleAuthService = new GoogleAuthService();
-
         const state = new URLSearchParams(filterParams({
           driveId: driveId !== 'none' ? (driveId || '') : '',
           redirectTo
         })).toString();
 
-        const authUrl = await googleAuthService.getWebAuthUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/auth`, state);
+        const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+        const authUrl = await authClient.getWebAuthUrl(`${serverUrl}/auth`, state);
         if (process.env.VERSION === 'dev') {
           console.debug(authUrl);
         }
@@ -286,78 +283,8 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/auth', async (req, res, next) => {
-      try {
-        const hostname = req.header('host');
-        const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-        const serverUrl = protocol + hostname;
-
-        if (!req.query.state) {
-          throw new Error('No state query parameter');
-        }
-        const state = new URLSearchParams(req.query.state);
-        const driveui = state.get('driveui');
-        if (driveui) {
-          const googleAuthService = new GoogleAuthService();
-          await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
-          res.redirect('/driveui/installed');
-          return;
-        }
-
-        const shareId = state.get('shareId');
-        if (shareId) {
-          const googleAuthService = new GoogleAuthService();
-          const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
-          console.log(token);
-          return;
-        }
-
-        if (!req.query.not_popup) {
-          openerRedirect(res, req.url + '&not_popup=1');
-          return;
-        }
-
-        const driveId = state.get('driveId');
-        const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
-        if (driveId && !folderRegistryContainer.hasFolder(driveId)) {
-          throw new Error('Folder not registered');
-        }
-        const redirectTo = state.get('redirectTo');
-
-        const googleAuthService = new GoogleAuthService();
-        const token = await googleAuthService.getWebToken(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET, `${serverUrl}/auth`, req.query.code);
-        const googleDriveService = new GoogleDriveService(this.logger, null);
-        const googleUser = await googleAuthService.getUser(token);
-
-        if (driveId) {
-          const drive = await googleDriveService.getDrive(token.access_token, driveId);
-          if (drive.id) {
-            const accessToken = signToken(googleUser, driveId);
-            setAccessCookie(res, accessToken);
-            res.redirect(redirectTo || '/');
-            return;
-          }
-        } else {
-          const accessToken = signToken(googleUser, '');
-          setAccessCookie(res, accessToken);
-          res.redirect(redirectTo || '/');
-          return;
-        }
-
-        res.json({});
-      } catch (err) {
-        if (err.message.indexOf('invalid_grant') > -1) {
-          if (req.query.state) {
-            const state = new URLSearchParams(req.query.state);
-            const redirectTo = state.get('redirectTo');
-            res.redirect(redirectTo || '/');
-          } else {
-            res.redirect('/');
-          }
-          return;
-        }
-        next(err);
-      }
+    app.get('/auth', (...args) => {
+      getAuth.call(this, ...args);
     });
   }
 

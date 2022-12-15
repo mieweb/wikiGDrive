@@ -1,15 +1,15 @@
 import {QueueTask} from './QueueTask';
 import winston from 'winston';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
 import {SimpleFile} from '../../model/GoogleFile';
+import {HasAccessToken} from '../../google/AuthClient';
 
 export class TaskFetchBinary extends QueueTask {
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
-              private auth: OAuth2Client,
+              private auth: HasAccessToken,
               private fileService: FileContentService,
               private file: SimpleFile,
               private forceDownload: boolean,

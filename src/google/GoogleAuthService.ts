@@ -4,14 +4,9 @@ import readline from 'readline';
 import open from 'open';
 import {promisify} from 'util';
 
-import {QuotaAuthClient, QuotaJwtClient} from './AuthClient';
-import {GoogleAuth} from '../model/GoogleAuth';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
-import {ServiceAccountJson} from '../model/AccountJson';
 import crypto from 'crypto';
-import {convertResponseToError} from './driveFetch';
 
-const SCOPES = [
+export const SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/drive.file',
   'https://www.googleapis.com/auth/drive.metadata.readonly'
@@ -37,177 +32,69 @@ export function decrypt(encrypted: string, key: string) {
   return decrypted + decipher.final('utf8');
 }
 
-export class GoogleAuthService {
+export interface TokenInfo {
+  expiry_date: number;
+  scopes: string[]
+  access_type: string;
+  azp: string;
+  aud: string;
+  exp: string;
+}
 
-  async authorizeServiceAccount(service_account_json: ServiceAccountJson): Promise<OAuth2Client> {
-    return new QuotaJwtClient(service_account_json.client_email, null, service_account_json.private_key, SCOPES);
-  }
-
-  async authorizeUserAccount(client_id: string, client_secret: string, redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'): Promise<OAuth2Client> {
-    if (!client_id) throw new Error('Unknown: client_id');
-    if (!client_secret) throw new Error('Unknown: client_secret');
-
-    // Service account
-
-    // https://medium.com/@bretcameron/how-to-use-the-google-drive-api-with-javascript-57a6cc9e5262
-    // const email = credentials.client_email;
-    // const key = credentials.private_key;
-    // const keyId = credentials.private_key_id;
-    //
-    // const oAuth2Client = new google.auth.JWT(email, null, key, SCOPES, keyId);
-    //
-    // console.log(oAuth2Client);
-    // return oAuth2Client;
-
-
-    // https://developers.google.com/identity/protocols/oauth2/service-account
-
-    // Client name: Service Account Unique ID
-    // API interfaces: https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/drive.metadata.readonly
-
-    return new QuotaAuthClient(client_id, client_secret, redirect_uri);
-  }
-
-  async getWebAuthUrl(client_id: string, redirect_uri: string, state: string): Promise<string> {
-    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-      client_id,
-      redirect_uri,
-      access_type: 'offline',
-      prompt: 'consent',
-      response_type: 'code',
-      include_granted_scopes: 'true',
-      scope: [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email'
-      ].join(' '),
-      state
-    }).toString();
-  }
-
-  async getWebDriveInstallUrl(client_id: string, redirect_uri: string, state: string): Promise<string> {
-    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-      client_id,
-      redirect_uri,
-      access_type: 'offline',
-      prompt: 'consent select_account',
-      response_type: 'code',
-      include_granted_scopes: 'true',
-      scope: [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/drive.install'
-      ].join(' '),
-      state
-    }).toString();
-  }
-
-  async getWebToken(client_id: string, client_secret: string, redirect_uri: string, code: string): Promise<GoogleAuth> {
-    const body = new URLSearchParams({
-      client_id,
-      client_secret,
-      redirect_uri: redirect_uri,
-      access_type: 'offline',
-      grant_type: 'authorization_code',
-      code: code
-    }).toString();
-
-    const response = await fetch('https://accounts.google.com/o/oauth2/token ', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
-      },
-      body
-    });
-
-    if (response.status >= 400) {
-      throw await convertResponseToError(response);
+export async function getTokenInfo(accessToken: string): Promise<TokenInfo> {
+  const response = await fetch('https://oauth2.googleapis.com/tokeninfo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Bearer ' + accessToken
     }
+  });
+  const json = await response.json();
 
-    const json = await response.json();
+  return {
+    expiry_date: new Date().getTime() + json.expires_in * 1000,
+    scopes: json.scope.split(' '),
+    access_type: json.access_type,
+    azp: json.azp,
+    aud: json.aud,
+    exp: json.exp
+  };
+}
 
-    if (!json.expiry_date && json.expires_in) {
-      const now = new Date().getTime();
-      json.expiry_date = now + Math.floor(json.expires_in * 1000 * 0.9);
-    }
+export async function getCliCode(client_id: string): Promise<string> {
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id,
+    // redirect_uri: ,
+    // response_type: 'code',
+    access_type: 'offline',
+    include_granted_scopes: 'true',
+    scope: SCOPES.join(' '),
+  }).toString();
 
-    return {
-      access_token: json.access_token,
-      refresh_token: json.refresh_token,
-      scope: json.scope,
-      token_type: json.token_type,
-      expiry_date: json.expiry_date,
-      id_token: json.id_token
-    };
-  }
+  const child = await open(authUrl, { wait: true });
+  child.stdout.on('data', (data) => {
+    console.log(`Received chunk ${data}`);
+  });
+  child.stderr.on('data', (data) => {
+    console.log(`Received err ${data}`);
+  });
+  child.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+  child.on('message', (m) => {
+    console.log('PARENT got message:', m);
+  });
 
-  async getCliAccessToken(client_id: string, client_secret: string): Promise<GoogleAuth> {
-    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-      client_id,
-      // redirect_uri: ,
-      // response_type: 'code',
-      access_type: 'offline',
-      include_granted_scopes: 'true',
-      scope: SCOPES.join(' '),
-    }).toString();
+  console.log('Authorize this app by visiting this url:', authUrl);
 
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
 
-/*
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES
-    });
-*/
+  const question = promisify(rl.question).bind(rl);
+  const code = await question('Enter the code from that page here: ');
+  rl.close();
 
-    const child = await open(authUrl, { wait: true });
-    child.stdout.on('data', (data) => {
-      console.log(`Received chunk ${data}`);
-    });
-    child.stderr.on('data', (data) => {
-      console.log(`Received err ${data}`);
-    });
-    child.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
-    child.on('message', (m) => {
-      console.log('PARENT got message:', m);
-    });
-
-    console.log('Authorize this app by visiting this url:', authUrl);
-
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    const question = promisify(rl.question).bind(rl);
-    const code = await question('Enter the code from that page here: ');
-    rl.close();
-
-    // const credentials: GetTokenResponse = await oAuth2Client.getToken(code);
-
-    return await this.getWebToken(client_id, client_secret, 'urn:ietf:wg:oauth:2.0:oob', code);
-  }
-
-  async getUser(auth: {
-    refresh_token: string;
-    access_token: string;
-    expiry_date: number | null }) {
-    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?access_token=' + auth.access_token);
-
-    if (response.status >= 400) {
-      throw await convertResponseToError(response);
-    }
-
-    const json = await response.json();
-    return {
-      id: json.id,
-      email: json.email,
-      name: json.name,
-      google_access_token: auth.access_token,
-      google_refresh_token: auth.refresh_token,
-      google_expiry_date: auth.expiry_date
-    };
-  }
+  return code;
 }

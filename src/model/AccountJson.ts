@@ -19,7 +19,6 @@ export interface UserAccountJson {
 
 export interface AuthConfig {
   user_account?: UserAccountJson;
-  web_account?: UserAccountJson;
   service_account?: ServiceAccountJson;
   share_email?: string;
 }

@@ -1,22 +1,22 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {GoogleAuthService} from '../../google/GoogleAuthService';
+import {getCliCode, getTokenInfo} from '../../google/GoogleAuthService';
 import {QuotaLimiter} from '../../google/QuotaLimiter';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';
 import {Drive} from '../folder_registry/FolderRegistryContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
+import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient} from '../../google/AuthClient';
+
 const __filename = fileURLToPath(import.meta.url);
 
 export class GoogleApiContainer extends Container {
   private logger: winston.Logger;
   private oldSave: string;
-  private auth: OAuth2Client;
-  private webAuth: OAuth2Client;
+  private auth: HasAccessToken;
   private quotaLimiter: QuotaLimiter;
 
   constructor(public readonly params: ContainerConfig, public authConfig: AuthConfig) {
@@ -40,24 +40,24 @@ export class GoogleApiContainer extends Container {
       this.oldSave = str;
     });
 
-    const googleAuthService = new GoogleAuthService();
     if (this.authConfig.service_account) {
-      this.auth = await googleAuthService.authorizeServiceAccount(this.authConfig.service_account);
+      this.auth = new ServiceAuthClient(this.authConfig.service_account);
     }
     if (this.authConfig.user_account) {
-      this.auth = await googleAuthService.authorizeUserAccount(this.authConfig.user_account.client_id, this.authConfig.user_account.client_secret);
+      const authClient = new UserAuthClient(this.authConfig.user_account.client_id, this.authConfig.user_account.client_secret);
 
-      const google_auth = await this.filesService.readJson('auth_token.json');
+      const google_auth: GoogleAuth = await this.filesService.readJson('auth_token.json');
       if (google_auth) {
-        this.auth.setCredentials(google_auth);
+        authClient.setCredentials(google_auth);
       } else {
-        const google_auth = await googleAuthService.getCliAccessToken(this.authConfig.user_account.client_id, this.authConfig.user_account.client_secret);
+        const code = await getCliCode(this.authConfig.user_account.client_id);
+        const google_auth = await authClient.authorizeResponseCode(code, 'urn:ietf:wg:oauth:2.0:oob');
         await this.filesService.writeJson('auth_token.json', google_auth);
-        this.auth.setCredentials(google_auth);
       }
-    }
-    if (this.authConfig.web_account) {
-      this.webAuth = await googleAuthService.authorizeUserAccount(this.authConfig.web_account.client_id, this.authConfig.web_account.client_secret);
+
+      await authClient.authorizeUserAccount();
+
+      this.auth = authClient;
     }
   }
 
@@ -71,13 +71,13 @@ export class GoogleApiContainer extends Container {
 
   async listDrives(): Promise<Drive[]> {
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
-    const accessToken = (await this.auth.getAccessToken()).token.trim();
+    const accessToken = await this.auth.getAccessToken();
     return await googleDriveService.listDrives(accessToken);
   }
 
   async getDrive(driveId: FileId): Promise<Drive> {
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
-    const accessToken = (await this.auth.getAccessToken()).token.trim();
+    const accessToken = await this.auth.getAccessToken();
     return await googleDriveService.getDrive(accessToken, driveId);
   }
 
@@ -86,7 +86,7 @@ export class GoogleApiContainer extends Container {
     return await googleDriveService.getFile(this.auth, fileId);
   }
 
-  getAuth(): OAuth2Client {
+  getAuth(): HasAccessToken {
     return this.auth;
   }
 
