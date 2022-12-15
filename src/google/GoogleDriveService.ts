@@ -3,13 +3,13 @@
 // https://developers.google.com/drive/api/v3/reference
 
 import {Logger} from 'winston';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
 import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
 import {FileId} from '../model/model';
 import {driveFetch, driveFetchStream} from './driveFetch';
-import {QuotaLimiter} from './QuotaLimiter.ts';
+import {QuotaLimiter} from './QuotaLimiter';
+import {HasAccessToken} from './AuthClient';
 
 export interface Changes {
   token: string;
@@ -45,7 +45,7 @@ export class GoogleDriveService {
   constructor(private logger: Logger, private quotaLimiter: QuotaLimiter) {
   }
 
-  async getStartTrackToken(auth: OAuth2Client, driveId?: string): Promise<string> {
+  async getStartTrackToken(auth: HasAccessToken, driveId?: string): Promise<string> {
     const params = {
       supportsAllDrives: true,
       driveId: undefined
@@ -55,11 +55,11 @@ export class GoogleDriveService {
       params.driveId = driveId;
     }
 
-    const res = await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', 'https://www.googleapis.com/drive/v3/changes/startPageToken', params);
+    const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', 'https://www.googleapis.com/drive/v3/changes/startPageToken', params);
     return res.startPageToken;
   }
 
-  async subscribeWatch(auth: OAuth2Client, pageToken: string, driveId?: string) {
+  async subscribeWatch(auth: HasAccessToken, pageToken: string, driveId?: string) {
     try {
       const params = {
         pageToken,
@@ -69,14 +69,14 @@ export class GoogleDriveService {
         includeRemoved: true,
         driveId: driveId ? driveId : undefined
       };
-      return await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'POST', 'https://www.googleapis.com/drive/v3/changes/watch', params);
+      return await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'POST', 'https://www.googleapis.com/drive/v3/changes/watch', params);
     } catch (err) {
       err.message = 'Error watching: ' + err.message;
       throw err;
     }
   }
 
-  async watchChanges(auth: OAuth2Client, pageToken: string, driveId?: string): Promise<Changes> {
+  async watchChanges(auth: HasAccessToken, pageToken: string, driveId?: string): Promise<Changes> {
     try {
       const params = {
         pageToken: pageToken,
@@ -86,7 +86,7 @@ export class GoogleDriveService {
         includeRemoved: true,
         driveId: driveId ? driveId : undefined
       };
-      const res = await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', 'https://www.googleapis.com/drive/v3/changes', params);
+      const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', 'https://www.googleapis.com/drive/v3/changes', params);
 
       const files = res.changes
         .filter(change => !!change.file)
@@ -108,7 +108,7 @@ export class GoogleDriveService {
     }
   }
 
-  async listFiles(auth: OAuth2Client, context: ListContext, pageToken?: string) {
+  async listFiles(auth: HasAccessToken, context: ListContext, pageToken?: string) {
     let query = '';
 
     if (context.folderId) {
@@ -135,7 +135,7 @@ export class GoogleDriveService {
     };
 
     try {
-      const res = await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', 'https://www.googleapis.com/drive/v3/files', listParams);
+      const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', 'https://www.googleapis.com/drive/v3/files', listParams);
 
       const apiFiles = [];
 
@@ -153,7 +153,7 @@ export class GoogleDriveService {
     }
   }
 
-  async listPermissions(auth: OAuth2Client, fileId: string, pageToken?: string) {
+  async listPermissions(auth: HasAccessToken, fileId: string, pageToken?: string) {
     const params = {
       fileId: fileId,
       supportsAllDrives: true,
@@ -161,7 +161,7 @@ export class GoogleDriveService {
       fields: '*',
       pageToken: pageToken
     };
-    const res = await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
+    const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
 
     const permissions = [];
 
@@ -174,7 +174,7 @@ export class GoogleDriveService {
     return permissions;
   }
 
-  async getFile(auth: OAuth2Client, fileId: FileId) {
+  async getFile(auth: HasAccessToken, fileId: FileId) {
     try {
       const params = {
         fileId: fileId,
@@ -182,7 +182,7 @@ export class GoogleDriveService {
         // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
         fields: '*'
       };
-      const res = await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}`, params);
+      const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}`, params);
 
       return apiFileToGoogleFile(res);
     } catch (err) {
@@ -191,14 +191,14 @@ export class GoogleDriveService {
     }
   }
 
-  async download(auth: OAuth2Client, file: SimpleFile, dest: Writable): Promise<void> {
+  async download(auth: HasAccessToken, file: SimpleFile, dest: Writable): Promise<void> {
     try {
       const params = {
         fileId: file.id,
         alt: 'media',
         supportsAllDrives: true
       };
-      const res: ReadableStream = await driveFetchStream(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}`, params);
+      const res: ReadableStream = await driveFetchStream(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}`, params);
       await res.pipeTo(Writable.toWeb(dest));
     } catch (err) {
       err.message = 'Error download file: ' + file.id + ' ' + err.message;
@@ -207,7 +207,7 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth: OAuth2Client, file: SimpleFile, dest: Writable): Promise<void> {
+  async exportDocument(auth: HasAccessToken, file: SimpleFile, dest: Writable): Promise<void> {
     const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
@@ -217,7 +217,7 @@ export class GoogleDriveService {
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
       };
-      const res = await driveFetchStream(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
+      const res = await driveFetchStream(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
       await res.pipeTo(Writable.toWeb(dest));
       this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
     } catch (err) {
@@ -230,11 +230,11 @@ export class GoogleDriveService {
     }
   }
 
-  async about(auth: OAuth2Client) {
+  async about(auth: HasAccessToken) {
     const params = {
       fields: '*'
     };
-    return await driveFetch(this.quotaLimiter, (await auth.getAccessToken()).token.trim(), 'GET', 'https://www.googleapis.com/drive/v3/about', params);
+    return await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', 'https://www.googleapis.com/drive/v3/about', params);
   }
 
   async listDrives(accessToken: string, pageToken?: string): Promise<Drive[]> {

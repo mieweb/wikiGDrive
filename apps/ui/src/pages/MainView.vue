@@ -87,20 +87,24 @@ export default {
       window.open('https://drive.google.com/drive/u/0/folders/' + folderId);
     },
     async submit() {
-      const json = await this.authenticatedClient.fetchApi('/api/share_drive', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: this.url
-        })
-      });
-      if (json.driveId) {
-        await this.$router.push({ name: 'drive', params: { driveId: json.driveId } });
-      } else {
-        alert('Error sharing drive');
+      try {
+        const json = await this.authenticatedClient.fetchApi('/api/share_drive', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            url: this.url
+          })
+        });
+        if (json.driveId) {
+          await this.$router.push({ name: 'drive', params: { driveId: json.driveId } });
+        } else {
+          alert('Error sharing drive');
+        }
+      } catch (err) {
+        console.error(err);
       }
     },
     async login() {

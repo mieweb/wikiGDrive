@@ -1,7 +1,7 @@
 import {Readable} from 'stream';
 import {SimpleFile} from '../model/GoogleFile';
 import opentelemetry from '@opentelemetry/api';
-import {QuotaLimiter} from './QuotaLimiter.ts';
+import {QuotaLimiter} from './QuotaLimiter';
 
 async function handleReadable(obj): Promise<string> {
   if (obj instanceof Readable) {
@@ -82,57 +82,6 @@ function jsonToErrorMessage(json): string {
       return driveError.error;
     }
   }
-}
-
-export async function handleGoogleError(err, reject) {
-  if (err.message) {
-    err.message = await handleReadable(err.message);
-  }
-
-  if (err.response && err.response.data) {
-    err.response.data = await handleReadable(err.response.data);
-  }
-
-  if (parseInt(err.code) === 429) { // Too many requests
-    err.isQuotaError = true;
-    reject(err);
-    return;
-  }
-  if (parseInt(err.code) === 403) { // Retry
-    if (err.isQuotaError) { // Already decoded
-      reject(err);
-      return;
-    }
-
-    if (err.message) {
-      const json = err.message;
-      const errorMessage = jsonToErrorMessage(json);
-      if (errorMessage && errorMessage.indexOf('User Rate Limit Exceeded') > -1) {
-        err.isQuotaError = true;
-        reject(err);
-        return;
-      }
-
-      if ('string' === typeof errorMessage) {
-        reject(new Error(errorMessage));
-        return;
-      }
-    }
-
-    if (err.response && err.response.data) {
-      const errorData = err.response.data;
-      if ('string' === typeof errorData) {
-        reject(new Error(errorData));
-        return;
-      }
-    }
-
-    if (err.config && err.config.url) {
-      throw err;
-    }
-  }
-
-  reject(err);
 }
 
 export function filterParams(params) {

@@ -2,7 +2,6 @@ import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '.
 import winston from 'winston';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {QueueDownloader} from './QueueDownloader';
 import {TaskFetchFolder} from './TaskFetchFolder';
 import {MimeTypes} from '../../model/GoogleFile';
@@ -10,6 +9,7 @@ import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleTreeProcessor} from './GoogleTreeProcessor';
+import {HasAccessToken} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -26,7 +26,7 @@ export interface GoogleTreeItem {
 export class GoogleFolderContainer extends Container {
   private logger: winston.Logger;
   private googleDriveService: GoogleDriveService;
-  private auth: OAuth2Client;
+  private auth: HasAccessToken;
   private filterFilesIds: FileId[];
   private forceDownloadFilters: boolean;
 

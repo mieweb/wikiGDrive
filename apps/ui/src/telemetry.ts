@@ -160,7 +160,9 @@ export function addTelemetry(app) {
               const url = new URL(result['url']);
               span.updateName('http_client ' + method + ' ' + url.toString());
             } else {
-              console.log(result['url']);
+              if (result['url']) {
+                console.log(result['url']);
+              }
             }
           },
         })

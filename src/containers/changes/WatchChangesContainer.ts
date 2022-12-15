@@ -1,8 +1,7 @@
-import {Container, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
+import {Container, ContainerEngine} from '../../ContainerEngine';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleFile} from '../../model/GoogleFile';
@@ -11,13 +10,14 @@ import {JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {type FileId} from '../../model/model';
 import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry';
+import {HasAccessToken} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 
 @TelemetryClass()
 export class WatchChangesContainer extends Container {
   private logger: winston.Logger;
-  private auth: OAuth2Client;
+  private auth: HasAccessToken;
   private googleDriveService: GoogleDriveService;
   private lastToken: { [driveId: string]: string } = {};
   private intervals: { [driveId: string]: NodeJS.Timer } = {};

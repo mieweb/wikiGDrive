@@ -1,19 +1,19 @@
 import {
   Controller,
   RouteErrorHandler,
-  RouteGet, RouteParamPath,
+  RouteGet,
   RouteParamQuery,
   RouteResponse
 } from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {Logger} from 'winston';
 import {ShareErrorHandler} from './FolderController';
-import {GoogleAuthService} from '../../../google/GoogleAuthService';
 import {filterParams} from '../../../google/driveFetch';
 import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {GoogleApiContainer} from '../../google_api/GoogleApiContainer';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {UserConfigService} from '../../google_folder/UserConfigService';
+import {UserAuthClient} from '../../../google/AuthClient';
 
 export class DriveUiController extends Controller {
 
@@ -89,7 +89,6 @@ export class DriveUiController extends Controller {
   @RouteResponse('stream')
   async getInstall() {
     const serverUrl = process.env.DOMAIN;
-    const googleAuthService = new GoogleAuthService();
 
     const state = new URLSearchParams(filterParams({
       driveui: 1,
@@ -97,7 +96,8 @@ export class DriveUiController extends Controller {
       // redirectTo
     })).toString();
 
-    const authUrl = await googleAuthService.getWebDriveInstallUrl(process.env.GOOGLE_AUTH_CLIENT_ID, `${serverUrl}/auth`, state);
+    const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+    const authUrl = await authClient.getWebDriveInstallUrl(`${serverUrl}/auth`, state);
     if (process.env.VERSION === 'dev') {
       console.debug(authUrl);
     }

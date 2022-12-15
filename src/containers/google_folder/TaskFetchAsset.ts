@@ -1,16 +1,16 @@
 import {QueueTask} from './QueueTask';
 import winston from 'winston';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {OAuth2Client} from 'google-auth-library/build/src/auth/oauth2client';
 import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile} from '../../model/GoogleFile';
 import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
+import {HasAccessToken} from '../../google/AuthClient';
 
 export class TaskFetchAsset extends QueueTask {
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
-              private auth: OAuth2Client,
+              private auth: HasAccessToken,
               private fileService: FileContentService,
               private file: GoogleFile,
               private _forceDownload: boolean) {

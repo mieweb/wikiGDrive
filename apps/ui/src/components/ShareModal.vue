@@ -10,13 +10,16 @@
           <div class="d-flex h-100">
             <div class="flex-column w-50">
               <div class="m-3">
-                <input readonly :value="share_email" />
                 <h4>Example:</h4>
                 <img src="/assets/share-example.png" class="w-100" />
               </div>
             </div>
             <div class="flex-column w-50">
-              Drive: {{driveId}}
+              <div class="d-flex align-items-center">
+                <label class="form-label flex-grow text-nowrap">Share your drive with:</label>
+                <input @click="copy" class="form-control flex-grow-1" readonly :value="share_email" />
+                <button class="btn" @click="copy"><i class="fa fa-copy"></i></button>
+              </div>
               <iframe :src="'/share-drive/' + driveId" class="w-100 h-100"></iframe>
             </div>
           </div>
@@ -44,6 +47,9 @@ export default {
   methods: {
     close() {
       this.$root.$removeModal();
+    },
+    async copy() {
+      await navigator.clipboard.writeText(this.share_email);
     }
   }
 };
