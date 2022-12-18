@@ -1,6 +1,6 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {getCliCode, getTokenInfo} from '../../google/GoogleAuthService';
+import {getCliCode} from '../../google/GoogleAuthService';
 import {QuotaLimiter} from '../../google/QuotaLimiter';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';

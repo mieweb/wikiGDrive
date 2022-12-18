@@ -27,6 +27,7 @@ const app: Vue.App = Vue.createApp({
   mixins: [ModalsMixin, ToastsMixin],
   data() {
     return {
+      user: null,
       drive: {},
       jobs: [],
       jobsMap: {},
@@ -43,7 +44,7 @@ const app: Vue.App = Vue.createApp({
       }, this.drive.gitStats);
     }
   },
-  created() {
+  async created() {
     this.authenticatedClient.app = this.$root;
     this.emitter.on('*', (type) => {
       switch (type) {
@@ -60,8 +61,18 @@ const app: Vue.App = Vue.createApp({
           break;
       }
     });
+    await this.fetchUser();
   },
   methods: {
+    async fetchUser() {
+      try {
+        const resUser = await authenticatedClient.fetchApi('/user/me');
+        const {user} = await resUser.json();
+        this.user = user;
+      } catch (err) {
+        this.user = null;
+      }
+    },
     async changeDrive(toDriveId) {
       try {
         this.drive = await (<any>vm).DriveClientService.changeDrive(toDriveId, vm);

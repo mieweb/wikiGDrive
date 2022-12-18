@@ -2,55 +2,69 @@
   <BaseLayout>
     <template v-slot:default>
       <div class="container">
-        <form @submit.prevent.stop="submit">
-          <legend>Share</legend>
-          <div class="input-group">
-            <input class="form-control" v-model="url" placeholder="https://drive.google.com/drive/u/0/folders/..." />
-            <button type="submit" class="btn btn-primary">Share</button>
-          </div>
-        </form>
+        <div v-if="!isLogged">
+          <h1>Welcome to WikiGDrive</h1>
 
-        <div v-if="loading" class="mt-3">
-          <i class="fa-solid fa-rotate fa-spin"></i>
-        </div>
+          <p>
+            Lorem ipsum
+          </p>
 
-        <div v-else-if="drivesShared && drivesShared.length > 0" class="mt-3">
-          or select one of your drives
-          <table class="table table-hover table-clickable">
-            <thead>
-            <tr>
-              <th>Name</th>
-              <th>Id</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="(item, idx) of drivesShared" :key="idx" @click="selectDrive(item.folderId)">
-              <td>{{item.name}}</td>
-              <td>{{item.folderId}}</td>
-              <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
-            </tr>
-            </tbody>
-          </table>
-
-          <a v-if="drivesNotShared && drivesNotShared.length > 0" href="/drive">more...</a>
-        </div>
-
-        <div class="mt-3" v-else>
-          or select one of your <a href="/drive">drives</a>
-        </div>
-
-        <div v-if="!loading">
           <button v-if="!isLogged" class="btn btn-secondary" @click="login">Login</button>
-          <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
         </div>
+        <div v-else>
 
+          <div v-if="loading" class="mt-3">
+            <i class="fa-solid fa-rotate fa-spin"></i>
+          </div>
+
+          <div v-else-if="drivesShared && drivesShared.length > 0" class="mt-3">
+            <table class="table table-hover table-clickable">
+              <thead>
+              <tr>
+                <th>Name</th>
+                <th>Id</th>
+                <th></th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="(item, idx) of drivesShared" :key="idx" @click="selectDrive(item.folderId)">
+                <td>{{item.name}}</td>
+                <td>{{item.folderId}}</td>
+                <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
+              </tr>
+              </tbody>
+            </table>
+
+            <div v-if="drivesNotShared && drivesNotShared.length > 0" class="mt-3">
+              <h3>You also have few drives not shared with wikigdrive:</h3>
+              <table class="table table-hover table-clickable">
+                <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Id</th>
+                  <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(item, idx) of drivesNotShared" :key="idx" @click="selectDrive(item.folderId)">
+                  <td>{{item.name}}</td>
+                  <td>{{item.folderId}}</td>
+                  <td @click.stop="share(item.folderId)"><i class="fa fa-share"></i> Share</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <button class="btn btn-secondary" @click="logout">Logout User</button>
+        </div>
       </div>
     </template>
   </BaseLayout>
 </template>
 <script>
 import BaseLayout from '../layout/BaseLayout.vue';
+import {markRaw} from 'vue';
+import ShareModal from '../components/ShareModal.vue';
 
 export default {
   components: {
@@ -61,24 +75,34 @@ export default {
       url: '',
       drivesShared: [],
       drivesNotShared: [],
-      loading: false,
-      isLogged: false
+      loading: false
     };
+  },
+  computed: {
+    isLogged() {
+      return !!this.$root.user;
+    }
   },
   async created() {
     await this.fetch();
   },
   methods: {
-    async fetch(optional_login = true) {
+    async fetch() {
+      await this.$root.fetchUser();
+      if (!this.isLogged) {
+        this.drivesShared = [];
+        this.drivesNotShared = [];
+        return;
+      }
+
       this.loading = true;
       try {
-        const drives = await this.DriveClientService.getDrives({ optional_login });
+        const drives = await this.DriveClientService.getDrives();
         this.drivesShared = drives.filter(d => !!d.exists);
         this.drivesNotShared = drives.filter(d => !d.exists);
       } finally {
         this.loading = false;
       }
-      this.isLogged = this.authenticatedClient.isLogged;
     },
     selectDrive(driveId) {
       this.$router.push('/drive/' + driveId);
@@ -108,7 +132,19 @@ export default {
       }
     },
     async login() {
-      await this.fetch(false);
+      const response = await this.authenticatedClient.fetchApi('/auth', { return_error: true });
+      const json = await response.json();
+      if (json.authPath) {
+        let authPopup;
+        window['authenticated'] = (url) => {
+          if (authPopup) {
+            authPopup.close();
+            authPopup = null;
+          }
+          window.location = url;
+        };
+        authPopup = window.open(json.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
+      }
     },
     async logout() {
       await this.authenticatedClient.fetchApi('/auth/logout', {
@@ -116,10 +152,18 @@ export default {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
-        }
+        },
+        return_error: true
       });
-      this.isLogged = false;
       await this.fetch();
+    },
+    share(driveId) {
+      this.$root.$addModal({
+        component: markRaw(ShareModal),
+        props: {
+          driveId
+        },
+      });
     }
   }
 };
