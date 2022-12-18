@@ -26,7 +26,7 @@ import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
 import {Logger} from 'vite';
 import * as fs from 'fs';
-import {authenticate, AuthError, GoogleUser, getAuth, setAccessCookie, signToken} from './auth';
+import {authenticate, AuthError, GoogleUser, getAuth, setAccessCookie, signToken, authenticateOptionally} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
@@ -34,6 +34,7 @@ import opentelemetry from '@opentelemetry/api';
 import {DriveUiController} from './routes/DriveUiController';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {UserAuthClient} from '../../google/AuthClient';
+import {getTokenInfo} from '../../google/GoogleAuthService';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -166,8 +167,8 @@ export class ServerContainer extends Container {
       max: 3000
     }));
 
-    app.use((req: express.Request, res: express.Response, next: NextFunction) => {
-      res.header('wgd-is-logged', req.cookies['accessToken'] ? '1' : '');
+    app.use((req, res, next) => {
+      res.header('wgd-share-email', this.params.share_email || '');
       next();
     });
 
@@ -189,7 +190,6 @@ export class ServerContainer extends Container {
 
     app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
       const code = err.status || 501;
-      res.header('wgd-share-email', this.params.share_email || '');
       switch(code) {
         case 404:
           {
@@ -258,6 +258,7 @@ export class ServerContainer extends Container {
       res.clearCookie('accessToken');
       res.json({ loggedOut: true });
     });
+
     app.get('/auth/:driveId', async (req, res, next) => {
       try {
         const hostname = req.header('host');
@@ -285,6 +286,28 @@ export class ServerContainer extends Container {
 
     app.get('/auth', (...args) => {
       getAuth.call(this, ...args);
+    });
+
+    app.use('/user/me', authenticateOptionally(this.logger));
+    app.get('/user/me', async (req, res) => {
+      if (!req.user || !req.user.google_access_token) {
+        res.json({ user: undefined });
+        return;
+      }
+
+      const tokenInfo = await getTokenInfo(req.user.google_access_token);
+
+      if (!tokenInfo.expiry_date) {
+        res.json({ user: undefined, tokenInfo });
+        return;
+      }
+
+      const user: GoogleUser = {
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name,
+      };
+      res.json({ user, tokenInfo });
     });
   }
 

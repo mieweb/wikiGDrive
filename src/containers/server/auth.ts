@@ -74,7 +74,7 @@ export function signToken(payload: JwtDecryptedPayload): string {
     name: payload.name,
     email: payload.email,
     gat: encrypt(payload.google_access_token, process.env.JWT_SECRET),
-    grt: encrypt(payload.google_refresh_token, process.env.JWT_SECRET),
+    grt: payload.google_refresh_token ? encrypt(payload.google_refresh_token, process.env.JWT_SECRET) : undefined,
     ged: payload.google_expiry_date,
     driveId: payload.driveId
   };
@@ -90,7 +90,7 @@ export function verifyToken(accessCookie: string): JwtDecryptedPayload {
     name: encrypted.name,
     email: encrypted.email,
     google_access_token: decrypt(encrypted.gat, process.env.JWT_SECRET),
-    google_refresh_token: decrypt(encrypted.grt, process.env.JWT_SECRET),
+    google_refresh_token: encrypted.grt ? decrypt(encrypted.grt, process.env.JWT_SECRET) : undefined,
     google_expiry_date: encrypted.ged,
     driveId: encrypted.driveId
   };
@@ -107,7 +107,7 @@ export async function getAuth(req, res, next){
     const serverUrl = protocol + hostname;
 
     if (!req.query.state) {
-      throw new Error('No state query parameter');
+      return next(redirError(req, 'No state query parameter'));
     }
     const state = new URLSearchParams(req.query.state);
     const driveui = state.get('driveui');
@@ -181,6 +181,85 @@ export async function getAuth(req, res, next){
   }
 }
 
+async function decodeAuthenticateInfo(req, res, next) {
+  const driveId = req['driveId'];
+  const logger = req['logger'];
+
+  if (!req.cookies.accessToken) {
+    req.user = null;
+    next();
+    return;
+  }
+
+  try {
+    const decoded = verifyToken(req.cookies.accessToken);
+    if (!decoded.id) {
+      return next(redirError(req, 'No jwt.sub'));
+    }
+    if (!decoded.google_access_token) {
+      return next(redirError(req, 'No jwt.gat'));
+    }
+
+    const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+    await authClient.authorizeCookieData(decoded.google_access_token, decoded.google_refresh_token, decoded.google_expiry_date);
+
+    req.user = {
+      name: decoded.name,
+      email: decoded.email,
+      id: decoded.id,
+      google_access_token: await authClient.getAccessToken()
+    };
+
+    if (driveId && decoded.driveId !== driveId) {
+      const googleDriveService = new GoogleDriveService(logger, null);
+      const drive = await googleDriveService.getDrive(await authClient.getAccessToken(), driveId);
+      if (!drive) {
+        return next(redirError(req, 'Unauthorized to read drive: ' + driveId));
+      }
+
+      const accessToken: string = signToken({
+        ...decoded,
+        ...await authClient.getAuthData(),
+        driveId: driveId
+      });
+      setAccessCookie(res, accessToken);
+    }
+
+    next();
+  } catch (err) {
+    if (err.status === 404 && req.user?.email) {
+      err.message = err.message + `, user: ${req.user.email}`;
+    }
+
+    if (err.expiredAt) { // jsonwebtoken.TokenExpiredError
+      res.clearCookie('accessToken');
+      return next(redirError(req, 'JWT expired'));
+    }
+    if (err.message === 'invalid signature') {
+      res.clearCookie('accessToken');
+      return next(redirError(req, 'JWT invalid signature'));
+    }
+    next(err);
+  }
+}
+
+export function authenticateOptionally(logger: Logger, idx = 0) {
+  return async (req, res, next) => {
+    req['driveId'] = '';
+    req['logger'] = logger;
+    const parts = req.path.split('/');
+
+    if (parts[0].length === 0) {
+      parts.shift();
+    }
+    const driveId = (parts[idx] || '').replace('undefined', '');
+    req['driveId'] = driveId || '';
+    req['logger'] = req['driveId'] ? logger.child({driveId: req['driveId']}) : logger;
+
+    await decodeAuthenticateInfo(req, res, next);
+  };
+}
+
 export function authenticate(logger: Logger, idx = 0) {
   return async (req, res, next) => {
     req['driveId'] = '';
@@ -192,62 +271,13 @@ export function authenticate(logger: Logger, idx = 0) {
     }
     const driveId = (parts[idx] || '').replace('undefined', '');
     req['driveId'] = driveId || '';
-    req['logger'] = req['driveId'] ? logger.child({ driveId: req['driveId'] }) : logger;
+    req['logger'] = req['driveId'] ? logger.child({driveId: req['driveId']}) : logger;
 
     if (!req.cookies.accessToken) {
       return next(redirError(req, 'No accessToken cookie'));
     }
 
-    try {
-      const decoded = verifyToken(req.cookies.accessToken);
-      if (!decoded.id) {
-        return next(redirError(req, 'No jwt.sub'));
-      }
-      if (!decoded.google_access_token) {
-        return next(redirError(req, 'No jwt.gat'));
-      }
-
-      const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      await authClient.authorizeCookieData(decoded.google_access_token, decoded.google_refresh_token, decoded.google_expiry_date);
-
-      req.user = {
-        name: decoded.name,
-        email: decoded.email,
-        id: decoded.id,
-        google_access_token: await authClient.getAccessToken()
-      };
-
-      if (driveId && decoded.driveId !== driveId) {
-        const googleDriveService = new GoogleDriveService(logger, null);
-        const drive = await googleDriveService.getDrive(await authClient.getAccessToken(), driveId);
-        if (!drive) {
-          return next(redirError(req, 'Unauthorized to read drive: ' + driveId));
-        }
-
-        const accessToken: string = signToken({
-          ...decoded,
-          ...await authClient.getAuthData(),
-          driveId: driveId
-        });
-        setAccessCookie(res, accessToken);
-      }
-
-      next();
-    } catch (err) {
-      if (err.status === 404 && req.user?.email) {
-        err.message = err.message + `, user: ${req.user.email}`;
-      }
-
-      if (err.expiredAt) { // jsonwebtoken.TokenExpiredError
-        res.clearCookie('accessToken');
-        return next(redirError(req, 'JWT expired'));
-      }
-      if (err.message === 'invalid signature') {
-        res.clearCookie('accessToken');
-        return next(redirError(req, 'JWT invalid signature'));
-      }
-      next(err);
-    }
+    await decodeAuthenticateInfo(req, res, next);
   };
 }
 

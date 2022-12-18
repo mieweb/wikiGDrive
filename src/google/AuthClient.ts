@@ -19,6 +19,8 @@ export interface HasAccessToken {
   getAccessToken(): Promise<string>;
 }
 
+// https://developers.google.com/identity/protocols/oauth2/web-server
+
 async function refreshToken(client_id: string, client_secret: string, refresh_token: string): Promise<GoogleAuth> {
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -35,10 +37,10 @@ async function refreshToken(client_id: string, client_secret: string, refresh_to
   const json = await response.json();
 
   return {
-    access_token: json.access_token.trim(),
+    access_token: json.access_token ? json.access_token.trim() : undefined,
     refresh_token,
     expiry_date: new Date().getTime() + Math.floor(json.expires_in * 1000),
-    scopes: json.scope.split(' '),
+    scopes: json.scope ? json.scope.split(' ') : [],
     token_type: json.token_type
   };
 }
@@ -75,8 +77,8 @@ export class UserAuthClient implements HasAccessToken {
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: this.client_id,
       redirect_uri,
-      access_type: 'offline',
-      prompt: 'consent',
+      // access_type: 'offline', // https://developers.google.com/identity/protocols/oauth2/web-server#offline
+      // prompt: 'consent',
       response_type: 'code',
       include_granted_scopes: 'true',
       scope: [
@@ -89,14 +91,14 @@ export class UserAuthClient implements HasAccessToken {
   }
 
   async authorizeResponseCode(code: string, redirect_uri: string): Promise<void> {
-    const body = new URLSearchParams({
+    const body = {
       client_id: this.client_id,
       client_secret: this.client_secret,
       redirect_uri: redirect_uri,
-      access_type: 'offline',
+      // access_type: 'offline',
       grant_type: 'authorization_code',
       code: code
-    }).toString();
+    };
 
     const response = await fetch('https://accounts.google.com/o/oauth2/token ', {
       method: 'POST',
@@ -104,7 +106,7 @@ export class UserAuthClient implements HasAccessToken {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body
+      body: new URLSearchParams(body).toString()
     });
 
     if (response.status >= 400) {
@@ -116,10 +118,14 @@ export class UserAuthClient implements HasAccessToken {
     const now = new Date().getTime();
     const expiry_date = now + Math.floor(json.expires_in * 1000);
 
+    if (!json.refresh_token) {
+      console.error('NOREF', json, body);
+    }
+
     const googleAuth: GoogleAuth = {
-      access_token: json.access_token.trim(),
-      refresh_token: json.refresh_token.trim(),
-      scopes: json.scope.split(' '),
+      access_token: json.access_token ? json.access_token.trim() : undefined,
+      refresh_token: json.refresh_token ? json.refresh_token.trim() : undefined,
+      scopes: json.scope ? json.scope.split(' ') : [],
       token_type: json.token_type,
       expiry_date,
       id_token: json.id_token
@@ -269,7 +275,7 @@ export class ServiceAuthClient implements HasAccessToken {
         }
     */
     this.expiry_date = new Date().getTime() + Math.floor(json.expires_in * 1000);
-    this.access_token = json.access_token.trim();
+    this.access_token = json.access_token ? json.access_token.trim() : undefined;
   }
 
   async getAccessToken(): Promise<string> {

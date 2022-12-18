@@ -53,7 +53,7 @@ export async function getTokenInfo(accessToken: string): Promise<TokenInfo> {
 
   return {
     expiry_date: new Date().getTime() + json.expires_in * 1000,
-    scopes: json.scope.split(' '),
+    scopes: json.scope ? json.scope.split(' ') : [],
     access_type: json.access_type,
     azp: json.azp,
     aud: json.aud,
@@ -66,7 +66,7 @@ export async function getCliCode(client_id: string): Promise<string> {
     client_id,
     // redirect_uri: ,
     // response_type: 'code',
-    access_type: 'offline',
+    // access_type: 'offline',
     include_granted_scopes: 'true',
     scope: SCOPES.join(' '),
   }).toString();

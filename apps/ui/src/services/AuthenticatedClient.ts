@@ -24,12 +24,10 @@ export class AuthenticatedClient {
   private app: any;
   private lastGetResponses: any;
   private GIT_SHA: string;
-  public isLogged: boolean;
 
   constructor(app) {
     this.app = app;
     this.lastGetResponses = {};
-    this.isLogged = false;
   }
 
   async fetchApi(url, params: any = {}) {
@@ -55,12 +53,15 @@ export class AuthenticatedClient {
 
     this.GIT_SHA = response.headers.get('GIT_SHA');
     const share_email = response.headers.get('wgd-share-email');
-    this.isLogged = !!response.headers.get('wgd-is-logged');
 
     switch (response.status) {
       case 401:
       case 403:
         {
+          if (params.return_error) {
+            return response;
+          }
+
           if (params.optional_login) {
             return {
               json: async () => ([])
@@ -79,6 +80,10 @@ export class AuthenticatedClient {
           throw new ResponseError(url + ' ' + response.statusText, response.status, json);
         }
       case 404:
+        if (params.return_error) {
+          return response;
+        }
+
         throw new NotFoundError(response.statusText, { share_email });
       case 501:
         if ((response.headers.get('Content-type') || '').startsWith('text/plain')) {
