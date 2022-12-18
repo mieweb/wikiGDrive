@@ -3,8 +3,18 @@
 import {convertResponseToError} from './driveFetch';
 import {ServiceAccountJson} from '../model/AccountJson';
 import jsonwebtoken from 'jsonwebtoken';
-import {SCOPES} from './GoogleAuthService';
 import {GoogleUser} from '../containers/server/auth';
+import open from 'open';
+import readline from 'readline';
+import {promisify} from 'util';
+
+export const SCOPES = [
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/drive.readonly',
+  // 'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.metadata.readonly'
+];
 
 export interface GoogleAuth {
   refresh_token: string | null;
@@ -45,6 +55,44 @@ async function refreshToken(client_id: string, client_secret: string, refresh_to
   };
 }
 
+export async function getCliCode(client_id: string): Promise<string> {
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id,
+    // redirect_uri: ,
+    // response_type: 'code',
+    access_type: 'offline',
+    include_granted_scopes: 'true',
+    scope: SCOPES.join(' '),
+  }).toString();
+
+  const child = await open(authUrl, { wait: true });
+  child.stdout.on('data', (data) => {
+    console.log(`Received chunk ${data}`);
+  });
+  child.stderr.on('data', (data) => {
+    console.log(`Received err ${data}`);
+  });
+  child.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+  child.on('message', (m) => {
+    console.log('PARENT got message:', m);
+  });
+
+  console.log('Authorize this app by visiting this url:', authUrl);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const question = promisify(rl.question).bind(rl);
+  const code = await question('Enter the code from that page here: ');
+  rl.close();
+
+  return code;
+}
+
 export class UserAuthClient implements HasAccessToken {
 
   private access_token: string;
@@ -60,13 +108,13 @@ export class UserAuthClient implements HasAccessToken {
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: this.client_id,
       redirect_uri,
-      access_type: 'offline',
+      // access_type: 'offline',
       prompt: 'consent select_account',
       response_type: 'code',
       include_granted_scopes: 'true',
       scope: [
-        'https://www.googleapis.com/auth/drive.readonly',
         'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/drive.readonly',
         'https://www.googleapis.com/auth/drive.install'
       ].join(' '),
       state
@@ -77,15 +125,11 @@ export class UserAuthClient implements HasAccessToken {
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: this.client_id,
       redirect_uri,
-      // access_type: 'offline', // https://developers.google.com/identity/protocols/oauth2/web-server#offline
+      access_type: 'offline', // https://developers.google.com/identity/protocols/oauth2/web-server#offline
       // prompt: 'consent',
       response_type: 'code',
       include_granted_scopes: 'true',
-      scope: [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email'
-      ].join(' '),
+      scope: SCOPES.join(' '),
       state
     }).toString();
   }
@@ -95,7 +139,7 @@ export class UserAuthClient implements HasAccessToken {
       client_id: this.client_id,
       client_secret: this.client_secret,
       redirect_uri: redirect_uri,
-      // access_type: 'offline',
+      access_type: 'offline',
       grant_type: 'authorization_code',
       code: code
     };
