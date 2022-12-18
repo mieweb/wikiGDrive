@@ -1,6 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {getCliCode} from '../../google/GoogleAuthService';
 import {QuotaLimiter} from '../../google/QuotaLimiter';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';
@@ -9,7 +8,7 @@ import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 
 import {fileURLToPath} from 'url';
-import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient} from '../../google/AuthClient';
+import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient, getCliCode} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 
