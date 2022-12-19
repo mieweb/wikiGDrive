@@ -3,6 +3,7 @@ import {EventEmitter} from 'events';
 import path from 'path';
 import {DailyRotateFile} from './DailyRotateFile';
 import {fileURLToPath} from 'url';
+import {ansi_colors} from './colors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,17 +39,20 @@ function getStackInfo(stackIndex, stackOffset = 0) {
   }
 }
 
-const myFormat = winston.format.printf((params) => {
-  const { level, message, timestamp } = params;
+
+
+const myFormat = (formatConfig = { console: false }) => winston.format.printf((params) => {
+  params.message = params.message || '';
+  const { level, timestamp } = params;
   let { filename } = params;
 
   let errorStr = '';
   if (level === 'error') {
-    if (params.stack) {
-      errorStr += ' ' + params.stack;
-    }
     if (params.message) {
       errorStr += ' ' + params.message;
+    }
+    if (params.stack && !params.message.match(/^[\s]+at /g)) {
+      errorStr += ' ' + params.stack;
     }
   }
 
@@ -60,10 +64,17 @@ const myFormat = winston.format.printf((params) => {
     filename = null;
   }
 
+  if (formatConfig.console) {
+
+    errorStr = errorStr.split('\n')
+      .map(line => line.indexOf('node_modules') === -1 ? line : ansi_colors.gray(line))
+      .join('\n');
+  }
+
   if (filename) {
-    return `${timestamp} [${level}] (${filename}): ${message}` + errorStr;
+    return `${timestamp} [${level}] (${filename}): ${errorStr}`;
   } else {
-    return `${timestamp} [${level}]: ${message}` + errorStr;
+    return `${timestamp} [${level}]: ${errorStr}`;
   }
 });
 
@@ -102,7 +113,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
     level: 'info',
     format: winston.format.combine(
       winston.format.timestamp(),
-      myFormat
+      myFormat()
     ),
     defaultMeta: {},
     transports: [
@@ -116,7 +127,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.timestamp(),
-      myFormat
+      myFormat({ console: true })
     )
   }));
 

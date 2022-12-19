@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { diffLines } from 'diff';
-import chalk from 'chalk';
+import {ansi_colors} from '../src/utils/logger/colors';
 
 export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
@@ -24,11 +24,11 @@ export function compareTexts(input, output, ignoreWhitespace = true) {
 
   for (const part of diff) {
     if (part.added) {
-      console.log(chalk.green(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
+      console.log(ansi_colors.green(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
     if (part.removed) {
-      console.log(chalk.red(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
+      console.log(ansi_colors.red(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
     console.log(part.value);
