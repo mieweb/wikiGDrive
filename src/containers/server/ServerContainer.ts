@@ -26,7 +26,7 @@ import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
 import {Logger} from 'vite';
 import * as fs from 'fs';
-import {authenticate, AuthError, GoogleUser, getAuth, setAccessCookie, signToken, authenticateOptionally} from './auth';
+import {authenticate, AuthError, GoogleUser, getAuth, authenticateOptionally} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
@@ -189,6 +189,17 @@ export class ServerContainer extends Container {
     });
 
     app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
+      if (err.showHtml) {
+        const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
+        if (indexHtml) {
+          console.error('eee', err);
+          res.status(err.status).header('Content-type', 'text/html').end(
+            indexHtml.replace('</head', `<meta name="errorMessage" content="${err.message}"></head`)
+          );
+          return;
+        }
+      }
+
       const code = err.status || 501;
       switch(code) {
         case 404:
@@ -197,7 +208,7 @@ export class ServerContainer extends Container {
             if (indexHtml) {
               res.status(404).header('Content-type', 'text/html').end(indexHtml);
             } else {
-              res.status(code).send({ code, message: err.message });
+              res.status(code).send({ code, message: err.message, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
             }
           }
           return;
@@ -205,9 +216,9 @@ export class ServerContainer extends Container {
           if (req.headers['redirect-to']) {
             err.redirectTo = req.headers['redirect-to'].toString();
           } else {
-            err.redirectTo = '/drive/' + req['driveId'];
+            err.redirectTo = '/drive/' + (req['driveId'] || '');
           }
-          console.error(err);
+          this.logger.error(err.stack ? err.stack : err.message);
           if (req['driveId']) {
             err.authPath = '/auth/' + req['driveId'] + '?redirectTo=' + err.redirectTo;
           } else {
@@ -222,7 +233,7 @@ export class ServerContainer extends Container {
             console.debug('  err.redirectTo', err.redirectTo);
             console.debug('  err.authPath', err.authPath);
           }
-          res.status(code).send({ message: err.message, authPath: err.authPath, stack: err.stack });
+          res.status(code).send({ message: err.message, authPath: err.authPath, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
           return;
         default:
           console.error(err);
@@ -254,7 +265,13 @@ export class ServerContainer extends Container {
   }
 
   async initAuth(app) {
+    app.use('/auth/logout', authenticateOptionally(this.logger));
     app.post('/auth/logout', async (req, res, next) => {
+      if (req.user?.google_access_token) {
+        const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+        await authClient.revokeToken(req.user.google_access_token);
+      }
+
       res.clearCookie('accessToken');
       res.json({ loggedOut: true });
     });

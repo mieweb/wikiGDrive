@@ -1,9 +1,9 @@
 'use strict';
 
-import {convertResponseToError} from './driveFetch';
+import {convertResponseToError, GoogleDriveServiceError} from './driveFetch';
 import {ServiceAccountJson} from '../model/AccountJson';
 import jsonwebtoken from 'jsonwebtoken';
-import {GoogleUser} from '../containers/server/auth';
+import {AuthError, GoogleUser} from '../containers/server/auth';
 import open from 'open';
 import readline from 'readline';
 import {promisify} from 'util';
@@ -104,6 +104,17 @@ export class UserAuthClient implements HasAccessToken {
     if (!client_secret) throw new Error('Unknown: client_secret');
   }
 
+  async revokeToken(access_token: string) {
+    const response = await fetch('https://oauth2.googleapis.com/revoke?token=' + access_token, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }
+    });
+
+    return await response.json();
+  }
+
   async getWebDriveInstallUrl(redirect_uri: string, state: string): Promise<string> {
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: this.client_id,
@@ -144,7 +155,7 @@ export class UserAuthClient implements HasAccessToken {
       code: code
     };
 
-    const response = await fetch('https://accounts.google.com/o/oauth2/token ', {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -164,6 +175,14 @@ export class UserAuthClient implements HasAccessToken {
 
     if (!json.refresh_token) {
       console.error('NOREF', json, body);
+    }
+
+    const scopes = (json.scope || '').split(' ');
+    if (!scopes.includes('https://www.googleapis.com/auth/drive.readonly') || !scopes.includes('https://www.googleapis.com/auth/drive.metadata.readonly')) {
+      await this.revokeToken(json.access_token);
+      const err = new AuthError('Insufficient Permission: no access to drive, check all permissions during login', 403);
+      err.showHtml = true;
+      throw err;
     }
 
     const googleAuth: GoogleAuth = {
