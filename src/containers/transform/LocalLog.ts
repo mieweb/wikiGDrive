@@ -37,6 +37,14 @@ export class LocalLog {
   }
 
   append(row: LogRow) {
+    if (row.id === 'TO_FILL') {
+      return;
+    }
+    if (row.type === 'touched') {
+      if (this.findLastFile(row.id)) {
+        return;
+      }
+    }
     row.mtime = +new Date();
     this.rows.push(row);
   }
