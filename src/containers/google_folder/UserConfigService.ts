@@ -72,14 +72,9 @@ export class UserConfigService {
 
   async getDeployPrivateKeyPath() {
     if (await this.fileService.exists('.private/id_rsa')) {
-      return path.join(this.fileService.getRealPath(), '.private', 'id_rsa');
-    }
-    return null;
-  }
-
-  async getDeployPrivateKey() {
-    if (await this.fileService.exists('.private/id_rsa')) {
-      return await this.fileService.readFile('.private/id_rsa');
+      const fullPath = path.join(this.fileService.getRealPath(), '.private', 'id_rsa');
+      fs.chmodSync(fullPath, '0600');
+      return fullPath;
     }
     return null;
   }
