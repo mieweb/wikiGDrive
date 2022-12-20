@@ -26,9 +26,10 @@ export class DriveController extends Controller {
     const drives = await googleDriveService.listDrives(user.google_access_token);
     return drives.map(drive => {
       return {
+        id: drive.id,
         folderId: drive.id,
         name: drive.name,
-        exists: folders[drive.id]
+        exists: !!folders[drive.id]
       };
     });
   }

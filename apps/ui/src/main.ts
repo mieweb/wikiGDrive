@@ -13,6 +13,8 @@ import {GitClientService} from './services/GitClientService';
 import {SearchClientService} from './services/SearchClientService';
 import {CachedFileClientService} from './services/CachedFileClientService';
 import {addTelemetry} from './telemetry';
+import {markRaw} from 'vue';
+import AuthModal from './components/AuthModal.vue';
 
 function completedJob(job) {
   return !['waiting', 'running'].includes(job.state);
@@ -123,6 +125,18 @@ const app: Vue.App = Vue.createApp({
     }
   },
   errorCaptured(err) {
+    if (err['status'] === 401 || err['status'] === 403) {
+      const json = err['json'] || {};
+      if (json.authPath) {
+        this.$addModal({
+          component: markRaw(AuthModal),
+          props: {
+            authPath: json.authPath
+          },
+        });
+        return;
+      }
+    }
     console.error('errorCaptured', err);
   }
 });

@@ -10,13 +10,14 @@ export class AuthError extends Error {
   public status: number;
   public authPath: string;
   public redirectTo: string;
+  public showHtml = false;
   constructor(msg, status) {
     super(msg);
     this.status = status;
   }
 }
 
-function redirError(req: Request, msg: string) {
+export function redirError(req: Request, msg: string) {
   const err = new AuthError(msg + ' for: ' + req.originalUrl, 401);
   const [empty, driveId] = req.path.split('/');
 
@@ -107,7 +108,12 @@ export async function getAuth(req, res, next){
     const serverUrl = protocol + hostname;
 
     if (!req.query.state) {
-      return next(redirError(req, 'No state query parameter'));
+      const wantsHTML = req.accepts('html', 'json') === 'html';
+      if (wantsHTML) {
+        return res.redirect('/');
+      } else {
+        return next(redirError(req, 'No state query parameter'));
+      }
     }
     const state = new URLSearchParams(req.query.state);
     const driveui = state.get('driveui');
@@ -133,7 +139,9 @@ export async function getAuth(req, res, next){
     const driveId = state.get('driveId');
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     if (driveId && !folderRegistryContainer.hasFolder(driveId)) {
-      throw new Error('Folder not registered');
+      const err = new AuthError('Folder not registered', 404);
+      err.showHtml = true;
+      throw err;
     }
     const redirectTo = state.get('redirectTo');
 
