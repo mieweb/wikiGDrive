@@ -38,7 +38,12 @@ export default {
   },
   methods: {
     async login() {
-      const response = await this.authenticatedClient.fetchApi('/auth', { return_error: true });
+      const response = await this.authenticatedClient.fetchApi('/auth', {
+        headers: {
+          'Accept': 'application/json'
+        },
+        return_error: true
+      });
       const json = await response.json();
       if (json.authPath) {
         let authPopup;
