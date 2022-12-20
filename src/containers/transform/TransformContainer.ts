@@ -107,42 +107,44 @@ export function solveConflicts(filesToGenerate: LocalFile[], destinationFiles: {
   return realFileNameToGenerated;
 }
 
-function processLog(realFileNameToGenerated: { [realFileName: string]: LocalFile }, destinationFiles: { [realFileName: string]: LocalFile }, localLog: LocalLog, prefix: string) {
-  for (const realFileName in realFileNameToGenerated) {
-    const fileToGenerate = realFileNameToGenerated[realFileName];
-    const destinationEntry = Object.entries(destinationFiles).find(item => item[1].id === fileToGenerate.id);
-    if (destinationEntry) {
-      if (destinationEntry[0] !== realFileName) {
-        localLog.append({
-          filePath: prefix + realFileName,
-          id: fileToGenerate.id,
-          type: fileToGenerate.type,
-          event: 'renamed',
-        });
-      }
-    } else {
-      if (fileToGenerate.id !== 'TO_FILL') {
-        localLog.append({
-          filePath: prefix + realFileName,
-          id: fileToGenerate.id,
-          type: fileToGenerate.type,
-          event: 'created',
-        });
-      }
-    }
-  }
-
-  for (const realFileName in destinationFiles) {
-    const destinationFile = destinationFiles[realFileName];
-    const entryToGenerate = Object.entries(destinationFiles).find(item => item[1].id === destinationFile.id);
-    if (!entryToGenerate) {
+function processLogExisting(realFileName: string, fileToGenerate: LocalFile, destinationFiles: { [realFileName: string]: LocalFile }, localLog: LocalLog, prefix: string) {
+  const destinationEntry = Object.entries(destinationFiles).find(item => item[1].id === fileToGenerate.id);
+  if (destinationEntry) {
+    if (destinationEntry[0] !== realFileName) {
       localLog.append({
         filePath: prefix + realFileName,
-        id: destinationFile.id,
-        type: destinationFile.type,
-        event: 'removed',
+        id: fileToGenerate.id,
+        type: fileToGenerate.type,
+        event: 'renamed',
+      });
+    } else {
+      localLog.append({
+        filePath: prefix + realFileName,
+        id: fileToGenerate.id,
+        type: fileToGenerate.type,
+        event: 'touched',
       });
     }
+  } else {
+    localLog.append({
+      filePath: prefix + realFileName,
+      id: fileToGenerate.id,
+      type: fileToGenerate.type,
+      event: 'created',
+    });
+  }
+}
+
+function processLogRemoved(realFileName: string, destinationFiles: { [realFileName: string]: LocalFile }, localLog: LocalLog, prefix: string) {
+  const destinationFile = destinationFiles[realFileName];
+  const entryToGenerate = Object.entries(destinationFiles).find(item => item[1].id === destinationFile.id);
+  if (!entryToGenerate) {
+    localLog.append({
+      filePath: prefix + realFileName,
+      id: destinationFile.id,
+      type: destinationFile.type,
+      event: 'removed',
+    });
   }
 }
 
@@ -215,12 +217,11 @@ export class TransformContainer extends Container {
 
     const realFileNameToGenerated = solveConflicts(filesToGenerate, destinationFiles);
 
-    processLog(realFileNameToGenerated, destinationFiles, this.localLog, destinationDirectory.getVirtualPath());
-
     for (const realFileName in destinationFiles) {
       if (realFileName.startsWith('.')) {
         continue;
       }
+      processLogRemoved(realFileName, destinationFiles, this.localLog, destinationDirectory.getVirtualPath());
 
       const fileInDirectory = destinationFiles[realFileName];
 
@@ -237,6 +238,7 @@ export class TransformContainer extends Container {
 
     for (const realFileName in realFileNameToGenerated) {
       const localFile: LocalFile = realFileNameToGenerated[realFileName];
+      processLogExisting(realFileName, localFile, destinationFiles, this.localLog, destinationDirectory.getVirtualPath());
 
       if (localFile.type === 'directory') {
         await destinationDirectory.mkdir(realFileName);
