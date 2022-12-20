@@ -8,8 +8,16 @@
           <p>
             Lorem ipsum
           </p>
+          <p>
+            Some screen shots
+          </p>
+          <ImageSlider />
 
-          <button v-if="!isLogged" class="btn btn-secondary" @click="login">Login</button>
+          <p>
+            Todo text
+          </p>
+
+          <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
         </div>
         <div v-else>
 
@@ -65,10 +73,11 @@
 import BaseLayout from '../layout/BaseLayout.vue';
 import {markRaw} from 'vue';
 import ShareModal from '../components/ShareModal.vue';
+import ImageSlider from '../components/ImageSlider.vue';
 
 export default {
   components: {
-    BaseLayout
+    BaseLayout, ImageSlider
   },
   data() {
     return {
@@ -132,7 +141,12 @@ export default {
       }
     },
     async login() {
-      const response = await this.authenticatedClient.fetchApi('/auth', { return_error: true });
+      const response = await this.authenticatedClient.fetchApi('/auth', {
+        headers: {
+          'Accept': 'application/json'
+        },
+        return_error: true
+      });
       const json = await response.json();
       if (json.authPath) {
         let authPopup;
