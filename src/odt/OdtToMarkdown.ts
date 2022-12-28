@@ -304,7 +304,7 @@ export class OdtToMarkdown {
 
     this.stateMachine.pushTag('BR/');
     this.stateMachine.pushTag('B');
-    this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION.');
+    this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
     this.stateMachine.pushTag('/B');
     this.stateMachine.pushTag('BR/');
   }
