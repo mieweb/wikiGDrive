@@ -117,7 +117,10 @@ export class ServerContainer extends Container {
     if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive')) {
       const distPath = path.resolve(HTML_DIR, 'dist');
       if (fs.existsSync(distPath)) {
-        const template = fs.readFileSync(path.join(distPath, 'index.html'));
+        const template = fs.readFileSync(path.join(distPath, 'index.html'))
+          .toString()
+          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
+          .replace(/GIT_SHA/g, process.env.GIT_SHA);
         return template;
       } else {
         const template = fs.readFileSync(HTML_DIR + '/index.html')
