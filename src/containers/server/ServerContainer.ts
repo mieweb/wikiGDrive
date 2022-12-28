@@ -26,7 +26,15 @@ import {SocketManager} from './SocketManager';
 import * as vite from 'vite';
 import {Logger} from 'vite';
 import * as fs from 'fs';
-import {authenticate, AuthError, GoogleUser, getAuth, authenticateOptionally} from './auth';
+import {
+  authenticate,
+  AuthError,
+  GoogleUser,
+  getAuth,
+  authenticateOptionally,
+  validateGetAuthState,
+  handleDriveUiInstall, handleShare, handlePopupClose
+} from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
@@ -205,6 +213,9 @@ export class ServerContainer extends Container {
 
       const code = err.status || 501;
       switch(code) {
+        case 302:
+          res.redirect('/');
+          return;
         case 404:
           {
             const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
@@ -216,27 +227,24 @@ export class ServerContainer extends Container {
           }
           return;
         case 401:
-          if (req.headers['redirect-to']) {
-            err.redirectTo = req.headers['redirect-to'].toString();
-          } else {
-            err.redirectTo = '/drive/' + (req['driveId'] || '');
+          {
+            const redirectTo: string = req.headers['redirect-to'] ? req.headers['redirect-to'].toString() : '';
+
+            const urlSearchParams = new URLSearchParams();
+            if (redirectTo && redirectTo.startsWith('/') && redirectTo.indexOf('//') === -1) {
+              urlSearchParams.set('redirectTo', redirectTo);
+            } else {
+              urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
+            }
+            this.logger.error(err.stack ? err.stack : err.message);
+
+            if (req['driveId']) {
+              err.authPath = '/auth/' + req['driveId'] + '?' + urlSearchParams.toString();
+            } else {
+              err.authPath = '/auth/none?' + urlSearchParams.toString();
+            }
+            res.status(code).send({ message: err.message, authPath: err.authPath, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
           }
-          this.logger.error(err.stack ? err.stack : err.message);
-          if (req['driveId']) {
-            err.authPath = '/auth/' + req['driveId'] + '?redirectTo=' + err.redirectTo;
-          } else {
-            err.authPath = '/auth/none?redirectTo=' + err.redirectTo;
-          }
-          if (process.env.VERSION === 'dev') {
-            console.error(err);
-            console.trace();
-            console.debug('app.use 401');
-            console.debug('  req[\'driveId\']', req['driveId']);
-            console.debug('  req.headers[\'redirect-to\']', req.headers['redirect-to']);
-            console.debug('  err.redirectTo', err.redirectTo);
-            console.debug('  err.authPath', err.authPath);
-          }
-          res.status(code).send({ message: err.message, authPath: err.authPath, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
           return;
         default:
           console.error(err);
@@ -286,10 +294,12 @@ export class ServerContainer extends Container {
         const serverUrl = protocol + hostname;
         const driveId = req.params.driveId;
         const redirectTo = req.query.redirectTo;
+        const popupWindow = req.query.popupWindow;
 
         const state = new URLSearchParams(filterParams({
           driveId: driveId !== 'none' ? (driveId || '') : '',
-          redirectTo
+          redirectTo,
+          popupWindow: popupWindow === 'true' ? 'true' : ''
         })).toString();
 
         const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
@@ -304,7 +314,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.get('/auth', (...args) => {
+    app.get('/auth', validateGetAuthState, handleDriveUiInstall, handleShare, handlePopupClose, (...args) => {
       getAuth.call(this, ...args);
     });
 

@@ -74,8 +74,10 @@ import BaseLayout from '../layout/BaseLayout.vue';
 import {markRaw} from 'vue';
 import ShareModal from '../components/ShareModal.vue';
 import ImageSlider from '../components/ImageSlider.vue';
+import {UtilsMixin} from '../components/UtilsMixin';
 
 export default {
+  mixins: [ UtilsMixin ],
   components: {
     BaseLayout, ImageSlider
   },
@@ -148,17 +150,7 @@ export default {
         return_error: true
       });
       const json = await response.json();
-      if (json.authPath) {
-        let authPopup;
-        window['authenticated'] = (url) => {
-          if (authPopup) {
-            authPopup.close();
-            authPopup = null;
-          }
-          window.location = url;
-        };
-        authPopup = window.open(json.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
-      }
+      this.openAuthRedirWindow(json.authPath);
     },
     async logout() {
       await this.authenticatedClient.fetchApi('/auth/logout', {

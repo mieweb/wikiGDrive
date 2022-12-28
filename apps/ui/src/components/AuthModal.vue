@@ -16,27 +16,17 @@
   </div>
 </template>
 <script>
+import {UtilsMixin} from './UtilsMixin';
+
 export default {
   name: 'AuthModal',
   props: ['authPath'],
-  data() {
-    return {
-      authPopup: null
-    };
-  },
-  mounted() {
-    window['authenticated'] = (url) => {
-      this.$root.$removeModal();
-      if (this.authPopup) {
-        this.authPopup.close();
-        this.authPopup = null;
-      }
-      window.location = url;
-    };
-  },
+  mixins: [ UtilsMixin ],
   methods: {
     open() {
-      this.authPopup = window.open(this.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
+      this.openAuthRedirWindow(this.authPath, () => {
+        this.$root.$removeModal();
+      });
     }
   }
 };

@@ -8,10 +8,19 @@ function stripUrlSuffix(id) {
   if (id.indexOf('&') > 0) {
     id = id.substring(0, id.indexOf('&'));
   }
-  return id;
+
+  if (id.match(/^[A-Z0-9_-]+$/ig)) {
+    return id;
+  }
+  return null;
 }
 
-export function urlToFolderId(url: string): string {
+export function urlToFolderId(url: string): string | null {
+  if (!url) {
+    return null;
+  }
+  url = url.replaceAll('../', '');
+
   if (url.match(/drive\.google\.com\/drive.*folders\//)) {
     const id = url.substring(url.indexOf('/folders/') + '/folders/'.length);
     return stripUrlSuffix(id);
@@ -30,7 +39,10 @@ export function urlToFolderId(url: string): string {
     if (id.indexOf('&') > 0) {
       id = id.substring(0, id.indexOf('&'));
     }
-    return id;
+    if (id.match(/^[A-Z0-9_-]+$/ig)) {
+      return id;
+    }
+    return null;
   }
 
   if (url.startsWith('https://docs.google.com/drawings/d/')) {

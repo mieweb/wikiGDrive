@@ -5,6 +5,7 @@ import {Logger} from 'winston';
 import {Request, Response} from 'express';
 import {UserAuthClient} from '../../google/AuthClient';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
+import {urlToFolderId} from '../../utils/idParsers';
 
 export class AuthError extends Error {
   public status: number;
@@ -21,8 +22,9 @@ export function redirError(req: Request, msg: string) {
   const err = new AuthError(msg + ' for: ' + req.originalUrl, 401);
   const [empty, driveId] = req.path.split('/');
 
-  if (req.headers['redirect-to']) {
-    err.redirectTo = req.headers['redirect-to'].toString();
+  const redirectTo: string = req.headers['redirect-to'] ? req.headers['redirect-to'].toString() : '';
+  if (redirectTo && redirectTo.startsWith('/') && redirectTo.indexOf('//') === -1) {
+    err.redirectTo = redirectTo;
   } else {
     err.redirectTo = '/drive/' + (driveId || '');
   }
@@ -30,15 +32,6 @@ export function redirError(req: Request, msg: string) {
     err.authPath = '/auth/' + driveId + '?redirectTo=' + err.redirectTo;
   } else {
     err.authPath = '/auth/none?redirectTo=' + err.redirectTo;
-  }
-
-  if (process.env.VERSION === 'dev') {
-    console.trace();
-    console.debug('redirError');
-    console.debug('  driveId', driveId);
-    console.debug('  req.headers[\'redirect-to\']', req.headers['redirect-to']);
-    console.debug('  err.redirectTo', err.redirectTo);
-    console.debug('  err.authPath', err.authPath);
   }
 
   return err;
@@ -101,49 +94,87 @@ function openerRedirect(res: Response, redirectTo: string) {
   res.send(`<script>window.opener.authenticated('${redirectTo}');window.close();</script>`);
 }
 
-export async function getAuth(req, res, next){
+export function validateGetAuthState(req: Request, res: Response, next) {
+  if (!req.query.state) {
+    const wantsHTML = req.accepts('html', 'json') === 'html';
+    if (wantsHTML) {
+      throw new AuthError('Redirect to homepage', 302);
+    } else {
+      throw redirError(req, 'No state query parameter');
+    }
+  }
+  next();
+}
+
+export async function handleDriveUiInstall(req: Request, res: Response, next) {
   try {
     const hostname = req.header('host');
     const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
     const serverUrl = protocol + hostname;
 
-    if (!req.query.state) {
-      const wantsHTML = req.accepts('html', 'json') === 'html';
-      if (wantsHTML) {
-        return res.redirect('/');
-      } else {
-        return next(redirError(req, 'No state query parameter'));
-      }
-    }
-    const state = new URLSearchParams(req.query.state);
-    const driveui = state.get('driveui');
+    const state = new URLSearchParams(req.query.state.toString());
+    const driveui = urlToFolderId(state.get('driveui'));
     if (driveui) {
       const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+      await authClient.authorizeResponseCode(req.query.code.toString(), `${serverUrl}/auth`);
       res.redirect('/driveui/installed');
       return;
     }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
 
-    const shareId = state.get('shareId');
+export async function handleShare(req: Request, res: Response, next) {
+  try {
+    const hostname = req.header('host');
+    const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
+    const serverUrl = protocol + hostname;
+
+    const state = new URLSearchParams(req.query.state.toString());
+    const shareId = urlToFolderId(state.get('shareId'));
     if (shareId) {
       const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      await authClient.authorizeResponseCode( req.query.code, `${serverUrl}/auth`);
+      await authClient.authorizeResponseCode(req.query.code.toString(), `${serverUrl}/auth`);
       return;
     }
 
-    if (!req.query.not_popup) {
-      openerRedirect(res, req.url + '&not_popup=1');
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handlePopupClose(req: Request, res: Response, next) {
+  try {
+    const state = new URLSearchParams(req.query.state.toString());
+    if (state.get('popupWindow') === 'true') {
+      openerRedirect(res, req.url.replace('popupWindow', ''));
       return;
     }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
 
-    const driveId = state.get('driveId');
+export async function getAuth(req, res: Response, next) {
+  try {
+    const hostname = req.header('host');
+    const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
+    const serverUrl = protocol + hostname;
+
+    const state = new URLSearchParams(req.query.state.toString());
+
+    const driveId = urlToFolderId(state.get('driveId'));
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     if (driveId && !folderRegistryContainer.hasFolder(driveId)) {
       const err = new AuthError('Folder not registered', 404);
       err.showHtml = true;
       throw err;
     }
-    const redirectTo = state.get('redirectTo');
+    const redirectTo = urlToFolderId(state.get('redirectTo'));
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
     await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);

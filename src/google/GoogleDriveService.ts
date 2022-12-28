@@ -269,7 +269,9 @@ export class GoogleDriveService {
     const params = {
       driveId
     };
-    const res = await driveFetch(this.quotaLimiter, accessToken, 'GET', `https://www.googleapis.com/drive/v3/drives/${driveId}`, params);
+
+    const url = `https://www.googleapis.com/drive/v3/drives/${driveId.replaceAll('../', '')}`;
+    const res = await driveFetch(this.quotaLimiter, accessToken, 'GET', url, params);
     return {
       id: driveId,
       name: res.name,

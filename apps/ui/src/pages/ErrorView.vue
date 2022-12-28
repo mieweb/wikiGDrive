@@ -45,17 +45,7 @@ export default {
         return_error: true
       });
       const json = await response.json();
-      if (json.authPath) {
-        let authPopup;
-        window['authenticated'] = (url) => {
-          if (authPopup) {
-            authPopup.close();
-            authPopup = null;
-          }
-          window.location = url;
-        };
-        authPopup = window.open(json.authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
-      }
+      this.openAuthRedirWindow(json.authPath);
     },
   }
 };
