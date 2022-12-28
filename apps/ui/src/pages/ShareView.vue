@@ -29,7 +29,8 @@ export default {
       if (!this.google_access_token) {
         return;
       }
-      const driveId = this.$route.params.driveId;
+      const driveId = this.$route.params.driveId
+          .replace(/[./?]*/g, ''); // CodeQL warning
       window.gapi.load('drive-share', () => {
         const shareClient = new window.gapi.drive.share.ShareClient();
         shareClient.setOAuthToken(this.google_access_token);

@@ -200,6 +200,31 @@ export const UtilsMixin = {
     downloadImage(fileId) {
       const odtPath = `/api/drive/${this.driveId}/transformed/${fileId}`;
       window.open(odtPath, '_blank');
+    },
+    openAuthRedirWindow(authPath: string, callback?) {
+      if (!authPath) {
+        return;
+      }
+
+      const url = new URL(authPath, 'http://example.com');
+      url.searchParams.set('popupWindow', 'true');
+      authPath = url.pathname + '?' + url.search;
+
+      let authPopup;
+      window['authenticated'] = (url) => {
+        if (callback) {
+          callback();
+        }
+        if (authPopup) {
+          authPopup.close();
+          authPopup = null;
+        }
+        window.location = url;
+      };
+
+
+      authPopup = window.open(authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
+
     }
   }
 };

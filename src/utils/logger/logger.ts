@@ -82,7 +82,7 @@ export function instrumentLogger(logger, childOpts = {}) {
   for (const funcName of ['info', 'error', 'warn']) {
     const originMethod = logger[funcName];
     logger[funcName] = (msg, payload) => {
-      const stackInfo = getStackInfo(0, payload ? payload.stackOffset : 0 || 0);
+      const stackInfo = getStackInfo(0, +(payload?.stackOffset));
       if (!payload?.filename && stackInfo) {
         let filename = path.relative(PROJECT_ROOT, stackInfo.path);
         if (stackInfo.line) {
