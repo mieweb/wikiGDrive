@@ -88,7 +88,7 @@
     "enquirer": "^2.3.6",
     "env-paths": "2.2.1",
     "express": "4.17.3",
-    "express-jwt": "7.7.5",
+    "express-jwt": "8.2.1",
     "express-rate-limit": "^6.6.0",
     "htmlparser2": "7.2.0",
     "identify-filetype": "^1.0.0",
