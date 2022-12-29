@@ -14,6 +14,32 @@ npm install
 wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json server 3000
 ```
 
+## Running locally with docker
+
+```
+docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
+
+docker build -t wgd-action-runner apps/wgd-action-runner
+
+docker build -t wikigdrive .
+
+docker run --user=$(id -u) -it --name wikigdrive \
+          -v /data/wikigdrive:/data \
+          -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
+          -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          --link zipkin:zipkin \
+          --publish 127.0.0.1:3000:3000 \
+          --publish 127.0.0.1:24678:24678 \
+          wikigdrive \
+          ./src/cli.sh --service_account /service_account.json --workdir /data server 3000
+
+docker rm -f wikigdrive
+
+# 24678 - vite hot reload port
+```
+
+
 ## Domain
 
 * wikigdrive.com (hosted by??)
@@ -145,7 +171,7 @@ Another cool trick to see diffs in images:
 Start zipkin with:
 
 ```
-ocker run -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
+docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
 ```
 
 Set app env var to:
