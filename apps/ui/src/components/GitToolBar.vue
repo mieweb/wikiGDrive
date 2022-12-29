@@ -29,8 +29,15 @@
     <div class="flex-grow-1"></div>
 
     <ToolButton
+        v-if="drive_url"
+        :href="drive_url"
+        target="_blank"
+        title="GoogleDrive"
+        icon="fa-brands fa-google-drive"
+    />
+
+    <ToolButton
         v-if="github_url"
-        :active="activeTab === 'git_hub'"
         :href="github_url"
         target="github"
         title="GitHub"
@@ -57,6 +64,19 @@ export default {
   props: {
     activeTab: {
       type: String
+    },
+    selectedFile: {
+      type: Object
+    }
+  },
+  computed: {
+    drive_url() {
+      if (!this.selectedFile) {
+        return null;
+      }
+      if (this.selectedFile.id) {
+        return 'https://drive.google.com/open?id=' + this.selectedFile.id;
+      }
     }
   }
 };

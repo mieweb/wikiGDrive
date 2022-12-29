@@ -125,10 +125,10 @@ export default {
         return;
       }
       if (this.isFolder(file)) {
-        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_blank');
       } else
       if (file.id) {
-        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_black');
+        this.openWindow(`https://drive.google.com/open?id=${file.id}`, '_blank');
       }
     },
     showContextMenu(event, ctx) {

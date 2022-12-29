@@ -1,6 +1,6 @@
 <template>
   <div class="container d-flex flex-column w-vh-toolbar">
-    <GitToolBar :active-tab="activeTab" />
+    <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
     <div class="flex-grow-1 overflow-scroll">
       <h5>Git log: {{ historyPath }}</h5>

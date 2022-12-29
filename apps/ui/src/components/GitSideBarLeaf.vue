@@ -5,8 +5,8 @@
            :class="{'active': file.path === selectedPath, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
            >
-        <i class="fa-solid fa-folder" v-if="file.children.length > 0"></i>
-        <i v-else class="fa-solid fa-file"></i>
+        <i @click.prevent="openExternal(file)" class="fa-solid fa-folder" v-if="file.children.length > 0"></i>
+        <i @click.prevent="openExternal(file)" v-else class="fa-solid fa-file"></i>
         <span v-if="!file.children.length">
           <input name="filePath" type="checkbox" :value="file.path" @click="$emit('toggle', file.path)" :checked="checked[file.path]" />
         </span>
@@ -52,6 +52,20 @@ export default {
     };
   },
   computed: {},
-  methods: {}
+  methods: {
+    async openExternal(file) {
+      if (!file) {
+        return;
+      }
+      if (!file.path) {
+        return;
+      }
+
+      const response = await this.FileClientService.getFile(`/${this.driveId}/${file.path}`);
+      if (response.googleId) {
+        this.openWindow(`https://drive.google.com/open?id=${response.googleId}`, '_blank');
+      }
+    },
+  }
 };
 </script>

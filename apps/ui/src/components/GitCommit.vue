@@ -20,7 +20,7 @@
 
     <form>
       <div class="container d-flex flex-column w-vh-toolbar">
-        <GitToolBar :active-tab="activeTab" />
+        <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
         <div v-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
           <h5>Git Diff</h5>
