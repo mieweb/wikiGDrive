@@ -120,3 +120,7 @@ a {
 .changes-badge {
   right: -20px;
 }
+
+.vr {
+  border-left: 1px solid #dee2e6;
+}

@@ -9,18 +9,31 @@
         <div class="modal-body">
           <div class="d-flex h-100">
             <div class="flex-column w-50">
-              <div class="m-3">
-                <h4>Example:</h4>
-                <img src="/assets/share-example.png" class="w-100" />
-              </div>
-            </div>
-            <div class="flex-column w-50">
-              <div class="d-flex align-items-center">
-                <label class="form-label flex-grow text-nowrap">Share your drive with:</label>
-                <input @click="copy" class="form-control flex-grow-1" readonly :value="share_email" />
-                <button class="btn" @click="copy"><i class="fa fa-copy"></i></button>
-              </div>
               <iframe :src="'/share-drive/' + driveId" class="w-100 h-100"></iframe>
+            </div>
+            <div class="vr m-2"></div>
+            <div class="flex-column w-50 d-flex justify-content-center">
+              <div class="m-3">
+                <h4><i class="fa fa-arrow-left"></i> Follow this steps on the left side:</h4>
+
+                <ol class="mt-5 mb-5">
+                  <li>
+                      <label class="form-label flex-grow text-nowrap">Copy our email address:</label>
+                      <div class="d-flex align-items-center">
+                        <input @click="copy" class="form-control flex-grow-1" readonly :value="share_email" />
+                        <button class="btn" @click="copy"><i class="fa fa-copy"></i></button>
+                      </div>
+                  </li>
+                  <li>Click <em>Add people and groups</em>, paste email address</li>
+                  <li>Note: WikiGDrive doesn't need Content manager rights.<br/>Change access level to Viewer</li>
+                  <li>Click Done</li>
+                </ol>
+
+                <h4 class="mt-5">Example:</h4>
+                <div class="text-center">
+                  <img src="/assets/share-example.png" class="" width="381" />
+                </div>
+              </div>
             </div>
           </div>
         </div>

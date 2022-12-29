@@ -1,6 +1,6 @@
 <template>
-  <div>
-    Loading...
+  <div class="d-flex h-100 align-items-center justify-content-center">
+    <button @click="share" class="btn btn-secondary">Opening share dialog...</button>
   </div>
 </template>
 <script>
