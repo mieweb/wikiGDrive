@@ -1,0 +1,22 @@
+{{- $baseurl := urls.Parse site.BaseURL -}}
+{{- $url := urls.Parse .Destination -}}
+{{- $getpage := .Page.GetPage .Destination -}}
+{{- $internal := lt (len $url.Host) 1 -}} {{/* NOTE: internal links will always have an empty $url.Host */}}
+{{- $fragment := $url.Fragment | lower -}}
+{{- with $fragment -}}{{ $fragment = printf "#%s" $fragment }}{{- end -}}
+{{- $destination := "" -}}
+{{- if $internal -}}
+{{- if (strings.HasPrefix $url.Path "./") -}}
+{{/* NOTE: for links starting with ./ */}}
+{{- $urltrimmed := strings.TrimPrefix "./" $url -}}
+{{- $destination = printf "%s%s" $getpage.RelPermalink $fragment -}}
+{{- else -}}
+{{/* NOTE: for internal links */}}
+{{- $destination = printf "%s%s" $getpage.RelPermalink $fragment -}}
+{{- end -}}
+{{- else -}}
+{{- $destination = .Destination -}}
+{{- end -}}
+<a href="{{ $destination | safeURL }}" {{ with or .Title $getpage.LinkTitle .Text }} title="{{ . }}"
+   {{ end }}{{ if not $internal }} rel="noopener external"
+   {{ end }}>{{ or .Text .Title $getpage.LinkTitle | safeHTML }}</a>

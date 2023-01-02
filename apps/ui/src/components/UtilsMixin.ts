@@ -18,6 +18,9 @@ export async function disableElement(event, handler) {
 
 export const UtilsMixin = {
   computed: {
+    isLogged() {
+      return !!this.$root.user;
+    },
     isGDocsPreview() {
       return this.$route.name === 'gdocs';
     },
@@ -212,19 +215,38 @@ export const UtilsMixin = {
 
       let authPopup;
       window['authenticated'] = (url) => {
-        if (callback) {
-          callback();
-        }
         if (authPopup) {
           authPopup.close();
           authPopup = null;
         }
         window.location = url;
+        if (callback) {
+          callback();
+        }
       };
 
-
       authPopup = window.open(authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
-
+    },
+    async login(callback?) {
+      const response = await this.authenticatedClient.fetchApi('/auth', {
+        headers: {
+          'Accept': 'application/json'
+        },
+        return_error: true
+      });
+      const json = await response.json();
+      this.openAuthRedirWindow(json.authPath, callback);
+    },
+    async logout() {
+      await this.authenticatedClient.fetchApi('/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        return_error: true
+      });
+      await this.fetch();
     }
   }
 };

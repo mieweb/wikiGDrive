@@ -23,7 +23,7 @@ docker build -t wgd-action-runner apps/wgd-action-runner
 
 docker build -t wikigdrive .
 
-docker run --user=$(id -u) -it --name wikigdrive \
+docker run --rm --user=$(id -u) -it \
           -v /data/wikigdrive:/data \
           -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
           -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \

@@ -47,6 +47,7 @@ import {getTokenInfo} from '../../google/GoogleAuthService';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const HTML_DIR = __dirname + '/../../../apps/ui';
+const MAIN_DIR = __dirname + '/../../..';
 
 interface TreeItem {
   id: FileId;
@@ -122,8 +123,17 @@ export class ServerContainer extends Container {
   }
 
   private async handleStaticHtml(reqPath: string, url: string) {
-    if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive')) {
+    if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive') || reqPath.endsWith('.html')) {
+      const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
       const distPath = path.resolve(HTML_DIR, 'dist');
+
+      if (fs.existsSync(hugoPath)) {
+        const template = fs.readFileSync(hugoPath)
+          .toString()
+          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
+          .replace(/GIT_SHA/g, process.env.GIT_SHA);
+        return template;
+      } else
       if (fs.existsSync(distPath)) {
         const template = fs.readFileSync(path.join(distPath, 'index.html'))
           .toString()
@@ -188,6 +198,7 @@ export class ServerContainer extends Container {
 
     const distPath = path.resolve(HTML_DIR, 'dist');
     app.use(express.static(distPath));
+    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
     await this.initUiServer(app);
 
     app.use(async (req: express.Request, res: express.Response) => {

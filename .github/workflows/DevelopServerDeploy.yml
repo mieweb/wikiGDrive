@@ -31,6 +31,16 @@ jobs:
       run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
       continue-on-error: true
 
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/doc:/site/doc" \
+        -v "${GITHUB_WORKSPACE}/themes:/site/themes" \
+        -v "${GITHUB_WORKSPACE}/config.toml:/site/config.toml" \
+        -v "/var/www/dev.wikigdrive.com:/site/dist/hugo" \
+        --env CONFIG_TOML="/site/config.toml" --env BASE_URL="https://dev.wikigdrive.com" \
+        wgd-action-runner:develop /steps/step_render_hugo
+
     - name: Start
       run: |
         docker run -d --name wikigdrive-develop \
