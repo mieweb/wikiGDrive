@@ -1,26 +1,22 @@
 <template>
   <BaseLayout>
+    <template v-slot:navbar="{ sidebar, collapsed, collapse }">
+      <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
+        <ul class="navbar-nav mr-auto align-items-center">
+          <li>
+            <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
+            <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
+          </li>
+        </ul>
+      </NavBar>
+    </template>
+
     <template v-slot:default>
       <div class="container">
         <div v-if="!isLogged">
-          <h1>Welcome to WikiGDrive</h1>
-
-          <p>
-            Lorem ipsum
-          </p>
-          <p>
-            Some screen shots
-          </p>
-          <ImageSlider />
-
-          <p>
-            Todo text
-          </p>
-
-          <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
+          <StaticContent />
         </div>
         <div v-else>
-
           <div v-if="loading" class="mt-3">
             <i class="fa-solid fa-rotate fa-spin"></i>
           </div>
@@ -63,23 +59,24 @@
               </table>
             </div>
           </div>
-          <button class="btn btn-secondary" @click="logout">Logout User</button>
         </div>
       </div>
     </template>
   </BaseLayout>
 </template>
 <script>
-import BaseLayout from '../layout/BaseLayout.vue';
 import {markRaw} from 'vue';
-import ShareModal from '../components/ShareModal.vue';
-import ImageSlider from '../components/ImageSlider.vue';
 import {UtilsMixin} from '../components/UtilsMixin';
+import BaseLayout from '../layout/BaseLayout.vue';
+import ShareModal from '../components/ShareModal.vue';
+import StaticContent from '../components/StaticContent.vue';
+import NavBar from '../components/NavBar.vue';
+import {awaitValue} from '@swc/helpers';
 
 export default {
   mixins: [ UtilsMixin ],
   components: {
-    BaseLayout, ImageSlider
+    BaseLayout, StaticContent, NavBar
   },
   data() {
     return {
@@ -88,11 +85,6 @@ export default {
       drivesNotShared: [],
       loading: false
     };
-  },
-  computed: {
-    isLogged() {
-      return !!this.$root.user;
-    }
   },
   async created() {
     await this.fetch();
@@ -141,27 +133,6 @@ export default {
       } catch (err) {
         console.error(err);
       }
-    },
-    async login() {
-      const response = await this.authenticatedClient.fetchApi('/auth', {
-        headers: {
-          'Accept': 'application/json'
-        },
-        return_error: true
-      });
-      const json = await response.json();
-      this.openAuthRedirWindow(json.authPath);
-    },
-    async logout() {
-      await this.authenticatedClient.fetchApi('/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        return_error: true
-      });
-      await this.fetch();
     },
     share(driveId) {
       this.$root.$addModal({

@@ -1,0 +1,4 @@
+theme="wgd-bootstrap"
+contentDir="doc"
+publishDir="dist/hugo"
+uglyURLs="true"

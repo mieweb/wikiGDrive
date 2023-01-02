@@ -1,21 +1,15 @@
 <template>
   <BaseLayout>
     <template v-slot:default>
-      <div>
-        <div class="container">
-          404 NOT FOUND
-        </div>
-      </div>
+      <StaticContent class="container" />
     </template>
   </BaseLayout>
 </template>
 <script>
 import BaseLayout from '../layout/BaseLayout.vue';
+import StaticContent from '../components/StaticContent.vue';
 
 export default {
-  components: {BaseLayout},
-  created() {
-    console.log(this.$route);
-  }
+  components: {BaseLayout, StaticContent},
 };
 </script>
