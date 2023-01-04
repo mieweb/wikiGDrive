@@ -11,7 +11,7 @@
     </div>
 
     <pre class="bg-dark text-white log-viewer overflow-auto"
-    ><div v-for="(item, idx) of logsFiltered" :key="idx" :class="{'text-danger': 'error' === item.level}"
+    ><div v-for="(item, idx) of logsFiltered" :key="idx" :class="{'text-danger': 'error' === item.level, 'text-warning': 'warn' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
     > <span>{{item.message}}</span
@@ -53,8 +53,8 @@ export default {
   watch: {
     modelValue: {
       deep: true,
-      handler() {
-        this.innerValue = {...this.modelValue};
+      handler(oldValue, newValue) {
+        this.innerValue = {...newValue};
       }
     }
   },
@@ -65,13 +65,13 @@ export default {
     logsFiltered() {
       let retVal = this.logs;
       if (this.errorsOnly) {
-        retVal = retVal.filter(item => 'error' === item.level);
+        retVal = retVal.filter(item => ['error', 'warn'].includes(item.level));
       }
       if (this.innerValue.from > 0) {
         retVal = retVal.filter(item =>  item.timestamp >= this.innerValue.from);
       }
-      if (this.innerValue.to > 0) {
-        retVal = retVal.filter(item =>  item.timestamp <= this.innerValue.to);
+      if (this.innerValue.until > 0) {
+        retVal = retVal.filter(item =>  item.timestamp <= this.innerValue.until);
       }
       return retVal;
     }
@@ -106,7 +106,7 @@ export default {
       this.logs.unshift(...logs);
 
       this.innerValue.from = logs[0].timestamp;
-      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
+      this.innerValue.until = this.logs[this.logs.length - 1].timestamp;
       this.$emit('update:modelValue', this.innerValue);
 
       this.$nextTick(() => {
@@ -117,10 +117,10 @@ export default {
       });
     },
     async fetchNewer() {
-      if (!this.innerValue.to) {
+      if (!this.innerValue.until) {
         return;
       }
-      const from = this.innerValue.to;
+      const from = this.innerValue.until;
       const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?order=asc&from=` + (from + 1));
       const logs = await response.json();
       if (logs.length === 0) {
@@ -131,7 +131,7 @@ export default {
 
       this.logs.push(...logs);
 
-      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
+      this.innerValue.until = this.logs[this.logs.length - 1].timestamp;
       this.$emit('update:modelValue', this.innerValue);
 
       if (logs.length > 0) {
@@ -176,7 +176,7 @@ export default {
     await this.fetchOlder();
 
     if (this.logs.length > 0) {
-      this.innerValue.to = this.logs[this.logs.length - 1].timestamp;
+      this.innerValue.until = this.logs[this.logs.length - 1].timestamp;
     }
 
     this.handleScroll();

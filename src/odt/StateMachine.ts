@@ -48,6 +48,7 @@ function isEndMacro(innerTxt: string) {
 }
 
 export class StateMachine {
+  public errors: string[] = [];
   private readonly tagsTree: TagLeaf[] = [];
   private listLevel = 0;
 
@@ -699,5 +700,9 @@ export class StateMachine {
     if (process.env.DEBUG_COLORS) {
       this.markdownChunks.dump();
     }
+  }
+
+  pushError(error: string) {
+    this.errors.push(error);
   }
 }

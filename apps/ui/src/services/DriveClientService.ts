@@ -50,7 +50,7 @@ export class DriveClientService {
 
       switch (json.cmd) {
         case 'jobs:changed':
-          this.vm.setJobs(json.payload?.jobs || []);
+          this.vm.setJobs(json.payload?.jobs || [], json.payload?.archive || []);
           break;
         case 'toasts:added':
           this.vm.$addToast(json.payload);

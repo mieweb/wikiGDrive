@@ -134,7 +134,7 @@ pre[class*=language-] {
   color: var(--bs-green);
 }
 .text-warning {
-  color: var(--bs-blue);
+  color: var(--bs-orange);
 }
 
 .is-warning {

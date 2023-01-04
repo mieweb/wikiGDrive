@@ -129,6 +129,7 @@ export class TaskLocalFileTransform extends QueueTask {
     let frontMatter;
     let markdown;
     let links = [];
+    let errors = [];
 
     const processor = new OdtProcessor(this.googleFolder, localFile.id, true);
     await processor.load();
@@ -156,11 +157,13 @@ export class TaskLocalFileTransform extends QueueTask {
       markdown = await converter.convert();
       links = Array.from(converter.links);
       frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
+      errors = converter.getErrors();
     } else {
       interface WorkerResult {
         links: Array<string>;
         frontMatter: string;
         markdown: string;
+        errors: Array<string>;
       }
 
       const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
@@ -176,6 +179,14 @@ export class TaskLocalFileTransform extends QueueTask {
       links = workerResult.links;
       frontMatter = workerResult.frontMatter;
       markdown = workerResult.markdown;
+      errors = workerResult.errors;
+    }
+
+    for (const errorMsg of errors) {
+      this.logger.warn('Error in: ' + this.localFile.fileName + ': ' + errorMsg, {
+        errorMdFile: this.localFile.fileName,
+        errorMdMsg: errorMsg
+      });
     }
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
