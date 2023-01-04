@@ -91,7 +91,7 @@
     "htmlparser2": "7.2.0",
     "identify-filetype": "^1.0.0",
     "js-yaml": "4.1.0",
-    "jszip": "3.7.1",
+    "jszip": "3.8.0",
     "listr2": "^3.14.0",
     "lunr": "2.3.9",
     "lunr-languages": "1.10.0",
