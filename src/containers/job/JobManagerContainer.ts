@@ -17,6 +17,7 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {ActionRunnerContainer} from '../action/ActionRunnerContainer';
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -24,6 +25,7 @@ export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
+  id?: string;
   progress?: { total: number; completed: number };
   type: JobType;
   state?: JobState;
@@ -48,6 +50,7 @@ export interface Toast {
 export interface DriveJobs {
   driveId: FileId;
   jobs: Job[];
+  archive: Job[];
 }
 
 export interface DriveJobsMap {
@@ -68,6 +71,12 @@ function removeOldByType(type: JobType) {
       return true;
     }
     return !(job.state === 'failed' || job.state === 'done');
+  };
+}
+
+function removeOldById(id) {
+  return (job: Job) => {
+    return job.id !== id;
   };
 }
 
@@ -92,6 +101,12 @@ function removeOldSingleJobs(fileId) {
   };
 }
 
+function filterSplit(driveJobs: DriveJobs, filter) {
+  driveJobs.archive = [].concat(driveJobs.archive).concat(driveJobs.jobs.filter(a => !filter(a)));
+  driveJobs.archive = driveJobs.archive.slice(driveJobs.archive.length - 100, driveJobs.archive.length);
+  driveJobs.jobs = driveJobs.jobs.filter(a => filter(a));
+}
+
 export class JobManagerContainer extends Container {
   private driveJobsMap: DriveJobsMap = {};
   private workerPool: WorkerPool;
@@ -113,6 +128,9 @@ export class JobManagerContainer extends Container {
         driveId, jobs: []
       };
     }
+    if (!this.driveJobsMap[driveId].archive) {
+      this.driveJobsMap[driveId].archive = [];
+    }
     return this.driveJobsMap[driveId];
   }
 
@@ -131,6 +149,7 @@ export class JobManagerContainer extends Container {
   }
 
   async schedule(driveId: FileId, job: Job) {
+    job.id = randomUUID();
     job.state = 'waiting';
     job.ts = +new Date();
 
@@ -217,7 +236,7 @@ export class JobManagerContainer extends Container {
       if (driveJobs.jobs) {
         driveJobs.jobs = [];
         await this.setDriveJobs(driveId, {
-          driveId, jobs: []
+          driveId, jobs: [], archive: driveJobs.archive
         });
       }
     }
@@ -226,9 +245,13 @@ export class JobManagerContainer extends Container {
         const now = +new Date();
         for (const driveId in this.driveJobsMap) {
           const driveJobs = await this.getDriveJobs(driveId);
-          if (driveJobs.jobs.length === 0) {
+          if (driveJobs.jobs.length === 0 && driveJobs.archive.length === 0) {
             delete this.driveJobsMap[driveId];
             await this.setDriveJobs(driveId, this.driveJobsMap[driveId]);
+          }
+
+          if (driveJobs.jobs.length === 0) {
+            delete this.driveJobsMap[driveId];
             continue;
           }
 
@@ -252,8 +275,10 @@ export class JobManagerContainer extends Container {
 
           this.runJob(driveId, currentJob, driveJobs)
             .then(async () => {
+              filterSplit(driveJobs, removeOldById(currentJob.id));
+
               if (currentJob.type === 'git_reset') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_reset'));
+                filterSplit(driveJobs, removeOldByType('git_reset'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git reset done',
                   type: 'git_reset:done',
@@ -263,7 +288,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'git_commit') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_commit'));
+                filterSplit(driveJobs, removeOldByType('git_commit'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git commit done',
                   type: 'git_commit:done',
@@ -273,7 +298,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'git_push') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
+                filterSplit(driveJobs, removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git push done',
                   type: 'git_push:done',
@@ -283,8 +308,8 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync_all') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('sync_all'));
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+                filterSplit(driveJobs, removeOldByType('sync_all'));
+                filterSplit(driveJobs, removeOldSingleJobs(null));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync all done',
                   type: 'sync:done',
@@ -292,7 +317,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+                filterSplit(driveJobs, removeOldSingleJobs(currentJob.payload));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync done',
                   type: 'sync:done',
@@ -304,8 +329,10 @@ export class JobManagerContainer extends Container {
               await this.setDriveJobs(driveId, driveJobs);
             })
             .catch(err => {
+              filterSplit(driveJobs, removeOldById(currentJob.id));
+
               if (currentJob.type === 'git_reset') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_reset'));
+                filterSplit(driveJobs, removeOldByType('git_reset'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git reset failed',
                   type: 'git_reset:failed',
@@ -316,7 +343,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'git_commit') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_commit'));
+                filterSplit(driveJobs, removeOldByType('git_commit'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git commit failed',
                   type: 'git_commit:failed',
@@ -327,7 +354,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'git_push') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_push'));
+                filterSplit(driveJobs, removeOldByType('git_push'));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Git push failed',
                   type: 'git_push:failed',
@@ -338,8 +365,8 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync_all') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('sync_all'));
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(null));
+                filterSplit(driveJobs, removeOldByType('sync_all'));
+                filterSplit(driveJobs, removeOldSingleJobs(null));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync all failed',
                   type: 'sync:failed',
@@ -351,7 +378,7 @@ export class JobManagerContainer extends Container {
                 });
               }
               if (currentJob.type === 'sync') {
-                driveJobs.jobs = driveJobs.jobs.filter(removeOldSingleJobs(currentJob.payload));
+                filterSplit(driveJobs, removeOldSingleJobs(currentJob.payload));
                 this.engine.emit(driveId, 'toasts:added', {
                   title: 'Sync failed',
                   type: 'sync:failed',
@@ -360,7 +387,7 @@ export class JobManagerContainer extends Container {
                 });
               }
 
-              const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+              const logger = this.engine.logger.child({ filename: __filename, driveId: driveId, jobId: currentJob.id });
               console.error('Job failed', err);
               logger.error(err.stack ? err.stack : err.message);
 
@@ -557,7 +584,7 @@ export class JobManagerContainer extends Container {
 
     await this.schedule(driveId, {
       type: 'run_action',
-      title: 'Run action',
+      title: 'Run action: on commit',
       trigger: 'commit',
       user
     });
@@ -626,7 +653,7 @@ export class JobManagerContainer extends Container {
   }
 
   private async runJob(driveId: FileId, currentJob: Job, driveJobs: DriveJobs) {
-    const logger = this.engine.logger.child({ filename: __filename, driveId: driveId });
+    const logger = this.engine.logger.child({ filename: __filename, driveId: driveId, jobId: currentJob.id });
     logger.info('runJob ' + driveId + ' ' + JSON.stringify(currentJob));
     switch (currentJob.type) {
       case 'sync':
@@ -649,7 +676,7 @@ export class JobManagerContainer extends Container {
 
           await this.schedule(driveId, {
             type: 'run_action',
-            title: 'Run action',
+            title: 'Run action: on ' + currentJob.type,
             trigger: currentJob.type
           });
         } catch (err) {

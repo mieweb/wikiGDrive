@@ -32,9 +32,20 @@
     </div>
 
     <div>
-      <h4>Jobs</h4>
+      <div class="card-footer" v-if="active_jobs.length === 0">
+        <div class="btn-group">
+          <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
+          <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
+          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
+        </div>
+      </div>
 
       <div class="card">
+        <div class="card-header">
+          Jobs
+        </div>
         <div class="card-body">
 
           <div class="row py-1 align-items-center" v-if="last_job.dateStr">
@@ -52,8 +63,8 @@
 
           <table class="table table-bordered jobs-list mt-3" v-if="active_jobs.length > 0">
             <thead>
-              <th>Job</th>
-              <th>Progress</th>
+            <th>Job</th>
+            <th>Progress</th>
             </thead>
             <tbody>
             <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
@@ -69,18 +80,36 @@
           <div v-if="active_jobs.length === 0" class="mt-3">
             No active jobs
           </div>
+
+        </div>
+      </div>
+
+      <div class="card" v-if="archive.length > 0">
+        <div class="card-header">
+          Jobs done
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered jobs-list mt-3">
+            <thead>
+            <th>Job</th>
+            <th>Started</th>
+            <th>Finished</th>
+            </thead>
+            <tbody>
+            <tr v-for="(job, idx) of archive" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
+              <td>{{ job.title }}</td>
+              <td>{{ job.startedStr }}</td>
+              <td>
+                {{ job.finishedStr }}
+                <button class="btn float-end" @click="showLogs(job)">Logs</button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
         </div>
 
       </div>
-      <div class="card-footer" v-if="active_jobs.length === 0">
-        <div class="btn-group">
-          <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
-          <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
-        </div>
-      </div>
+
     </div>
   </div>
 </template>
@@ -102,6 +131,18 @@ export default {
   computed: {
     fileChanges() {
       return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');
+    },
+    archive() {
+      const arr = [].concat(this.$root.archive);
+      arr.sort((a, b) => b.finished - a.finished);
+
+      return arr.map(a => {
+        return {
+          ...a,
+          finishedStr: new Date(a.finished).toISOString(),
+          startedStr: new Date(a.started).toISOString()
+        };
+      });
     }
   },
   methods: {
@@ -128,6 +169,13 @@ export default {
           this.$router.push(`/drive/${this.driveId}${path}`);
         }
       }
+    },
+    showLogs(job) {
+      this.$emit('showLogs', {
+        from: job.started,
+        until: job.finished
+      });
+      this.setActiveTab('drive_logs');
     }
   }
 };

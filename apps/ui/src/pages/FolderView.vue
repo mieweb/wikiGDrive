@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" @showLogs="showLogs" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
 
@@ -198,6 +198,19 @@ export default {
           this.notFound = filePath;
         }
       }
+    },
+    showLogs(param) {
+      this.logsState = {
+        from: param?.from || this.logsState.from,
+        until: param?.to || this.logsState.until
+      };
+       // =  || undefined;
+      // this.logsState.until = param?.until || undefined;
+      console.log('showLogs', {
+        from: param.from,
+        froms: new Date(param.from).toISOString(),
+        untils: new Date(param.until).toISOString(),
+      }, JSON.stringify(this.logsState));
     }
   }
 };

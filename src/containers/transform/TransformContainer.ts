@@ -23,9 +23,9 @@ import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
 import {LunrIndexer} from '../search/LunrIndexer';
-import {GitScanner} from '../../git/GitScanner';
 import {JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
+import Transport from 'winston-transport';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -170,6 +170,33 @@ async function addBinaryMetaData(destinationFiles: { [realFileName: string]: Loc
   }
 }
 
+export class TransformLog extends Transport {
+  public errors = {};
+
+  constructor(options = {}) {
+    super(options);
+  }
+
+  log(info, callback) {
+    switch (info.level) {
+      case 'error':
+      case 'warn':
+        if (info.errorMdFile) {
+          if (!this.errors[info.errorMdFile]) {
+            this.errors[info.errorMdFile] = [];
+          }
+          if (info.errorMdMsg) {
+            this.errors[info.errorMdFile].push(info.errorMdMsg);
+          }
+        }
+    }
+
+    if (callback) {
+      callback(null, true);
+    }
+  }
+}
+
 export class TransformContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
@@ -181,6 +208,7 @@ export class TransformContainer extends Container {
   private userConfigService: UserConfigService;
 
   private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
+  private transformLog: TransformLog;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -197,6 +225,8 @@ export class TransformContainer extends Container {
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.transformLog = new TransformLog();
+    this.logger.add(this.transformLog);
   }
 
   async syncDir(googleFolder: FileContentService, destinationDirectory: FileContentService, queueTransformer: QueueTransformer) {
@@ -341,6 +371,22 @@ export class TransformContainer extends Container {
     }
 
     await queueTransformer.finished();
+
+    await contentFileService.remove('_errors.md');
+    if (Object.keys(this.transformLog.errors).length > 0) {
+      console.log('this.transformLog.errors', this.transformLog.errors);
+      let errorLog = '';
+      errorLog += '---\n';
+      errorLog += 'type: \'page\'\n';
+      errorLog += '---\n';
+      for (const mdFile in this.transformLog.errors) {
+        errorLog += `\n**[${mdFile}](${mdFile})**\n\n`;
+        for (const mdMsg of this.transformLog.errors[mdFile]) {
+          errorLog += `${mdMsg}\n`;
+        }
+      }
+      await contentFileService.writeFile('_errors.md', errorLog);
+    }
 
     await this.createRedirs(contentFileService);
     await this.writeToc(contentFileService);

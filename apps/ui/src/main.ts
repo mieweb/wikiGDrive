@@ -32,6 +32,7 @@ const app: Vue.App = Vue.createApp({
       user: null,
       drive: {},
       jobs: [],
+      archive: [],
       jobsMap: {},
       changes: [],
       changesMap: {}
@@ -94,8 +95,9 @@ const app: Vue.App = Vue.createApp({
         };
       }
     },
-    setJobs(jobs) {
+    setJobs(jobs, archive) {
       this.jobs = jobs;
+      this.archive = archive;
       this.jobsMap = {};
       for (const job of jobs) {
         if (completedJob(job)) {

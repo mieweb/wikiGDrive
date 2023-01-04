@@ -47,13 +47,15 @@ const myFormat = (formatConfig = { console: false }) => winston.format.printf((p
   let { filename } = params;
 
   let errorStr = '';
-  if (level === 'error') {
+  if (level === 'error' || level === 'warn') {
     if (params.message) {
-      errorStr += ' ' + params.message;
+      errorStr += params.message;
     }
     if (params.stack && !params.message.match(/^[\s]+at /g)) {
       errorStr += ' ' + params.stack;
     }
+  } else {
+    errorStr += params.message;
   }
 
   if (filename) {
@@ -65,7 +67,6 @@ const myFormat = (formatConfig = { console: false }) => winston.format.printf((p
   }
 
   if (formatConfig.console) {
-
     errorStr = errorStr.split('\n')
       .map(line => line.indexOf('node_modules') === -1 ? line : ansi_colors.gray(line))
       .join('\n');
@@ -95,7 +96,7 @@ export function instrumentLogger(logger, childOpts = {}) {
           filename
         });
       }
-      originMethod.apply(logger, [msg, payload]);
+      originMethod.apply(logger, [msg, Object.assign({}, childOpts, payload)]);
       return logger;
     };
   }

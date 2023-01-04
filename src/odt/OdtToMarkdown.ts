@@ -96,6 +96,10 @@ export class OdtToMarkdown {
     return await this.rewriteHeaders(this.chunks.toString());
   }
 
+  getErrors() {
+    return this.stateMachine.errors;
+  }
+
   async tocToText(tableOfContent: TableOfContent): Promise<void> {
     this.stateMachine.pushTag('TOC');
     for (const paragraph of tableOfContent.indexBody.list) {
@@ -305,6 +309,7 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('BR/');
     this.stateMachine.pushTag('B');
     this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
+    this.stateMachine.pushError('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
     this.stateMachine.pushTag('/B');
     this.stateMachine.pushTag('BR/');
   }

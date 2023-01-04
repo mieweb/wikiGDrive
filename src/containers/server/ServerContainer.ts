@@ -330,25 +330,29 @@ export class ServerContainer extends Container {
     });
 
     app.use('/user/me', authenticateOptionally(this.logger));
-    app.get('/user/me', async (req, res) => {
-      if (!req.user || !req.user.google_access_token) {
-        res.json({ user: undefined });
-        return;
+    app.get('/user/me', async (req, res, next) => {
+      try {
+        if (!req.user || !req.user.google_access_token) {
+          res.json({ user: undefined });
+          return;
+        }
+
+        const tokenInfo = await getTokenInfo(req.user.google_access_token);
+
+        if (!tokenInfo.expiry_date) {
+          res.json({ user: undefined, tokenInfo });
+          return;
+        }
+
+        const user: GoogleUser = {
+          id: req.user.id,
+          email: req.user.email,
+          name: req.user.name,
+        };
+        res.json({ user, tokenInfo });
+      } catch (err) {
+        next(err);
       }
-
-      const tokenInfo = await getTokenInfo(req.user.google_access_token);
-
-      if (!tokenInfo.expiry_date) {
-        res.json({ user: undefined, tokenInfo });
-        return;
-      }
-
-      const user: GoogleUser = {
-        id: req.user.id,
-        email: req.user.email,
-        name: req.user.name,
-      };
-      res.json({ user, tokenInfo });
     });
   }
 
@@ -429,7 +433,7 @@ export class ServerContainer extends Container {
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
           type: 'run_action',
-          title: 'Run action',
+          title: 'Run action: on ' + req.params.trigger,
           trigger: req.params.trigger,
           payload: req.body ? JSON.stringify(req.body) : '',
           user: req.user
