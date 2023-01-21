@@ -56,8 +56,6 @@ export function convertToRelativeSvgPath(localPath, basePath) {
   if (localPath.startsWith('http://')) return localPath;
   if (basePath === localPath) return '.';
 
-  localPath = convertExtension(localPath);
-
   const host = '//example.com/';
   return convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
     output: RelateUrl.PATH_RELATIVE

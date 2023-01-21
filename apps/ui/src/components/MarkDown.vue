@@ -26,11 +26,14 @@ Prism.plugins.autolinker = {
         }
 
         def.inside = def.inside || {};
+        // console.log('t', type);
         if (type == 'url') {
           def.inside['md-link'] = linkMd;
         }
         if (type == 'comment') {
           def.inside['md-link'] = linkMd;
+          // console.log('dd', def);
+          // Prism.languages.insertBefore('inside', 'punctuation', { 'url-link': url }, def);
         }
         if (type == 'attr-value') {
           Prism.languages.insertBefore('inside', 'punctuation', { 'url-link': url }, def);
@@ -42,7 +45,9 @@ Prism.plugins.autolinker = {
       }
     });
     grammar['url-link'] = url;
+    console.log('grammar[\'url-link\']', grammar['url-link']);
     grammar['email-link'] = email;
+    grammar['md-link'] = linkMd;
   }
 };
 
@@ -51,6 +56,10 @@ Prism.hooks.add('before-highlight', function (env) {
 });
 
 Prism.hooks.add('wrap', function (env) {
+  // console.log(env.type, env.content);
+  // if (env.type === 'url') {
+  //   env.attributes.href = 'http://example.com/' + url;
+  // } else
   if (/-link$/.test(env.type)) {
     env.tag = 'a';
 

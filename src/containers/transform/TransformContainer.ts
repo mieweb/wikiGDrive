@@ -3,7 +3,7 @@ import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '.
 import {FileContentService} from '../../utils/FileContentService';
 import {appendConflict, DirectoryScanner, RESERVED_NAMES, stripConflict} from './DirectoryScanner';
 import {GoogleFilesScanner} from './GoogleFilesScanner';
-import {convertToRelativeMarkDownPath} from '../../LinkTranslator';
+import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator';
 import {LocalFilesGenerator} from './LocalFilesGenerator';
 import {QueueTransformer} from './QueueTransformer';
 import {generateNavigationHierarchy, NavigationHierarchy} from './generateNavigationHierarchy';
@@ -424,7 +424,11 @@ export class TransformContainer extends Container {
           const fileId = str.substring('gdoc:'.length);
           const lastLog = this.localLog.findLastFile(fileId);
           if (lastLog) {
-            return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
+            if (fileName.endsWith('.svg')) {
+              return convertToRelativeSvgPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
+            } else {
+              return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
+            }
           } else {
             return 'https://drive.google.com/open?id=' + fileId;
           }
