@@ -77,6 +77,7 @@ export default {
       if (this.selectedFile.id) {
         return 'https://drive.google.com/open?id=' + this.selectedFile.id;
       }
+      return null;
     }
   }
 };
