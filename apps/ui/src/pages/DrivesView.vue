@@ -24,7 +24,7 @@
         </div>
 
         <div v-if="drivesNotShared && drivesNotShared.length > 0" class="mt-3">
-          <h3>You also have few drives not shared with wikigdrive:</h3>
+          <h3>You also have drives not shared with wikigdrive:</h3>
           <table class="table table-hover table-clickable">
             <thead>
             <tr>
