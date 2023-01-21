@@ -155,13 +155,20 @@ export class GitScanner {
     removedFiles = removedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
       .filter(fileName => !! fileName);
 
-    const addParam = addedFiles.map(fileName => `"${sanitize(fileName)}"`).join(' ');
-    const rmParam = removedFiles.map(fileName => `"${sanitize(fileName)}"`).join(' ');
-    if (addParam) {
-      await this.exec(`git add ${addParam}`);
+    while (addedFiles.length > 0) {
+      const chunk = addedFiles.splice(0, 400);
+      const addParam = chunk.map(fileName => `"${sanitize(fileName)}"`).join(' ');
+      if (addParam) {
+        await this.exec(`git add ${addParam}`);
+      }
     }
-    if (rmParam) {
-      await this.exec(`git rm ${rmParam}`);
+
+    while (removedFiles.length > 0) {
+      const chunk = removedFiles.splice(0, 400);
+      const rmParam = chunk.map(fileName => `"${sanitize(fileName)}"`).join(' ');
+      if (rmParam) {
+        await this.exec(`git rm ${rmParam}`);
+      }
     }
 
     await this.exec(`git commit -m "${sanitize(message)}"`, {
