@@ -32,7 +32,7 @@ export default {
     async fetch() {
       this.loading = true;
       try {
-        const response = await fetch(this.$route.path === '/' ? '/index.html' : this.$route.path);
+        const response = await fetch(['/', '/driveui'].includes(this.$route.path) ? '/index.html' : this.$route.path);
         if (response.status < 300) {
           let innerHTML = await response.text();
           if (innerHTML.indexOf('<body') > -1) {
