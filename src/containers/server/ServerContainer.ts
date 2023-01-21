@@ -303,7 +303,7 @@ export class ServerContainer extends Container {
         const hostname = req.header('host');
         const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
         const serverUrl = protocol + hostname;
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
         const redirectTo = req.query.redirectTo;
         const popupWindow = req.query.popupWindow;
 
@@ -428,7 +428,7 @@ export class ServerContainer extends Container {
 
     app.post('/api/run_action/:driveId/:trigger', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
@@ -447,7 +447,7 @@ export class ServerContainer extends Container {
 
     app.post('/api/transform/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
@@ -463,7 +463,7 @@ export class ServerContainer extends Container {
 
     app.post('/api/transform/:driveId/:fileId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
         const fileId = req.params.fileId;
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
@@ -481,7 +481,7 @@ export class ServerContainer extends Container {
 
     app.post('/api/sync/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
@@ -501,7 +501,7 @@ export class ServerContainer extends Container {
 
     app.post('/api/sync/:driveId/:fileId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
         const fileId = req.params.fileId;
 
         let fileTitle = '#' + fileId;
@@ -534,7 +534,7 @@ export class ServerContainer extends Container {
 
     app.get('/api/inspect/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
       try {
-        const driveId = req.params.driveId;
+        const driveId = urlToFolderId(req.params.driveId);
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         const inspected = await jobManagerContainer.inspect(driveId);
 
