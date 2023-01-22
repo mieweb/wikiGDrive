@@ -143,6 +143,18 @@ export class DirectoryScanner {
           if (!localFile.modifiedTime) localFile.modifiedTime = yamlFile?.modifiedTime;
           if (!localFile.version) localFile.version = yamlFile?.version;
           this.files[realFileName] = localFile;
+        } else {
+          const mdFile: MdFile = {
+            type: 'md',
+            fileName: stripConflict(realFileName),
+            id: undefined,
+            modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
+            version: undefined,
+            mimeType: 'text/x-markdown',
+            title: stripConflict(realFileName),
+            lastAuthor: ''
+          };
+          this.files[realFileName] = mdFile;
         }
       } else {
         const binaryFile: BinaryFile = {

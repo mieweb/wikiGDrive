@@ -8,6 +8,7 @@ export class QueueTaskError extends Error {
 
 export class QueueTask {
   retries: number;
+  public warnings = 0;
 
   constructor(protected logger: winston.Logger) {
     this.retries = INITIAL_RETRIES;

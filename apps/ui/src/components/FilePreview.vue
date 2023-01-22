@@ -3,7 +3,7 @@
     <PreviewHeader :selected-file="selectedFile" :active-tab="activeTab" :folder-path="folderPath" />
 
     <div v-if="activeTab === 'markdown' && selectedFile.mimeType === 'text/x-markdown' && fileContent">
-      <MarkDown>{{fileContent}}</MarkDown>
+      <MarkDown :abs-path="'/drive/' + driveId + folderPath">{{fileContent}}</MarkDown>
     </div>
 
     <div v-if="activeTab === 'html' && selectedFile.previewUrl">

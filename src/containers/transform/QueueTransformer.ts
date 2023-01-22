@@ -12,11 +12,12 @@ const CONCURRENCY = SINGLE_THREADED_TRANSFORM ? 4 : os.cpus().length;
 export class QueueTransformer {
   private q: QueueObject<QueueTask>;
   private logger: winston.Logger;
-  private progressCallback: ({total, completed}: { total: number; completed: number }) => void;
+  private progressCallback: ({total, completed}: { total: number; completed: number; warnings: number }) => void;
 
   private progress = {
     completed: 0,
-    total: 0
+    total: 0,
+    warnings: 0
   };
 
   constructor(logger: winston.Logger) {
@@ -48,6 +49,7 @@ export class QueueTransformer {
 
   async processQueueTask(task: QueueTask) {
     const subTasks = await task.run();
+    this.progress.warnings += task.warnings;
     this.progress.completed++;
     this.notify();
     for (const subTask of subTasks) {
@@ -59,7 +61,7 @@ export class QueueTransformer {
   }
 
   async finished() {
-    if (this.q.length() === 0) {
+    if (this.q.length() + this.q.running() === 0) {
       return;
     }
     return this.q.drain();
@@ -71,13 +73,13 @@ export class QueueTransformer {
     this.notify();
   }
 
-  onProgressNotify(progressCallback: ({total, completed}: { total: number; completed: number }) => void) {
+  onProgressNotify(progressCallback: ({total, completed, warnings}: { total: number; completed: number; warnings: number }) => void) {
     this.progressCallback = progressCallback;
   }
 
   notify() {
     if (this.progressCallback) {
-      this.progressCallback({ completed: this.progress.completed, total: this.progress.total });
+      this.progressCallback({ completed: this.progress.completed, total: this.progress.total, warnings: this.progress.warnings });
     }
   }
 }

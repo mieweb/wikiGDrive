@@ -14,7 +14,7 @@
     ><div v-for="(item, idx) of logsFiltered" :key="idx" :class="{'text-danger': 'error' === item.level, 'text-warning': 'warn' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
-    > <span>{{item.message}}</span
+    > <span v-html="highLight(item.message)"></span
     ></div>
   </pre>
   </div>
@@ -24,8 +24,7 @@
 import {UtilsMixin} from './UtilsMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
 
-const Prism = window['Prism'];
-Prism.manual = true;
+import {Prism} from './prismFix';
 
 export default {
   mixins: [UtilsMixin],
@@ -36,6 +35,9 @@ export default {
       type: Object
     },
     activeTab: {
+      type: String
+    },
+    contentDir: {
       type: String
     }
   },
@@ -62,6 +64,9 @@ export default {
     this.innerValue = {...this.modelValue};
   },
   computed: {
+    absPath() {
+      return '/drive/' + this.driveId + this.contentDir;
+    },
     logsFiltered() {
       let retVal = this.logs;
       if (this.errorsOnly) {
@@ -151,6 +156,9 @@ export default {
           });
         }
       }
+      this.$nextTick(() => {
+        this.rewriteLinks();
+      });
     },
     getLink(fileName) {
       if (!fileName) {
@@ -167,6 +175,30 @@ export default {
         return '';
       }
       return new Date(v).toISOString();
+    },
+    highLight(str) {
+      return Prism.highlight(str, Prism.languages.markdown, 'markdown');
+    },
+    rewriteLinks() {
+      const links = this.$el.querySelectorAll('a[data-to-rewrite]');
+      for (const link of links) {
+        const href = link.getAttribute('href');
+        if (href.endsWith('.md')) {
+          link.setAttribute('href', this.absPath + '/' + href + '#markdown');
+          link.addEventListener('click', event => {
+            event.preventDefault();
+            this.$router.push(link.getAttribute('href'));
+          });
+        } else
+        if (href.endsWith('.svg')) {
+          link.setAttribute('href', this.absPath + '/' + href);
+          link.addEventListener('click', event => {
+            event.preventDefault();
+            this.$router.push(link.getAttribute('href'));
+          });
+        }
+        link.removeAttribute('data-to-rewrite');
+      }
     }
   },
   async mounted() {

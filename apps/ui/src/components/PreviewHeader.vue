@@ -46,10 +46,10 @@
       <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
         <i class="fa-brands fa-markdown me-1"></i>
       </button>
-      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
+      <button v-if="isGoogleId(selectedFile.id) && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="downloadOdt(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download odt" title="Download odt" >
         <i class="fa fa-download me-1"></i>
       </button>
-      <button v-if="selectedFile.id && isImage(selectedFile)" @click.prevent.stop="downloadImage(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download image" title="Download image" >
+      <button v-if="isGoogleId(selectedFile.id) && isImage(selectedFile)" @click.prevent.stop="downloadImage(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Download image" title="Download image" >
         <i class="fa fa-download me-1"></i>
       </button>
       <a v-if="selectedFile.previewUrl" :href="selectedFile.previewUrl" target="_blank" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview in new window" title="Preview in new window">
@@ -67,11 +67,11 @@
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </button>
 
-      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="openAddonView(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Google addon mode" title="Google addon mode" >
+      <button v-if="isGoogleId(selectedFile.id) && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="openAddonView(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Google addon mode" title="Google addon mode" >
         <i class="fa-solid fa-arrows-left-right"></i>
       </button>
 
-      <button v-if="selectedFile.id && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="reportBug(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Report issue" title="Report issue" >
+      <button v-if="isGoogleId(selectedFile.id) && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="reportBug(selectedFile)" class="btn btn-white text-primary ml-1" type="button" aria-label="Report issue" title="Report issue" >
         <i class="fa-solid fa-bug"></i>
       </button>
 
@@ -155,6 +155,7 @@ export default {
       if (!id) return false;
       if (id.length === 0) return false;
       if (id.indexOf(':') > -1) return false;
+      if (id === 'UNKNOWN') return false;
 
       return true;
     }

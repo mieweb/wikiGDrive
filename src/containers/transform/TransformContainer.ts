@@ -1,7 +1,7 @@
 import winston from 'winston';
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import {FileContentService} from '../../utils/FileContentService';
-import {appendConflict, DirectoryScanner, RESERVED_NAMES, stripConflict} from './DirectoryScanner';
+import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner';
 import {GoogleFilesScanner} from './GoogleFilesScanner';
 import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator';
 import {LocalFilesGenerator} from './LocalFilesGenerator';
@@ -207,7 +207,7 @@ export class TransformContainer extends Container {
   private transformSubDir: string;
   private userConfigService: UserConfigService;
 
-  private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
+  private progressNotifyCallback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void;
   private transformLog: TransformLog;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
@@ -312,9 +312,9 @@ export class TransformContainer extends Container {
     const contentFileService = this.transformSubDir ? await this.generatedFileService.getSubFileService(this.transformSubDir, '/') : this.generatedFileService;
 
     const queueTransformer = new QueueTransformer(this.logger);
-    queueTransformer.onProgressNotify(({ total, completed }) => {
+    queueTransformer.onProgressNotify(({ total, completed, warnings }) => {
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed });
+        this.progressNotifyCallback({ total, completed, warnings });
       }
     });
 
@@ -374,15 +374,14 @@ export class TransformContainer extends Container {
 
     await contentFileService.remove('_errors.md');
     if (Object.keys(this.transformLog.errors).length > 0) {
-      console.log('this.transformLog.errors', this.transformLog.errors);
       let errorLog = '';
       errorLog += '---\n';
       errorLog += 'type: \'page\'\n';
       errorLog += '---\n';
       for (const mdFile in this.transformLog.errors) {
-        errorLog += `\n**[${mdFile}](${mdFile})**\n\n`;
+        errorLog += `\n* [${mdFile}](${mdFile})\n`;
         for (const mdMsg of this.transformLog.errors[mdFile]) {
-          errorLog += `${mdMsg}\n`;
+          errorLog += `   ${mdMsg}\n`;
         }
       }
       await contentFileService.writeFile('_errors.md', errorLog);
@@ -445,9 +444,9 @@ export class TransformContainer extends Container {
 
     const markDownScanner = new DirectoryScanner();
     const transformerQueue = new QueueTransformer(this.logger);
-    transformerQueue.onProgressNotify(({ total, completed }) => {
+    transformerQueue.onProgressNotify(({ total, completed, warnings }) => {
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed });
+        this.progressNotifyCallback({ total, completed, warnings });
       }
     });
 
@@ -527,7 +526,7 @@ export class TransformContainer extends Container {
     this.transformSubDir = (transform_subdir || '').replaceAll('/', '').trim();
   }
 
-  onProgressNotify(callback: ({total, completed}: { total?: number; completed?: number }) => void) {
+  onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number, warnings?: number }) => void) {
     this.progressNotifyCallback = callback;
   }
 }
