@@ -96,7 +96,7 @@
             <th>Finished</th>
             </thead>
             <tbody>
-            <tr v-for="(job, idx) of archive" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
+            <tr v-for="(job, idx) of archive" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state, 'text-danger': 'failed' === job.state, 'text-warning': job.progress && job.progress.warnings > 0 }">
               <td>{{ job.title }}</td>
               <td>{{ job.startedStr }}</td>
               <td>

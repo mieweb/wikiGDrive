@@ -158,6 +158,7 @@ export class TaskLocalFileTransform extends QueueTask {
       links = Array.from(converter.links);
       frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
       errors = converter.getErrors();
+      this.warnings = errors.length;
     } else {
       interface WorkerResult {
         links: Array<string>;
@@ -180,10 +181,11 @@ export class TaskLocalFileTransform extends QueueTask {
       frontMatter = workerResult.frontMatter;
       markdown = workerResult.markdown;
       errors = workerResult.errors;
+      this.warnings = errors.length;
     }
 
     for (const errorMsg of errors) {
-      this.logger.warn('Error in: ' + this.localFile.fileName + ': ' + errorMsg, {
+      this.logger.warn('Error in: ['+ this.localFile.fileName +'](' + this.localFile.fileName + ') ' + errorMsg, {
         errorMdFile: this.localFile.fileName,
         errorMdMsg: errorMsg
       });

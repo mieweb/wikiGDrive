@@ -113,7 +113,7 @@ export class GoogleFolderContainer extends Container {
     }
   }
 
-  onProgressNotify(callback: ({total, completed}: { total?: number; completed?: number }) => void) {
+  onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void) {
     this.progressNotifyCallback = callback;
   }
 }

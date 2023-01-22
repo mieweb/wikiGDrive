@@ -26,14 +26,14 @@
       <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-      <LogsViewer v-if="activeTab === 'drive_logs'" :active-tab="activeTab" v-model="logsState" />
+      <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
       <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
       <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
       <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
       <ActionsEditor v-if="activeTab === 'actions'" :active-tab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
         <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />

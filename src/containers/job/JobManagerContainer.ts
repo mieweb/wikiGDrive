@@ -26,7 +26,7 @@ export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
   id?: string;
-  progress?: { total: number; completed: number };
+  progress?: { total: number; completed: number; warnings: number };
   type: JobType;
   state?: JobState;
   title: string;
@@ -388,7 +388,6 @@ export class JobManagerContainer extends Container {
               }
 
               const logger = this.engine.logger.child({ filename: __filename, driveId: driveId, jobId: currentJob.id });
-              console.error('Job failed', err);
               logger.error(err.stack ? err.stack : err.message);
 
               currentJob.state = 'failed';
@@ -418,7 +417,7 @@ export class JobManagerContainer extends Container {
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
     transformContainer.setTransformSubDir(userConfigService.config.transform_subdir);
-    transformContainer.onProgressNotify(({ completed, total }) => {
+    transformContainer.onProgressNotify(({ completed, total, warnings }) => {
       if (!this.driveJobsMap[folderId]) {
         return;
       }
@@ -427,7 +426,8 @@ export class JobManagerContainer extends Container {
       if (job) {
         job.progress = {
           completed: completed,
-          total: total
+          total: total,
+          warnings
         };
         this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
       }
@@ -460,7 +460,7 @@ export class JobManagerContainer extends Container {
     downloadContainer.setForceDownloadFilters(filesIds.length === 1);
 
     await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
-    downloadContainer.onProgressNotify(({ completed, total }) => {
+    downloadContainer.onProgressNotify(({ completed, total, warnings }) => {
       if (!this.driveJobsMap[folderId]) {
         return;
       }
@@ -469,7 +469,8 @@ export class JobManagerContainer extends Container {
       if (job) {
         job.progress = {
           completed: completed,
-          total: total
+          total: total,
+          warnings
         };
         this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
       }

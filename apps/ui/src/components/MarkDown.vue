@@ -2,94 +2,35 @@
   <pre><code class="language-markdown line-numbers" ref="code"><slot></slot></code></pre>
 </template>
 <script lang="ts">
-const Prism = window['Prism'];
-
-const url = /\b([a-z]{3,7}:\/\/|tel:)[\w\-+%~/.:=&@]+(?:\?[\w\-+%~/.:=?&!$'()*,;@]*)?(?:#[\w\-+%~/.:#=?&!$'()*,;@]*)?/;
-const email = /\b\S+@[\w.]+[a-z]{2}/;
-const linkMd = /\[([^\]]+)]\(([^)]+)\)/;
-
-// Tokens that may contain URLs and emails
-const candidates = ['comment', 'url', 'attr-value', 'string', 'ssfsdfsd'];
-
-Prism.plugins.autolinker = {
-  processGrammar: function (grammar) {
-    // Abort if grammar has already been processed
-    if (!grammar || grammar['url-link']) {
-      return;
-    }
-    Prism.languages.DFS(grammar, function (key, def, type) {
-      if (candidates.indexOf(type) > -1 && !Array.isArray(def)) {
-        if (!def.pattern) {
-          def = this[key] = {
-            pattern: def
-          };
-        }
-
-        def.inside = def.inside || {};
-        // console.log('t', type);
-        if (type == 'url') {
-          def.inside['md-link'] = linkMd;
-        }
-        if (type == 'comment') {
-          def.inside['md-link'] = linkMd;
-          // console.log('dd', def);
-          // Prism.languages.insertBefore('inside', 'punctuation', { 'url-link': url }, def);
-        }
-        if (type == 'attr-value') {
-          Prism.languages.insertBefore('inside', 'punctuation', { 'url-link': url }, def);
-        } else {
-          def.inside['url-link'] = url;
-        }
-
-        def.inside['email-link'] = email;
-      }
-    });
-    grammar['url-link'] = url;
-    console.log('grammar[\'url-link\']', grammar['url-link']);
-    grammar['email-link'] = email;
-    grammar['md-link'] = linkMd;
-  }
-};
-
-Prism.hooks.add('before-highlight', function (env) {
-  Prism.plugins.autolinker.processGrammar(env.grammar);
-});
-
-Prism.hooks.add('wrap', function (env) {
-  // console.log(env.type, env.content);
-  // if (env.type === 'url') {
-  //   env.attributes.href = 'http://example.com/' + url;
-  // } else
-  if (/-link$/.test(env.type)) {
-    env.tag = 'a';
-
-    let href = env.content;
-
-    if (env.type == 'email-link' && href.indexOf('mailto:') != 0) {
-      href = 'mailto:' + href;
-    } else if (env.type == 'md-link') {
-      // Markdown
-      const match = env.content.match(linkMd);
-      // console.log('kdt', match);
-
-      href = match[2];
-      env.content = match[1];
-    }
-
-    env.attributes.href = href;
-
-    // Silently catch any error thrown by decodeURIComponent (#1186)
-    try {
-      env.content = decodeURIComponent(env.content);
-    } catch (e) { /* noop */ }
-  }
-});
-
-Prism.manual = true;
+import {Prism} from './prismFix';
 
 export default {
+  props: ['absPath'],
   mounted() {
+    const absPath = this.absPath.endsWith('/') ? this.absPath.substring(0, this.absPath.length - 1) : this.absPath;
     Prism.highlightElement(this.$refs.code);
+    const links = this.$refs.code.querySelectorAll('a[data-to-rewrite]');
+    for (const link of links) {
+      const href = link.getAttribute('href');
+      if (href.startsWith('#')) {
+        link.removeAttribute('href');
+      } else
+      if (href.endsWith('.md')) {
+        link.setAttribute('href', absPath + '/' + href + '#markdown');
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          this.$router.push(link.getAttribute('href'));
+        });
+      } else
+      if (href.endsWith('.svg')) {
+        link.setAttribute('href', absPath + '/' + href);
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          this.$router.push(link.getAttribute('href'));
+        });
+      }
+      link.removeAttribute('data-to-rewrite');
+    }
   }
 };
 </script>
