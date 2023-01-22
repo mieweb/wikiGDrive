@@ -87,7 +87,7 @@ export class SocketManager {
   async getFilteredChanges(driveId: FileId, changes: GoogleFile[]): Promise<GoogleFile[]> {
     let filteredChanges = [];
 
-    const driveFileSystem = await this.fileService.getSubFileService(driveId, '');
+    const driveFileSystem = await this.fileService.getSubFileService(driveId + '_transform', '');
     const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
     await markdownTreeProcessor.load();
 
