@@ -1,4 +1,5 @@
 import {FileContentService} from '../../utils/FileContentService';
+import {UserConfigService} from '../google_folder/UserConfigService';
 
 export function fileNameToExt(fileName: string) {
   const idx = fileName.lastIndexOf('.');
@@ -23,4 +24,8 @@ export async function removeMarkDownsAndImages(removePath: string, localFilesSer
   if (removePath !== imagesPath) {
     await localFilesService.remove(imagesPath);
   }
+}
+
+export async function getContentFileService(transformedFileSystem: FileContentService, userConfigService: UserConfigService): Promise<FileContentService> {
+  return userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir, '/') : transformedFileSystem;
 }

@@ -14,6 +14,7 @@ import {GoogleApiContainer} from '../../google_api/GoogleApiContainer';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {UserAuthClient} from '../../../google/AuthClient';
+import {getContentFileService} from '../../transform/utils';
 
 export class DriveUiController extends Controller {
 
@@ -59,7 +60,7 @@ export class DriveUiController extends Controller {
       const userConfigService = new UserConfigService(googleFileSystem);
       await userConfigService.load();
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+      const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
 
       const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
       await markdownTreeProcessor.load();

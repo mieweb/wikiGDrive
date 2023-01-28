@@ -134,7 +134,6 @@ export class MainService {
 
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
-    transformContainer.setTransformSubDir(userConfigService.config.transform_subdir);
 
     await this.containerEngine.registerContainer(transformContainer);
 

@@ -43,6 +43,7 @@ import {DriveUiController} from './routes/DriveUiController';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {UserAuthClient} from '../../google/AuthClient';
 import {getTokenInfo} from '../../google/GoogleAuthService';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -507,9 +508,9 @@ export class ServerContainer extends Container {
         let fileTitle = '#' + fileId;
 
         const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
-        const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
-        await markdownTreeProcessor.load();
-        const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
+        const googleTreeProcessor = new GoogleTreeProcessor(driveFileSystem);
+        await googleTreeProcessor.load();
+        const [file, drivePath] = await googleTreeProcessor.findById(fileId);
         if (file && drivePath) {
           fileTitle = file['name'];
         }

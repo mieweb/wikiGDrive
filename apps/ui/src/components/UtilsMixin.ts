@@ -122,6 +122,14 @@ export const UtilsMixin = {
         this.$router.push('/drive/' + this.driveId + path);
       }
     },
+    isRedirect(file) {
+      if (!file) return false;
+      return !!file.redirectTo;
+    },
+    isConflict(file) {
+      if (!file) return false;
+      return Array.isArray(file.conflicting) && file.conflicting.length > 0;
+    },
     isFolder(file) {
       if (!file) return false;
       return file.mimeType === 'application/vnd.google-apps.folder';

@@ -11,7 +11,7 @@ import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform';
 import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml';
-import {removeMarkDownsAndImages} from './utils';
+import {getContentFileService, removeMarkDownsAndImages} from './utils';
 import {LocalLog} from './LocalLog';
 import {LocalLinks} from './LocalLinks';
 import {OdtProcessor} from '../../odt/OdtProcessor';
@@ -204,7 +204,6 @@ export class TransformContainer extends Container {
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
-  private transformSubDir: string;
   private userConfigService: UserConfigService;
 
   private progressNotifyCallback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void;
@@ -309,7 +308,7 @@ export class TransformContainer extends Container {
   }
 
   async run(rootFolderId: FileId) {
-    const contentFileService = this.transformSubDir ? await this.generatedFileService.getSubFileService(this.transformSubDir, '/') : this.generatedFileService;
+    const contentFileService = await getContentFileService(this.generatedFileService, this.userConfigService);
 
     const queueTransformer = new QueueTransformer(this.logger);
     queueTransformer.onProgressNotify(({ total, completed, warnings }) => {
@@ -520,10 +519,6 @@ export class TransformContainer extends Container {
     }
 
     return {};
-  }
-
-  setTransformSubDir(transform_subdir: string) {
-    this.transformSubDir = (transform_subdir || '').replaceAll('/', '').trim();
   }
 
   onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number, warnings?: number }) => void) {

@@ -9,6 +9,7 @@ import {AuthConfig} from '../../../model/AccountJson';
 import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
 import {Container} from '../../../ContainerEngine';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
+import {getContentFileService} from '../../transform/utils';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -48,7 +49,7 @@ export class DriveController extends Controller {
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+    const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();

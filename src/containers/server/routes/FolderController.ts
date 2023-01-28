@@ -16,6 +16,8 @@ import {GitChange, GitScanner} from '../../../git/GitScanner';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {Logger} from 'winston';
 import {clearCachedChanges} from '../../job/JobManagerContainer';
+import {getContentFileService} from '../../transform/utils';
+import {LocalLog} from '../../transform/LocalLog';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -167,6 +169,13 @@ export default class FolderController extends Controller {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     await transformedFileSystem.remove(filePath);
 
+    // Remove redirs
+    const localLog = new LocalLog(contentFileService);
+    await localLog.load();
+    if (await localLog.remove(filePath)) {
+      await localLog.save();
+    }
+
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
     await clearCachedChanges(googleFileSystem);
 
@@ -187,7 +196,7 @@ export default class FolderController extends Controller {
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const contentFileService = userConfigService.config.transform_subdir ? await transformedFileSystem.getSubFileService(userConfigService.config.transform_subdir) : transformedFileSystem;
+    const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
 
     if (method === 'delete') {
       const result = await this.removeFolder(driveId, contentFileService, filePath);
@@ -220,7 +229,7 @@ export default class FolderController extends Controller {
         : await markdownTreeProcessor.findByPath(contentFilePath);
 
       if (!treeItem) {
-        this.res.status(404).send('No local');
+        this.res.status(404).send({ message: 'No local' });
         return;
       }
 
@@ -279,7 +288,9 @@ export default class FolderController extends Controller {
                 path: filePath + file.fileName,
                 realFileName: file.fileName,
                 title: file.title,
-                mimeType: file.mimeType
+                mimeType: file.mimeType,
+                conflicting: file.type === 'conflict' ? file.conflicting : undefined,
+                redirectTo: file.type === 'redir' ? file.redirectTo : undefined
               };
            })
         };

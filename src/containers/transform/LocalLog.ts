@@ -72,4 +72,10 @@ export class LocalLog {
     }
     return null;
   }
+
+  async remove(filePath: string): Promise<boolean> {
+    const originalLength = this.rows.length;
+    this.rows = this.rows.filter(logRow => logRow.filePath !== filePath);
+    return originalLength !== this.rows.length;
+  }
 }

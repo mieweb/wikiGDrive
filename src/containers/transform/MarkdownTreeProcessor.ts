@@ -51,6 +51,8 @@ export class MarkdownTreeProcessor {
           mimeType: file.mimeType,
           modifiedTime: file.modifiedTime,
           version: file.version,
+          conflicting: file.type === 'conflict' ? file.conflicting : undefined,
+          redirectTo: file.type === 'redir' ? file.redirectTo : undefined,
           parentId,
           children: await this.internalRegenerateTree(subFilesService, file.id)
         };
@@ -65,6 +67,8 @@ export class MarkdownTreeProcessor {
           mimeType: file.mimeType,
           modifiedTime: file.modifiedTime,
           version: file.version,
+          conflicting: file.type === 'conflict' ? file.conflicting : undefined,
+          redirectTo: file.type === 'redir' ? file.redirectTo : undefined,
           parentId
         };
         retVal.push(item);

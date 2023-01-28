@@ -1,4 +1,4 @@
-import {CommonFileData} from './LocalFile';
+import {CommonFileData, ConflictData} from './LocalFile';
 import {FileId} from './model';
 
 export interface TreeItem extends CommonFileData {
@@ -7,4 +7,6 @@ export interface TreeItem extends CommonFileData {
   path: string;
   version?: number;
   children?: TreeItem[];
+  conflicting?: ConflictData[];
+  redirectTo?: FileId;
 }
