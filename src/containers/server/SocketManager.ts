@@ -6,6 +6,8 @@ import {GoogleFile} from '../../model/GoogleFile';
 import {WatchChangesContainer} from '../changes/WatchChangesContainer';
 import {FileContentService} from '../../utils/FileContentService';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
+import {UserConfigService} from '../google_folder/UserConfigService';
+import {getContentFileService} from '../transform/utils';
 
 export class SocketManager {
 
@@ -87,8 +89,12 @@ export class SocketManager {
   async getFilteredChanges(driveId: FileId, changes: GoogleFile[]): Promise<GoogleFile[]> {
     let filteredChanges = [];
 
-    const driveFileSystem = await this.fileService.getSubFileService(driveId + '_transform', '');
-    const markdownTreeProcessor = new MarkdownTreeProcessor(driveFileSystem);
+    const googleFileSystem = await this.fileService.getSubFileService(driveId, '');
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
+    const transformedFileSystem = await this.fileService.getSubFileService(driveId + '_transform', '');
+    const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
 
     if (!markdownTreeProcessor.isEmpty()) {

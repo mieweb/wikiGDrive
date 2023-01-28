@@ -18,6 +18,7 @@ import {ActionRunnerContainer} from '../action/ActionRunnerContainer';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
+import {getContentFileService} from '../transform/utils';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -407,16 +408,15 @@ export class JobManagerContainer extends Container {
     const transformContainer = new TransformContainer({
       name: folderId
     }, { filesIds });
-    const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
+    const transformedFileSystem = await this.filesService.getSubFileService(folderId + '_transform', '/');
     const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
     await transformContainer.mount2(
       googleFileSystem,
-      generatedFileService
+      transformedFileSystem
     );
 
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
-    transformContainer.setTransformSubDir(userConfigService.config.transform_subdir);
     transformContainer.onProgressNotify(({ completed, total, warnings }) => {
       if (!this.driveJobsMap[folderId]) {
         return;
@@ -436,7 +436,8 @@ export class JobManagerContainer extends Container {
     try {
       await transformContainer.run(folderId);
 
-      const markdownTreeProcessor = new MarkdownTreeProcessor(generatedFileService);
+      const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
+      const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
       await markdownTreeProcessor.load();
 
       if (filesIds.length > 0) {

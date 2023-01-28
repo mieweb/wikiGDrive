@@ -2,10 +2,12 @@
   <ul class="nav nav-pills flex-column files-list" v-if="files.length > 0" :title="folderPath">
     <li v-for="file in files" :key="(file.realFileName || file.fileName)" :title="file.title" @contextmenu.prevent.stop="showContextMenu($event, file)">
       <div class="nav-item files-list__item"
-           :class="{'active': (file.realFileName || file.fileName) === selectedName, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"
+           :class="{'active': (file.realFileName || file.fileName) === selectedName, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M', 'text-muted': isRedirect(file) || isConflict(file)}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
            @click="selectFile((file.realFileName || file.fileName), file)">
-        <i @click.prevent="openExternal(file)" class="fa-solid fa-folder" v-if="isFolder(file)"></i>
+        <i class="fa-solid fa-person-walking-luggage" v-if="isRedirect(file)"></i>
+        <i class="fa-solid fa-car-crash" v-else-if="isConflict(file)"></i>
+        <i @click.prevent="openExternal(file)" class="fa-solid fa-folder" v-else-if="isFolder(file)"></i>
         <i @click.prevent="openExternal(file)" class="fa-solid fa-file-image" v-else-if="isImage(file)"></i>
         <i @click.prevent="openExternal(file)" class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
         <i @click.prevent="openExternal(file)" v-else class="fa-solid fa-file"></i>

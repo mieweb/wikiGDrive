@@ -32,5 +32,9 @@ hugo --config="$CONFIG_TOML" --verbose --baseURL="$BASE_URL"
 CODE=$?
 
 rm -rf .hugo_build.lock
+if [[ -d /site/resources/_gen ]]
+then
+    rm -rf /site/resources/_gen
+fi
 
 exit $CODE

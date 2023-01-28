@@ -2,8 +2,12 @@ import {FileService, pathResolve} from './FileService';
 import identify from 'identify-filetype';
 
 export class FileContentService extends FileService {
-  constructor(protected readonly rootPath: string = '/', protected readonly virtualPath: string = '/') {
+
+  protected readonly virtualPath;
+
+  constructor(protected readonly rootPath: string = '/', virtualPath = '/') {
     super(rootPath);
+    this.virtualPath = virtualPath || '/';
   }
 
   async readFile(filePath: string): Promise<string> {
@@ -40,7 +44,10 @@ export class FileContentService extends FileService {
     if (!subPath) {
       throw new Error('Empty subPath');
     }
-    const subFileService = new FileContentService(pathResolve(this.rootPath, subPath), virtualPath !== undefined ? virtualPath : this.virtualPath + subPath + '/');
+    const subFileService = new FileContentService(
+      pathResolve(this.rootPath, subPath),
+      virtualPath !== undefined ? virtualPath : this.virtualPath + subPath + '/'
+    );
     await subFileService.mkdir('/');
     return subFileService;
   }
