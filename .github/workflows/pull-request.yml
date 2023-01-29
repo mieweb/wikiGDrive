@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - run: sudo apt-get install -y libkrb5-dev
 
@@ -22,6 +22,9 @@ jobs:
       - name: Install node_modules
         run: npm install
 
+      - name: Lint
+        run: npm run lint
+
       - name: Test
         run: npm run test
 
@@ -29,7 +32,7 @@ jobs:
     runs-on: wgd-dev
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Use Node.js 18.x
       uses: actions/setup-node@v3
