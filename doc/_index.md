@@ -2,9 +2,9 @@
 
 Google Drive to MarkDown synchronization
 
-[![CircleCI](https://circleci.com/gh/mieweb/wikiGDrive.svg?style=svg)](https://circleci.com/gh/mieweb/wikiGDrive)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/mieweb/wikiGDrive.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mieweb/wikiGDrive/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/mieweb/wikiGDrive.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mieweb/wikiGDrive/context:javascript)
+[![Develop Server Deploy](https://github.com/mieweb/wikiGDrive/actions/workflows/DevelopServerDeploy.yml/badge.svg?branch=develop&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/DevelopServerDeploy.yml)
+[![Prod Server Deploy](https://github.com/mieweb/wikiGDrive/actions/workflows/ProdServerDeploy.yml/badge.svg?branch=master&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/ProdServerDeploy.yml)
+[![CodeQL](https://github.com/mieweb/wikiGDrive/actions/workflows/codeql-analysis.yml/badge.svg?branch=master&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/codeql-analysis.yml?query=event%3Apush+branch%3Amaster+)
 
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
