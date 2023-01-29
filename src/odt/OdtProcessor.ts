@@ -41,7 +41,7 @@ export class OdtProcessor {
   }
 
   async unzipAssets(destinationDirectory: FileContentService, destinationName: string) {
-    const assetsDirectory = await destinationDirectory.getSubFileService(destinationName.replace('.md', '.assets'));
+    const assetsDirectory = await destinationDirectory.getSubFileService(destinationName.replace(/.md$/, '.assets'));
     await assetsDirectory.mkdir('');
     const written = [];
     for (const relativePath in this.files) {

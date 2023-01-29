@@ -150,9 +150,9 @@ export class TaskLocalFileTransform extends QueueTask {
 
       const converter = new OdtToMarkdown(document, styles, fileNameMap);
       if (this.realFileName === '_index.md') {
-        converter.setPicturesDir('./' + this.realFileName.replace('.md', '.assets/'));
+        converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'));
       } else {
-        converter.setPicturesDir('../' + this.realFileName.replace('.md', '.assets/'));
+        converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'));
       }
       markdown = await converter.convert();
       links = Array.from(converter.links);
@@ -193,7 +193,7 @@ export class TaskLocalFileTransform extends QueueTask {
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
     if (process.env.VERSION === 'dev') {
-      await this.destinationDirectory.writeFile(this.realFileName.replace('.md', '.debug.xml'), content);
+      await this.destinationDirectory.writeFile(this.realFileName.replace(/.md$/, '.debug.xml'), content);
     }
     this.localLinks.append(localFile.id, localFile.fileName, links);
   }
