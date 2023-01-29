@@ -236,14 +236,12 @@ export const UtilsMixin = {
       authPopup = window.open(authPath, '_auth', 'width=400,height=400,menubar=no,location=no,resizable=no,scrollbars=no,status=no');
     },
     async login(callback?) {
-      const response = await this.authenticatedClient.fetchApi('/auth', {
-        headers: {
-          'Accept': 'application/json'
-        },
-        return_error: true
-      });
-      const json = await response.json();
-      this.openAuthRedirWindow(json.authPath, callback);
+      const driveId = this.driveId ? this.driveId : 'none';
+      const urlSearchParams = new URLSearchParams();
+      // urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
+      urlSearchParams.set('redirectTo', window.location.pathname);
+      const authPath = '/auth/' + driveId + '?' + urlSearchParams.toString();
+      this.openAuthRedirWindow(authPath, callback);
     },
     async logout() {
       await this.authenticatedClient.fetchApi('/auth/logout', {

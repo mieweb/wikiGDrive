@@ -38,14 +38,12 @@ export default {
   },
   methods: {
     async login() {
-      const response = await this.authenticatedClient.fetchApi('/auth', {
-        headers: {
-          'Accept': 'application/json'
-        },
-        return_error: true
-      });
-      const json = await response.json();
-      this.openAuthRedirWindow(json.authPath);
+      const driveId = this.driveId ? this.driveId : 'none';
+      const urlSearchParams = new URLSearchParams();
+      // urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
+      urlSearchParams.set('redirectTo', window.location.pathname);
+      const authPath = '/auth/' + driveId + '?' + urlSearchParams.toString();
+      this.openAuthRedirWindow(authPath);
     },
   }
 };
