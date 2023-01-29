@@ -15,9 +15,9 @@ export async function executeOdtToMarkdown(workerData) {
 
   const converter = new OdtToMarkdown(document, styles, workerData.fileNameMap);
   if (workerData.realFileName === '_index.md') {
-    converter.setPicturesDir('./' + workerData.realFileName.replace('.md', '.assets/'));
+    converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'));
   } else {
-    converter.setPicturesDir('../' + workerData.realFileName.replace('.md', '.assets/'));
+    converter.setPicturesDir('../' + workerData.realFileName.replace(/.md$/, '.assets/'));
   }
   const markdown = await converter.convert();
   const links = Array.from(converter.links);

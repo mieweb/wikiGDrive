@@ -284,7 +284,7 @@ export class ActionRunnerContainer extends Container {
         const payload = JSON.parse(this.params.payload);
         additionalEnv['BRANCH'] = payload.branch;
         additionalEnv['MESSAGE'] = payload.message;
-        additionalEnv['FILES'] = payload.filePath.join(' ');
+        additionalEnv['FILES'] = Array.isArray(payload.filePaths) ? payload.filePaths.join(' ') : '';
       } catch (err) {
         this.logger.error(err.stack ? err.stack : err.message);
       }
