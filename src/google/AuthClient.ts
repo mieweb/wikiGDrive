@@ -49,7 +49,7 @@ async function refreshToken(client_id: string, client_secret: string, refresh_to
   return {
     access_token: json.access_token ? json.access_token.trim() : undefined,
     refresh_token,
-    expiry_date: new Date().getTime() + Math.floor(json.expires_in * 1000),
+    expiry_date: new Date().getTime() + Math.floor((json.expires_in - 60) * 1000),
     scopes: json.scope ? json.scope.split(' ') : [],
     token_type: json.token_type
   };
@@ -171,7 +171,7 @@ export class UserAuthClient implements HasAccessToken {
     const json = await response.json();
 
     const now = new Date().getTime();
-    const expiry_date = now + Math.floor(json.expires_in * 1000);
+    const expiry_date = now + Math.floor((json.expires_in - 60) * 1000);
 
     if (!json.refresh_token) {
       console.error('NOREF', json, body);
@@ -337,7 +337,7 @@ export class ServiceAuthClient implements HasAccessToken {
           token_type: 'Bearer'
         }
     */
-    this.expiry_date = new Date().getTime() + Math.floor(json.expires_in * 1000);
+    this.expiry_date = new Date().getTime() + Math.floor((json.expires_in - 60) * 1000);
     this.access_token = json.access_token ? json.access_token.trim() : undefined;
   }
 

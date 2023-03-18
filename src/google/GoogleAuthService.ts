@@ -42,7 +42,7 @@ export async function getTokenInfo(accessToken: string): Promise<TokenInfo> {
   const json = await response.json();
 
   return {
-    expiry_date: new Date().getTime() + json.expires_in * 1000,
+    expiry_date: new Date().getTime() + (json.expires_in - 60) * 1000,
     scopes: json.scope ? json.scope.split(' ') : [],
     access_type: json.access_type,
     azp: json.azp,
