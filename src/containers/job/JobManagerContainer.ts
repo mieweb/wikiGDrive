@@ -648,7 +648,7 @@ export class JobManagerContainer extends Container {
           type: 'sync',
           startAfter: now + 10 * 1000,
           payload: change.id,
-          title: 'Retry syncing file: ' + change.title
+          title: 'Retry syncing file: ' + (change.title || change.name)
         });
       }
     }
