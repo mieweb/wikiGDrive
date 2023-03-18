@@ -2,47 +2,50 @@
   <div class="container mainbar__content-height">
     <StatusToolBar :active-tab="activeTab" />
 
-    <div v-if="changes.length > 0" class="overflow-scroll">
-      <h4>Changed on gdocs</h4>
-      <table class="table table-bordered jobs-list">
-        <thead>
-        <tr>
-          <th>
-            Document
-          </th>
-          <th>
-            Modified
-          </th>
-        </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(file, idx) of fileChanges" :key="idx" :class="{ 'is-warning': selectedFile && file.id === selectedFile.id }">
-            <td>
-              <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
-              <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
-                <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
-              </button>
-            </td>
-            <td>
-              {{ file.modifiedTime }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
     <div>
-      <div class="card-footer" v-if="active_jobs.length === 0">
-        <div class="btn-group">
-          <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
-          <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
-          <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
+      <div class="card mt-3">
+        <div v-if="changes.length > 0" class="card-header">
+          Changed on gdocs
+        </div>
+        <div v-if="changes.length > 0" class="card-body">
+          <table class="table table-bordered jobs-list">
+            <thead>
+            <tr>
+              <th>
+                Document
+              </th>
+              <th>
+                Modified
+              </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(file, idx) of fileChanges" :key="idx" :class="{ 'is-warning': selectedFile && file.id === selectedFile.id }">
+              <td>
+                <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
+                <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
+                  <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+                </button>
+              </td>
+              <td>
+                {{ file.modifiedTime }}
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" v-if="active_jobs.length === 0">
+          <div class="btn-group">
+            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
+            <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
+            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
+            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
+          </div>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card mt-3">
         <div class="card-header">
           Jobs
         </div>
@@ -84,7 +87,7 @@
         </div>
       </div>
 
-      <div class="card" v-if="archive.length > 0">
+      <div class="card mt-3" v-if="archive.length > 0">
         <div class="card-header">
           Jobs done
         </div>
