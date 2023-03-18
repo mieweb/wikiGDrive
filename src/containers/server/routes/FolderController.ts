@@ -30,7 +30,7 @@ export const extToMime = {
   'svg': 'image/svg+xml'
 };
 
-function addPreviewUrl(hugo_theme, driveId) {
+export function addPreviewUrl(hugo_theme, driveId) {
   return (file) => {
     const previewMdUrl = '/' + driveId + (hugo_theme?.id ? `/${hugo_theme?.id}` : '/_manual') + file.path;
 
