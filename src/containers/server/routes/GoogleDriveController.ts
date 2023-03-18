@@ -1,6 +1,6 @@
 import {Controller, RouteErrorHandler, RouteGet, RouteParamPath, RouteResponse} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
-import {outputDirectory, ShareErrorHandler} from './FolderController';
+import {addPreviewUrl, outputDirectory, ShareErrorHandler} from './FolderController';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
@@ -23,12 +23,14 @@ export class GoogleDriveController extends Controller {
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
-    const [treeItem] = await markdownTreeProcessor.findById(fileId);
+    const [foundTreeItem] = await markdownTreeProcessor.findById(fileId);
 
-    if (!treeItem) {
+    if (!foundTreeItem) {
       this.res.status(404).send({ message: 'No local' });
       return;
     }
+
+    const treeItem = addPreviewUrl(userConfigService.config.hugo_theme, driveId)(foundTreeItem);
 
     const contentDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '/';
 
@@ -40,6 +42,7 @@ export class GoogleDriveController extends Controller {
     this.res.setHeader('wgd-path', treeItem.path || '');
     this.res.setHeader('wgd-file-name', treeItem.fileName || '');
     this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+    this.res.setHeader('wgd-preview-url', treeItem.previewUrl || '');
 
     const filePath = contentDir + treeItem.path;
     if (!await transformedFileSystem.exists(filePath)) {
