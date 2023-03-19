@@ -182,7 +182,9 @@ export default {
         if (baseName.indexOf('.') > -1) {
           const dirPath = '/' + parts.join('/');
           await this.fetchFolder(driveId, dirPath);
-          const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {};
+          const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {
+            path: filePath.replace('/' + driveId + this.contentDir, '')
+          };
           this.selectedFolder = null;
           this.selectedFile = file || {};
         } else {

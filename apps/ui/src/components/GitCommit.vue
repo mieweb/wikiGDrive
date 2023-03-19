@@ -22,7 +22,12 @@
       <div class="container d-flex flex-column w-vh-toolbar">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
-        <div v-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
+        <div v-if="!selectedFile.id" class="flex-grow-1">
+          <div class="alert-warning p-3 mb-3">
+            File deleted
+          </div>
+        </div>
+        <div v-else-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
           <h5>Git Diff</h5>
           <div v-for="(diff, idx) of diffs" :key="idx">
             <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>

@@ -67,7 +67,7 @@
         <i class="fa-solid fa-ellipsis-vertical"></i>
       </button>
 
-      <button v-if="isGoogleId(selectedFile.id) && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="openAddonView(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Google addon mode" title="Google addon mode" >
+      <button v-if="!isAddon && isGoogleId(selectedFile.id) && (isDocument(selectedFile) || isMarkdown(selectedFile))" @click.prevent.stop="openAddonView(selectedFile.id)" class="btn btn-white text-primary ml-1" type="button" aria-label="Google addon mode" title="Google addon mode" >
         <i class="fa-solid fa-arrows-left-right"></i>
       </button>
 
@@ -100,6 +100,11 @@ export default {
     return {
       commitMsg: ''
     };
+  },
+  computed: {
+    isAddon() {
+      return this.$route.name === 'gdocs';
+    }
   },
   methods: {
     async commitSingle() {
