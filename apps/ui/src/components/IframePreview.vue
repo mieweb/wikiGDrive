@@ -35,7 +35,7 @@ export default {
       return this.$root.drive || {};
     },
     imagePath() {
-      return '/api/file/' + this.driveId + this.folderPath + this.selectedFile.fileName;
+      return '/api/file/' + this.driveId + this.folderPath + '/' + this.selectedFile.fileName;
     }
   }
 };

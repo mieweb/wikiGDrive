@@ -38,7 +38,7 @@
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
         <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
-      <div v-if="(activeTab === 'html') && selectedFile.mimeType === 'application/binary'">
+      <div v-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
