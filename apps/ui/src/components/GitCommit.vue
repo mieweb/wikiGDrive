@@ -19,7 +19,7 @@
     </template>
 
     <form>
-      <div class="container d-flex flex-column w-vh-toolbar">
+      <div class="container d-flex flex-column w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
         <div v-if="!selectedFile.id" class="flex-grow-1">

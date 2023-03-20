@@ -26,6 +26,14 @@
       </span>
     </ToolButton>
 
+    <ToolButton
+        v-if="gitStats.initialized"
+        :active="activeTab === 'git_info'"
+        @click="setActiveTab('git_info')"
+        title="Status"
+        icon="fa-solid fa-circle-info" >
+    </ToolButton>
+
     <div class="flex-grow-1"></div>
 
     <ToolButton

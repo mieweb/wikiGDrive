@@ -1,5 +1,5 @@
 <template>
-  <div class="container d-flex flex-column w-vh-toolbar">
+  <div class="container d-flex flex-column w-vh-toolbar w-100">
     <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
     <div class="flex-grow-1 overflow-scroll">

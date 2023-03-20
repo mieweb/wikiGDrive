@@ -804,4 +804,14 @@ export class GitScanner {
       fs.unlinkSync(filePath);
     }
   }
+
+  async cmd(cmd: string) {
+    if (!['status', 'remote -v'].includes(cmd)) {
+      throw new Error('Forbidden command');
+    }
+
+    const result = await this.exec('git ' + cmd, { skipLogger: true });
+
+    return { stdout: result.stdout, stderr: result.stderr };
+  }
 }

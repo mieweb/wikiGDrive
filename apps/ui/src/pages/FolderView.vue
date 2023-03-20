@@ -1,5 +1,6 @@
 <template>
   <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
+  <GitInfo v-if="activeTab === 'git_info'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
 
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
@@ -72,6 +73,7 @@ import UserSettings from '../components/UserSettings.vue';
 import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
+import GitInfo from '../components/GitInfo.vue';
 import DriveTools from '../components/DriveTools.vue';
 import NavBar from '../components/NavBar.vue';
 import GitSettings from '../components/GitSettings.vue';
@@ -98,7 +100,8 @@ export default {
     DangerSettings,
     ActionsEditor,
     GitLog,
-    GitCommit
+    GitCommit,
+    GitInfo
   },
   mixins: [ UtilsMixin, UiMixin ],
   data() {
