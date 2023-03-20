@@ -7,7 +7,7 @@
       </NavBar>
     </template>
 
-    <template v-slot:sidebar="{ collapse }">
+    <template v-slot:sidebar>
       <ul class="nav files-list border-bottom dark">
         <li class="nav-item fs-4">
           <div class="files-list__item">
@@ -33,9 +33,6 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.ts';
 import {GitMixin} from './GitMixin.ts';
-import GitFooter from './GitFooter.vue';
-import GitToolBar from './GitToolBar.vue';
-import GitSideBar from './GitSideBar.vue';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NavBar from './NavBar.vue';
 import NavSearch from './NavSearch.vue';
@@ -46,9 +43,6 @@ Prism.manual = true;
 export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
-    GitFooter,
-    GitToolBar,
-    GitSideBar,
     BaseLayout,
     NavBar,
     NavSearch,
