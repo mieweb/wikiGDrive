@@ -128,6 +128,9 @@ export default {
     }
   },
   async created() {
+    this.emitter.on('tree:changed', () => {
+      this.fetch();
+    });
     await this.fetch();
   },
   methods: {

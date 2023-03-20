@@ -17,8 +17,6 @@ export const GitMixin = {
       if (json.error) {
         alert(json.error);
         window.location.hash = '#drive_logs';
-      } else {
-        alert('Commited');
       }
     },
     async commitBranch({ branch, message, filePath, removeFilePath }) {
