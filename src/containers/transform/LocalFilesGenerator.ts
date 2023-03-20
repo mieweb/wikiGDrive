@@ -8,7 +8,14 @@ const MAX_FILENAME_LENGTH = 200;
 
 export function getDesiredPath(name: string, mimeType?: string) {
   name = name.replace(/[&]+/g, ' and ');
-  name = name.replace(/[/,:()]+/g, ' ');
+  name = name
+    .replace(/[/,:()]+/g, ' ')
+    .replace(/\p{P}/gu, (match) => { // https://stackoverflow.com/questions/11598786/how-to-replace-non-printable-unicode-characters-javascript
+      if (['.', '_'].includes(match)) {
+        return match;
+      }
+      return ' ';
+    });
   name = name.trim();
   name = slugify(name, { replacement: '-', lower: true, remove: /[#*+~()'"!:@]/g });
 

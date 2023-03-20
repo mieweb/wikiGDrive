@@ -22,7 +22,7 @@
       <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
-        <div v-if="!selectedFile.id" class="flex-grow-1">
+        <div v-if="file_deleted" class="flex-grow-1">
           <div class="alert-warning p-3 mb-3">
             File deleted
           </div>
@@ -102,6 +102,9 @@ export default {
     };
   },
   computed: {
+    file_deleted() {
+      return !this.selectedFile.id && !['/toc.md'].includes(this.selectedFile.path);
+    },
     git_remote_url() {
       return this.user_config.remote_url || '';
     },

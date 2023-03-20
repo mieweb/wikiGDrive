@@ -37,6 +37,7 @@ import BaseLayout from '../layout/BaseLayout.vue';
 import NavBar from './NavBar.vue';
 import NavSearch from './NavSearch.vue';
 import NavTabs from './NavTabs.vue';
+import GitToolBar from './GitToolBar.vue';
 const Prism = window['Prism'];
 Prism.manual = true;
 
@@ -44,6 +45,7 @@ export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
     BaseLayout,
+    GitToolBar,
     NavBar,
     NavSearch,
     NavTabs
