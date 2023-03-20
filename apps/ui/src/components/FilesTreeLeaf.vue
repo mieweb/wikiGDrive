@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav nav-pills flex-column files-list" v-if="files.length > 0" :title="folderPath">
+  <ul class="nav nav-pills flex-column order-0 files-list" v-if="files.length > 0" :title="folderPath">
     <li v-for="file in files" :key="(file.realFileName || file.fileName)" :title="file.title" @contextmenu.prevent.stop="showContextMenu($event, file)">
       <div class="nav-item files-list__item"
            :class="{'active': (file.realFileName || file.fileName) === selectedName, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M', 'text-muted': isRedirect(file) || isConflict(file)}"

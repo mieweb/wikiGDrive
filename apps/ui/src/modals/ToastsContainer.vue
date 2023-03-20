@@ -5,7 +5,7 @@
         <strong class="me-auto">{{ toast.title }}</strong>
         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" @click.stop.prevent="$root.$removeToastAt(idx)"></button>
       </div>
-      <div class="toast-body">
+      <div class="toast-body overflow-scroll mh-90">
         {{ toast.description }}
         {{ toast.err }}
         <router-link :to="{ hash }" v-for="(title, hash) in links(toast)" :key="hash">

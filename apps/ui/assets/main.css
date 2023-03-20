@@ -167,3 +167,7 @@ a[disabled] {
 .border-left-0 {
   border-left: none;
 }
+
+.mh-90 {
+  max-height: 90vh !important;
+}

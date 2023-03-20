@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav nav-tabs nav-horizontal flex-column">
+  <ul class="nav nav-tabs nav-horizontal flex-column order-0 w-auto">
     <li class="nav-item">
       <a class="nav-link" :class="{active: $route.hash === '#drive_config'}" href="#drive_config">Sync settings</a>
     </li>

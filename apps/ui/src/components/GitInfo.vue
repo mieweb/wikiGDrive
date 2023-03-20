@@ -23,7 +23,7 @@
     </template>
 
     <form>
-      <div class="container d-flex flex-column w-vh-toolbar w-100">
+      <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
         <pre><code ref="code" class="language-diff line-numbers">{{ stderr }}{{ stdout }}</code></pre>
       </div>

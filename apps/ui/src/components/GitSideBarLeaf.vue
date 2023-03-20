@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav nav-pills flex-column files-list" v-if="tree.length > 0">
+  <ul class="nav nav-pills flex-column order-0 files-list" v-if="tree.length > 0">
     <li v-for="file in tree" :key="file.path" :title="file.path">
       <div class="nav-item files-list__item"
            :class="{'active': file.path === selectedPath, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"

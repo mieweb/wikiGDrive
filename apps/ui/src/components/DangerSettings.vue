@@ -5,12 +5,12 @@
     <div class="overflow-scroll d-flex flex-row mt-3">
       <SettingsSidebar />
 
-      <div class="card flex-column flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
+      <div class="card flex-column order-0 flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
         <div class="card-body">
 
           <h4>Transformed files</h4>
 
-          <button class="btn btn-danger" type="button" @click="nukeContentDir()"><i class="fa-solid fa-explosion"></i> Nuke markdown directory</button>
+          <button class="btn btn-danger" type="button" @click="nukeContentDir()"><i class="fa-solid fa-explosion"></i> Nuke markdown directory (with .git subdir)</button>
 
           <h4>Git</h4>
 
