@@ -192,7 +192,7 @@ export class GitScanner {
 
     await this.exec(`git pull --rebase origin ${remoteBranch}:master`, {
       env: {
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -vT git@github.com` : undefined
       }
     });
   }
