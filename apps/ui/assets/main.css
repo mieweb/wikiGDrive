@@ -168,6 +168,23 @@ a[disabled] {
   border-left: none;
 }
 
+.mh-auto {
+  min-height: auto !important;
+}
+
 .mh-90 {
   max-height: 90vh !important;
+}
+
+.table-layout-fixed {
+  table-layout: fixed;
+}
+
+.text-overflow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.direction-rtl {
+  direction: rtl;
 }

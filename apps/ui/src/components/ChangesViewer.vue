@@ -163,6 +163,7 @@ export default {
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type'),
           previewUrl: response.headers.get('wgd-preview-url'),
+          status: response.headers.get('wgd-git-status'),
           path: path
         };
 

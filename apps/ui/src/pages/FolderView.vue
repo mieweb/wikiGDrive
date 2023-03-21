@@ -33,10 +33,10 @@
       <ActionsEditor v-if="activeTab === 'actions'" :active-tab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
       <div v-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />

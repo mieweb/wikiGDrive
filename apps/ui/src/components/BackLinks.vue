@@ -1,14 +1,13 @@
 <template>
   <div class="x-container">
-    <table class="table table-hover table-clickable table-bordered" v-if="backlinks && backlinks.length > 0">
-      <thead>
-      <tr>
-        <th>File</th>
-      </tr>
-      </thead>
+    <h5>Back Links</h5>
+    <table class="table table-hover table-clickable table-bordered table-layout-fixed" v-if="backlinks && backlinks.length > 0">
       <tbody>
       <tr v-for="(item, idx) of backlinks" :key="idx" @click="selectFile(item.path)">
-        <td>{{item.name}}</td>
+        <td class="text-overflow">
+          <span :title="item.path">{{item.path}}</span>
+          <button class="btn btn-sm float-end" @click.prevent.stop="goToGDocs(item.fileId)"><i class="fa-brands fa-google-drive"></i></button>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -23,7 +22,8 @@ import {UtilsMixin} from './UtilsMixin.ts';
 export default {
   mixins: [UtilsMixin],
   props: {
-    selectedFile: Object
+    selectedFile: Object,
+    contentDir: String
   },
   data() {
     return {
@@ -34,17 +34,27 @@ export default {
     await this.fetch();
   },
   watch: {
-    async selectedFile() {
-      await this.fetch();
+    async selectedFile(a, b) {
+      if (a.id !== b.id || a.version !== b.version) {
+        await this.fetch();
+      }
     }
   },
   methods: {
     async fetch() {
-      this.backlinks = await this.FileClientService.getBacklinks(this.driveId, this.selectedFile.id);
+      if (this.selectedFile.id) {
+        this.backlinks = await this.FileClientService.getBacklinks(this.driveId, this.selectedFile.id);
+      } else {
+        this.backlinks = [];
+      }
     },
     selectFile(path) {
-      console.log(this.driveId, path);
-      this.$router.push('/drive/' + this.driveId + path);
+      if (this.isAddon) {
+        const routeData = this.$router.resolve('/drive/' + this.driveId + this.contentDir + path);
+        window.open(routeData.href, '_blank');
+      } else {
+        this.$router.push('/drive/' + this.driveId + this.contentDir + path);
+      }
     }
   }
 };

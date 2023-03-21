@@ -8,25 +8,37 @@
       <div class="toast-body overflow-scroll mh-90">
         {{ toast.description }}
         {{ toast.err }}
-        <router-link :to="{ hash }" v-for="(title, hash) in links(toast)" :key="hash">
+        <a :href="getHref(hash)" @click.prevent.stop="setActiveTab(hash.substring(1))" v-for="(title, hash) in links(toast)" :key="hash">
           {{ title }}
-        </router-link>
+        </a>
       </div>
     </div>
 
   </div>
 </template>
 <script lang="ts">
+import {UtilsMixin} from '../components/UtilsMixin';
+
 export default {
   data() {
     return {};
   },
+  mixins: [UtilsMixin],
   computed: {
+    fullDrivePath() {
+      if (this.isAddon) {
+        return '/drive/' + this.driveId;
+      }
+      return '';
+    },
     toasts() {
       return this.$root.toasts;
     }
   },
   methods: {
+    getHref(hash) {
+      return this.$router.resolve({ path: this.fullDrivePath, hash });
+    },
     links(toast) {
       if (toast.links && Object.keys(toast.links).length > 0) {
         return toast.links;

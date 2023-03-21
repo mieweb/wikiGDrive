@@ -59,7 +59,7 @@ export const CACHE_PATH = '.private/cached_git_status.json';
 
 const workingJobs = {};
 
-async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
+export async function getCachedChanges(logger: Logger, transformedFileSystem: FileContentService, contentFileService: FileContentService, googleFileSystem: FileContentService): Promise<GitChange[]> {
   let mtime = 0;
   try {
     const mtimeGit = await transformedFileSystem.getMtime('.git/refs/head/master');

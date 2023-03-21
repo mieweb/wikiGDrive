@@ -15,7 +15,7 @@
         <span v-if="last_job.durationStr" class="small text-muted">&nbsp;({{ last_job.durationStr }})</span>
       </div>
       <div class="col-4 text-end">
-        <button class="btn btn-white bg-white text-primary" v-if="selectedFile.id && !syncing" @click="syncSingle(selectedFile)" title="Sync single">
+        <button class="btn btn-white bg-white text-primary" v-if="selectedFile.id && !syncing" @click="syncSingle($event, selectedFile)" title="Sync single">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         </button>
       </div>
@@ -100,11 +100,6 @@ export default {
     return {
       commitMsg: ''
     };
-  },
-  computed: {
-    isAddon() {
-      return this.$route.name === 'gdocs';
-    }
   },
   methods: {
     async commitSingle() {
