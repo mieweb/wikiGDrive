@@ -366,7 +366,7 @@ export class ServerContainer extends Container {
       <JobManagerContainer>this.engine.getContainer('job_manager'), this.engine);
     app.use('/api/git', authenticate(this.logger), await gitController.getRouter());
 
-    const folderController = new FolderController('/api/file', this.filesService);
+    const folderController = new FolderController('/api/file', this.filesService, this.engine);
     app.use('/api/file', authenticate(this.logger), await folderController.getRouter());
 
     const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);

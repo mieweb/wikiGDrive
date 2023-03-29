@@ -18,6 +18,7 @@ import {Logger} from 'winston';
 import {clearCachedChanges} from '../../job/JobManagerContainer';
 import {getContentFileService} from '../../transform/utils';
 import {LocalLog} from '../../transform/LocalLog';
+import {ContainerEngine} from '../../../ContainerEngine';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -157,7 +158,7 @@ function inDir(dirPath: string, filePath: string) {
 
 export default class FolderController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService) {
+  constructor(subPath: string, private readonly filesService: FileContentService, private engine: ContainerEngine) {
     super(subPath);
   }
 
@@ -201,6 +202,11 @@ export default class FolderController extends Controller {
     if (method === 'delete') {
       const result = await this.removeFolder(driveId, contentFileService, filePath);
       this.res.status(200).send(JSON.stringify(result));
+
+      this.engine.emit(driveId, 'toasts:added', {
+        title: 'File deleted: ' + filePath,
+        type: 'tree:changed'
+      });
       return;
     }
 
