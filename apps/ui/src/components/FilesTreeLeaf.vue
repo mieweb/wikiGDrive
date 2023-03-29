@@ -12,7 +12,7 @@
         <i @click.prevent="openExternal(file)" class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
         <i @click.prevent="openExternal(file)" v-else class="fa-solid fa-file"></i>
         <span class="file-name">{{ file.realFileName || file.fileName }}</span>
-        <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', file)">
+        <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', { $event, file })">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap['transform'] || jobsMap[file.id]) }"></i>
           #{{ changesMap[file.id].version }}
         </span>

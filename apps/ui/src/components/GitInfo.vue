@@ -3,7 +3,7 @@
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <NavSearch />
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle($event.$event, $event.file)" />
       </NavBar>
     </template>
 

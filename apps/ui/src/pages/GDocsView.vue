@@ -4,7 +4,7 @@
   <BaseLayout v-else :sidebar="false" :share-email="shareEmail">
     <template v-slot:navbar>
       <NavBar :sidebar="false">
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle">
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle($event.$event, $event.file)">
           <li class="wgd-nav-item">
             <a class="position-relative" @click.prevent.stop="setActiveTab('html')" :href="fullDrivePath + '#html'">
               <i class="fa-brands fa-html5"></i>
@@ -133,6 +133,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
 import {disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
+import {GitMixin} from '../components/GitMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NotRegistered from './NotRegistered.vue';
 import NavBar from '../components/NavBar.vue';
@@ -146,7 +147,7 @@ dayjs.extend(relativeTime);
 
 export default {
   name: 'GDocsView',
-  mixins: [UtilsMixin, UiMixin],
+  mixins: [UtilsMixin, UiMixin, GitMixin],
   components: {
     NavBar,
     NavTabs,

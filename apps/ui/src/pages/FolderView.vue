@@ -5,12 +5,12 @@
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse" v-if="!notRegistered">
         <NavSearch />
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle" />
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle($event.$event, $event.file)" />
       </NavBar>
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" ref="filesTree" />
+      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle($event.$event, $event.file)" ref="filesTree" />
     </template>
 
     <template v-slot:default>
@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" @showLogs="showLogs" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
 
