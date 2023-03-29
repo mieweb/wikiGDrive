@@ -110,7 +110,7 @@
 
           <div v-if="selectedFile.status">
             <div class="input-groups">
-              <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
+              <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
             </div>
           </div>
           <div v-if="selectedFile.status" class="mb-3">
