@@ -4,9 +4,9 @@
     <table class="table table-hover table-clickable table-bordered table-layout-fixed" v-if="backlinks && backlinks.length > 0">
       <tbody>
       <tr v-for="(item, idx) of backlinks" :key="idx" @click="selectFile(item.path)">
-        <td class="text-overflow">
-          <span data-toggle="tooltip" data-placement="top" :title="item.path">{{item.path}}</span>
+        <td class="text-overflow" data-bs-toggle="tooltip" data-bs-placement="top" :title="item.path">
           <button class="btn btn-sm float-end" @click.prevent.stop="goToGDocs(item.fileId)"><i class="fa-brands fa-google-drive"></i></button>
+          <span>{{item.path}}</span>
         </td>
       </tr>
       </tbody>

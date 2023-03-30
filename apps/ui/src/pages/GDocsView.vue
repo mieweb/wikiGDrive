@@ -30,9 +30,9 @@
               <tbody>
                 <tr v-if="selectedFile.path">
                   <td>
-                    <div class="d-flex">
+                    <div class="d-flex" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="selectedFile.path">
                       <strong>Path:&nbsp;</strong>
-                      <span class="text-overflow direction-rtl" :title="selectedFile.path.replace(/^\//, '')"><span class="small text-muted">{{ selectedFile.path.replace(/^\//, '') }}</span></span>
+                      <span class="text-overflow"><span class="small text-muted">{{ selectedFile.path }}</span></span>
                     </div>
                   </td>
                 </tr>
