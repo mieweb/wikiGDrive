@@ -1,6 +1,8 @@
 <template>
   <div class="x-container">
-    <h5>Back Links</h5>
+    <slot name="header">
+      <h5>Back Links</h5>
+    </slot>
     <table class="table table-hover table-clickable table-bordered table-layout-fixed" v-if="backlinks && backlinks.length > 0">
       <tbody>
       <tr v-for="(item, idx) of backlinks" :key="idx" @click="selectFile(item.path)">

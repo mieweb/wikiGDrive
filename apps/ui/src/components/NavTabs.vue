@@ -32,7 +32,7 @@
         </span>
       </a>
     </li>
-    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'actions'].includes(activeTab) }" class="wgd-nav-item">
+    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'actions'].includes(activeTab) }" class="wgd-nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="jobsStr">
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')" :href="fullDrivePath + '#sync'">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">
@@ -61,6 +61,19 @@ export default {
     selectedFolder: Object
   },
   computed: {
+    jobsStr() {
+      let str = '';
+      for (const job of this.active_jobs) {
+        if (str) {
+          str += '\n, ';
+        }
+        str += job.title;
+        if ('running' === job.state) {
+          str += ' [running]';
+        }
+      }
+      return str;
+    },
     fullDrivePath() {
       if (this.isAddon) {
         if ('undefined' !== typeof this.selectedFile?.fileName) {

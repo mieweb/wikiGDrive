@@ -188,3 +188,7 @@ a[disabled] {
 .direction-rtl {
   direction: rtl;
 }
+
+.pl-1 {
+  padding-left: 10px !important;
+}

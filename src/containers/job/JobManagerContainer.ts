@@ -603,18 +603,26 @@ export class JobManagerContainer extends Container {
       const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
       const userConfigService = new UserConfigService(googleFileSystem);
       const userConfig = await userConfigService.load();
+      const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
+      const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
 
       switch (type) {
         case 'local':
           await gitScanner.resetToLocal({
             privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
           });
+
+          await markdownTreeProcessor.regenerateTree(driveId);
+          await markdownTreeProcessor.save();
           break;
         case 'remote':
           {
             await gitScanner.resetToRemote(userConfig.remote_branch, {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
+
+            await markdownTreeProcessor.regenerateTree(driveId);
+            await markdownTreeProcessor.save();
           }
           break;
       }

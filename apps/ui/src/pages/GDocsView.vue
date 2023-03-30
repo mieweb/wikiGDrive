@@ -23,91 +23,162 @@
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
       <div v-else>
-
         <div class="card mb-3" v-if="isDocument(selectedFile) || isImage(selectedFile) || isMarkdown(selectedFile)">
+          <div class="card-header">Markdown</div>
           <div class="card-body">
             <table class="table table-hover table-clickable table-bordered table-layout-fixed">
               <tbody>
-                <tr v-if="selectedFile.path">
-                  <td>
-                    <div class="d-flex" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="selectedFile.path">
-                      <strong>Path:&nbsp;</strong>
-                      <span class="text-overflow"><span class="small text-muted">{{ selectedFile.path }}</span></span>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="selectedFile.modifiedTime">
-                  <td class="text-overflow">
-                    <strong>Modified: </strong>
-                    <span>
+              <tr v-if="selectedFile.path">
+                <td>
+                  <div class="d-flex" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="selectedFile.path">
+                    <strong>Path:&nbsp;</strong>
+                    <span class="text-overflow"><span class="small text-muted">{{ selectedFile.path }}</span></span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="selectedFile.modifiedTime">
+                <td class="text-overflow">
+                  <strong>Modified: </strong>
+                  <span>
                     <span class="small text-muted">{{ selectedFile.modifiedTime }}</span>
                     <div class="small text-muted text-end">
-                      {{ agoStr }}
+                      <span v-html="agoStr(selectedFile)"></span>
                       <button class="btn btn-white bg-white text-primary btn-sm" v-if="selectedFile.id" @click="syncSingle($event, selectedFile)" title="Sync single">
                         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
                       </button>
                     </div>
                   </span>
-                  </td>
-                </tr>
-                <tr v-if="selectedFile.version">
-                  <td>
-                    <strong>Version: </strong>
-                    <span class="small text-muted">#{{ selectedFile.version }}</span>
-                  </td>
-                </tr>
-                <tr v-if="selectedFile.lastAuthor">
-                  <td>
-                    <strong>Last author: </strong>
-                    <span class="small text-muted">{{ selectedFile.lastAuthor }}</span>
-                  </td>
-                </tr>
+                </td>
+              </tr>
+              <tr v-if="selectedFile.version">
+                <td>
+                  <strong>Version: </strong>
+                  <span class="small text-muted">#{{ selectedFile.version }}</span>
+                </td>
+              </tr>
+              <tr v-if="selectedFile.lastAuthor">
+                <td>
+                  <strong>Last author: </strong>
+                  <span class="small text-muted text-overflow">{{ selectedFile.lastAuthor }}</span>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <GitFooter class="mt-3 mb-3">
-          <div class="d-flex">
-            <h5 class="flex-column order-0 mh-auto">
-              Git
-            </h5>
-            <ul class="nav flex-row flex-grow-1 flex-shrink-0 justify-content-end">
-              <ToolButton
-                  v-if="gitStats.initialized"
-                  :active="activeTab === 'git_log'"
-                  @click="setActiveTab('git_log')"
-                  title="History"
-                  icon="fa-solid fa-timeline">
+        <div class="card mb-3" v-if="!syncing && change">
+          <div class="card-header alert-warning">
+            Change available
+            <button class="btn btn-white bg-white text-primary btn-sm float-end" v-if="change.id" @click="syncSingle($event, selectedFile)" title="Sync single">
+              <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <table class="table table-hover table-clickable table-bordered table-layout-fixed">
+              <tbody>
+              <tr v-if="change.modifiedTime">
+                <td class="text-overflow">
+                  <strong>Modified: </strong>
+                  <span>
+                    <span class="small text-muted">{{ change.modifiedTime }}</span>
+                    <div class="small text-muted text-end">
+                      <span v-html="agoStr(change)"></span>
+                    </div>
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="change.version">
+                <td>
+                  <strong>Version: </strong>
+                  <span class="small text-muted">#{{ change.version }}</span>
+                </td>
+              </tr>
+              <tr v-if="change.lastAuthor">
+                <td>
+                  <strong>Last author: </strong>
+                  <span class="small text-muted">{{ change.lastAuthor }}</span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mb-3" v-if="!syncing && untransformed">
+          <div class="card-header alert-danger">
+            Not transformed
+            <button class="btn btn-white bg-white text-primary btn-sm float-end" @click="transformAll" title="Update your entire tree now">
+              <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <table class="table table-hover table-clickable table-bordered table-layout-fixed">
+              <tbody>
+              <tr v-if="untransformed.modifiedTime">
+                <td class="text-overflow">
+                  <strong>Modified: </strong>
+                  <span>
+                    <span class="small text-muted">{{ untransformed.modifiedTime }}</span>
+                    <div class="small text-muted text-end">
+                      <span v-html="agoStr(untransformed)"></span>
+                    </div>
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="untransformed.version">
+                <td>
+                  <strong>Version: </strong>
+                  <span class="small text-muted">#{{ untransformed.version }}</span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card-header d-flex" v-if="!syncing">
+          Git
+          <ul class="nav flex-row flex-grow-1 flex-shrink-0 justify-content-end">
+            <ToolButton
+                v-if="gitStats.initialized"
+                class="pl-1 p-0"
+                :active="activeTab === 'git_log'"
+                @click="setActiveTab('git_log')"
+                title="History"
+                icon="fa-solid fa-timeline">
                   <span class="badge" v-if="gitStats.headAhead > 0">
                     {{ gitStats.headAhead }} commits ahead remote
                   </span>
-                <span class="badge" v-if="gitStats.headAhead < 0">
+              <span class="badge" v-if="gitStats.headAhead < 0">
                     {{ -gitStats.headAhead }} commits behind remote
                   </span>
-              </ToolButton>
+            </ToolButton>
 
-              <ToolButton
-                  v-if="gitStats.initialized"
-                  :active="activeTab === 'git_commit'"
-                  @click="setActiveTab('git_commit')"
-                  title="Commit"
-                  icon="fa-solid fa-code-commit" >
+            <ToolButton
+                v-if="gitStats.initialized"
+                class="pl-1 p-0"
+                :active="activeTab === 'git_commit'"
+                @click="setActiveTab('git_commit')"
+                title="Commit"
+                icon="fa-solid fa-code-commit" >
                   <span class="badge" v-if="gitStats.unstaged > 0">
                     {{ gitStats.unstaged }} unstaged files
                   </span>
-              </ToolButton>
+            </ToolButton>
 
-              <ToolButton
-                  v-if="github_url"
-                  :href="github_url"
-                  target="github"
-                  title="GitHub"
-                  icon="fa-brands fa-github"
-              />
-            </ul>
-          </div>
-
+            <ToolButton
+                v-if="github_url"
+                class="pl-1 p-0"
+                :href="github_url"
+                target="github"
+                title="GitHub"
+                icon="fa-brands fa-github"
+            />
+          </ul>
+        </div>
+        <GitFooter class="mt-3 mb-3" v-if="!syncing">
           <div v-if="selectedFile.status">
             <div class="input-groups">
               <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
@@ -120,8 +191,11 @@
         </GitFooter>
 
         <div class="card">
+          <div class="card-header">Backlinks</div>
           <div class="card-body">
-            <BackLinks :selectedFile="selectedFile" :contentDir="contentDir" />
+            <BackLinks :selectedFile="selectedFile" :contentDir="contentDir">
+              <template v-slot:header><span></span></template>
+            </BackLinks>
           </div>
         </div>
       </div>
@@ -160,6 +234,7 @@ export default {
   },
   data() {
     return {
+      untransformed: null,
       commitMsg: '',
       activeTab: DEFAULT_TAB,
       folderPath: '',
@@ -170,6 +245,12 @@ export default {
       logsState: {
         from: undefined,
         until: undefined
+      },
+      agoStr: (val) => { // For some reason displays "[object Promise]" while used as method on PROD
+        if (!val || !val.modifiedTime) {
+          return '';
+        }
+        return '(' + dayjs().to(dayjs(val.modifiedTime)) + ')';
       }
     };
   },
@@ -177,11 +258,14 @@ export default {
     this.fetch();
   },
   computed: {
+    change() {
+      if (!this.selectedFile) {
+        return null;
+      }
+      return this.changes.find(change => change.id === this.selectedFile.id);
+    },
     git_remote_url() {
       return this.gitStats.remote_url || '';
-    },
-    agoStr() {
-      return '(' + dayjs().to(dayjs(this.selectedFile.modifiedTime)) + ')';
     },
     fullDrivePath() {
       if (this.isAddon) {
@@ -252,6 +336,8 @@ export default {
     async fetchFileById() {
       const fileId = this.$route.params.fileId;
 
+      this.untransformed = null;
+
       if (fileId) {
         try {
           const response = await this.authenticatedClient.fetchApi(`/api/gdrive/${this.driveId}/${fileId}`);
@@ -275,6 +361,17 @@ export default {
             status: response.headers.get('wgd-git-status'),
             lastAuthor: response.headers.get('wgd-last-author')
           };
+
+          if (response.headers.get('wgd-synced-modified-time')) {
+            if (response.headers.get('wgd-synced-modified-time') !== response.headers.get('wgd-google-modified-time') ||
+                response.headers.get('wgd-synced-version') !== response.headers.get('wgd-google-version')) {
+              this.untransformed = {
+                version: response.headers.get('wgd-synced-version'),
+                modifiedTime: response.headers.get('wgd-synced-modified-time'),
+              };
+            }
+          }
+
           this.notRegistered = false;
         } catch (err) {
           if (err.code === 404) {
