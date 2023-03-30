@@ -1,4 +1,4 @@
-import fs, {rmSync} from 'fs';
+import fs from 'fs';
 import path from 'path';
 import {exec, spawn} from 'child_process';
 
