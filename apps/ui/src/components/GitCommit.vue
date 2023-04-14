@@ -3,7 +3,7 @@
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <NavSearch />
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle" />
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle($event.$event, $event.file)" />
       </NavBar>
     </template>
 
@@ -19,10 +19,15 @@
     </template>
 
     <form>
-      <div class="container d-flex flex-column w-vh-toolbar">
+      <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
 
-        <div v-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
+        <div v-if="file_deleted" class="flex-grow-1">
+          <div class="alert-warning p-3 mb-3">
+            File deleted
+          </div>
+        </div>
+        <div v-else-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
           <h5>Git Diff</h5>
           <div v-for="(diff, idx) of diffs" :key="idx">
             <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
@@ -97,6 +102,9 @@ export default {
     };
   },
   computed: {
+    file_deleted() {
+      return !this.selectedFile.id && !['/toc.md'].includes(this.selectedFile.path);
+    },
     git_remote_url() {
       return this.user_config.remote_url || '';
     },
@@ -123,6 +131,9 @@ export default {
     }
   },
   async created() {
+    this.emitter.on('tree:changed', () => {
+      this.fetch();
+    });
     await this.fetch();
   },
   methods: {

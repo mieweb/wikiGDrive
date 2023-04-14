@@ -1,5 +1,6 @@
 <template>
   <div class="card">
+    <slot name="header"></slot>
     <div class="card-body">
       <slot></slot>
       <button v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Push</button>

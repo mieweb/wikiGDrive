@@ -1,16 +1,16 @@
 <template>
   <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
-
+  <GitInfo v-else-if="activeTab === 'git_info'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse" v-if="!notRegistered">
         <NavSearch />
-        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle" />
+        <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :selectedFolder="selectedFolder" @sync="syncSingle($event.$event, $event.file)" />
       </NavBar>
     </template>
 
     <template v-slot:sidebar="{ collapse }">
-      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle" ref="filesTree" />
+      <FilesTree :folder-path="folderPath" :not-registered="notRegistered" v-if="sidebar" @collapse="collapse" @sync="syncSingle($event.$event, $event.file)" ref="filesTree" />
     </template>
 
     <template v-slot:default>
@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle" @transform="transformSingle" @showLogs="showLogs" />
+      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
       <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
 
@@ -33,12 +33,12 @@
       <ActionsEditor v-if="activeTab === 'actions'" :active-tab="activeTab" />
 
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
-      <div v-if="(activeTab === 'html') && selectedFile.mimeType === 'application/binary'">
+      <div v-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
@@ -72,6 +72,7 @@ import UserSettings from '../components/UserSettings.vue';
 import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
+import GitInfo from '../components/GitInfo.vue';
 import DriveTools from '../components/DriveTools.vue';
 import NavBar from '../components/NavBar.vue';
 import GitSettings from '../components/GitSettings.vue';
@@ -98,7 +99,8 @@ export default {
     DangerSettings,
     ActionsEditor,
     GitLog,
-    GitCommit
+    GitCommit,
+    GitInfo
   },
   mixins: [ UtilsMixin, UiMixin ],
   data() {
@@ -182,7 +184,9 @@ export default {
         if (baseName.indexOf('.') > -1) {
           const dirPath = '/' + parts.join('/');
           await this.fetchFolder(driveId, dirPath);
-          const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {};
+          const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {
+            path: filePath.replace('/' + driveId + this.contentDir, '')
+          };
           this.selectedFolder = null;
           this.selectedFile = file || {};
         } else {

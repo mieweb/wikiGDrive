@@ -8,11 +8,11 @@
         </div>
         <div class="modal-body">
           <div class="d-flex share-container">
-            <div class="flex-column">
+            <div class="flex-column order-0">
               <iframe :src="'/share-drive/' + driveId" class="w-100 h-100"></iframe>
             </div>
             <div class="vr m-2"></div>
-            <div class="flex-column d-flex justify-content-center">
+            <div class="flex-column order-0 d-flex justify-content-center">
               <div class="m-3">
                 <h4 class="d-none d-md-inline mb-5"><i class="fa fa-arrow-left"></i> Follow this steps on the <span class="d-none d-md-inline">left</span><span class="d-md-none">below</span> side:</h4>
 

@@ -1,9 +1,10 @@
 import {Controller, RouteErrorHandler, RouteGet, RouteParamPath, RouteResponse} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
-import {addPreviewUrl, outputDirectory, ShareErrorHandler} from './FolderController';
+import {addPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 
 export class GoogleDriveController extends Controller {
 
@@ -43,6 +44,31 @@ export class GoogleDriveController extends Controller {
     this.res.setHeader('wgd-file-name', treeItem.fileName || '');
     this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
     this.res.setHeader('wgd-preview-url', treeItem.previewUrl || '');
+    this.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
+
+    const treeProcessor = new GoogleTreeProcessor(googleFileSystem);
+    await treeProcessor.load();
+    const [leaf] = await treeProcessor.findById(foundTreeItem.id);
+
+    if (leaf) {
+      this.res.setHeader('wgd-synced-version', leaf.version || '');
+      this.res.setHeader('wgd-synced-modified-time', leaf.modifiedTime || '');
+    }
+
+    const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+    const change = changes.find(change => change.path === (contentDir + treeItem.path).replace(/^\//, ''));
+    if (change) {
+      if (change.state.isNew) {
+        treeItem['status'] = 'N';
+      } else
+      if (change.state.isModified) {
+        treeItem['status'] = 'M';
+      } else
+      if (change.state.isDeleted) {
+        treeItem['status'] = 'D';
+      }
+    }
+    this.res.setHeader('wgd-git-status', treeItem['status'] || '');
 
     const filePath = contentDir + treeItem.path;
     if (!await transformedFileSystem.exists(filePath)) {

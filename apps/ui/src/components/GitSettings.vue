@@ -5,7 +5,7 @@
     <div class="overflow-scroll d-flex flex-row mt-3">
       <SettingsSidebar />
 
-      <div class="card flex-column flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
+      <div class="card flex-column order-0 flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
         <div class="card-body">
           <div class="form-group">
             <label>

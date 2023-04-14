@@ -15,6 +15,7 @@ import {CachedFileClientService} from './services/CachedFileClientService';
 import {addTelemetry} from './telemetry';
 import {markRaw} from 'vue';
 import AuthModal from './components/AuthModal.vue';
+import {Tooltip} from 'bootstrap';
 
 function completedJob(job) {
   return !['waiting', 'running'].includes(job.state);
@@ -212,6 +213,14 @@ const router = VueRouter.createRouter({
 });
 
 app.use(router);
+
+app.mixin({
+  mounted() {
+    new Tooltip(document.body, {
+      selector: '[data-bs-toggle=tooltip]'
+    });
+  },
+});
 
 const vm = app.mount('#app');
 

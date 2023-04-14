@@ -11,6 +11,10 @@ interface CommitPost {
   removeFilePath: string[];
 }
 
+interface CmdPost {
+  cmd: string;
+}
+
 export default class GitController extends Controller {
 
   constructor(subPath: string, private readonly filesService: FileContentService,
@@ -76,6 +80,16 @@ export default class GitController extends Controller {
       })
     });
     return { driveId, message };
+  }
+
+  @RoutePost('/:driveId/cmd')
+  async postCmd(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CmdPost, @RouteParamUser() user) {
+    const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    await gitScanner.initialize();
+
+    const output = await gitScanner.cmd(body.cmd);
+    return output;
   }
 
   @RoutePost('/:driveId/pull')

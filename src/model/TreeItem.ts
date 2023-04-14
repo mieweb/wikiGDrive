@@ -9,4 +9,5 @@ export interface TreeItem extends CommonFileData {
   children?: TreeItem[];
   conflicting?: ConflictData[];
   redirectTo?: FileId;
+  lastAuthor?: string;
 }

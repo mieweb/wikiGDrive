@@ -600,19 +600,29 @@ export class JobManagerContainer extends Container {
       const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
 
+      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const userConfigService = new UserConfigService(googleFileSystem);
+      const userConfig = await userConfigService.load();
+      const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
+      const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+
       switch (type) {
         case 'local':
-          await gitScanner.resetToLocal();
+          await gitScanner.resetToLocal({
+            privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+          });
+
+          await markdownTreeProcessor.regenerateTree(driveId);
+          await markdownTreeProcessor.save();
           break;
         case 'remote':
           {
-            const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
-            const userConfigService = new UserConfigService(googleFileSystem);
-            const userConfig = await userConfigService.load();
-
             await gitScanner.resetToRemote(userConfig.remote_branch, {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
+
+            await markdownTreeProcessor.regenerateTree(driveId);
+            await markdownTreeProcessor.save();
           }
           break;
       }

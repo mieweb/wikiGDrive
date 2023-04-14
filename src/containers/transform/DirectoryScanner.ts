@@ -163,7 +163,7 @@ export class DirectoryScanner {
           id: yamlFile ? yamlFile.id : 'TO_FILL',
           modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
           version: yamlFile ? yamlFile.version : undefined,
-          mimeType: 'application/binary',
+          mimeType: realFileName.endsWith('.pdf') ? 'application/pdf' : 'application/binary',
           title: stripConflict(realFileName)
         };
         this.files[realFileName] = binaryFile;

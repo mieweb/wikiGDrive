@@ -11,7 +11,7 @@
       <iframe :src="selectedFile.previewUrl + '?' + selectedFile.version" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
     </div>
 
-    <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" />
+    <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" :contentDir="contentDir" />
   </div>
 </template>
 <script>
@@ -34,7 +34,8 @@ export default {
     folderPath: {
       type: String
     },
-    selectedFile: Object
+    selectedFile: Object,
+    contentDir: String
   },
   data() {
     return {

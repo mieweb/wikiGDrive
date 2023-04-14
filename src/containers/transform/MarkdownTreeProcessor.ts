@@ -53,6 +53,7 @@ export class MarkdownTreeProcessor {
           version: file.version,
           conflicting: file.type === 'conflict' ? file.conflicting : undefined,
           redirectTo: file.type === 'redir' ? file.redirectTo : undefined,
+          lastAuthor: 'lastAuthor' in file ? file.lastAuthor : undefined,
           parentId,
           children: await this.internalRegenerateTree(subFilesService, file.id)
         };
@@ -69,6 +70,7 @@ export class MarkdownTreeProcessor {
           version: file.version,
           conflicting: file.type === 'conflict' ? file.conflicting : undefined,
           redirectTo: file.type === 'redir' ? file.redirectTo : undefined,
+          lastAuthor: 'lastAuthor' in file ? file.lastAuthor : undefined,
           parentId
         };
         retVal.push(item);

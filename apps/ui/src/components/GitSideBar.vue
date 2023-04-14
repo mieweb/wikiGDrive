@@ -59,7 +59,7 @@ export default {
               path: currentPath.substring(1)
             };
 
-            if (change.path === currentPath) {
+            if (change.path === newNode.path) {
               newNode.change = change;
               if (change.state.isDeleted) {
                 newNode.status = 'D';

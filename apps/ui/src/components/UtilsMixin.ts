@@ -18,6 +18,9 @@ export async function disableElement(event, handler) {
 
 export const UtilsMixin = {
   computed: {
+    isAddon() {
+      return this.$route.name === 'gdocs';
+    },
     isLogged() {
       return !!this.$root.user;
     },
@@ -109,6 +112,20 @@ export const UtilsMixin = {
   },
   methods: {
     setActiveTab(tab, selectedFilePath) {
+      if (this.isAddon) {
+        if (this.fullDrivePath) {
+          window.open(this.fullDrivePath + '#' + tab, '_blank');
+        } else
+        if ('undefined' !== typeof selectedFilePath) {
+          const routeData = this.$router.resolve('/drive/' + this.driveId + selectedFilePath + '#' + tab);
+          window.open(routeData.href, '_blank');
+        } else {
+          const routeData = this.$router.resolve('/drive/' + this.driveId + '#' + tab);
+          window.open(routeData.href, '_blank');
+        }
+        return;
+      }
+
       if ('undefined' !== typeof selectedFilePath) {
         this.$router.replace('/drive/' + this.driveId + selectedFilePath + '#' + tab);
       } else {
@@ -169,7 +186,7 @@ export const UtilsMixin = {
     copyEmail(event) {
       event.target.select();
     },
-    async syncSingle(selectedFile) {
+    async syncSingle(event, selectedFile) {
       await disableElement(event, async () => {
         await this.authenticatedClient.fetchApi(`/api/sync/${this.driveId}/${selectedFile.id}`, {
           method: 'post'

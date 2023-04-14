@@ -1,5 +1,5 @@
 <template>
-  <ul class="nav nav-pills flex-column files-list" v-if="files.length > 0" :title="folderPath">
+  <ul class="nav nav-pills flex-column order-0 files-list" v-if="files.length > 0" :title="folderPath">
     <li v-for="file in files" :key="(file.realFileName || file.fileName)" :title="file.title" @contextmenu.prevent.stop="showContextMenu($event, file)">
       <div class="nav-item files-list__item"
            :class="{'active': (file.realFileName || file.fileName) === selectedName, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M', 'text-muted': isRedirect(file) || isConflict(file)}"
@@ -12,7 +12,7 @@
         <i @click.prevent="openExternal(file)" class="fa-solid fa-file-lines" v-else-if="isDocument(file) || isMarkdown(file)"></i>
         <i @click.prevent="openExternal(file)" v-else class="fa-solid fa-file"></i>
         <span class="file-name">{{ file.realFileName || file.fileName }}</span>
-        <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', file)">
+        <span v-if="changesMap[file.id]" class="btn" @click.prevent="$emit('sync', { $event, file })">
           <i class="fa-solid fa-rotate" :class="{'fa-spin': (jobsMap['sync_all'] || jobsMap['transform'] || jobsMap[file.id]) }"></i>
           #{{ changesMap[file.id].version }}
         </span>

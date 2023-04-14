@@ -131,13 +131,16 @@ export class GitScanner {
       }
     }
 
-    const untrackedResult = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+    const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
     for (const line of untrackedResult.stdout.split('\n')) {
       if (!line.trim()) {
         continue;
       }
       retVal.push({
-        path: line.trim(),
+        path: line
+          .trim()
+          .replace(/^"/, '')
+          .replace(/"$/, ''),
         state: {
           isNew: true,
           isDeleted: false,
@@ -264,8 +267,12 @@ export class GitScanner {
     }
   }
 
-  async resetToLocal() {
-    await this.exec('git reset --hard HEAD');
+  async resetToLocal(sshParams?: SshParams) {
+    await this.exec('git reset --hard HEAD', {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+      }
+    });
     await this.removeUntracked();
   }
 
@@ -280,7 +287,11 @@ export class GitScanner {
       }
     });
 
-    await this.exec(`git reset --hard refs/remotes/origin/${remoteBranch}`);
+    await this.exec(`git reset --hard refs/remotes/origin/${remoteBranch}`, {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+      }
+    });
     await this.removeUntracked();
   }
 
@@ -321,7 +332,7 @@ export class GitScanner {
     }
 
     try {
-      const untrackedList = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
 
       for (const fileName of untrackedList.stdout.trim().split('\n')) {
         if (!fileName) {
@@ -557,7 +568,7 @@ export class GitScanner {
     const toCommit = new Set<string>();
 
     try {
-      const untrackedList = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
 
       for (const fileName of untrackedList.stdout.trim().split('\n')) {
         if (!fileName) {
@@ -730,7 +741,7 @@ export class GitScanner {
     let unstaged = 0;
 
     try {
-      const untrackedResult = await this.exec('git ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
       for (const line of untrackedResult.stdout.split('\n')) {
         if (!line.trim()) {
           continue;
@@ -771,7 +782,7 @@ export class GitScanner {
   }
 
   async removeUntracked() {
-    const result = await this.exec('git status', { skipLogger: true });
+    const result = await this.exec('git -c core.quotepath=off status', { skipLogger: true });
     let mode = 0;
 
     const untracked = [];
@@ -793,7 +804,11 @@ export class GitScanner {
             break;
           }
 
-          untracked.push(line.trim());
+          untracked.push(line
+            .trim()
+            .replace(/^"/, '')
+            .replace(/"$/, '')
+          );
 
           break;
       }
@@ -801,7 +816,17 @@ export class GitScanner {
 
     for (const fileName of untracked) {
       const filePath = path.join(this.rootPath, fileName);
-      fs.unlinkSync(filePath);
+      fs.rmSync(filePath, { recursive: true });
     }
+  }
+
+  async cmd(cmd: string) {
+    if (!['status', 'remote -v'].includes(cmd)) {
+      throw new Error('Forbidden command');
+    }
+
+    const result = await this.exec('git ' + cmd, { skipLogger: true });
+
+    return { stdout: result.stdout, stderr: result.stderr };
   }
 }

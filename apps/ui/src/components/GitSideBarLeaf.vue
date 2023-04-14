@@ -1,6 +1,6 @@
 <template>
-  <ul class="nav nav-pills flex-column files-list" v-if="tree.length > 0">
-    <li v-for="file in tree" :key="file.path" :title="file.path">
+  <ul class="nav nav-pills flex-column order-0 files-list" v-if="tree.length > 0">
+    <li v-for="file in tree" :key="file.path" :title="file.path" @contextmenu.prevent.stop="showContextMenu($event, file)">
       <div class="nav-item files-list__item"
            :class="{'active': file.path === selectedPath, 'text-git-del': file.status === 'D', 'text-git-new': file.status === 'N', 'text-git-mod': file.status === 'M'}"
            :style="{ 'padding-left': (8 + level * 16) + 'px'}"
@@ -28,12 +28,23 @@
       />
     </li>
   </ul>
+  <ContextMenu ref="contextMenu">
+    <template v-slot="slotProps">
+      <div class="dropdown" v-if="slotProps.ctx">
+        <ul class="dropdown-menu show">
+          <li><button class="dropdown-item" type="button" @click="removeFile(slotProps.ctx)"><i class="fa-solid fa-trash"></i> Remove</button></li>
+        </ul>
+      </div>
+    </template>
+  </ContextMenu>
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.ts';
+import ContextMenu from './ContextMenu.vue';
 
 export default {
   name: 'GitSideBarLeaf',
+  components: { ContextMenu },
   mixins: [ UtilsMixin ],
   props: {
     selectedPath: String,
@@ -66,6 +77,19 @@ export default {
         this.openWindow(`https://drive.google.com/open?id=${response.googleId}`, '_blank');
       }
     },
+    showContextMenu(event, ctx) {
+      this.$refs.contextMenu.open(event, ctx);
+    },
+    async removeFile(file) {
+      if (!window.confirm('Are you sure?')) {
+        this.$refs.contextMenu.close();
+        return;
+      }
+      const path = file.path;
+      await this.FileClientService.removeFile('/' + this.driveId + (path.startsWith('/') ? path : '/' + path));
+      this.$refs.contextMenu.close();
+      await this.fetchFolder();
+    }
   }
 };
 </script>

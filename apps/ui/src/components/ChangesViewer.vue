@@ -23,7 +23,7 @@
             <tr v-for="(file, idx) of fileChanges" :key="idx" :class="{ 'is-warning': selectedFile && file.id === selectedFile.id }">
               <td>
                 <a href="#" @click.prevent="gotoFile(file.id)">{{ file.name }} #{{ file.version }}</a>
-                <button class="btn is-right" @click.prevent="$emit('sync', file)" v-if="!syncing">
+                <button class="btn is-right" @click.prevent="$emit('sync', { $event, file})" v-if="!syncing">
                   <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
                 </button>
               </td>
@@ -36,7 +36,7 @@
         </div>
         <div class="card-footer" v-if="active_jobs.length === 0">
           <div class="btn-group">
-            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', selectedFile)">Sync Single</a>
+            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
             <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
             <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
             <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
@@ -163,6 +163,7 @@ export default {
           fileId: response.headers.get('wgd-google-id'),
           mimeType: response.headers.get('wgd-mime-type'),
           previewUrl: response.headers.get('wgd-preview-url'),
+          status: response.headers.get('wgd-git-status'),
           path: path
         };
 
