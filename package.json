@@ -101,7 +101,7 @@
     "mathjs": "10.5.0",
     "minimist": "1.2.6",
     "mitt": "^3.0.0",
-    "nunjucks": "^3.2.3",
+    "nunjucks": "^3.2.4",
     "open": "^7.4.2",
     "prismjs": "1.29.0",
     "relateurl": "0.2.7",
