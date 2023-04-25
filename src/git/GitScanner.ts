@@ -89,6 +89,8 @@ export class GitScanner {
   async changes(): Promise<GitChange[]> {
     const retVal = [];
 
+    const skipOthers = false;
+
     try {
       const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
       for (const line of result.stdout.split('\n')) {
@@ -126,12 +128,16 @@ export class GitScanner {
         }
       }
     } catch (err) {
-      if (!err.message.indexOf('fatal: bad revision')) {
+      if (err.message.indexOf('fatal: bad revision') === -1) {
         throw err;
       }
+      // skipOthers = true;
     }
 
-    const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
+    const untrackedResult = await this.exec(
+      skipOthers ? 'git -c core.quotepath=off ls-files --exclude-standard' : 'git -c core.quotepath=off ls-files --others --exclude-standard',
+      { skipLogger: true }
+    );
     for (const line of untrackedResult.stdout.split('\n')) {
       if (!line.trim()) {
         continue;
