@@ -52,13 +52,19 @@ jobs:
     - name: Build action runner
       run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
-    - name: Stop
-      run: docker stop wikigdrive-prod
+    - name: Stop and remove
+      run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
       continue-on-error: true
 
-    - name: Remove
-      run: docker rm wikigdrive-prod
-      continue-on-error: true
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/doc:/site/doc" \
+        -v "${GITHUB_WORKSPACE}/themes:/site/themes" \
+        -v "${GITHUB_WORKSPACE}/config.toml:/site/config.toml" \
+        -v "/var/www/wikigdrive.com:/site/dist/hugo" \
+        --env CONFIG_TOML="/site/config.toml" --env BASE_URL="https://wikigdrive.com" \
+        wgd-action-runner:prod /steps/step_render_hugo
 
     - name: Start
       run: |
