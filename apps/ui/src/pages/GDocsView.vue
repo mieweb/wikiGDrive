@@ -7,7 +7,7 @@
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle($event.$event, $event.file)">
           <li class="wgd-nav-item">
             <a class="position-relative" @click.prevent.stop="setActiveTab('html')" :href="fullDrivePath + '#html'">
-              <i class="fa-brands fa-html5"></i>
+              <i class="fa-solid fa-eye"></i>
             </a>
           </li>
 
