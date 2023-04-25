@@ -41,7 +41,7 @@
       </button>
 
       <button v-if="activeTab !== 'html'" @click.prevent.stop="setActiveTab('html')" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview" title="Preview">
-        <i class="fa-brands fa-html5 me-1"></i>
+        <i class="fa-solid fa-eye me-1"></i>
       </button>
       <button v-if="activeTab !== 'markdown'" @click.prevent.stop="setActiveTab('markdown')" class="btn btn-white text-primary ml-1" type="button" aria-label="Markdown" title="Markdown" >
         <i class="fa-brands fa-markdown me-1"></i>
