@@ -2,29 +2,34 @@
   <ul class="navbar-nav mr-auto">
     <slot></slot>
     <li :class="{ 'active': activeTab === 'html' || activeTab === 'markdown' }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Preview"
         v-if="!isAddon && (isDocument(selectedFile) || isMarkdown(selectedFile) || isImage(selectedFile))">
       <a @click.prevent.stop="setActiveTab('html')" href="#html">
         <i class="fa-solid fa-eye"></i>
       </a>
     </li>
     <li :class="{ 'active': !activeTab }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Git"
         v-else-if="!isAddon && (activeTab === 'git_commit')">
       <a @click.prevent.stop="setActiveTab('')" href="#">
         <i class="fa-solid fa-eye"></i>
       </a>
     </li>
     <li :class="{ 'active': !activeTab || activeTab === 'html' || activeTab === 'markdown' }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Preview"
         v-else-if="!isAddon && selectedFolder">
       <a @click.prevent.stop="setActiveTab('')"  href="#">
         <i class="fa-solid fa-eye"></i>
       </a>
     </li>
-    <li v-if="!isAddon && isGDocsPreview" :class="{ 'active': activeTab.startsWith('drive_') }" class="wgd-nav-item">
+    <li v-if="!isAddon && isGDocsPreview" :class="{ 'active': activeTab.startsWith('drive_') }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Google drive">
       <a @click.prevent.stop="setActiveTab('drive_tools')" href="#drive_tools">
         <i class="fa-brands fa-google-drive"></i>
       </a>
     </li>
-    <li :class="{ 'active': activeTab.startsWith('git_') }" class="wgd-nav-item">
+    <li :class="{ 'active': activeTab.startsWith('git_') }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Git">
       <a class="position-relative" @click.prevent.stop="setActiveTab('git_commit')" :href="fullDrivePath + '#git_commit'">
         <i class="fa-brands fa-git-square"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="gitStats.unstaged > 0">
@@ -32,7 +37,8 @@
         </span>
       </a>
     </li>
-    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'actions'].includes(activeTab) }" class="wgd-nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="jobsStr">
+    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'actions'].includes(activeTab) }" class="wgd-nav-item"
+        data-bs-toggle="tooltip" data-bs-placement="bottom" :title="jobsStr || 'Sync'">
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')" :href="fullDrivePath + '#sync'">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
         <span class="position-absolute top-0 changes-badge translate-middle badge rounded-pill bg-danger" v-if="fileChanges.length > 0">

@@ -5,13 +5,13 @@
     <template v-slot:navbar>
       <NavBar :sidebar="false">
         <NavTabs :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" @sync="syncSingle($event.$event, $event.file)">
-          <li class="wgd-nav-item">
+          <li class="wgd-nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Preview">
             <a class="position-relative" @click.prevent.stop="setActiveTab('html')" :href="fullDrivePath + '#html'">
               <i class="fa-solid fa-eye"></i>
             </a>
           </li>
 
-          <li class="wgd-nav-item">
+          <li class="wgd-nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Markdown">
             <a class="position-relative" @click.prevent.stop="setActiveTab('markdown')" :href="fullDrivePath + '#markdown'">
               <i class="fa-brands fa-markdown"></i>
             </a>
