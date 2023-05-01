@@ -5,6 +5,33 @@ export class FileClientService {
   constructor(private authenticatedClient) {
   }
 
+  async saveFile(path, content) {
+    const response = await this.authenticatedClient.fetchApi(`/api/file${path}`, {
+      method: 'put',
+      headers: {
+        'Content-type': 'text/plain'
+      },
+      body: content
+    });
+    delete this.currentFetches[path];
+
+    const retVal = {
+      path,
+      googleId: response.headers.get('wgd-google-id'),
+      mimeType: response.headers.get('Content-type').split(';')[0].trim(),
+      treeEmpty: response.headers.get('wgd-tree-empty') === 'true',
+      treeVersion: response.headers.get('wgd-tree-version'),
+      contentDir: response.headers.get('wgd-content-dir'),
+      files: undefined
+    };
+
+    const text = await response.text();
+    return {
+      ...retVal,
+      content: text
+    };
+  }
+
   async getFile(path) {
     if (this.currentFetches[path]) {
       return this.currentFetches[path];
@@ -27,20 +54,20 @@ export class FileClientService {
 
         if (retVal.mimeType === 'application/vnd.google-apps.folder') {
           retVal.files = await response.json();
-          delete this.currentFetches[path];
           resolve(retVal);
+          return;
         }
 
         const text = await response.text();
 
-        delete this.currentFetches[path];
         resolve({
           ...retVal,
           content: text
         });
       } catch (err) {
-        delete this.currentFetches[path];
         reject(err);
+      } finally {
+        delete this.currentFetches[path];
       }
     });
 

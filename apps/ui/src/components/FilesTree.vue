@@ -33,7 +33,7 @@ export default {
       return this.$route.path.replace(`/drive/${driveId}${this.folderPath}/`, '');
     }
   },
-  emits: ['collapse', 'sync'],
+  emits: ['collapse', 'sync', 'selected'],
   mounted() {
     window.addEventListener('resize', () => {
       const sidebarEl = document.querySelector('.mainbar__sidebar');

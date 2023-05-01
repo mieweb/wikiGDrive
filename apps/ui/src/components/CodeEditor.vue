@@ -1,7 +1,7 @@
 <template>
   <PrismEditor
       class="form-control"
-      language="toml"
+      :language="lang"
       :model-value="innerValue"
       @update:modelValue="$emit('update:modelValue', $event)"
       :highlight="highlight"
@@ -20,7 +20,8 @@ export default {
   emits: ['update:modelValue'],
   props: {
     lang: {
-      type: String
+      type: String,
+      default: 'toml'
     },
     modelValue: {
       type: String

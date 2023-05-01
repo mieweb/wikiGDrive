@@ -3,7 +3,7 @@ import {
   RouteErrorHandler,
   RouteParamPath, RouteParamMethod,
   RouteResponse,
-  RouteUse
+  RouteUse, RouteParamBody
 } from './Controller';
 import {MimeTypes} from '../../../model/GoogleFile';
 import {AuthConfig} from '../../../model/AccountJson';
@@ -190,7 +190,8 @@ export default class FolderController extends Controller {
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder(@RouteParamMethod() method: string, @RouteParamPath('driveId') driveId: string) {
+  async getFolder(@RouteParamMethod() method: string, @RouteParamPath('driveId') driveId: string,
+                  @RouteParamBody() body: string) {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
@@ -208,6 +209,19 @@ export default class FolderController extends Controller {
         type: 'tree:changed'
       });
       return;
+    }
+
+    if (method === 'put') {
+      if (!await transformedFileSystem.exists(filePath)) {
+        this.res.status(404).send('Not exist in transformedFileSystem');
+        return;
+      }
+      await transformedFileSystem.writeFile(filePath, body);
+      await clearCachedChanges(googleFileSystem);
+      this.engine.emit(driveId, 'toasts:added', {
+        title: 'File modified: ' + filePath,
+        type: 'tree:changed'
+      });
     }
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
