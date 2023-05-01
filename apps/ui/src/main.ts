@@ -50,18 +50,20 @@ const app: Vue.App = Vue.createApp({
   },
   async created() {
     this.authenticatedClient.app = this.$root;
-    this.emitter.on('*', (type) => {
+    this.emitter.on('*', async (type) => {
       switch (type) {
         case 'run_action:done':
         case 'git_pull:done':
         case 'git_push:done':
         case 'git_reset:done':
         case 'git_commit:done':
-          this.FileClientService.clearCache();
           if (this.drive?.id) {
-            this.changeDrive(this.drive.id);
+            await this.changeDrive(this.drive.id);
           }
           this.emitter.emit('tree:changed');
+          break;
+        case 'tree:changed':
+          await this.FileClientService.clearCache();
           break;
       }
     });
@@ -228,7 +230,7 @@ router.beforeEach(async (to, from, next) => {
   const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
   const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
   if (toDriveId !== fromDriveId) {
-    (<any>vm).FileClientService.clearCache();
+    await (<any>vm).FileClientService.clearCache();
     await (<any>vm).changeDrive(toDriveId);
   }
   next();

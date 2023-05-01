@@ -29,7 +29,7 @@
         :active="activeTab === 'actions'"
         :to="{ name: 'drive', params: { driveId }, hash: '#actions' }"
         icon="fa-solid fa-circle-play"
-        title="Actions"
+        title="Workflows"
     />
     <ToolButton
         v-if="!isGDocsPreview"

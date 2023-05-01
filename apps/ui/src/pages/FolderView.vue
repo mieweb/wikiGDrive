@@ -35,21 +35,28 @@
       <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
         <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
-      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
+      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
         <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
       </div>
-      <div v-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
+      <div v-else-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
         <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
+      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType && selectedFile.mimeType.startsWith('text/')">
+        <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+      </div>
+      <div v-else>
 
-      <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
-                  :folderPath="folderPath"
-                  :selectedFile="selectedFile"
-                  :selected-folder="selectedFolder"
-                  :active-tab="activeTab"
-                  :tree-empty="treeEmpty"
-                  :tree-version="treeVersion"
-      />
+        <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
+                    :folderPath="folderPath"
+                    :selectedFile="selectedFile"
+                    :selected-folder="selectedFolder"
+                    :active-tab="activeTab"
+                    :tree-empty="treeEmpty"
+                    :tree-version="treeVersion"
+        />
+        <IframePreview v-else :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+      </div>
+
 
     </template>
   </BaseLayout>
@@ -63,6 +70,7 @@ import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
 import ImagePreview from '../components/ImagePreview.vue';
 import IframePreview from '../components/IframePreview.vue';
+import FileEditor from '../components/FileEditor.vue';
 import NavTabs from '../components/NavTabs.vue';
 import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
@@ -92,6 +100,7 @@ export default {
     FilePreview,
     ImagePreview,
     IframePreview,
+    FileEditor,
     LogsViewer,
     ZipkinViewer,
     ChangesViewer,

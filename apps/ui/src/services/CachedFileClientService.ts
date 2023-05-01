@@ -8,15 +8,22 @@ export class CachedFileClientService extends FileClientService {
     this.cache = {};
   }
 
-  clearCache() {
+  async clearCache() {
     this.cache = {};
   }
 
   async getFile(path) {
-    if (!this.cache[path]) {
-      this.cache[path] = await super.getFile(path);
+    if (this.cache[path]) {
+      return this.cache[path];
     }
-    return this.cache[path];
+    const result = await super.getFile(path);
+    this.cache[path] = result;
+    return result;
+  }
+
+  async saveFile(path, content) {
+    delete this.cache[path];
+    return super.saveFile(path, content);
   }
 
   async removeFile(path) {

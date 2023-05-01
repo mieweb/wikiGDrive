@@ -78,7 +78,9 @@ export default {
   },
   created() {
     this.emitter.on('tree:changed', () => {
-      this.fetchFolder();
+      setTimeout(() => {
+        this.fetchFolder();
+      }, 100);
     });
     this.fetchFolder();
   },
@@ -96,7 +98,7 @@ export default {
         return;
       }
       const pathContent = await this.FileClientService.getFile('/' + this.driveId + this.folderPath);
-      this.files = pathContent.files || [];
+      this.files = pathContent?.files || [];
       this.expanded = {};
       for (const file of this.files) {
         if (inDir(file.fileName, this.selectedName)) {
