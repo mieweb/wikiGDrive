@@ -3,7 +3,7 @@
     <slot></slot>
     <li :class="{ 'active': activeTab === 'html' || activeTab === 'markdown' }" class="wgd-nav-item"
         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Preview"
-        v-if="!isAddon && (isDocument(selectedFile) || isMarkdown(selectedFile) || isImage(selectedFile))">
+        v-if="!isAddon && selectedFile">
       <a @click.prevent.stop="setActiveTab('html')" href="#html">
         <i class="fa-solid fa-eye"></i>
       </a>
@@ -37,7 +37,7 @@
         </span>
       </a>
     </li>
-    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'actions'].includes(activeTab) }" class="wgd-nav-item"
+    <li :class="{ 'active': ['performance', 'drive_logs', 'drive_config', 'drive_danger', 'sync', 'workflows'].includes(activeTab) }" class="wgd-nav-item"
         data-bs-toggle="tooltip" data-bs-placement="bottom" :title="jobsStr || 'Sync'">
       <a class="position-relative" @click.prevent.stop="setActiveTab('sync')" :href="fullDrivePath + '#sync'">
         <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
