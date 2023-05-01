@@ -235,5 +235,14 @@ router.beforeEach(async (to, from, next) => {
   }
   next();
 });
+router.afterEach(() => {
+  const elements = document.querySelectorAll('[data-bs-toggle=tooltip]');
+  elements.forEach(element => {
+    const tooltip = Tooltip.getInstance(element);
+    if (tooltip) {
+      tooltip.hide();
+    }
+  });
+});
 
 addTelemetry(app);
