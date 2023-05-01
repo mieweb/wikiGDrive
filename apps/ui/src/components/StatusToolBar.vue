@@ -26,8 +26,8 @@
 
     <ToolButton
         v-if="!isGDocsPreview"
-        :active="activeTab === 'actions'"
-        :to="{ name: 'drive', params: { driveId }, hash: '#actions' }"
+        :active="activeTab === 'workflows'"
+        :to="{ name: 'drive', params: { driveId }, hash: '#workflows' }"
         icon="fa-solid fa-circle-play"
         title="Workflows"
     />

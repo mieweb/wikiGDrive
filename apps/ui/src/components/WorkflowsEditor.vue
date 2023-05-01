@@ -25,7 +25,7 @@ import StatusToolBar from './StatusToolBar.vue';
 import CodeEditor from './CodeEditor.vue';
 
 export default {
-  name: 'ActionsEditor',
+  name: 'WorkflowsEditor',
   mixins: [UtilsMixin],
   components: {
     StatusToolBar, CodeEditor
