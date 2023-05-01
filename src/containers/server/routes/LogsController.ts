@@ -27,7 +27,7 @@ export class LogsController extends Controller {
       until: until ? new Date(+until) : undefined,
       order: order || 'asc',
       start: 0,
-      limit: 1000,
+      limit: 100,
       fields: undefined
     };
 
