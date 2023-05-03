@@ -46,7 +46,7 @@ after
 
 Image from file:
 
-<object type="image/svg+xml" data="gdoc:1jEOoXqPeqiU_z2QLiC-w6TfPjmiJY4wyLZqoG-OF9Xc" />
+<object type="image/svg+xml" data="gdoc:1jEOoXqPeqiU_z2QLiC-w6TfPjmiJY4wyLZqoG-OF9Xc" ></object>
 
 done
 
