@@ -340,15 +340,22 @@ export class GitScanner {
     try {
       const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
 
-      for (const fileName of untrackedList.stdout.trim().split('\n')) {
-        if (!fileName) {
-          continue;
+      const list = untrackedList.stdout.trim().split('\n')
+        .filter(fileName => !!fileName)
+        .filter(fileName => fileName.indexOf('.assets/') === -1);
+
+      let fileNamesStr = '';
+      for (const fileName of list) {
+        if (fileNamesStr.length > 1000) {
+          await this.exec(`git add -N ${fileNamesStr}`);
+          fileNamesStr = '';
         }
-        if (fileName.indexOf('.assets/') > -1) {
-          continue;
-        }
-        await this.exec(`git add -N ${sanitize(fileName)}`);
+        fileNamesStr += ' ' + sanitize(fileName);
       }
+      if (fileNamesStr.length > 0) {
+        await this.exec(`git add -N ${fileNamesStr}`);
+      }
+
 
       const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: true });
 
@@ -576,14 +583,20 @@ export class GitScanner {
     try {
       const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
 
-      for (const fileName of untrackedList.stdout.trim().split('\n')) {
-        if (!fileName) {
-          continue;
+      const list = untrackedList.stdout.trim().split('\n')
+        .filter(fileName => !!fileName)
+        .filter(fileName => fileName.endsWith('.md'));
+
+      let fileNamesStr = '';
+      for (const fileName of list) {
+        if (fileNamesStr.length > 1000) {
+          await this.exec(`git add -N ${fileNamesStr}`);
+          fileNamesStr = '';
         }
-        if (!fileName.endsWith('.md')) {
-          continue;
-        }
-        await this.exec(`git add -N ${sanitize(fileName)}`);
+        fileNamesStr += ' ' + sanitize(fileName);
+      }
+      if (fileNamesStr.length > 0) {
+        await this.exec(`git add -N ${fileNamesStr}`);
       }
 
       const childProcess = spawn('git',
