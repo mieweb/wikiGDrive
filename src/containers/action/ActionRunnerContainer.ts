@@ -280,7 +280,7 @@ export class ActionRunnerContainer extends Container {
     const additionalEnv = {};
     additionalEnv['REMOTE_BRANCH'] = this.userConfigService.config?.remote_branch || 'master';
 
-    if (this.params.payload) {
+    if (this.params.payload && this.params.payload.startsWith('{')) {
       try {
         const payload = JSON.parse(this.params.payload);
         additionalEnv['BRANCH'] = payload.branch || '';
