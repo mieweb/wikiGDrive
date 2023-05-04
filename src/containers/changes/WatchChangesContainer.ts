@@ -103,9 +103,13 @@ export class WatchChangesContainer extends Container {
     if (this.intervals[driveId]) {
       return;
     }
-    this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
     this.intervals[driveId] = setInterval(async () => {
       try {
+        if (!this.lastToken[driveId]) {
+          this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
+          return;
+        }
+
         await this.watchDriveChanges(driveId);
       } catch (err) {
         this.logger.warn(err.message);
