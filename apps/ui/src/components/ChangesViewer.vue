@@ -104,6 +104,7 @@
               <td>{{ job.startedStr }}</td>
               <td>
                 {{ job.finishedStr }}
+                ({{ job.durationStr }})
                 <button class="btn float-end" @click="showLogs(job)">Logs</button>
               </td>
             </tr>
@@ -143,7 +144,8 @@ export default {
         return {
           ...a,
           finishedStr: new Date(a.finished).toISOString(),
-          startedStr: new Date(a.started).toISOString()
+          startedStr: new Date(a.started).toISOString(),
+          durationStr: Math.round((+new Date(a.finished) - +new Date(a.started)) / 100)/10 + 's'
         };
       });
     }

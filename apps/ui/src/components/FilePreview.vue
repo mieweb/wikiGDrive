@@ -1,14 +1,12 @@
 <template>
-  <div>
+  <div class="mainbar__content-height container">
     <PreviewHeader :selected-file="selectedFile" :active-tab="activeTab" :folder-path="folderPath" />
 
     <div v-if="activeTab === 'markdown' && selectedFile.mimeType === 'text/x-markdown' && fileContent">
       <MarkDown :abs-path="'/drive/' + driveId + folderPath">{{fileContent}}</MarkDown>
     </div>
 
-    <div v-if="activeTab === 'html' && selectedFile.previewUrl">
-      <iframe :src="selectedFile.previewUrl + '?' + selectedFile.version" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
-    </div>
+      <iframe v-if="activeTab === 'html' && selectedFile.previewUrl" :src="selectedFile.previewUrl + '?' + selectedFile.version" style="width: 100%; border: 0; height: calc(100vh - var(--navbar-height) );"></iframe>
 
     <BackLinks v-if="activeTab === 'drive_backlinks'" :selectedFile="selectedFile" :contentDir="contentDir" />
   </div>
