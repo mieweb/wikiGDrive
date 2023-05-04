@@ -242,6 +242,7 @@ export class ActionRunnerContainer extends Container {
           step.env = {};
         }
         step.env['OWNER_REPO'] = ownerRepo;
+        step.env['PAYLOAD'] = this.params.payload;
 
         let lastCode = 0;
         switch (step.uses) {
@@ -282,8 +283,8 @@ export class ActionRunnerContainer extends Container {
     if (this.params.payload) {
       try {
         const payload = JSON.parse(this.params.payload);
-        additionalEnv['BRANCH'] = payload.branch;
-        additionalEnv['MESSAGE'] = payload.message;
+        additionalEnv['BRANCH'] = payload.branch || '';
+        additionalEnv['MESSAGE'] = payload.message || '';
         additionalEnv['FILES'] = Array.isArray(payload.filePaths) ? payload.filePaths.join(' ') : '';
       } catch (err) {
         this.logger.error(err.stack ? err.stack : err.message);

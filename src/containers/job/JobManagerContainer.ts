@@ -689,6 +689,7 @@ export class JobManagerContainer extends Container {
           await this.schedule(driveId, {
             type: 'run_action',
             title: 'Run action: on ' + currentJob.type,
+            payload: currentJob.payload || 'all',
             trigger: currentJob.type
           });
         } catch (err) {
