@@ -45,7 +45,6 @@
         <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
       <div v-else>
-
         <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
                     :folderPath="folderPath"
                     :selectedFile="selectedFile"
@@ -54,7 +53,7 @@
                     :tree-empty="treeEmpty"
                     :tree-version="treeVersion"
         />
-        <IframePreview v-else :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown')" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
 
