@@ -1,41 +1,44 @@
 <template>
   <div class="modal open" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-fullscreen " role="document">
+    <div class="modal-dialog open " role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Share drive</h5>
           <button type="button" class="btn-close" @click="close" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="d-flex share-container">
-            <div class="flex-column order-0">
-              <iframe :src="'/share-drive/' + driveId" class="w-100 h-100"></iframe>
-            </div>
-            <div class="vr m-2"></div>
-            <div class="flex-column order-0 d-flex justify-content-center">
-              <div class="m-3">
-                <h4 class="d-none d-md-inline mb-5"><i class="fa fa-arrow-left"></i> Follow this steps on the <span class="d-none d-md-inline">left</span><span class="d-md-none">below</span> side:</h4>
+          <div class="justify-content-center">
+            <div class="m-3">
+              <h5>
+                Follow those steps:
+              </h5>
+              <ol class="mb-5s">
+                <li>
+                    <label class="form-label flex-grow text-nowrap">Copy our email address:</label>
+                    <div class="d-flex align-items-center">
+                      <input @click="copy" class="form-control flex-grow-1" readonly :value="share_email" />
+                      <button class="btn" @click="copy"><i class="fa fa-copy"></i></button>
+                    </div>
+                </li>
+              </ol>
+              <h5>On the next screen:</h5>
+              <ol class="mb-5s">
+                <li>
+                  <em>Add people and groups</em>, paste above email address
+                </li>
+                <li>Note: WikiGDrive doesn't need Content manager rights.<br/>Change access level to Viewer</li>
+                <li>Click Share</li>
+              </ol>
 
-                <ol class="mb-5">
-                  <li>
-                      <label class="form-label flex-grow text-nowrap">Copy our email address:</label>
-                      <div class="d-flex align-items-center">
-                        <input @click="copy" class="form-control flex-grow-1" readonly :value="share_email" />
-                        <button class="btn" @click="copy"><i class="fa fa-copy"></i></button>
-                      </div>
-                  </li>
-                  <li>Click <em>Add people and groups</em>, paste email address</li>
-                  <li>Note: WikiGDrive doesn't need Content manager rights.<br/>Change access level to Viewer</li>
-                  <li>Click Done</li>
-                </ol>
-
-                <h4 class="mt-5">Example:</h4>
-                <div class="text-center">
-                  <img src="/assets/share-example.png" class="" width="381" />
-                </div>
-
-                <h4 class="d-md-none mt-3"><i class="fa fa-arrow-down"></i> Follow this steps on the <span class="d-none d-md-inline">left</span><span class="d-md-none">below</span> side:</h4>
+              <h4 class="mt-5">Example:</h4>
+              <div class="text-center" v-if="google_access_token">
+                <img src="/assets/share-example.png" class="" width="381" />
               </div>
+
+              <h4 class="d-md-none mt-3"><i class="fa fa-arrow-down"></i> Follow this steps on the <span class="d-none d-md-inline">left</span><span class="d-md-none">below</span> side:</h4>
+            </div>
+            <div class="modal-footer">
+              <button v-if="gapi" @click="share" class="btn btn-primary">Go to share screen</button>
             </div>
           </div>
         </div>
@@ -49,11 +52,25 @@ export default {
   props: ['driveId'],
   data() {
     return {
+      gapi: null,
       authPopup: null,
-      share_email: null
+      share_email: null,
+      google_access_token: null
     };
   },
   async mounted() {
+    if (!window.gapi) {
+      const scriptElem = document.createElement('script');
+      scriptElem.id = 'gapiScript';
+      scriptElem.defer = true;
+      scriptElem.src = 'https://apis.google.com/js/api.js';
+      scriptElem.onload = () => {
+        this.gapi = window.gapi;
+      };
+      document.body.appendChild(scriptElem);
+    } else {
+      this.gapi = window.gapi;
+    }
     const response = await this.authenticatedClient.fetchApi('/api/share-token', { method: 'post'});
     const json = await response.json();
     this.google_access_token = json.google_access_token;
@@ -65,6 +82,18 @@ export default {
     },
     async copy() {
       await navigator.clipboard.writeText(this.share_email);
+    },
+    async share() {
+      if (!this.google_access_token || !this.gapi) {
+        return;
+      }
+      const driveId = this.driveId;
+      this.gapi.load('drive-share', () => {
+        const shareClient = new window.gapi.drive.share.ShareClient();
+        shareClient.setOAuthToken(this.google_access_token);
+        shareClient.setItemIds([driveId]);
+        shareClient.showSettingsDialog();
+      });
     }
   }
 };
