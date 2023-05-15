@@ -3,7 +3,7 @@ import winston from 'winston';
 import {QuotaLimiter} from '../../google/QuotaLimiter';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {AuthConfig} from '../../model/AccountJson';
-import {Drive} from '../folder_registry/FolderRegistryContainer';
+import {Drive, Permission} from '../folder_registry/FolderRegistryContainer';
 import {FileId} from '../../model/model';
 import {GoogleFile} from '../../model/GoogleFile';
 
@@ -83,6 +83,12 @@ export class GoogleApiContainer extends Container {
   async getFolder(fileId: FileId): Promise<GoogleFile> {
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
     return await googleDriveService.getFile(this.auth, fileId);
+  }
+
+  async shareDrive(driveId: string, shareEmail: string): Promise<Permission> {
+    const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
+    const accessToken = await this.auth.getAccessToken();
+    return await googleDriveService.shareDrive(accessToken, driveId, shareEmail);
   }
 
   getAuth(): HasAccessToken {

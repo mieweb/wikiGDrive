@@ -1,15 +1,45 @@
-import {Controller, RouteErrorHandler, RouteGet, RouteParamPath, RouteResponse} from './Controller';
+import {
+  Controller,
+  RouteErrorHandler,
+  RouteGet,
+  RouteParamPath,
+  RouteParamUser,
+  RoutePost,
+  RouteResponse
+} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {addPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
+import {GoogleApiContainer} from '../../google_api/GoogleApiContainer';
+import {GoogleDriveService} from '../../../google/GoogleDriveService';
+import {UserAuthClient} from '../../../google/AuthClient';
+import {filterParams} from '../../../google/driveFetch';
 
 export class GoogleDriveController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService, private readonly authContainer) {
+  constructor(subPath: string, private readonly filesService: FileContentService) {
     super(subPath);
+  }
+
+  @RouteGet('/:driveId/share')
+  async getShare(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
+    const serverUrl = process.env.DOMAIN;
+
+    const state = new URLSearchParams(filterParams({
+      shareDrive: 1,
+      driveId: driveId !== 'none' ? (driveId || '') : ''
+    })).toString();
+
+    const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+    const shareUrl = await authClient.getWebDriveShareUrl(`${serverUrl}/auth`, state);
+    if (process.env.VERSION === 'dev') {
+      console.debug(shareUrl);
+    }
+
+    return { shareUrl };
   }
 
   @RouteGet('/:driveId/:fileId')

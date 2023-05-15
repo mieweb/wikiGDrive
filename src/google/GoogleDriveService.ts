@@ -5,7 +5,7 @@
 import {Logger} from 'winston';
 import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
-import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
+import {Drive, Permission} from '../containers/folder_registry/FolderRegistryContainer';
 import {FileId} from '../model/model';
 import {driveFetch, driveFetchStream} from './driveFetch';
 import {QuotaLimiter} from './QuotaLimiter';
@@ -153,28 +153,7 @@ export class GoogleDriveService {
     }
   }
 
-  async listPermissions(auth: HasAccessToken, fileId: string, pageToken?: string) {
-    const params = {
-      fileId: fileId,
-      supportsAllDrives: true,
-      // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
-      fields: '*',
-      pageToken: pageToken
-    };
-    const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
-
-    const permissions = [];
-
-    if (res.nextPageToken) {
-      const nextItems = await this.listPermissions(auth, fileId, res.nextPageToken);
-      permissions.push(...nextItems);
-    }
-    permissions.push(...res.permissions);
-
-    return permissions;
-  }
-
-  async getFile(auth: HasAccessToken, fileId: FileId) {
+  async getFile(auth: HasAccessToken, fileId: FileId): Promise<GoogleFile> {
     try {
       const params = {
         fileId: fileId,
@@ -279,16 +258,36 @@ export class GoogleDriveService {
     };
   }
 
-  async shareDrive(accessToken: string, fileId: string, email: string) {
+  async listPermissions(accessToken: string, fileId: string, pageToken?: string): Promise<Permission[]> {
     const params = {
-      requestBody: {
-        type: 'user',
-        role: 'reader',
-        emailAddress: email
-      },
-      fileId,
-      fields: 'id',
+      fileId: fileId,
+      supportsAllDrives: true,
+      // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+      fields: '*',
+      pageToken: pageToken
     };
-    return await driveFetch(this.quotaLimiter, accessToken, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
+    const res = await driveFetch(this.quotaLimiter, accessToken, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
+
+    const permissions = [];
+
+    if (res.nextPageToken) {
+      const nextItems = await this.listPermissions(accessToken, fileId, res.nextPageToken);
+      permissions.push(...nextItems);
+    }
+    permissions.push(...res.permissions);
+
+    return permissions;
+  }
+
+  async shareDrive(accessToken: string, fileId: string, email: string): Promise<Permission> {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
+    return await driveFetch(this.quotaLimiter, accessToken, 'POST', url, {
+      sendNotificationEmail: true,
+      supportsAllDrives: true
+    }, {
+      emailAddress: email,
+      type: 'user',
+      role: 'reader'
+    });
   }
 }

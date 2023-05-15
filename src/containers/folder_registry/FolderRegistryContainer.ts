@@ -14,6 +14,13 @@ export interface Drive {
   new?: boolean;
 }
 
+export interface Permission {
+  id: string;
+  type: 'user';
+  role: 'reader';
+  kind: string; // drive#permission
+}
+
 export interface Folder {
   id: FileId;
   name: string;

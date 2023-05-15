@@ -124,7 +124,7 @@ export async function convertResponseToError(response) {
   });
 }
 
-async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method, requestUrl, params): Promise<Response> {
+async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method, requestUrl, params, body?): Promise<Response> {
   params = filterParams(params);
   const url = requestUrl + '?' + new URLSearchParams(params).toString();
 
@@ -141,8 +141,10 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
       method,
       headers: {
         Authorization: 'Bearer ' + accessToken,
+        'Content-type': body ? 'application/json' : undefined,
         traceparent
-      }
+      },
+      body: body ? JSON.stringify(body): undefined
     });
 
     if (response.status >= 400) {
@@ -159,8 +161,10 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
           method,
           headers: {
             Authorization: 'Bearer ' + accessToken,
+            'Content-type': body ? 'application/json' : undefined,
             traceparent
-          }
+          },
+          body: body ? JSON.stringify(body): undefined
         });
 
         if (response.status >= 400) {
@@ -185,8 +189,8 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
   });
 }
 
-export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params) {
-  const response = await driveRequest(quotaLimiter, accessToken, method, url, params);
+export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params, body?) {
+  const response = await driveRequest(quotaLimiter, accessToken, method, url, params, body);
   try {
     const body = await response.text();
     return JSON.parse(body);

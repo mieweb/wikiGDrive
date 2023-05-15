@@ -169,6 +169,20 @@ export async function getAuth(req, res: Response, next) {
 
     const driveId = urlToFolderId(state.get('driveId'));
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+
+    const shareDrive = !!state.get('shareDrive');
+    if (driveId && shareDrive) {
+      const googleDriveService = new GoogleDriveService(this.logger, null);
+      const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+
+      await googleDriveService.shareDrive(await authClient.getAccessToken(), driveId, this.params.share_email);
+
+      await folderRegistryContainer.registerFolder(driveId);
+      res.redirect('/drive/' + driveId);
+      return;
+    }
+
     if (driveId && !folderRegistryContainer.hasFolder(driveId)) {
       const err = new AuthError('Folder not registered', 404);
       err.showHtml = true;

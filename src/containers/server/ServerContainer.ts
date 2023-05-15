@@ -36,7 +36,6 @@ import {
   handleDriveUiInstall, handleShare, handlePopupClose
 } from './auth';
 import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
-import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {SearchController} from './routes/SearchController';
 import opentelemetry from '@opentelemetry/api';
 import {DriveUiController} from './routes/DriveUiController';
@@ -370,7 +369,7 @@ export class ServerContainer extends Container {
     const folderController = new FolderController('/api/file', this.filesService, this.engine);
     app.use('/api/file', authenticate(this.logger), await folderController.getRouter());
 
-    const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);
+    const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService);
     app.use('/api/gdrive', authenticate(this.logger), await googleDriveController.getRouter());
 
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
