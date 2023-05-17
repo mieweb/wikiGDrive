@@ -19,6 +19,7 @@ import {clearCachedChanges} from '../../job/JobManagerContainer';
 import {getContentFileService} from '../../transform/utils';
 import {LocalLog} from '../../transform/LocalLog';
 import {ContainerEngine} from '../../../ContainerEngine';
+import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -193,6 +194,12 @@ export default class FolderController extends Controller {
   async getFolder(@RouteParamMethod() method: string, @RouteParamPath('driveId') driveId: string,
                   @RouteParamBody() body: string) {
     const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
+
+    const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+    if (!folderRegistryContainer.hasFolder(driveId)) {
+      this.res.status(404).send(JSON.stringify({ message: 'Folder not registered' }));
+      return;
+    }
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);

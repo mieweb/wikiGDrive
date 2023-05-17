@@ -62,6 +62,12 @@ export class WatchChangesContainer extends Container {
     });
     this.engine.subscribe('drive:unregister', (driveId) => {
       this.stopWatching(driveId);
+      this.engine.emit(driveId, 'toasts:added', {
+        type: 'drive:unregister',
+        links: {},
+        title: 'WikiGDrive access to Google Drive removed',
+        description: `Access for ${this.params.share_email} has been removed`
+      });
     });
   }
 
@@ -113,6 +119,10 @@ export class WatchChangesContainer extends Container {
         await this.watchDriveChanges(driveId);
       } catch (err) {
         this.logger.warn(err.message);
+        if (err.status === 403 && err.message.indexOf('The attempted action requires shared drive membership') > -1) {
+          const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+          await folderRegistryContainer.refreshDrives();
+        }
       }
     }, 3000);
   }

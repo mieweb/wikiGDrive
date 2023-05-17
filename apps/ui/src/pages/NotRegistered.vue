@@ -13,15 +13,19 @@
       </div>
       <div class="card" v-else>
         <h2 class="card-header">Folder is not shared with WikiGDrive.</h2>
-        <div class="card-body">
-          <button class="btn btn-primary" type="button" @click.stop="share(driveId)"><i class="fa fa-share"></i> Share folder</button>
-        </div>
-      </div>
-
-      <br/>
-      <div class="card">
-        <div class="card-body">
-          Go back to <a href="/">homepage</a>
+        <div class="justify-content-center">
+            <div class="m-3">
+                <p>
+                    You need to authorize WikiGDrive to read files from your drive.
+                    You can revoke this access any time.
+                </p>
+                <p>
+                    You'll be redirected to Google to do that.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button @click="share" class="btn btn-primary">Authorize WikiGDrive</button>
+            </div>
         </div>
       </div>
     </div>
@@ -29,8 +33,6 @@
 </template>
 <script>
 import {UtilsMixin} from '../components/UtilsMixin.ts';
-import {markRaw} from 'vue';
-import ShareModal from '../components/ShareModal.vue';
 
 export default {
   mixins: [ UtilsMixin ],
@@ -63,13 +65,12 @@ export default {
     }
   },
   methods: {
-    share(driveId) {
-      this.$root.$addModal({
-        component: markRaw(ShareModal),
-        props: {
-          driveId
-        },
-      });
+    async share() {
+      const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/share', { method: 'get'});
+      const json = await response.json();
+      if (json.shareUrl) {
+          window.location = json.shareUrl;
+      }
     }
   }
 };

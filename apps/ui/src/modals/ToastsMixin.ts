@@ -7,6 +7,10 @@ export const ToastsMixin = {
   methods: {
     async $addToast(toast) {
       switch (toast.type) {
+        case 'drive:unregister':
+          await this.$root.changeDrive(this.drive.id);
+          window.location.reload();
+          break;
         case 'transform:scheduled':
           this.$removeToastMatching(item => item.type.startsWith('transform:'));
           break;

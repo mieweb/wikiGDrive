@@ -101,11 +101,12 @@ export class FolderRegistryContainer extends Container {
   }
 
   async unregisterFolder(folderId: FileId) {
-    delete this.folders[folderId];
-
-    this.engine.emit(folderId, 'drive:unregister', this.folders[folderId]);
-
-    await this.flushData();
+    if (this.folders[folderId]) {
+      this.logger.info('Unregistered folder: ' + folderId);
+      delete this.folders[folderId];
+      await this.flushData();
+      this.engine.emit(folderId, 'drive:unregister', this.folders[folderId]);
+    }
   }
 
   getFolders() {

@@ -205,7 +205,7 @@ export class MainService {
       process.exit(1);
     }
 
-    const changesContainer = new WatchChangesContainer({ name: 'watch_changes' });
+    const changesContainer = new WatchChangesContainer({ name: 'watch_changes', share_email: this.params.share_email });
     await changesContainer.mount(await this.mainFileService);
     await this.containerEngine.registerContainer(changesContainer);
     await changesContainer.run();
