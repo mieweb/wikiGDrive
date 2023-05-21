@@ -11,7 +11,7 @@ import {FileContentService} from '../../../utils/FileContentService';
 import express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
 import {UserConfigService} from '../../google_folder/UserConfigService';
-import {DirectoryScanner} from '../../transform/DirectoryScanner';
+import {DirectoryScanner, isTextFileName} from '../../transform/DirectoryScanner';
 import {GitChange, GitScanner} from '../../../git/GitScanner';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {Logger} from 'winston';
@@ -242,7 +242,7 @@ export default class FolderController extends Controller {
     this.res.setHeader('wgd-content-dir', contentDir);
 
     if (!await transformedFileSystem.exists(filePath)) {
-      this.res.status(404).send('Not exist in transformedFileSystem');
+      this.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
       return;
     }
 
@@ -255,90 +255,103 @@ export default class FolderController extends Controller {
         ? await markdownTreeProcessor.getRootItem(driveId)
         : await markdownTreeProcessor.findByPath(contentFilePath);
 
-      if (!treeItem) {
-        this.res.status(404).send({ message: 'No local' });
-        return;
-      }
+      if (treeItem) {
+        const previewMdUrl = treeItem.path
+          ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + treeItem.path
+          : '';
 
-      const previewMdUrl = treeItem.path
-        ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + treeItem.path
-        : '';
+        const previewUrl = '/preview' +
+          previewMdUrl
+            .replace(/.md$/, '')
+            .replace(/_index$/, '');
 
-      const previewUrl = '/preview' +
-        previewMdUrl
-          .replace(/.md$/, '')
-          .replace(/_index$/, '');
+        this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
+        this.res.setHeader('wgd-google-id', treeItem.id || '');
+        this.res.setHeader('wgd-google-version', treeItem.version || '');
+        this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
+        this.res.setHeader('wgd-path', treeItem.path || '');
+        this.res.setHeader('wgd-file-name', treeItem.fileName || '');
+        this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+        this.res.setHeader('wgd-preview-url', previewUrl);
 
-      this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
-      this.res.setHeader('wgd-google-id', treeItem.id || '');
-      this.res.setHeader('wgd-google-version', treeItem.version || '');
-      this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
-      this.res.setHeader('wgd-path', treeItem.path || '');
-      this.res.setHeader('wgd-file-name', treeItem.fileName || '');
-      this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
-      this.res.setHeader('wgd-preview-url', previewUrl);
+        if (await transformedFileSystem.isDirectory(filePath)) {
+          const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+          treeItem.children = [
+            ...await this.generateChildren(transformedFileSystem, driveId, '/' + userConfigService.config.transform_subdir, filePath),
+            ...treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId))
+          ];
+          await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
+          await outputDirectory(this.res, treeItem);
+          return;
+        } else {
+          if (treeItem.mimeType) {
+            this.res.setHeader('Content-type', treeItem.mimeType);
+          }
 
-      if (await transformedFileSystem.isDirectory(filePath)) {
-        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
-        await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
-        treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
-        await outputDirectory(this.res, treeItem);
-        return;
-      } else {
-        if (treeItem.mimeType) {
-          this.res.setHeader('Content-type', treeItem.mimeType);
+          const buffer = await transformedFileSystem.readBuffer(filePath);
+          this.res.send(buffer);
+          return;
         }
-
-        const buffer = await transformedFileSystem.readBuffer(filePath);
-        this.res.send(buffer);
-        return;
-      }
-    } else {
-      if (await transformedFileSystem.isDirectory(filePath)) {
-        const scanner = new DirectoryScanner();
-        const files = await scanner.scan(transformedFileSystem);
-
-        const treeItem: TreeItem = {
-          fileName: filePath,
-          id: '',
-          parentId: '',
-          path: filePath,
-          realFileName: '',
-          title: '',
-          mimeType: MimeTypes.FOLDER_MIME,
-          children: Object.values(files)
-            .map(file => {
-              return {
-                fileName: file.fileName,
-                id: '/' + userConfigService.config.transform_subdir === filePath + file.fileName ? driveId : 'UNKNOWN',
-                parentId: 'UNKNOWN',
-                path: filePath + file.fileName,
-                realFileName: file.fileName,
-                title: file.title,
-                mimeType: file.mimeType,
-                conflicting: file.type === 'conflict' ? file.conflicting : undefined,
-                redirectTo: file.type === 'redir' ? file.redirectTo : undefined
-              };
-           })
-        };
-
-        const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
-        await addGitData(treeItem.children, changes, '');
-        treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
-        await outputDirectory(this.res, treeItem);
-        return;
-      } else {
-        const ext = await transformedFileSystem.guessExtension(filePath);
-        const mimeType = extToMime[ext];
-        if (mimeType) {
-          this.res.setHeader('Content-type', mimeType);
-        }
-
-        const buffer = await transformedFileSystem.readBuffer(filePath);
-        this.res.send(buffer);
-        return;
       }
     }
+
+    if (!await transformedFileSystem.exists(filePath)) {
+      this.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
+      return;
+    }
+
+    if (await transformedFileSystem.isDirectory(filePath)) {
+      const treeItem: TreeItem = {
+        fileName: filePath,
+        id: '',
+        parentId: '',
+        path: filePath,
+        realFileName: '',
+        title: '',
+        mimeType: MimeTypes.FOLDER_MIME,
+        children: await this.generateChildren(transformedFileSystem, driveId, '/' + userConfigService.config.transform_subdir, filePath)
+      };
+
+      const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+      await addGitData(treeItem.children, changes, '');
+      treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
+      await outputDirectory(this.res, treeItem);
+      return;
+    } else {
+      const ext = await transformedFileSystem.guessExtension(filePath);
+      const mimeType = extToMime[ext];
+      if (mimeType) {
+        this.res.setHeader('Content-type', mimeType);
+      } else {
+        if (isTextFileName(filePath)) {
+          this.res.setHeader('Content-type', 'text/plain');
+        }
+      }
+
+      const buffer = await transformedFileSystem.readBuffer(filePath);
+      this.res.send(buffer);
+      return;
+    }
+  }
+
+  async generateChildren(transformedFileSystem, driveId, transform_subdir, dirPath) {
+    const scanner = new DirectoryScanner();
+    const files = await scanner.scan(transformedFileSystem);
+
+    return Object.values(files)
+      .map(file => {
+        return {
+          fileName: file.fileName,
+          id: transform_subdir === dirPath + file.fileName ? driveId : 'UNKNOWN',
+          parentId: 'UNKNOWN',
+          path: dirPath + file.fileName,
+          realFileName: file.fileName,
+          title: file.title,
+          mimeType: file.mimeType,
+          conflicting: file.type === 'conflict' ? file.conflicting : undefined,
+          redirectTo: file.type === 'redir' ? file.redirectTo : undefined
+        };
+      });
   }
 
 }

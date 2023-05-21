@@ -7,7 +7,17 @@ import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
 export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
-  '.tree.json', '.gitignore'];
+  '.tree.json'];
+
+export function isTextFileName(fileName) {
+  if (fileName.endsWith('.txt')) {
+    return true;
+  }
+  if (fileName.endsWith('.gitignore')) {
+    return true;
+  }
+  return false;
+}
 
 export function stripConflict(localPath: string) {
   const parts = localPath.split('.');
@@ -169,6 +179,7 @@ export class DirectoryScanner {
             if (realFileName.endsWith('.js')) return 'text/javascript';
             if (realFileName.endsWith('.sh')) return 'text/x-sh';
             if (realFileName.endsWith('.toml')) return 'text/toml';
+            if (isTextFileName(realFileName)) return 'text/plain';
             return 'application/binary';
           })(realFileName),
           title: stripConflict(realFileName)

@@ -69,6 +69,14 @@ export default {
     }
   },
   computed: {
+    github_url() {
+        const remote_url = this.remote_url || '';
+        if (remote_url.startsWith('git@github.com:')) {
+            return remote_url.replace('git@github.com:', 'https://github.com/')
+                .replace(/.git$/, '');
+        }
+        return '';
+    },
     drive() {
       return this.$root.drive || {};
     }

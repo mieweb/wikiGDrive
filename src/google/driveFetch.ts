@@ -189,13 +189,14 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
   });
 }
 
-export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params, body?) {
-  const response = await driveRequest(quotaLimiter, accessToken, method, url, params, body);
+export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params, bodyReq?) {
+  const response = await driveRequest(quotaLimiter, accessToken, method, url, params, bodyReq);
+  let bodyResp = '';
   try {
-    const body = await response.text();
-    return JSON.parse(body);
+    bodyResp = await response.text();
+    return JSON.parse(bodyResp);
   } catch (err) {
-    throw Error('Invalid JSON');
+    throw new Error('Invalid JSON: ' + url + ', ' + bodyResp);
   }
 }
 
