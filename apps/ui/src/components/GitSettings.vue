@@ -1,11 +1,18 @@
 <template>
   <div class="container" v-if="user_config">
-    <GitToolBar :active-tab="activeTab" />
+    <slot name="toolbar">
+      <GitToolBar :active-tab="activeTab" />
+    </slot>
 
     <div class="overflow-scroll d-flex flex-row mt-3">
-      <SettingsSidebar />
+      <slot name="sidebar">
+        <SettingsSidebar />
+      </slot>
 
-      <div class="card flex-column order-0 flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
+      <div class="card flex-column order-0 flex-grow-1 flex-shrink-1 overflow-scroll border-left-0-not-first">
+        <slot name="header">
+<!--          <div class="card-header">Git</div>-->
+        </slot>
         <div class="card-body">
           <div class="form-group">
             <label>
@@ -30,7 +37,12 @@
               <textarea class="form-control" rows="6" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
             </div>
           </div>
-          <button class="btn btn-primary" type="button" @click="save">Save</button>
+        </div>
+        <div class="card-footer">
+          <div class="btn-group">
+            <button class="btn btn-primary" type="button" @click="save">Save</button>
+            <button v-if="remote_url" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
+          </div>
           <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate</button>
         </div>
       </div>
@@ -105,10 +117,12 @@ export default {
       });
       const json = await response.json();
       await this.processResponse(json);
-      alert('Saved');
       await this.$root.changeDrive(this.driveId);
     },
-
+    async saveAndReset() {
+      await this.save();
+      await this.resetToRemote();
+    },
     async regenerateKey() {
       if (!window.confirm('Are you sure you want to regenerate deploy key?')) {
         return;

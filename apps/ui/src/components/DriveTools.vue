@@ -59,6 +59,10 @@ export default {
   mixins: [UtilsMixin, UiMixin],
   components: {ToolButton},
   props: {
+    driveEmpty: {
+      type: Boolean,
+      default: false
+    },
     treeEmpty: {
       type: Boolean,
       default: false

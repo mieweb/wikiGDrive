@@ -20,6 +20,7 @@ import {getContentFileService} from '../../transform/utils';
 import {LocalLog} from '../../transform/LocalLog';
 import {ContainerEngine} from '../../../ContainerEngine';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -231,11 +232,15 @@ export default class FolderController extends Controller {
       });
     }
 
+    const googleTreeProcessor = new GoogleTreeProcessor(googleFileSystem);
+    await googleTreeProcessor.load();
+
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
 
     const treeVersion = markdownTreeProcessor.getTreeVersion();
 
+    this.res.setHeader('wgd-drive-empty', googleTreeProcessor.getTree().length === 0 ? 'true' : 'false');
     this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
     this.res.setHeader('wgd-tree-version', treeVersion);
     const contentDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '/';

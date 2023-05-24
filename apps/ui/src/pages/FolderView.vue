@@ -45,14 +45,31 @@
         <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
       <div v-else>
-        <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
-                    :folderPath="folderPath"
-                    :selectedFile="selectedFile"
-                    :selected-folder="selectedFolder"
-                    :active-tab="activeTab"
-                    :tree-empty="treeEmpty"
-                    :tree-version="treeVersion"
-        />
+        <div v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound">
+          <DriveTools
+               :folderPath="folderPath"
+               :selectedFile="selectedFile"
+               :selected-folder="selectedFolder"
+               :active-tab="activeTab"
+               :tree-empty="treeEmpty"
+               :drive-empty="driveEmpty"
+               :tree-version="treeVersion"
+          />
+
+          <GitSettings :active-tab="activeTab" v-if="!github_url">
+            <template v-slot:header>
+              <div class="card-header alert-danger">
+                Git is not configured
+              </div>
+            </template>
+            <template v-slot:toolbar>
+              <span></span>
+            </template>
+            <template v-slot:sidebar>
+              <span></span>
+            </template>
+          </GitSettings>
+        </div>
         <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown')" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
@@ -120,6 +137,7 @@ export default {
       files: [],
       selectedFile: {},
       selectedFolder: {},
+      driveEmpty: false,
       treeEmpty: false,
       treeVersion: null,
       notFound: false,
@@ -169,6 +187,7 @@ export default {
       this.contentDir = pathContent.contentDir;
       this.folderPath = filePath;
       this.files = pathContent.files || [];
+      this.driveEmpty = pathContent.driveEmpty;
       this.treeEmpty = pathContent.treeEmpty;
       this.treeVersion = pathContent.treeVersion;
       return pathContent;

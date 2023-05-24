@@ -167,6 +167,9 @@ a[disabled] {
 .border-left-0 {
   border-left: none;
 }
+.border-left-0-not-first:not(:first-of-type) {
+  border-left: none;
+}
 
 .mh-auto {
   min-height: auto !important;
