@@ -23,7 +23,7 @@
 
       <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
       <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
-      <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
+      <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
 
       <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
       <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
@@ -56,7 +56,7 @@
                :tree-version="treeVersion"
           />
 
-          <GitSettings :active-tab="activeTab" v-if="!github_url">
+          <GitSettings :active-tab="activeTab" v-if="!github_url" :tree-empty="treeEmpty">
             <template v-slot:header>
               <div class="card-header alert-danger">
                 Git is not configured
@@ -70,7 +70,7 @@
             </template>
           </GitSettings>
         </div>
-        <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown')" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
       </div>
 
 

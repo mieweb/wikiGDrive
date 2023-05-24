@@ -21,6 +21,7 @@ import {LocalLog} from '../../transform/LocalLog';
 import {ContainerEngine} from '../../../ContainerEngine';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
+import {FileId} from '../../../model/model';
 
 export const extToMime = {
   'js': 'application/javascript',
@@ -281,10 +282,16 @@ export default class FolderController extends Controller {
 
         if (await transformedFileSystem.isDirectory(filePath)) {
           const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
-          treeItem.children = [
-            ...await this.generateChildren(transformedFileSystem, driveId, '/' + userConfigService.config.transform_subdir, filePath),
-            ...treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId))
-          ];
+          const subDir = await transformedFileSystem.getSubFileService(filePath);
+          const map1: Map<string, TreeItem> = new Map(
+            (await this.generateChildren(subDir, driveId, '/' + userConfigService.config.transform_subdir, filePath))
+              .map(element => [element.realFileName, element])
+          );
+          const map2: Map<string, TreeItem> = new Map(
+            treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId))
+              .map(element => [element.realFileName, element])
+          );
+          treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
           await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
           await outputDirectory(this.res, treeItem);
           return;
@@ -306,6 +313,7 @@ export default class FolderController extends Controller {
     }
 
     if (await transformedFileSystem.isDirectory(filePath)) {
+      const subDir = await transformedFileSystem.getSubFileService(filePath);
       const treeItem: TreeItem = {
         fileName: filePath,
         id: '',
@@ -314,7 +322,7 @@ export default class FolderController extends Controller {
         realFileName: '',
         title: '',
         mimeType: MimeTypes.FOLDER_MIME,
-        children: await this.generateChildren(transformedFileSystem, driveId, '/' + userConfigService.config.transform_subdir, filePath)
+        children: await this.generateChildren(subDir, driveId, '/' + userConfigService.config.transform_subdir, filePath)
       };
 
       const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
@@ -339,7 +347,7 @@ export default class FolderController extends Controller {
     }
   }
 
-  async generateChildren(transformedFileSystem, driveId, transform_subdir, dirPath) {
+  async generateChildren(transformedFileSystem: FileContentService, driveId: FileId, transform_subdir: string, dirPath: string) {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(transformedFileSystem);
 

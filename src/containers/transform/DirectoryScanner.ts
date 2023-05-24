@@ -9,11 +9,19 @@ import {LOG_NAME} from './LocalLog';
 export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
   '.tree.json'];
 
+export const RESERVED_DIR_NAMES = ['.git'];
+
 export function isTextFileName(fileName) {
   if (fileName.endsWith('.txt')) {
     return true;
   }
   if (fileName.endsWith('.gitignore')) {
+    return true;
+  }
+  if (fileName.endsWith('.ts')) {
+    return true;
+  }
+  if (fileName.endsWith('.css')) {
     return true;
   }
   return false;
@@ -122,6 +130,19 @@ export class DirectoryScanner {
             const map: {[realFileName: string]: LocalFile} = props.fileMap || {};
             this.files[realFileName] = directory;
           }
+        } else {
+          if (RESERVED_DIR_NAMES.indexOf(realFileName) > -1) {
+            continue;
+          }
+          const directory: Directory = {
+            type: 'directory',
+            fileName: stripConflict(realFileName),
+            id: 'TO_FILL',
+            mimeType: MimeTypes.FOLDER_MIME,
+            modifiedTime: 'TO_FILL',
+            title: stripConflict(realFileName)
+          };
+          this.files[realFileName] = directory;
         }
         continue;
       }

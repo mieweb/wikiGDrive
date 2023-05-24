@@ -41,7 +41,7 @@
         <div class="card-footer">
           <div class="btn-group">
             <button class="btn btn-primary" type="button" @click="save">Save</button>
-            <button v-if="remote_url" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
+            <button v-if="remote_url && treeEmpty" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
           </div>
           <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate</button>
         </div>
@@ -63,6 +63,10 @@ export default {
   props: {
     activeTab: {
       type: String
+    },
+    treeEmpty: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
