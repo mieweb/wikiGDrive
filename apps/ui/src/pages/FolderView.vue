@@ -15,65 +15,66 @@
 
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
-      <div v-if="notFound" class="container">
-        <div class="alert alert-warning text-wrap">
-          404 NOT FOUND: {{ notFound }}
-        </div>
-      </div>
-
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
-      <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
-      <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
-
-      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-      <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
-      <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
-      <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
-      <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
-      <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
-
-      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
-      </div>
-      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
-      </div>
-      <div v-else-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
-        <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
-      </div>
-      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType && selectedFile.mimeType.startsWith('text/')">
-        <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
-      </div>
       <div v-else>
-        <div v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound">
-          <DriveTools
-               :folderPath="folderPath"
-               :selectedFile="selectedFile"
-               :selected-folder="selectedFolder"
-               :active-tab="activeTab"
-               :tree-empty="treeEmpty"
-               :drive-empty="driveEmpty"
-               :tree-version="treeVersion"
-          />
 
-          <GitSettings :active-tab="activeTab" v-if="!github_url" :tree-empty="treeEmpty">
-            <template v-slot:header>
-              <div class="card-header alert-danger">
-                Git is not configured
-              </div>
-            </template>
-            <template v-slot:toolbar>
-              <span></span>
-            </template>
-            <template v-slot:sidebar>
-              <span></span>
-            </template>
-          </GitSettings>
+        <div v-if="notFound" class="container">
+          <div class="alert alert-warning text-wrap">
+            404 NOT FOUND: {{ notFound }}
+          </div>
         </div>
-        <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+
+        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+        <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
+
+        <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
+        <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
+        <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
+        <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
+        <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
+        <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
+
+        <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
+          <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+        </div>
+        <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
+          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+        </div>
+        <div v-else-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
+          <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        </div>
+        <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType && selectedFile.mimeType.startsWith('text/')">
+          <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        </div>
+        <div>
+          <div v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound">
+            <DriveTools
+                 :folderPath="folderPath"
+                 :selectedFile="selectedFile"
+                 :selected-folder="selectedFolder"
+                 :active-tab="activeTab"
+                 :tree-empty="treeEmpty"
+                 :drive-empty="driveEmpty"
+                 :tree-version="treeVersion"
+            />
+
+            <GitSettings :active-tab="activeTab" v-if="!github_url" :tree-empty="treeEmpty">
+              <template v-slot:header>
+                <div class="card-header alert-danger">
+                  Git is not configured
+                </div>
+              </template>
+              <template v-slot:toolbar>
+                <span></span>
+              </template>
+              <template v-slot:sidebar>
+                <span></span>
+              </template>
+            </GitSettings>
+          </div>
+          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        </div>
       </div>
-
-
     </template>
   </BaseLayout>
 </template>
