@@ -7,7 +7,7 @@ import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../Lin
 import {LocalFilesGenerator} from './LocalFilesGenerator';
 import {QueueTransformer} from './QueueTransformer';
 import {generateNavigationHierarchy, NavigationHierarchy} from './generateNavigationHierarchy';
-import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile';
+import {ConflictFile, LocalFile, LocalFileMap, RedirFile} from '../../model/LocalFile';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform';
 import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml';
@@ -240,6 +240,7 @@ export class TransformContainer extends Container {
     const destinationScanner = new DirectoryScanner();
     const destinationFiles = await destinationScanner.scan(destinationDirectory);
     await addBinaryMetaData(destinationFiles, destinationDirectory);
+    await this.removeOutdatedLogEntries(destinationDirectory, destinationFiles);
 
     const localFilesGenerator = new LocalFilesGenerator();
     const filesToGenerate: LocalFile[] = await localFilesGenerator.generateLocalFiles(googleFolderFiles);
@@ -421,7 +422,7 @@ export class TransformContainer extends Container {
         const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)/ig, (str: string) => {
           const fileId = str.substring('gdoc:'.length);
           const lastLog = this.localLog.findLastFile(fileId);
-          if (lastLog) {
+          if (lastLog && lastLog.event !== 'removed') {
             if (fileName.endsWith('.svg')) {
               return convertToRelativeSvgPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
             } else {
@@ -523,5 +524,21 @@ export class TransformContainer extends Container {
 
   onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number, warnings?: number }) => void) {
     this.progressNotifyCallback = callback;
+  }
+
+  async removeOutdatedLogEntries(destinationDirectory: FileContentService, destinationFiles: LocalFileMap) {
+    const prefix = destinationDirectory.getVirtualPath();
+    const logFiles = await this.localLog.getDirFiles(prefix);
+    for (const logEntry of logFiles) {
+      const fileName = logEntry.filePath.substring(prefix.length);
+      if (!destinationFiles[fileName]) {
+        this.localLog.append({
+          filePath: logEntry.filePath,
+          id: logEntry.id,
+          type: logEntry.type,
+          event: 'removed',
+        });
+      }
+    }
   }
 }

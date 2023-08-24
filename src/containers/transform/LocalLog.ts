@@ -78,4 +78,17 @@ export class LocalLog {
     this.rows = this.rows.filter(logRow => logRow.filePath !== filePath);
     return originalLength !== this.rows.length;
   }
+
+  async getDirFiles(prefix: string): Promise<LogRow[]> {
+    const list = this.rows
+      .filter(row => row.filePath.startsWith(prefix) && row.filePath.substring(prefix.length).indexOf('/') === -1)
+      .filter(row => row.type === 'md');
+
+    const lastOnes: {[key: string]: LogRow} = {};
+    for (const item of list) {
+      lastOnes[item.filePath] = item;
+    }
+
+    return Object.values(lastOnes).filter(item => item.event !== 'removed');
+  }
 }
