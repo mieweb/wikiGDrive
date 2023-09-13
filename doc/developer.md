@@ -29,7 +29,7 @@ sudo apt install libkrb5-dev libssh2-1-dev
 
 npm install
 
-wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json server 3000
+wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
 ```
 
 ## Running locally with docker
@@ -50,7 +50,7 @@ docker run --rm --user=$(id -u) -it \
           --publish 127.0.0.1:3000:3000 \
           --publish 127.0.0.1:24678:24678 \
           wikigdrive \
-          ./src/cli.sh --service_account /service_account.json --workdir /data server 3000
+          ./src/cli.sh --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data server 3000
 
 docker rm -f wikigdrive
 
@@ -137,3 +137,19 @@ ZIPKIN_URL=http://localhost:9411`
 ```
 
 ## Debugging
+
+```
+./src/cli.sh --inspect --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
+```
+
+Chrome
+
+    Go to `chrome://inspect`
+
+Visual Studio Code 1.10+
+
+    In the Debug panel, click the settings icon to open .vscode/launch.json. Select "Node.js" for initial setup.
+
+JetBrains WebStorm and other JetBrains IDEs
+
+    Create a new Node.js debug configuration and hit Debug. --inspect will be used by default for Node.js 7+. To disable uncheck js.debugger.node.use.inspect in the IDE Registry. To learn more about running and debugging Node.js in WebStorm and other JetBrains IDEs, check out WebStorm online help.

@@ -216,7 +216,6 @@ export class ServerContainer extends Container {
       if (err.showHtml) {
         const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
         if (indexHtml) {
-          console.error('eee', err);
           res.status(err.status).header('Content-type', 'text/html').end(
             indexHtml.replace('</head', `<meta name="errorMessage" content="${err.message}"></head`)
           );
@@ -249,7 +248,11 @@ export class ServerContainer extends Container {
             } else {
               urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
             }
-            this.logger.error(err.stack ? err.stack : err.message);
+            if (process.env.VERSION === 'dev') {
+              this.logger.warn(err.stack ? err.stack : err.message);
+            } else {
+              this.logger.warn(err.message);
+            }
 
             if (req['driveId']) {
               err.authPath = '/auth/' + req['driveId'] + '?' + urlSearchParams.toString();

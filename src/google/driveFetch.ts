@@ -109,8 +109,12 @@ export async function convertResponseToError(response) {
   if (message.indexOf('User Rate Limit Exceeded') > -1) {
     isQuotaError = true;
   }
+  let isUnautorized = false;
+  if (401 === response.status) {
+    isUnautorized = true;
+  }
 
-  if (process.env.VERSION === 'dev') {
+  if (process.env.VERSION === 'dev' && !isUnautorized) {
     console.trace();
     console.error('convertResponseToError response', response.status, response.statusText, response.headers);
     console.error('convertResponseToError body', body);
