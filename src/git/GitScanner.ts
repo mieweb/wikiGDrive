@@ -87,44 +87,44 @@ export class GitScanner {
   }
 
   async changes(): Promise<GitChange[]> {
-    const retVal = [];
+    const retVal = {};
 
     const skipOthers = false;
+
+    function addEntry(path, state, attachments = 0) {
+      if (!retVal[path]) {
+        retVal[path] = {
+          path,
+          state: {
+            isNew: false,
+            isDeleted: false,
+            isModified: false
+          }
+        };
+      }
+      retVal[path].cnt++;
+      for (const k in state) {
+        retVal[path].state[k] = state[k];
+      }
+      if (attachments > 0) {
+        retVal[path].attachments = (retVal[path].attachments || 0) + attachments;
+      }
+    }
 
     try {
       const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
       for (const line of result.stdout.split('\n')) {
         const parts = line.split(/\s/);
         const path = parts[parts.length - 1];
+
         if (line.match(/^A\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: true,
-              isDeleted: false,
-              isModified: false
-            }
-          });
+          addEntry(path, { isNew: true });
         }
         if (line.match(/^M\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: false,
-              isDeleted: false,
-              isModified: true
-            }
-          });
+          addEntry(path, { isModified: true });
         }
         if (line.match(/^D\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: false,
-              isDeleted: true,
-              isModified: false
-            }
-          });
+          addEntry(path, { isDeleted: true });
         }
       }
     } catch (err) {
@@ -142,20 +142,26 @@ export class GitScanner {
       if (!line.trim()) {
         continue;
       }
-      retVal.push({
-        path: line
-          .trim()
-          .replace(/^"/, '')
-          .replace(/"$/, ''),
-        state: {
-          isNew: true,
-          isDeleted: false,
-          isModified: false
-        }
-      });
+      const path = line
+        .trim()
+        .replace(/^"/, '')
+        .replace(/"$/, '');
+
+      if (path.indexOf('.assets/') > -1) {
+        const idx = path.indexOf('.assets/');
+        const mdPath = path.substring(0, idx) + '.md';
+        addEntry(mdPath, { isModified: true }, 1);
+        continue;
+      }
+
+      addEntry(path, { isNew: true });
     }
 
-    return retVal;
+    const retValArr: GitChange[] = Object.values(retVal);
+    retValArr.sort((a, b) => {
+      return a.path.localeCompare(b.path);
+    });
+    return retValArr;
   }
 
   async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
@@ -355,7 +361,13 @@ export class GitScanner {
       if (fileNamesStr.length > 0) {
         await this.exec(`git add -N ${fileNamesStr}`);
       }
+      if (fileName === '') {
+        await this.exec('git add -N *');
+      }
 
+      if (fileName.endsWith('.md')) {
+        fileName = fileName.substring(0, fileName.length - '.md'.length) + '.*' + ' ' + fileName.substring(0, fileName.length - '.md'.length) + '.*/*';
+      }
 
       const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: true });
 
@@ -440,6 +452,16 @@ export class GitScanner {
         }
         retVal.push(current);
       }
+
+      retVal.sort((a, b) => {
+        if (a.newFile.endsWith('.md') && b.newFile.startsWith(a.newFile.replace('.md', '.assets/'))) {
+          return -1;
+        }
+        if (b.newFile.endsWith('.md') && a.newFile.startsWith(b.newFile.replace('.md', '.assets/'))) {
+          return 1;
+        }
+        return a.newFile.localeCompare(b.newFile);
+      });
 
       return retVal;
     } catch (err) {

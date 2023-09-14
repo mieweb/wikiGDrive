@@ -2,30 +2,46 @@
   <ul class="nav files-list border-bottom dark">
     <li class="nav-item fs-4">
       <div class="files-list__item">
-        <i class="fa-brands fa-github"></i>&nbsp; Files to commit
+        <input name="filePath" type="checkbox" value="/" @click="$emit('toggleAll')" :checked="isCheckedAll" />
+        &nbsp; Files to commit ({{checkedCount}})
       </div>
     </li>
   </ul>
 
-  <GitSideBarLeaf
-      v-if="gitChanges && gitChanges.length > 0"
-      :tree="tree"
+  <ul class="nav nav-pills flex-column order-0 files-list" v-if="filteredGitChanges.length > 0">
+    <GitSideBarRow
+      v-for="filteredGitChange in filteredGitChanges"
       :checked="checked"
-      :checkedDirs="checkedDirs"
-      :selectedPath="selectedPath"
-      @toggleDir="toggleDir"
+      :change="filteredGitChange"
+      :key="filteredGitChange.path"
+      :selectedPath="selectedPathWithoutSlash"
+      :data-path="filteredGitChange.path"
       @toggle="$emit('toggle', $event)"
       @selected="$emit('setCurrentDiff', $event)"
-  />
+      @contextmenu.prevent.stop="showContextMenu($event, filteredGitChange)"
+    />
+  </ul>
   <div v-else-if="gitChanges === null"><i class="fa-solid fa-rotate fa-spin"></i> Loading...</div>
   <div v-else>No changes to commit</div>
+
+  <ContextMenu ref="contextMenu">
+    <template v-slot="slotProps">
+      <div class="dropdown" v-if="slotProps.ctx">
+        <ul class="dropdown-menu show">
+          <li><button class="dropdown-item" type="button" @click="removeFile(slotProps.ctx)"><i class="fa-solid fa-trash"></i> Remove</button></li>
+        </ul>
+      </div>
+    </template>
+  </ContextMenu>
 </template>
 <script>
-import GitSideBarLeaf from './GitSideBarLeaf.vue';
+import GitSideBarRow from './GitSideBarRow.vue';
+import ContextMenu from './ContextMenu.vue';
 
 export default {
   components: {
-    GitSideBarLeaf
+    ContextMenu,
+    GitSideBarRow
   },
   props: {
     gitChanges: Array,
@@ -38,7 +54,7 @@ export default {
       checkedDirs: {}
     };
   },
-  emits: ['toggle', 'collapse', 'setCurrentDiff'],
+  emits: ['toggle', 'toggleAll', 'collapse', 'setCurrentDiff'],
   watch: {
     gitChanges() {
       const retVal = [];
@@ -94,6 +110,18 @@ export default {
     }
   },
   methods: {
+    async removeFile(file) {
+      if (!window.confirm('Are you sure?')) {
+        this.$refs.contextMenu.close();
+        return;
+      }
+      const path = file.path;
+      await this.FileClientService.removeFile('/' + this.driveId + (path.startsWith('/') ? path : '/' + path));
+      this.$refs.contextMenu.close();
+    },
+    showContextMenu(event, ctx) {
+      this.$refs.contextMenu.open(event, ctx);
+    },
     addCheckedDirs(tree) {
       for (const item of tree) {
         if (item.children.length > 0) {
@@ -130,10 +158,19 @@ export default {
     }
   },
   computed: {
+    selectedPathWithoutSlash() {
+      return this.selectedPath.replace(/^\//, '');
+    },
     filteredGitChanges() {
+      if (null === this.gitChanges) {
+        return [];
+      }
       return this.gitChanges.filter(change => {
         return (change.path.indexOf('.assets/') === -1);
       });
+    },
+    checkedCount() {
+      return Object.keys(this.checked).length;
     },
     isCheckedAll() {
       return Object.keys(this.checked).length === this.gitChanges?.length;

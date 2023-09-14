@@ -9,10 +9,12 @@
 
     <template v-slot:sidebar="{ collapse }">
       <GitSideBar
+          ref="git_sidebar"
           :selectedPath="selectedPath"
           :gitChanges="gitChanges"
           :checked="checked"
           @toggle="toggle"
+          @toggleAll="toggleAll"
           @setCurrentDiff="setCurrentDiff"
           @collapse="collapse"
       />
@@ -21,7 +23,6 @@
     <form>
       <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
-
         <div v-if="file_deleted" class="flex-grow-1">
           <div class="alert-warning p-3 mb-3">
             File deleted
@@ -88,7 +89,8 @@ export default {
     contentDir: {
       type: String
     },
-    selectedFile: Object
+    selectedFile: Object,
+    selectedFolder: Object
   },
   data() {
     return {
@@ -103,7 +105,8 @@ export default {
   },
   computed: {
     file_deleted() {
-      return !this.selectedFile.id && !['/toc.md'].includes(this.selectedFile.path);
+      return false;
+      // return !this.selectedFile.id && !this.selectedFolder?.path && !['/toc.md'].includes(this.selectedFile.path);
     },
     git_remote_url() {
       return this.user_config.remote_url || '';
@@ -178,6 +181,13 @@ export default {
 
       const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
       this.user_config = await responseConfig.json();
+
+      this.$nextTick(() => {
+        const el = this.$el.querySelector('[data-path="' + this.selectedPath + '"]');
+        if (el) {
+          el.scrollIntoView();
+        }
+      });
     },
     open(url) {
       window.open(url, '_blank');
@@ -269,6 +279,15 @@ export default {
           window.location.hash = '#drive_logs';
         }
       });
+    },
+    toggleAll() {
+      if (Object.keys(this.checked).length === this.gitChanges.length) {
+        this.checked = {};
+      } else {
+        for (const change of this.gitChanges) {
+          this.checked[change.path] = true;
+        }
+      }
     },
     toggle(path) {
       if (this.checked[path]) {

@@ -137,6 +137,8 @@ describe('GitTest', function () {
       await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md', 'testdel.md'], [], COMMITER1);
 
       fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'line1\nline2 modified\nline4\nline5\n');
+      fs.mkdirSync(path.join(scannerLocal.rootPath, 'test2.assets'));
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.assets', 'img1.txt'), 'image\n');
       fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'newone\n');
       fs.unlinkSync(path.join(scannerLocal.rootPath, 'testdel.md'));
 
@@ -144,7 +146,7 @@ describe('GitTest', function () {
       assert.equal(r1.length, 0);
 
       const r2 = await scannerLocal.diff('');
-      assert.equal(r2.length, 3);
+      assert.equal(r2.length, 4);
       assert.equal(r2[0].oldFile, 'test1.md');
       assert.equal(r2[0].newFile, 'test1.md');
 
@@ -163,10 +165,15 @@ describe('GitTest', function () {
       const txt2 = r2[1].txt.trim().split('\n');
       assert.equal(txt2[txt2.length - 1], '+newone');
 
-      assert.equal(r2[2].oldFile, 'testdel.md');
-      assert.equal(r2[2].newFile, 'testdel.md');
+      assert.equal(r2[2].oldFile, 'test2.assets/img1.txt');
+      assert.equal(r2[2].newFile, 'test2.assets/img1.txt');
       const txt3 = r2[2].txt.trim().split('\n');
-      assert.equal(txt3[txt3.length - 1], '-garbage');
+      assert.equal(txt3[txt3.length - 1], '+image');
+
+      assert.equal(r2[3].oldFile, 'testdel.md');
+      assert.equal(r2[3].newFile, 'testdel.md');
+      const txt4 = r2[3].txt.trim().split('\n');
+      assert.equal(txt4[txt4.length - 1], '-garbage');
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
     }
