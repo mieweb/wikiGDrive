@@ -43,6 +43,7 @@ import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {UserAuthClient} from '../../google/AuthClient';
 import {getTokenInfo} from '../../google/GoogleAuthService';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
+import compress from 'compression';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -362,6 +363,15 @@ export class ServerContainer extends Container {
   }
 
   async initRouter(app) {
+    app.use(async (req: express.Request, res: express.Response, next: NextFunction) => {
+      if (req.path.startsWith('/api/')) {
+        this.logger.info(`${req.method} ${req.path}`);
+      }
+      next();
+    });
+
+    app.use(compress());
+
     const driveController = new DriveController('/api/drive', this.filesService,
       <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.authContainer);
     app.use('/api/drive', authenticate(this.logger), await driveController.getRouter());
