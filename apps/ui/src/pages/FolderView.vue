@@ -71,8 +71,23 @@
                 <span></span>
               </template>
             </GitSettings>
+
+            <UserSettings v-if="!contentDir && !(activeTab === 'drive_config' || activeTab === 'drive_config_git')" :activeTab="activeTab">
+              <template v-slot:header>
+                <div class="card-header alert-danger">
+                  Content subdirectory must be set and start with /
+                </div>
+              </template>
+              <template v-slot:toolbar>
+                <span></span>
+              </template>
+              <template v-slot:sidebar>
+                <span></span>
+              </template>
+            </UserSettings>
+
           </div>
-          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder.path" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
         </div>
       </div>
     </template>
@@ -170,7 +185,9 @@ export default {
     this.fetch();
     this.rootFolder = this.$root.drive;
     this.emitter.on('tree:changed', () => {
-      this.fetch();
+      this.$nextTick(() => {
+        this.fetch();
+      });
     });
   },
   watch: {
@@ -215,7 +232,7 @@ export default {
           const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {
             path: filePath.replace('/' + driveId + this.contentDir, '')
           };
-          this.selectedFolder = null;
+          this.selectedFolder = {};
           this.selectedFile = file || {};
         } else {
           parts.push(baseName);

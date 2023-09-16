@@ -59,13 +59,21 @@ export class DriveController extends Controller {
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md' || item.path === '/navigation.md');
 
-    const contentPrefix = userConfigService.config.transform_subdir ? `/${userConfigService.config.transform_subdir}` : '';
+    let tocFilePath = null;
+    let navFilePath = null;
+
+    if (userConfigService.config.transform_subdir && userConfigService.config.transform_subdir.length > 0) {
+      const contentPrefix = (!userConfigService.config.transform_subdir.startsWith('/') ? '/' : '')
+        + userConfigService.config.transform_subdir;
+      tocFilePath = tocFile ? contentPrefix + tocFile.path : null;
+      navFilePath = navFile ? contentPrefix + navFile.path : null;
+    }
 
     return {
       ...drive,
       gitStats: await gitScanner.getStats(userConfig),
-      tocFilePath: tocFile ? contentPrefix + tocFile.path : null,
-      navFilePath: navFile ? contentPrefix + navFile.path : null
+      tocFilePath,
+      navFilePath
     };
   }
 

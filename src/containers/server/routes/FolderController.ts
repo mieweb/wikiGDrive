@@ -244,18 +244,16 @@ export default class FolderController extends Controller {
     this.res.setHeader('wgd-drive-empty', googleTreeProcessor.getTree().length === 0 ? 'true' : 'false');
     this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
     this.res.setHeader('wgd-tree-version', treeVersion);
-    const contentDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '/';
-    this.res.setHeader('wgd-content-dir', contentDir);
+    this.res.setHeader('wgd-content-dir', userConfigService.config.transform_subdir || '');
 
     if (!await transformedFileSystem.exists(filePath)) {
       this.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
       return;
     }
 
-    if (!userConfigService.config.transform_subdir || inDir('/' + userConfigService.config.transform_subdir, filePath)) {
-      const contentFilePath = !userConfigService.config.transform_subdir ?
-        filePath :
-        filePath.replace('/' + userConfigService.config.transform_subdir, '') || '/';
+    if ((userConfigService.config.transform_subdir || '').startsWith('/') && inDir(userConfigService.config.transform_subdir, filePath)) {
+      const prefixed_subdir = userConfigService.config.transform_subdir;
+      const contentFilePath = filePath.replace(prefixed_subdir, '') || '/';
 
       const [treeItem] = contentFilePath === '/'
         ? await markdownTreeProcessor.getRootItem(driveId)
@@ -284,7 +282,7 @@ export default class FolderController extends Controller {
           const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
           const subDir = await transformedFileSystem.getSubFileService(filePath);
           const map1: Map<string, TreeItem> = new Map(
-            (await this.generateChildren(subDir, driveId, '/' + userConfigService.config.transform_subdir, filePath))
+            (await this.generateChildren(subDir, driveId, prefixed_subdir, filePath))
               .map(element => [element.realFileName, element])
           );
           const map2: Map<string, TreeItem> = new Map(
@@ -292,7 +290,7 @@ export default class FolderController extends Controller {
               .map(element => [element.realFileName, element])
           );
           treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
-          await addGitData(treeItem.children, changes, userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir + '' : '');
+          await addGitData(treeItem.children, changes, prefixed_subdir);
           await outputDirectory(this.res, treeItem);
           return;
         } else {
@@ -322,7 +320,7 @@ export default class FolderController extends Controller {
         realFileName: '',
         title: '',
         mimeType: MimeTypes.FOLDER_MIME,
-        children: await this.generateChildren(subDir, driveId, '/' + userConfigService.config.transform_subdir, filePath)
+        children: await this.generateChildren(subDir, driveId, userConfigService.config.transform_subdir || '/', filePath)
       };
 
       const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
@@ -347,7 +345,7 @@ export default class FolderController extends Controller {
     }
   }
 
-  async generateChildren(transformedFileSystem: FileContentService, driveId: FileId, transform_subdir: string, dirPath: string) {
+  async generateChildren(transformedFileSystem: FileContentService, driveId: FileId, subdir: string, dirPath: string) {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(transformedFileSystem);
 
@@ -355,7 +353,7 @@ export default class FolderController extends Controller {
       .map(file => {
         return {
           fileName: file.fileName,
-          id: transform_subdir === dirPath + file.fileName ? driveId : 'UNKNOWN',
+          id: subdir === dirPath + file.fileName ? driveId : 'UNKNOWN',
           parentId: 'UNKNOWN',
           path: dirPath + file.fileName,
           realFileName: file.fileName,

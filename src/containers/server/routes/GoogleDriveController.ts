@@ -63,9 +63,9 @@ export class GoogleDriveController extends Controller {
 
     const treeItem = addPreviewUrl(userConfigService.config.hugo_theme, driveId)(foundTreeItem);
 
-    const contentDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '/';
+    const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
 
-    this.res.setHeader('wgd-content-dir', contentDir);
+    this.res.setHeader('wgd-content-dir', contentDir || '');
     this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
     this.res.setHeader('wgd-google-id', treeItem.id || '');
     this.res.setHeader('wgd-google-version', treeItem.version || '');
@@ -75,6 +75,11 @@ export class GoogleDriveController extends Controller {
     this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
     this.res.setHeader('wgd-preview-url', treeItem.previewUrl || '');
     this.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
+
+    if (!contentDir) {
+      this.res.status(404).send('Content subdirectory must be set and start with /');
+      return;
+    }
 
     const treeProcessor = new GoogleTreeProcessor(googleFileSystem);
     await treeProcessor.load();
@@ -86,7 +91,7 @@ export class GoogleDriveController extends Controller {
     }
 
     const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
-    const change = changes.find(change => change.path === (contentDir + treeItem.path).replace(/^\//, ''));
+    const change = changes.find(change => change.path === (contentDir.substring(1) + treeItem.path).replace(/^\//, ''));
     if (change) {
       if (change.state.isNew) {
         treeItem['status'] = 'N';

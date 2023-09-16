@@ -1,13 +1,24 @@
 <template>
   <div class="container mainbar__content-height" v-if="user_config">
-    <StatusToolBar :active-tab="activeTab" />
+    <slot name="toolbar">
+      <StatusToolBar :active-tab="activeTab" />
+    </slot>
 
     <div class="overflow-scroll d-flex flex-row mt-3">
-      <SettingsSidebar />
+      <slot name="sidebar">
+        <SettingsSidebar />
+      </slot>
 
-      <div class="card flex-grow-1 flex-shrink-1 overflow-scroll border-left-0">
+      <div class="card flex-grow-1 flex-shrink-1 overflow-scroll border-left-0-not-first">
+        <slot name="header">
+        </slot>
         <div class="card-body">
           <form>
+            <div class="form-group">
+              <label :class="!user_config.transform_subdir ? 'text-danger' : ''">Content subdirectory</label>
+              <input class="form-control" rows="10" v-model="user_config.transform_subdir" />
+            </div>
+
             <div class="form-group">
               <label>Theme</label>
               <select class="form-control" @change="changeTheme($event.target.value)">
@@ -22,11 +33,6 @@
 
             <div v-if="userThemeId">
               <img v-if="user_config.hugo_theme.preview_img" :src="user_config.hugo_theme.preview_img" style="height: 250px;" :alt="user_config.hugo_theme.id" />
-            </div>
-
-            <div class="form-group">
-              <label>Content subdirectory</label>
-              <input class="form-control" rows="10" v-model="user_config.transform_subdir" />
             </div>
 
             <div class="form-group">

@@ -309,6 +309,10 @@ export class TransformContainer extends Container {
   }
 
   async run(rootFolderId: FileId) {
+    if (!this.userConfigService.config.transform_subdir.startsWith('/')) {
+      this.logger.warn('Content subdirectory must be set and start with /');
+      return;
+    }
     const contentFileService = await getContentFileService(this.generatedFileService, this.userConfigService);
 
     const queueTransformer = new QueueTransformer(this.logger);

@@ -99,7 +99,7 @@ export class ActionRunnerContainer extends Container {
     const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
 
     const contentDir = config.transform_subdir ?
-      `/${driveIdTransform}/${config.transform_subdir}` :
+      `/${driveIdTransform}${ !config.transform_subdir.startsWith('/') ? '/' : '' }${config.transform_subdir}` :
       `/${driveIdTransform}`;
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 

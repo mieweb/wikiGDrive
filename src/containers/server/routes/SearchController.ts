@@ -23,7 +23,7 @@ export class SearchController extends Controller {
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
 
-    const prefix = userConfigService.config.transform_subdir ? `/${userConfigService.config.transform_subdir}` : '';
+    const prefix = (userConfigService.config.transform_subdir || '').startsWith('/') ? `${userConfigService.config.transform_subdir}` : '';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 

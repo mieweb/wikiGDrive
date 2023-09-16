@@ -11,7 +11,6 @@
 
       <div class="card flex-column order-0 flex-grow-1 flex-shrink-1 overflow-scroll border-left-0-not-first">
         <slot name="header">
-<!--          <div class="card-header">Git</div>-->
         </slot>
         <div class="card-body">
           <div class="form-group">
@@ -43,7 +42,7 @@
             <button class="btn btn-primary" type="button" @click="save">Save</button>
             <button v-if="remote_url && treeEmpty" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
           </div>
-          <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate</button>
+          <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate key</button>
         </div>
       </div>
     </div>

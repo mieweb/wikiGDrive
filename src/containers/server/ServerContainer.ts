@@ -389,7 +389,7 @@ export class ServerContainer extends Container {
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
 
-    const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
+    const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.engine);
     app.use('/api/config', authenticate(this.logger), await configController.getRouter());
 
     const logsController = new LogsController('/api/logs', this.logger);
