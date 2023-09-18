@@ -46,6 +46,11 @@
         WikiGDrive is now running: <em>{{GIT_SHA}}</em>.<br/>
         <a class="btn btn-outline-secondary me-2" @click.prevent="transformAll">Update your entire tree now?</a>
       </li>
+
+      <li class="list-group-item" v-if="selectedFolder.contentDir">
+        Synchronize to Google Drive
+        <a class="btn btn-outline-secondary me-2" @click.prevent="uploadGdrive">Upload missing markdowns to Google Drive</a>
+      </li>
     </ul>
   </div>
 </template>

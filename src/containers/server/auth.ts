@@ -6,6 +6,7 @@ import {Request, Response} from 'express';
 import {UserAuthClient} from '../../google/AuthClient';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {urlToFolderId} from '../../utils/idParsers';
+import {JobManagerContainer} from '../job/JobManagerContainer';
 
 export class AuthError extends Error {
   public status: number;
@@ -179,6 +180,22 @@ export async function getAuth(req, res: Response, next) {
       await googleDriveService.shareDrive(await authClient.getAccessToken(), driveId, this.params.share_email);
 
       await folderRegistryContainer.registerFolder(driveId);
+      res.redirect('/drive/' + driveId);
+      return;
+    }
+
+    const uploadDrive = !!state.get('uploadDrive');
+    if (driveId && uploadDrive) {
+      const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+      await jobManagerContainer.schedule(driveId, {
+        type: 'upload',
+        title: 'Uploading to Google Drive',
+        access_token: await authClient.getAccessToken()
+      });
+
       res.redirect('/drive/' + driveId);
       return;
     }

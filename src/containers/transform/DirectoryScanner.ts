@@ -114,6 +114,10 @@ export class DirectoryScanner {
       }
 
       if (await existingDirectory.isDirectory(realFileName)) {
+        if (realFileName.endsWith('.assets')) {
+          continue;
+        }
+
         if (await existingDirectory.exists(`${realFileName}/.wgd-directory.yaml`)) {
           const yamlContent = await existingDirectory.readFile(`${realFileName}/.wgd-directory.yaml`);
           const props = yaml.load(yamlContent);
@@ -147,6 +151,10 @@ export class DirectoryScanner {
         continue;
       }
 
+      if (realFileName.endsWith('.debug.xml')) {
+        continue;
+      }
+
       let yamlFile;
       if (await existingDirectory.exists('.wgd-directory.yaml')) {
         const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
@@ -162,7 +170,7 @@ export class DirectoryScanner {
           modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
           version: yamlFile ? yamlFile.version : undefined,
           mimeType: 'image/svg+xml',
-          title: stripConflict(realFileName)
+          title: stripConflict(realFileName).replace(/.svg$/, '')
         };
         this.files[realFileName] = drawingFile;
       } else
@@ -178,11 +186,11 @@ export class DirectoryScanner {
           const mdFile: MdFile = {
             type: 'md',
             fileName: stripConflict(realFileName),
-            id: undefined,
+            id: yamlFile ? yamlFile.id : 'TO_FILL',
             modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
             version: undefined,
             mimeType: 'text/x-markdown',
-            title: stripConflict(realFileName),
+            title: stripConflict(realFileName).replace(/.md/, ''),
             lastAuthor: ''
           };
           this.files[realFileName] = mdFile;

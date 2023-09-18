@@ -19,10 +19,11 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import {getContentFileService} from '../transform/utils';
+import {UploadContainer} from '../google_folder/UploadContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action' | 'upload';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export interface Job {
@@ -33,6 +34,7 @@ export interface Job {
   title: string;
   trigger?: string;
   payload?: string;
+  access_token?: string;
   ts?: number; // scheduled at
   started?: number; // started at
   finished?: number; // finished at
@@ -215,6 +217,12 @@ export class JobManagerContainer extends Container {
         }
         driveJobs.jobs.push(job);
         break;
+      case 'upload':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'upload' && notCompletedJob(subJob))) {
+          return;
+        }
+        driveJobs.jobs.push(job);
+        break;
     }
 
     await this.setDriveJobs(driveId, driveJobs);
@@ -278,6 +286,14 @@ export class JobManagerContainer extends Container {
             .then(async () => {
               filterSplit(driveJobs, removeOldById(currentJob.id));
 
+              if (currentJob.type === 'upload') {
+                filterSplit(driveJobs, removeOldByType('upload'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Google Drive upload done',
+                  type: 'upload:done',
+                  links: {}
+                });
+              }
               if (currentJob.type === 'git_reset') {
                 filterSplit(driveJobs, removeOldByType('git_reset'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -332,6 +348,17 @@ export class JobManagerContainer extends Container {
             .catch(err => {
               filterSplit(driveJobs, removeOldById(currentJob.id));
 
+              if (currentJob.type === 'upload') {
+                filterSplit(driveJobs, removeOldByType('upload'));
+                this.engine.emit(driveId, 'toasts:added', {
+                  title: 'Google Drive upload failed',
+                  type: 'upload:failed',
+                  err: err.message,
+                  links: {
+                    '#drive_logs': 'View logs'
+                  },
+                });
+              }
               if (currentJob.type === 'git_reset') {
                 filterSplit(driveJobs, removeOldByType('git_reset'));
                 this.engine.emit(driveId, 'toasts:added', {
@@ -447,6 +474,45 @@ export class JobManagerContainer extends Container {
       }
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
+    }
+  }
+
+  private async upload(folderId: FileId, access_token: string) {
+    const uploadContainer = new UploadContainer({
+      cmd: 'pull',
+      name: folderId,
+      folderId: folderId,
+      apiContainer: 'google_api',
+      access_token
+    });
+
+    const generatedFileService = await this.filesService.getSubFileService(folderId + '_transform', '/');
+    const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
+    await uploadContainer.mount2(
+      googleFileSystem,
+      generatedFileService
+    );
+
+    uploadContainer.onProgressNotify(({ completed, total, warnings }) => {
+      if (!this.driveJobsMap[folderId]) {
+        return;
+      }
+      const jobs = this.driveJobsMap[folderId].jobs || [];
+      const job = jobs.find(j => j.state === 'running' && j.type === 'upload');
+      if (job) {
+        job.progress = {
+          completed: completed,
+          total: total,
+          warnings
+        };
+        this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
+      }
+    });
+    await this.engine.registerContainer(uploadContainer);
+    try {
+      await uploadContainer.run();
+    } finally {
+      await this.engine.unregisterContainer(uploadContainer.params.name);
     }
   }
 
@@ -781,6 +847,10 @@ export class JobManagerContainer extends Container {
         await this.gitReset(driveId, currentJob.payload);
         await this.clearGitCache(driveId);
         break;
+      case 'upload':
+        await this.upload(driveId, currentJob.access_token);
+        break;
+
     }
   }
 

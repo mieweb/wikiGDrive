@@ -48,8 +48,6 @@ function addXmlHandlers(classType) {
     const elemDef: XmlElementDef = classType._elems[xmlElementTag];
     if (elemDef) {
       if (!elemDef.classTypeName || typeof elemDef.classTypeName !== 'string') {
-        // context.parser.startIndex
-        console.log('elemDef', xmlElementTag, elemDef);
         throw new Error('noClassType for tag: ' + xmlElementTag + ', fieldName: ' + elemDef.fieldName);
       }
 

@@ -214,6 +214,15 @@ export const UtilsMixin = {
         });
       });
     },
+    async uploadGdrive(event) {
+      await disableElement(event, async () => {
+        const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/upload', { method: 'get'});
+        const json = await response.json();
+        if (json.shareUrl) {
+          window.location = json.shareUrl;
+        }
+      });
+    },
     async transformSingle(event, selectedFile) {
       await disableElement(event, async () => {
         await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {

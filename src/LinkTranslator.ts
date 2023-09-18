@@ -61,3 +61,12 @@ export function convertToRelativeSvgPath(localPath, basePath) {
     output: RelateUrl.PATH_RELATIVE
   })), 'dirURLs');
 }
+
+export function convertToAbsolutePath(fullPath: string, relativePath: string) {
+  if (fullPath.startsWith('/')) {
+    fullPath = '/' + fullPath;
+  }
+  const fakeServer = 'https://example.com';
+  const abs = RelateUrl.relate(fakeServer + fullPath, relativePath, { output: RelateUrl.ABSOLUTE });
+  return abs.substring(fakeServer.length);
+}

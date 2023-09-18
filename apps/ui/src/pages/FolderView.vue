@@ -87,7 +87,7 @@
             </UserSettings>
 
           </div>
-          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder.path" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+<!--          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder.path" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />-->
         </div>
       </div>
     </template>

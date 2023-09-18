@@ -7,9 +7,10 @@ import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
 import {Drive, Permission} from '../containers/folder_registry/FolderRegistryContainer';
 import {FileId} from '../model/model';
-import {driveFetch, driveFetchStream} from './driveFetch';
+import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch';
 import {QuotaLimiter} from './QuotaLimiter';
 import {HasAccessToken} from './AuthClient';
+import {markdownToHtml} from './markdownToHtml';
 
 export interface Changes {
   token: string;
@@ -289,5 +290,70 @@ export class GoogleDriveService {
       type: 'user',
       role: 'reader'
     });
+  }
+
+  async createDir(accessToken: string, folderId: FileId, name: string) {
+    const url = 'https://www.googleapis.com/upload/drive/v3/files';
+
+    const metadata = {
+      name,
+      'mimeType' : 'application/vnd.google-apps.folder',
+      parents: [folderId],
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+
+    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+      uploadType: 'multipart',
+      supportsAllDrives: true
+    }, formData);
+  }
+
+  async generateIds(accessToken: string, count: number): Promise<FileId[]> {
+    const url = 'https://www.googleapis.com/drive/v3/files/generateIds';
+
+    const response = await driveFetch(this.quotaLimiter, accessToken, 'GET', url, {
+      count: String(count),
+      space: 'drive',
+      type: 'files'
+    });
+
+    return response.ids;
+  }
+
+  async upload(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, id?: FileId) {
+    const url = 'https://www.googleapis.com/upload/drive/v3/files';
+
+    let googleMimeType = 'application/octet-stream';
+    switch (mimeType) {
+      case MimeTypes.IMAGE_SVG:
+        // 'mimeType': MimeTypes.DRAWING_MIME, // Error: Bad Request
+        googleMimeType = MimeTypes.IMAGE_SVG;
+        break;
+      case MimeTypes.MARKDOWN:
+        googleMimeType = MimeTypes.DOCUMENT_MIME;
+        buffer = Buffer.from(new TextEncoder().encode(await markdownToHtml(buffer)));
+        mimeType = 'text/html';
+        break;
+    }
+
+    const metadata = {
+      name,
+      mimeType: googleMimeType,
+      parents: [folderId],
+      id,
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+    formData.append('Media', new Blob([buffer], { type: mimeType }), name);
+
+    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+      uploadType: 'multipart',
+      supportsAllDrives: true
+    }, formData);
   }
 }

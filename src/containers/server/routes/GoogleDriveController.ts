@@ -42,6 +42,25 @@ export class GoogleDriveController extends Controller {
     return { shareUrl };
   }
 
+  @RouteGet('/:driveId/upload')
+  async getUpload(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
+    const serverUrl = process.env.DOMAIN;
+
+    console.log('driveId', driveId);
+    const state = new URLSearchParams(filterParams({
+      uploadDrive: 1,
+      driveId: driveId !== 'none' ? (driveId || '') : ''
+    })).toString();
+
+    const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+    const shareUrl = await authClient.getUploadDriveUrl(`${serverUrl}/auth`, state);
+    if (process.env.VERSION === 'dev') {
+      console.debug(shareUrl);
+    }
+
+    return { shareUrl };
+  }
+
   @RouteGet('/:driveId/:fileId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
