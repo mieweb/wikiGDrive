@@ -63,6 +63,9 @@ export function convertToRelativeSvgPath(localPath, basePath) {
 }
 
 export function convertToAbsolutePath(fullPath: string, relativePath: string) {
+  if (relativePath.indexOf('://') > -1) {
+    return '';
+  }
   if (fullPath.startsWith('/')) {
     fullPath = '/' + fullPath;
   }

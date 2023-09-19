@@ -223,15 +223,15 @@ export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToke
     }
   }
 
-  const after = `\r\n--${boundary}--`;
+  const after = `\n--${boundary}--`;
   function generateMultipart(image: ArrayBuffer, mimetype) {
     const source = new Uint8Array(image); // Wrap in view to get data
 
     const before = [
-      `\r\n--${boundary}\r\n`,
-      `Content-Type: ${mimetype}\r\n`,
-      `Content-Length: ${source.byteLength}\r\n`,
-      '\r\n'
+      `\n--${boundary}\n`,
+      `Content-Type: ${mimetype}\n`,
+      `Content-Length: ${source.byteLength}\n`,
+      '\n'
     ].join('');
 
     const size = before.length + source.byteLength;

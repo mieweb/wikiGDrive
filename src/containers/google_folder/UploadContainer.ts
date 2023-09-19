@@ -1,6 +1,13 @@
 import winston from 'winston';
 import {fileURLToPath} from 'url';
+import htmlparser2 from 'htmlparser2';
+import domutils from 'domutils';
+import {Element} from 'domhandler';
+import render from 'dom-serializer';
+
+import {FileId} from '../../model/model';
 import {MimeTypes} from '../../model/GoogleFile';
+import {LocalFile} from '../../model/LocalFile';
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {UserConfigService} from './UserConfigService';
@@ -8,12 +15,13 @@ import {FileContentService} from '../../utils/FileContentService';
 import {getContentFileService} from '../transform/utils';
 import {DirectoryScanner} from '../transform/DirectoryScanner';
 import {getDesiredPath} from '../transform/LocalFilesGenerator';
-import {FileId} from '../../model/model';
-import {LocalFile} from '../../model/LocalFile';
+import {markdownToHtml} from '../../google/markdownToHtml';
+import {convertToAbsolutePath} from '../../LinkTranslator';
 
 const __filename = fileURLToPath(import.meta.url);
 
 interface FileToUpload {
+  performRewrite?: string;
   path: string;
   file: LocalFile;
   parent: FileId;
@@ -26,6 +34,8 @@ export class UploadContainer extends Container {
   private googleDriveService: GoogleDriveService;
   private userConfigService: UserConfigService;
   private generatedFileService: FileContentService;
+
+  private pathToIdMap = {};
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -55,8 +65,13 @@ export class UploadContainer extends Container {
     let cnt = 0;
     for (const entry of files) {
       const file = entry.file;
-      if (file.id === 'TO_FILL') {
-        cnt++;
+      switch (file.mimeType) {
+        case MimeTypes.IMAGE_SVG:
+        case MimeTypes.MARKDOWN:
+          if (file.id === 'TO_FILL') {
+            cnt++;
+          }
+          break;
       }
     }
 
@@ -64,9 +79,36 @@ export class UploadContainer extends Container {
       const ids = await this.googleDriveService.generateIds(access_token, cnt);
       for (const entry of files) {
         const file = entry.file;
-        if (file.id === 'TO_FILL') {
-          file.id = ids.splice(0, 1)[0];
+        switch (file.mimeType) {
+          case MimeTypes.IMAGE_SVG:
+          case MimeTypes.MARKDOWN:
+            if (file.id === 'TO_FILL') {
+              file.id = ids.splice(0, 1)[0];
+            }
+            break;
         }
+      }
+    }
+  }
+
+  async updateLinks(driveIdId: FileId, dirFileService: FileContentService, files: FileToUpload[]) {
+    // Second pass because of error: Generated IDs are not supported for Docs Editors formats
+    const access_token = this.params.access_token;
+
+    for (const entry of files) {
+      const file = entry.file;
+
+      try {
+        switch (file.mimeType) {
+          case MimeTypes.MARKDOWN:
+            if (file.id && file.id !== 'TO_FILL' && entry.performRewrite) {
+              const rewrittenHtml = await this.rewriteLinks(entry.performRewrite, entry.path);
+              const response = await this.googleDriveService.update(access_token, entry.parent, file.title, MimeTypes.HTML, rewrittenHtml, file.id);
+            }
+            break;
+        }
+      } catch (err) {
+        this.logger.error('[' + entry.path + ']: ' + err.message);
       }
     }
   }
@@ -77,21 +119,34 @@ export class UploadContainer extends Container {
     for (const entry of files) {
       const file = entry.file;
 
-      switch (file.mimeType) {
-        case MimeTypes.FOLDER_MIME:
-          break;
-        case MimeTypes.MARKDOWN:
-          if (file.id && file.id !== 'TO_FILL') {
-            const content = await dirFileService.readBuffer(entry.path);
-            const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
-          }
-          break;
-        case MimeTypes.IMAGE_SVG:
-          if (file.id && file.id !== 'TO_FILL') {
-            const content = await dirFileService.readBuffer(entry.path);
-            const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
-          }
-          break;
+      try {
+        switch (file.mimeType) {
+          case MimeTypes.FOLDER_MIME:
+            break;
+          case MimeTypes.MARKDOWN:
+            if (file.id && file.id !== 'TO_FILL') {
+              const content = await dirFileService.readBuffer(entry.path);
+              const html = await markdownToHtml(content);
+              entry.performRewrite = html;
+              const buffer = Buffer.from(new TextEncoder().encode(html));
+              const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, MimeTypes.HTML, buffer);
+              file.id = response.id;
+            }
+            break;
+          case MimeTypes.IMAGE_SVG:
+            if (file.id && file.id !== 'TO_FILL') {
+              const content = await dirFileService.readBuffer(entry.path);
+              const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
+              file.id = response.id;
+            }
+            break;
+        }
+      } catch (err) {
+        this.logger.error('[' + entry.path + ']: ' + err.message);
+      }
+
+      if (file.id && file.id !== 'TO_FILL') {
+        this.pathToIdMap[entry.path] = file.id;
       }
     }
   }
@@ -119,6 +174,7 @@ export class UploadContainer extends Container {
     }
 
     for (const file of Object.values(files)) {
+      const fullPath = parentPath + '/' + file.fileName;
       switch (file.mimeType) {
         case MimeTypes.FOLDER_MIME:
           if (file.id === 'TO_FILL') {
@@ -129,17 +185,17 @@ export class UploadContainer extends Container {
               file.id = map[file.title].id;
             }
           }
-          await this.uploadDir(file.id, await dirFileService.getSubFileService(file.fileName), parentPath + '/' + file.fileName);
+          await this.uploadDir(file.id, await dirFileService.getSubFileService(file.fileName), fullPath);
           break;
         case MimeTypes.MARKDOWN:
           if (map[getDesiredPath(file.title)]) {
             file.id = map[getDesiredPath(file.title)].id;
           }
-          {
-            const content = await dirFileService.readBuffer(file.fileName);
-            const response = await this.googleDriveService.upload(access_token, folderId, file.title, file.mimeType, content);
-            file.id = response.id;
-          }
+          retVal.push({
+            path: parentPath + '/' + file.fileName,
+            file,
+            parent: folderId
+          });
           break;
         case MimeTypes.IMAGE_SVG:
           if (map[getDesiredPath(file.title)]) {
@@ -151,14 +207,11 @@ export class UploadContainer extends Container {
             file,
             parent: folderId
           });
-
-          {
-            const content = await dirFileService.readBuffer(file.fileName);
-            const response = await this.googleDriveService.upload(access_token, folderId, file.title, file.mimeType, content);
-            file.id = response.id;
-          }
           break;
+      }
 
+      if (file.id && file.id !== 'TO_FILL') {
+        this.pathToIdMap[fullPath] = file.id;
       }
     }
 
@@ -171,13 +224,46 @@ export class UploadContainer extends Container {
       throw new Error('Content subdirectory must be set and start with /');
     }
 
+    this.pathToIdMap = {};
+
     const contentFileService = await getContentFileService(this.generatedFileService, this.userConfigService);
     const files = await this.uploadDir(this.params.folderId, contentFileService, '');
     await this.addIds(this.params.folderId, contentFileService, files);
     await this.uploadFiles(this.params.folderId, contentFileService, files);
+    await this.updateLinks(this.params.folderId, contentFileService, files);
   }
 
   onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void) {
     this.progressNotifyCallback = callback;
+  }
+
+  private async rewriteLinks(html: string, entryPath: string): Promise<Buffer> {
+    const dom = htmlparser2.parseDocument(html);
+
+    const links = domutils.findAll((elem: Element) => {
+      return ['a'].includes(elem.tagName) && !!elem.attribs?.href;
+    }, dom.childNodes);
+    const images = domutils.findAll((elem: Element) => {
+      return ['img'].includes(elem.tagName) && !!elem.attribs?.src;
+    }, dom.childNodes);
+
+    for (const elem of links) {
+      const targetPath = convertToAbsolutePath(entryPath, elem.attribs.href);
+      if (!targetPath) {
+        continue;
+      }
+      if (this.pathToIdMap[targetPath]) {
+        elem.attribs.href = 'https://drive.google.com/open?id=' + this.pathToIdMap[targetPath];
+      }
+    }
+    for (const elem of images) {
+      const targetPath = convertToAbsolutePath(entryPath, elem.attribs.src);
+      if (this.pathToIdMap[targetPath]) {
+        elem.attribs.src = 'https://drive.google.com/open?id=' + this.pathToIdMap[targetPath];
+      }
+    }
+
+    const rewrittenHtml = render(dom);
+    return Buffer.from(new TextEncoder().encode(rewrittenHtml));
   }
 }

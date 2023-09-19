@@ -332,10 +332,8 @@ export class GoogleDriveService {
         // 'mimeType': MimeTypes.DRAWING_MIME, // Error: Bad Request
         googleMimeType = MimeTypes.IMAGE_SVG;
         break;
-      case MimeTypes.MARKDOWN:
+      case MimeTypes.HTML:
         googleMimeType = MimeTypes.DOCUMENT_MIME;
-        buffer = Buffer.from(new TextEncoder().encode(await markdownToHtml(buffer)));
-        mimeType = 'text/html';
         break;
     }
 
@@ -352,6 +350,37 @@ export class GoogleDriveService {
     formData.append('Media', new Blob([buffer], { type: mimeType }), name);
 
     return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+      uploadType: 'multipart',
+      supportsAllDrives: true
+    }, formData);
+  }
+
+  async update(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, fileId: FileId) {
+    const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}`;
+
+    let googleMimeType = 'application/octet-stream';
+    switch (mimeType) {
+      case MimeTypes.IMAGE_SVG:
+        // 'mimeType': MimeTypes.DRAWING_MIME, // Error: Bad Request
+        googleMimeType = MimeTypes.IMAGE_SVG;
+        break;
+      case MimeTypes.HTML:
+        googleMimeType = MimeTypes.DOCUMENT_MIME;
+        break;
+    }
+
+    const metadata = {
+      name,
+      mimeType: googleMimeType,
+      // parents: [folderId],
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+    formData.append('Media', new Blob([buffer], { type: mimeType }), name);
+
+    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'PATCH', url, {
       uploadType: 'multipart',
       supportsAllDrives: true
     }, formData);

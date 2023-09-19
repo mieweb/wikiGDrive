@@ -33,7 +33,7 @@ describe('markdownToHtml', () => {
 
     assert.equal(map['./Doc1.svg'], '/aaa/bbb/Doc1.svg');
     assert.equal(map['Doc2.svg'], '/aaa/bbb/Doc2.svg');
-    assert.equal(map['../subdir/Diagram.svgg'], '/aaa/subdir/Diagram.svg');
+    assert.equal(map['../subdir/Diagram.svg'], '/aaa/subdir/Diagram.svg');
 
     const serilzd = render(dom);
     console.log(serilzd);

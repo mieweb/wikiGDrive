@@ -46,7 +46,6 @@ export class GoogleDriveController extends Controller {
   async getUpload(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
     const serverUrl = process.env.DOMAIN;
 
-    console.log('driveId', driveId);
     const state = new URLSearchParams(filterParams({
       uploadDrive: 1,
       driveId: driveId !== 'none' ? (driveId || '') : ''
