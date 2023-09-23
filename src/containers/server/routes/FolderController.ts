@@ -28,7 +28,7 @@ export const extToMime = {
   'mjs': 'application/javascript',
   'css': 'text/css',
   'txt': 'text/plain',
-  'md': 'text/plain',
+  'md': 'text/x-markdown',
   'htm': 'text/html',
   'html': 'text/html',
   'svg': 'image/svg+xml'
@@ -330,13 +330,25 @@ export default class FolderController extends Controller {
       return;
     } else {
       const ext = await transformedFileSystem.guessExtension(filePath);
-      const mimeType = extToMime[ext];
+
+      const mimeType = extToMime[ext] || (isTextFileName(filePath) ? 'text/plain' : undefined);
       if (mimeType) {
         this.res.setHeader('Content-type', mimeType);
-      } else {
-        if (isTextFileName(filePath)) {
-          this.res.setHeader('Content-type', 'text/plain');
-        }
+      }
+
+      if ('md' === ext) {
+        const previewMdUrl = filePath
+          ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + filePath
+          : '';
+
+        const previewUrl = '/preview' +
+          previewMdUrl
+            .replace(/.md$/, '')
+            .replace(/_index$/, '');
+
+        this.res.setHeader('wgd-path', filePath || '');
+        this.res.setHeader('wgd-mime-type', mimeType);
+        this.res.setHeader('wgd-preview-url', previewUrl);
       }
 
       const buffer = await transformedFileSystem.readBuffer(filePath);

@@ -24,6 +24,9 @@ export function isTextFileName(fileName) {
   if (fileName.endsWith('.css')) {
     return true;
   }
+  if (fileName.endsWith('.md')) {
+    return true;
+  }
   return false;
 }
 
