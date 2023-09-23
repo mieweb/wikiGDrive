@@ -140,7 +140,7 @@ export default {
       });
     },
     openExternal(file) {
-      if (file.id === 'UNKNOWN') {
+      if (file.id === 'UNKNOWN' || file.id === 'TO_FILL') {
         return;
       }
       if (this.isFolder(file)) {
@@ -156,6 +156,7 @@ export default {
       if (id.length === 0) return false;
       if (id.indexOf(':') > -1) return false;
       if (id === 'UNKNOWN') return false;
+      if (id === 'TO_FILL') return false;
 
       return true;
     }

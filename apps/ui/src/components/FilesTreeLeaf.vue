@@ -125,7 +125,7 @@ export default {
       }
     },
     openExternal(file) {
-      if (file.id === 'UNKNOWN') {
+      if (file.id === 'UNKNOWN' || file.id === 'TO_FILL') {
         return;
       }
       if (this.isFolder(file)) {
