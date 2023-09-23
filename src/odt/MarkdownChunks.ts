@@ -184,7 +184,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/A':
           return `](${chunk.payload.href})`;
         case 'SVG/':
-          return `<object type="image/svg+xml" data="${chunk.payload.href}" ></object>`;
+          return `![](${chunk.payload.href})`;
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
