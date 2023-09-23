@@ -47,6 +47,24 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
         uses: 'push_branch'
       }
     ]
+  },
+  {
+    on: 'git_reset',
+    steps: [
+      {
+        name: 'render_hugo',
+        uses: 'render_hugo',
+      }
+    ]
+  },
+  {
+    on: 'git_pull',
+    steps: [
+      {
+        name: 'render_hugo',
+        uses: 'render_hugo',
+      }
+    ]
   }
 ];
 

@@ -591,6 +591,12 @@ export class JobManagerContainer extends Container {
         privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
       });
 
+      await this.schedule(driveId, {
+        type: 'run_action',
+        title: 'Run action: on git_pull',
+        trigger: 'git_pull'
+      });
+
       return {};
     } catch (err) {
       logger.error(err.stack ? err.stack : err.message);
@@ -699,6 +705,12 @@ export class JobManagerContainer extends Container {
           }
           break;
       }
+
+      await this.schedule(driveId, {
+        type: 'run_action',
+        title: 'Run action: on git_reset',
+        trigger: 'git_reset'
+      });
     } catch (err) {
       logger.error(err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {

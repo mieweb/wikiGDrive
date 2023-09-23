@@ -42,6 +42,16 @@ export class UserConfig {
   actions_yaml?: string;
 }
 
+const DEFAULT_CONFIG: UserConfig = {
+  remote_branch: 'master',
+  hugo_theme: {
+    id: 'ananke',
+    name: 'Anake',
+    url: 'https://github.com/budparr/gohugo-theme-ananke.git',
+    preview_img: 'https://raw.githubusercontent.com/budparr/gohugo-theme-ananke/master/images/screenshot.png'
+  }
+};
+
 export class UserConfigService {
 
   public config: UserConfig;
@@ -53,9 +63,7 @@ export class UserConfigService {
       const json = await this.fileService.readJson('.user_config.json');
       this.config = json || {};
     } else {
-      this.config = {
-        remote_branch: 'master'
-      };
+      this.config = structuredClone(DEFAULT_CONFIG);
       await this.save();
     }
     if (!this.config.actions_yaml) {
