@@ -361,7 +361,7 @@ export class JobManagerContainer extends Container {
                   type: 'upload:failed',
                   err: err.message,
                   links: {
-                    '#drive_logs': 'View logs'
+                    ['#drive_logs:' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -372,7 +372,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_reset:failed',
                   err: err.message,
                   links: {
-                    '#drive_logs': 'View logs'
+                    ['#drive_logs:' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -383,7 +383,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_commit:failed',
                   err: err.message,
                   links: {
-                    '#drive_logs': 'View logs'
+                    ['#drive_logs:' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -394,7 +394,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_push:failed',
                   err: err.message,
                   links: {
-                    '#drive_logs': 'View logs'
+                    ['#drive_logs:' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -406,7 +406,7 @@ export class JobManagerContainer extends Container {
                   type: 'sync:failed',
                   err: err.message,
                   links: {
-                    '#drive_logs': 'View logs'
+                    ['#drive_logs:' + currentJob.id]: 'View logs'
                   },
                   payload: 'all'
                 });
@@ -802,7 +802,7 @@ export class JobManagerContainer extends Container {
             type: 'transform:failed',
             err: err.message,
             links: {
-              '#drive_logs': 'View logs'
+              ['#drive_logs:' + currentJob.id]: 'View logs'
             },
             payload: currentJob.payload || 'all'
           });
@@ -824,7 +824,7 @@ export class JobManagerContainer extends Container {
             type: 'run_action:failed',
             err: err.message,
             links: {
-              '#drive_logs': 'View logs'
+              ['#drive_logs:' + currentJob.id]: 'View logs'
             }
           });
           throw err;
@@ -857,7 +857,7 @@ export class JobManagerContainer extends Container {
             type: 'git_pull:failed',
             err: err.message,
             links: {
-              '#drive_logs': 'View logs'
+              ['#drive_logs:' + currentJob.id]: 'View logs'
             },
           });
           throw err;
