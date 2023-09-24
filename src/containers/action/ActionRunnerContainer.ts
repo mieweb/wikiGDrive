@@ -73,6 +73,7 @@ export class ActionRunnerContainer extends Container {
   private generatedFileService: FileContentService;
   private userConfigService: UserConfigService;
   private tempFileService: FileContentService;
+  private isErr = false;
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
@@ -238,6 +239,8 @@ export class ActionRunnerContainer extends Container {
 
     const ownerRepo = await gitScanner.getOwnerRepo();
 
+    this.isErr = false;
+
     const actionDefs = await this.convertActionYaml(config.actions_yaml);
     for (const actionDef of actionDefs) {
       if (actionDef.on !== this.params['trigger']) {
@@ -282,6 +285,7 @@ export class ActionRunnerContainer extends Container {
             break;
         }
         if (0 !== lastCode) {
+          this.isErr = true;
           break;
         }
       }
@@ -309,5 +313,9 @@ export class ActionRunnerContainer extends Container {
       }
     }
     return additionalEnv;
+  }
+
+  public failed() {
+    return this.isErr;
   }
 }

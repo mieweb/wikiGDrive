@@ -580,6 +580,9 @@ export class JobManagerContainer extends Container {
     await this.engine.registerContainer(runActionContainer);
     try {
       await runActionContainer.run(folderId);
+      if (runActionContainer.failed()) {
+        throw new Error('One on action steps has failed');
+      }
     } finally {
       fs.rmSync(tempPath, { recursive: true, force: true });
       await this.engine.unregisterContainer(runActionContainer.params.name);
