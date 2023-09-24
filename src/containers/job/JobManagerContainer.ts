@@ -26,11 +26,18 @@ const __filename = fileURLToPath(import.meta.url);
 export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action' | 'upload';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
+export function initJob(): { id: string, state: JobState } {
+  return {
+    id: randomUUID(),
+    state: 'waiting'
+  };
+}
+
 export interface Job {
-  id?: string;
+  id: string;
+  state: JobState;
   progress?: { total: number; completed: number; warnings: number };
   type: JobType;
-  state?: JobState;
   title: string;
   trigger?: string;
   payload?: string;
@@ -152,7 +159,6 @@ export class JobManagerContainer extends Container {
   }
 
   async schedule(driveId: FileId, job: Job) {
-    job.id = randomUUID();
     job.state = 'waiting';
     job.ts = +new Date();
 
@@ -429,11 +435,12 @@ export class JobManagerContainer extends Container {
     }, 100);
   }
 
-  private async transform(folderId: FileId, filesIds: FileId[] = []) {
+  private async transform(folderId: FileId, jobId: string, filesIds: FileId[] = []) {
     const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
     const changesToFetch: GoogleFile[] = await watchChangesContainer.getChanges(folderId);
     const transformContainer = new TransformContainer({
-      name: folderId
+      name: folderId,
+      jobId
     }, { filesIds });
     const transformedFileSystem = await this.filesService.getSubFileService(folderId + '_transform', '/');
     const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
@@ -477,11 +484,12 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async upload(folderId: FileId, access_token: string) {
+  private async upload(folderId: FileId, jobId: string, access_token: string) {
     const uploadContainer = new UploadContainer({
       cmd: 'pull',
       name: folderId,
       folderId: folderId,
+      jobId,
       apiContainer: 'google_api',
       access_token
     });
@@ -516,11 +524,12 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async sync(folderId: FileId, filesIds: FileId[] = []) {
+  private async sync(folderId: FileId, jobId: string, filesIds: FileId[] = []) {
     const downloadContainer = new GoogleFolderContainer({
       cmd: 'pull',
       name: folderId,
       folderId: folderId,
+      jobId,
       apiContainer: 'google_api'
     }, { filesIds });
 
@@ -550,9 +559,10 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async runAction(folderId: FileId, trigger: string, payload: string, user?: { name: string, email: string }) {
+  private async runAction(folderId: FileId, jobId: string, trigger: string, payload: string, user?: { name: string, email: string }) {
     const runActionContainer = new ActionRunnerContainer({
       name: folderId,
+      jobId,
       trigger,
       payload,
       user_name: user?.name || 'WikiGDrive',
@@ -576,8 +586,8 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async gitPull(driveId: FileId) {
-    const logger = this.engine.logger.child({ filename: __filename, driveId });
+  private async gitPull(driveId: FileId, jobId: string) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
       const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
@@ -592,6 +602,7 @@ export class JobManagerContainer extends Container {
       });
 
       await this.schedule(driveId, {
+        ...initJob(),
         type: 'run_action',
         title: 'Run action: on git_pull',
         trigger: 'git_pull'
@@ -607,8 +618,8 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async gitPush(driveId: FileId) {
-    const logger = this.engine.logger.child({filename: __filename, driveId});
+  private async gitPush(driveId: FileId, jobId: string) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
 
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
@@ -633,8 +644,8 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async gitCommit(driveId: FileId, message: string, filePaths: string[], removeFilePaths: string[], user) {
-    const logger = this.engine.logger.child({filename: __filename, driveId});
+  private async gitCommit(driveId: FileId, jobId: string, message: string, filePaths: string[], removeFilePaths: string[], user) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
@@ -664,6 +675,7 @@ export class JobManagerContainer extends Container {
     await gitScanner.commit(message, filePaths, removeFilePaths, user);
 
     await this.schedule(driveId, {
+      ...initJob(),
       type: 'run_action',
       title: 'Run action: on commit',
       trigger: 'commit',
@@ -671,8 +683,8 @@ export class JobManagerContainer extends Container {
     });
   }
 
-  private async gitReset(driveId: FileId, type: string) {
-    const logger = this.engine.logger.child({filename: __filename, driveId});
+  private async gitReset(driveId: FileId, jobId: string, type: string) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
 
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
@@ -707,6 +719,7 @@ export class JobManagerContainer extends Container {
       }
 
       await this.schedule(driveId, {
+        ...initJob(),
         type: 'run_action',
         title: 'Run action: on git_reset',
         trigger: 'git_reset'
@@ -740,6 +753,7 @@ export class JobManagerContainer extends Container {
     if (filesToRetry.length > 0) {
       for (const change of filesToRetry) {
         await this.schedule(driveId, {
+          ...initJob(),
           type: 'sync',
           startAfter: now + 10 * 1000,
           payload: change.id,
@@ -754,14 +768,14 @@ export class JobManagerContainer extends Container {
     logger.info('runJob ' + driveId + ' ' + JSON.stringify(currentJob));
     switch (currentJob.type) {
       case 'sync':
-        await this.sync(driveId, currentJob.payload.split(','));
+        await this.sync(driveId, currentJob.id, currentJob.payload.split(','));
         break;
       case 'sync_all':
-        await this.sync(driveId);
+        await this.sync(driveId, currentJob.id);
         break;
       case 'transform':
         try {
-          await this.transform(driveId, currentJob.payload ? [ currentJob.payload ] : [] );
+          await this.transform(driveId, currentJob.id, currentJob.payload ? [ currentJob.payload ] : [] );
           await this.clearGitCache(driveId);
 
           driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('transform'));
@@ -772,6 +786,7 @@ export class JobManagerContainer extends Container {
           });
 
           await this.schedule(driveId, {
+            ...initJob(),
             type: 'run_action',
             title: 'Run action: on ' + currentJob.type,
             payload: currentJob.payload || 'all',
@@ -793,7 +808,7 @@ export class JobManagerContainer extends Container {
         break;
       case 'run_action':
         try {
-          await this.runAction(driveId, currentJob.trigger, currentJob.payload, currentJob.user);
+          await this.runAction(driveId, currentJob.id, currentJob.trigger, currentJob.payload, currentJob.user);
           await this.clearGitCache(driveId);
 
           this.engine.emit(driveId, 'toasts:added', {
@@ -816,7 +831,7 @@ export class JobManagerContainer extends Container {
         break;
       case 'git_pull':
         try {
-          await this.gitPull(driveId);
+          await this.gitPull(driveId, currentJob.id);
           await this.clearGitCache(driveId);
           driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
           this.engine.emit(driveId, 'toasts:added', {
@@ -828,6 +843,7 @@ export class JobManagerContainer extends Container {
           });
 
           await this.schedule(driveId, {
+            ...initJob(),
             type: 'transform',
             title: 'Transform markdown'
           });
@@ -845,22 +861,22 @@ export class JobManagerContainer extends Container {
         }
         break;
       case 'git_push':
-        await this.gitPush(driveId);
+        await this.gitPush(driveId, currentJob.id);
         await this.clearGitCache(driveId);
         break;
       case 'git_commit':
         {
           const { message, filePaths, removeFilePaths, user } = JSON.parse(currentJob.payload);
-          await this.gitCommit(driveId, message, filePaths, removeFilePaths, user);
+          await this.gitCommit(driveId, currentJob.id, message, filePaths, removeFilePaths, user);
           await this.clearGitCache(driveId);
         }
         break;
       case 'git_reset':
-        await this.gitReset(driveId, currentJob.payload);
+        await this.gitReset(driveId, currentJob.id, currentJob.payload);
         await this.clearGitCache(driveId);
         break;
       case 'upload':
-        await this.upload(driveId, currentJob.access_token);
+        await this.upload(driveId, currentJob.id, currentJob.access_token);
         break;
 
     }

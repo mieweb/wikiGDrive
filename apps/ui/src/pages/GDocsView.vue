@@ -205,8 +205,8 @@
 <script lang="js">
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
-import {disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
+import {UiMixin} from '../components/UiMixin.ts';
+import {DEFAULT_TAB, disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
 import {GitMixin} from '../components/GitMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NotRegistered from './NotRegistered.vue';
@@ -237,6 +237,7 @@ export default {
       untransformed: null,
       commitMsg: '',
       activeTab: DEFAULT_TAB,
+      activeTabParams: [],
       folderPath: '',
       contentDir: '',
       selectedFile: {},
@@ -287,14 +288,14 @@ export default {
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+      [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
     },
     async active_jobs() {
       await this.fetch();
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
   },
   methods: {
     async commitSinglePush(event) {

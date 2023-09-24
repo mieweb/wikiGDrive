@@ -76,7 +76,7 @@ export class ActionRunnerContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
   }
 
   async convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {

@@ -9,7 +9,7 @@ import {saveRunningInstance} from './loadRunningInstance';
 import {urlToFolderId} from '../../utils/idParsers';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
+import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer';
 import {fileURLToPath} from 'url';
 import GitController from './routes/GitController';
 import FolderController from './routes/FolderController';
@@ -447,6 +447,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'run_action',
           title: 'Run action: on ' + req.params.trigger,
           trigger: req.params.trigger,
@@ -466,6 +467,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           title: 'Transform Markdown'
         });
@@ -483,6 +485,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           payload: fileId,
           title: 'Transform Single'
@@ -500,10 +503,12 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'sync_all',
           title: 'Syncing all'
         });
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           title: 'Transform markdown'
         });
@@ -531,11 +536,13 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'sync',
           payload: fileId,
           title: 'Syncing file: ' + fileTitle
         });
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           payload: fileId,
           title: 'Transform markdown'

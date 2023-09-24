@@ -4,6 +4,7 @@ import path from 'path';
 import {DailyRotateFile} from './DailyRotateFile';
 import {fileURLToPath} from 'url';
 import {ansi_colors} from './colors';
+import {JobLogFile} from './JobLogFile';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -133,6 +134,12 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
   }));
 
   const dirname = path.join(workdir, '%driveId%', '.logs');
+  logger.add(new JobLogFile({
+    format: winston.format.json(),
+    zippedArchive: true,
+    dirname: dirname,
+    filename: 'job-%JOB_ID%.log'
+  }));
   logger.add(new DailyRotateFile({
     format: winston.format.json(),
     zippedArchive: true,

@@ -11,6 +11,7 @@ export class LogsController extends Controller {
   async getConfig(@RouteParamPath('driveId') driveId: string,
                   @RouteParamQuery('from') from?: number,
                   @RouteParamQuery('until') until?: number,
+                  @RouteParamQuery('jobId') jobId?: string,
                   @RouteParamQuery('order') order?: 'desc' | 'asc'
                   ) {
 
@@ -22,9 +23,10 @@ export class LogsController extends Controller {
       }
     }
 
-    const options: QueryOptions = {
+    const options: any = {
       from: from ? new Date(+from) : undefined,
       until: until ? new Date(+until) : undefined,
+      jobId,
       order: order || 'asc',
       start: 0,
       limit: 100,
@@ -40,6 +42,10 @@ export class LogsController extends Controller {
         resolve(results);
       }
     }));
+
+    if (jobId) {
+      return results['jobLogFile'];
+    }
 
     return results['dailyRotateFile'].reverse();
   }

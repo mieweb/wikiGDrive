@@ -28,7 +28,12 @@
         <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-        <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
+
+        <div v-if="activeTab === 'drive_logs'">
+          <JobLogsViewer v-if="activeTabParams[0]" contentDir="contentDir" :active-tab="activeTab" :jobId="activeTabParams[0]" />
+          <LogsViewer v-else :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
+        </div>
+
         <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
         <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
         <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
@@ -95,8 +100,8 @@
 </template>
 <script lang="ts">
 import BaseLayout from '../layout/BaseLayout.vue';
-import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
-import {UtilsMixin} from '../components/UtilsMixin.ts';
+import {UiMixin} from '../components/UiMixin.ts';
+import {DEFAULT_TAB, UtilsMixin} from '../components/UtilsMixin.ts';
 import FilesTree from '../components/FilesTree.vue';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
@@ -106,6 +111,7 @@ import FileEditor from '../components/FileEditor.vue';
 import NavTabs from '../components/NavTabs.vue';
 import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
+import JobLogsViewer from '../components/JobLogsViewer.vue';
 import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
@@ -134,6 +140,7 @@ export default {
     IframePreview,
     FileEditor,
     LogsViewer,
+    JobLogsViewer,
     ZipkinViewer,
     ChangesViewer,
     UserSettings,
@@ -150,8 +157,12 @@ export default {
       folderPath: '',
       contentDir: '',
       activeTab: DEFAULT_TAB,
+      activeTabParams: [],
       files: [],
-      selectedFile: {},
+      selectedFile: {
+        id: null,
+        mimeType: ''
+      },
       selectedFolder: {},
       driveEmpty: false,
       treeEmpty: false,
@@ -193,11 +204,11 @@ export default {
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+      [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
   },
   methods: {
     async fetchFolder(driveId, filePath) {

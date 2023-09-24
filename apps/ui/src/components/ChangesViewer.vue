@@ -105,7 +105,7 @@
               <td>
                 {{ job.finishedStr }}
                 ({{ job.durationStr }})
-                <button class="btn float-end" @click="showLogs(job)">Logs</button>
+                <a class="btn float-end" :href="'#drive_logs:job-' + job.id" @click.prevent="showLogs(job)">Logs</a>
               </td>
             </tr>
             </tbody>
@@ -177,11 +177,7 @@ export default {
       }
     },
     showLogs(job) {
-      this.$emit('showLogs', {
-        from: job.started,
-        until: job.finished
-      });
-      this.setActiveTab('drive_logs');
+      this.$router.push(`/drive/${this.driveId}#drive_logs:job-${job.id}`);
     }
   }
 };

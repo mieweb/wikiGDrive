@@ -50,7 +50,7 @@ export class UploadContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
     this.googleDriveService = new GoogleDriveService(this.logger, null);
     // this.auth = googleApiContainer.getAuth();
   }

@@ -44,7 +44,7 @@ export class GoogleFolderContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
     const googleApiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
     this.googleDriveService = new GoogleDriveService(this.logger, googleApiContainer.getQuotaLimiter());
     this.auth = googleApiContainer.getAuth();

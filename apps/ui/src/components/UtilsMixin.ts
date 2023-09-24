@@ -1,3 +1,5 @@
+export const DEFAULT_TAB = 'html';
+
 export async function disableElement(event, handler) {
   const origAttr = event.target.getAttribute('disabled');
   if ('disabled' === origAttr) {
@@ -111,6 +113,10 @@ export const UtilsMixin = {
     }
   },
   methods: {
+    getActiveTab() {
+      const parts = (this.$route.hash.replace(/^#/, '') || DEFAULT_TAB).split(':');
+      return parts;
+    },
     setActiveTab(tab, selectedFilePath) {
       if (this.isAddon) {
         if (this.fullDrivePath) {

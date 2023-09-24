@@ -6,7 +6,7 @@ import {Request, Response} from 'express';
 import {UserAuthClient} from '../../google/AuthClient';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {urlToFolderId} from '../../utils/idParsers';
-import {JobManagerContainer} from '../job/JobManagerContainer';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
 
 export class AuthError extends Error {
   public status: number;
@@ -191,6 +191,7 @@ export async function getAuth(req, res: Response, next) {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
       await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
         type: 'upload',
         title: 'Uploading to Google Drive',
         access_token: await authClient.getAccessToken()

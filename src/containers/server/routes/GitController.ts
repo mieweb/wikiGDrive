@@ -2,7 +2,7 @@ import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, Ro
 import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FileContentService} from '../../../utils/FileContentService';
-import {JobManagerContainer} from '../../job/JobManagerContainer';
+import {initJob, JobManagerContainer} from '../../job/JobManagerContainer';
 import {ContainerEngine} from '../../../ContainerEngine';
 
 interface CommitPost {
@@ -73,6 +73,7 @@ export default class GitController extends Controller {
       : (body.removeFilePath ? [body.removeFilePath] : []);
 
     await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
       type: 'git_commit',
       title: 'Git Commit',
       payload: JSON.stringify({
@@ -95,6 +96,7 @@ export default class GitController extends Controller {
   @RoutePost('/:driveId/pull')
   async pull(@RouteParamPath('driveId') driveId: string) {
     await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
       type: 'git_pull',
       title: 'Git Pull'
     });
@@ -104,6 +106,7 @@ export default class GitController extends Controller {
   @RoutePost('/:driveId/push')
   async push(@RouteParamPath('driveId') driveId: string) {
     await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
       type: 'git_push',
       title: 'Git Push'
     });
@@ -114,6 +117,7 @@ export default class GitController extends Controller {
   @RoutePost('/:driveId/reset_remote')
   async resetRemote(@RouteParamPath('driveId') driveId: string) {
     await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
       type: 'git_reset',
       title: 'Git Reset to Remote',
       payload: 'remote'
@@ -125,6 +129,7 @@ export default class GitController extends Controller {
   @RoutePost('/:driveId/reset_local')
   async resetLocal(@RouteParamPath('driveId') driveId: string) {
     await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
       type: 'git_reset',
       title: 'Git Reset to Local',
       payload: 'local'

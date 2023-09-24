@@ -6,7 +6,7 @@ import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleFile} from '../../model/GoogleFile';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
-import {JobManagerContainer} from '../job/JobManagerContainer';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {type FileId} from '../../model/model';
 import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry';
@@ -93,11 +93,13 @@ export class WatchChangesContainer extends Container {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
       await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
         type: 'sync',
         payload: fileIdsString,
         title: 'Syncing file: ' + fileIdsString
       });
       await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
         type: 'transform',
         title: 'Transform markdown'
       });
