@@ -112,7 +112,7 @@
     "open": "^7.4.2",
     "prismjs": "1.29.0",
     "relateurl": "0.2.7",
-    "sharp": "0.30.7",
+    "sharp": "0.32.6",
     "sharp-phash": "^2.0.0",
     "slugify": "1.6.5",
     "stream": "^0.0.2",
