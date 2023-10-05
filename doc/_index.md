@@ -8,7 +8,7 @@ Google Drive to MarkDown synchronization
 
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
-![Diagram](./Diagram.svg)
+![Diagram](./diagram.svg)
 
 [Google Drive Notes](https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#)
 | [Github Project](https://github.com/mieweb/wikiGDrive/projects)
@@ -16,23 +16,23 @@ WikiGDrive is a node app that uses the [Google Drive API](https://developers.goo
 
 With a "Shared Drive" as the key, WikiGDrive:
 
-- Reads all the files from a Google "Shared Drive"
-- Builds a map of the driveId (URL) to the pathname in the "Shared Drive"
-- For each Google Document:
-    - Converts to a Markdown file with the path (instead of the driveId for the file)
-    - Changes driveId to the path (eg: 12lvdxKgGsD.../edit would be changed to /filename
-    - Support diagrams as SVG (and map the URLs in the diagram)
+* Reads all the files from a Google "Shared Drive"
+* Builds a map of the driveId (URL) to the pathname in the "Shared Drive"
+* For each Google Document:
+    * Converts to a Markdown file with the path (instead of the driveId for the file)
+    * Changes driveId to the path (eg: 12lvdxKgGsD.../edit would be changed to /filename
+    * Support diagrams as SVG (and map the URLs in the diagram)
 
 WikiGDrive scans for changes in the drive and then refresh the local converted files.
 
 ## Developer Documentation
 
-[Developer README](./developer.md)
-[Internals](./internals.md)
+* [Developer README](./developer.md)
+* [Internals](./internals.md)
 
 ## Install from NPM
 
-*Not currently working*
+*Not currently working*  
 See https://github.com/mieweb/wikiGDrive/issues/297 for status.
 
 [![View this project on NPM](https://img.shields.io/npm/v/@mieweb/wikigdrive.svg)](https://www.npmjs.com/package/@mieweb/wikigdrive)
@@ -45,7 +45,7 @@ npm i -g @mieweb/wikigdrive
 
 ## App setup
 
-1. Go to console https://console.developers.google.com/
+1. Go to [console](https://console.developers.google.com/)
 2. Create New Project
 3. Enable Apis -> add Google Drive API
 4. Enable Apis -> Add Google Docs API
@@ -110,7 +110,7 @@ wikigdrive server
 
 ## Example usage with Hugo Generator
 
-1. Install hugo https://gohugo.io/getting-started/quick-start/
+1. Install [hugo](https://gohugo.io/getting-started/quick-start/)
 
 2. Create a New Site
 
@@ -140,7 +140,7 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID" --des
 wikigdrive pull
 ```
 
-Note that by default you need to use `uglyURLs` with Hugo. https://gohugo.io/content-management/urls/#ugly-urls
+Note that by default you need to use [uglyURLs](https://gohugo.io/content-management/urls/#ugly-urls) with Hugo.
 
 6. Generate HTML
 
@@ -156,7 +156,7 @@ hugo server
 
 ## Example usage with Hexo Generator
 
-1. Install hexo https://hexo.io/docs/main.html
+1. Install [hexo](https://hexo.io/docs/main.html)
 
 ```
 npm i -g hexo-cli
@@ -170,7 +170,7 @@ hexo init quickstart
 
 3. Add a Theme
 
-By default, hexo installs `landscape` theme. If you need another one check: https://hexo.io/docs/themes
+By default, hexo installs `landscape` theme. If you need another one check [hexo themes](https://hexo.io/docs/themes)
 
 4. Install wikigdrive
 
@@ -201,10 +201,10 @@ hexo serve
 
 There are two methods: individual credentials or a service account.
 
-- [Individual](https://cloud.google.com/docs/authentication/end-user#creating_your_client_credentials)
-- [Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority)
+* [Individual](https://cloud.google.com/docs/authentication/end-user#creating_your_client_credentials)
+* [Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority)
 
-*** Note: If the authentication is successful, but the account does not have access to documents in gdrive, there is currently no way to know if the directory is empty or just not possible to see.
+Note: If the authentication is successful, but the account does not have access to documents in gdrive, there is currently no way to know if the directory is empty or just not possible to see.
 
 ## FAQ
 
@@ -224,7 +224,7 @@ Also, Google does not have a good blame system for contributions to a document. 
 
 ### Why markdown?
 
-All ears for a different preferred format. It’s easy to read when editing directly and when doing a diff for changes it’s clean
+All ears for a different preferred format. It's easy to read when editing directly and when doing a diff for changes is clean
 
 ### What about mismatches in Docs vs Markdown
 
