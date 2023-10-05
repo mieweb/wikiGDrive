@@ -36,7 +36,7 @@
         </div>
         <div class="card-footer" v-if="active_jobs.length === 0">
           <div class="btn-group">
-            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
+            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
             <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
             <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
             <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>

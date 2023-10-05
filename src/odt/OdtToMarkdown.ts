@@ -18,9 +18,10 @@ import {
 } from './LibreOffice';
 import {urlToFolderId} from '../utils/idParsers';
 import {MarkdownChunks} from './MarkdownChunks';
-import {StateMachine} from './StateMachine';
+import {isMarkdownMacro, StateMachine} from './StateMachine';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils';
 import {extractPath} from './extractPath';
+import {mergeDeep} from './mergeDeep';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -30,6 +31,28 @@ const COURIER_FONTS = ['Courier New', 'Courier'];
 
 interface FileNameMap {
   [name: string]: string
+}
+
+function getInnerText(span: TextSpan) {
+  let retVal = '';
+  for (const child of span.list) {
+    if (typeof child === 'string') {
+      retVal += child;
+      continue;
+    }
+    switch (child.type) {
+      case 'line_break':
+        retVal += '\n';
+        break;
+      case 'tab':
+        retVal += '\t';
+        break;
+      case 'space':
+        retVal += spaces((<TextSpace>child).chars || 1);
+        break;
+    }
+  }
+  return retVal;
 }
 
 export class OdtToMarkdown {
@@ -44,11 +67,11 @@ export class OdtToMarkdown {
     this.stateMachine = new StateMachine(this.chunks);
   }
 
-  getStyle(styleName): Style {
+  getStyle(styleName: string): Style {
     if (!this.styles[styleName]) {
       const docStyle = this.documentStyles?.styles?.styles.find(a => a.name === styleName);
       if (docStyle) {
-        return docStyle;
+        return structuredClone(docStyle);
       }
 
       return {
@@ -62,8 +85,7 @@ export class OdtToMarkdown {
     }
 
     const parentStyle = this.getStyle(this.styles[styleName].parentStyleName);
-
-    return Object.assign({}, parentStyle, this.styles[styleName]);
+    return structuredClone(mergeDeep(parentStyle, this.styles[styleName]));
   }
 
   getListStyle(listStyleName): ListStyle {
@@ -93,7 +115,37 @@ export class OdtToMarkdown {
 
     this.stateMachine.postProcess();
 
-    return await this.rewriteHeaders(this.chunks.toString());
+    const markdown = this.chunks.toString();
+    const trimmed = this.trimBreaks(markdown);
+    return await this.rewriteHeaders(trimmed);
+  }
+
+  trimBreaks(markdown: string) {
+    const rows = markdown.split('\n');
+
+    let inSidePre = false;
+    for (let i = 0; i < rows.length - 1; i++) {
+      if (rows[i].substring(0, 3) === '```') {
+        inSidePre = !inSidePre;
+      }
+
+      if (inSidePre && (rows[i].match(/[^ ] {2}$/))) {
+        rows[i] = rows[i].replace(/ {2}$/, '');
+        continue;
+      }
+
+      if ((rows[i].match(/[^ ] {2}$/)) && rows[i + 1].trim().length === 0) {
+        rows[i] = rows[i].replace(/ {2}$/, '');
+        continue;
+      }
+
+      if (rows[i] === '  ') {
+        rows[i] = '';
+        continue;
+      }
+    }
+
+    return rows.join('\n');
   }
 
   getErrors() {
@@ -389,6 +441,32 @@ export class OdtToMarkdown {
       this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
     }
 
+    let codeElementsCount = 0;
+    let textElementsCount = 0;
+    for (const paraChild of paragraph.list) {
+      if (typeof paraChild === 'string') {
+        textElementsCount++;
+        continue;
+      }
+      if (paraChild.type === 'span') {
+        const paraSpan = <TextSpan>paraChild;
+        const spanStyle = this.getStyle(paraSpan.styleName);
+
+        const innerTxt = getInnerText(paraSpan);
+        if (isMarkdownMacro(innerTxt)) {
+          continue;
+        }
+        if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+          codeElementsCount++;
+        }
+      }
+    }
+
+    const onlyCodeChildren = codeElementsCount > 0 && codeElementsCount + textElementsCount === paragraph.list.length;
+    if (onlyCodeChildren) {
+      this.stateMachine.pushTag('PRE');
+    }
+
 /*    switch (this.top.mode) {
       case 'html':
         this.stateMachine.pushTag('P');
@@ -440,12 +518,16 @@ export class OdtToMarkdown {
           {
             const span = <TextSpan>child;
             const spanStyle = this.getStyle(span.styleName);
-            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && paragraph.list.length === 1) {
-              this.stateMachine.pushTag('PRE');
+            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && onlyCodeChildren) {
               const span2 = Object.assign({}, span);
               span2.styleName = '';
               await this.spanToText(span2);
-              this.stateMachine.pushTag('/PRE');
+            } else if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+              this.stateMachine.pushTag('CODE');
+              const span2 = Object.assign({}, span);
+              span2.styleName = '';
+              await this.spanToText(span2);
+              this.stateMachine.pushTag('/CODE');
             } else {
               await this.spanToText(span);
             }
@@ -502,6 +584,10 @@ export class OdtToMarkdown {
     }
     if (this.hasStyle(paragraph, 'Heading_20_4')) {
       this.stateMachine.pushTag('/H4');
+    }
+
+    if (onlyCodeChildren) {
+      this.stateMachine.pushTag('/PRE');
     }
 
     if (this.isCourier(paragraph.styleName)) {

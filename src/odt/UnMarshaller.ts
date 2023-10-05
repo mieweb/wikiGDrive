@@ -1,4 +1,4 @@
-import htmlparser2 from 'htmlparser2';
+import * as htmlparser2 from 'htmlparser2';
 
 // TODO https://relaxng.org/relaxng.rng
 // TODO namespaces
@@ -188,6 +188,9 @@ export class UnMarshaller {
   }
 
   public unmarshal(content) {
+    if ('string' !== typeof content) {
+      content = new TextDecoder().decode(content);
+    }
     this.parser.write(content);
     this.parser.end();
     return this.top.val['retVal'];

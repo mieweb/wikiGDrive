@@ -216,7 +216,7 @@ export class TextChangeEnd {
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace| DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace | DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }

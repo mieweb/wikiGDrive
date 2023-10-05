@@ -1,10 +1,11 @@
 import winston from 'winston';
 import {fileURLToPath} from 'url';
-import htmlparser2 from 'htmlparser2';
-import domutils from 'domutils';
-import {Element} from 'domhandler';
-import render from 'dom-serializer';
+import * as htmlparser2 from 'htmlparser2';
+import {ElementType} from 'htmlparser2';
+import * as domutils from 'domutils';
+import {Element, Text} from 'domhandler';
 
+import render from 'dom-serializer';
 import {FileId} from '../../model/model';
 import {MimeTypes} from '../../model/GoogleFile';
 import {LocalFile} from '../../model/LocalFile';
@@ -260,6 +261,21 @@ export class UploadContainer extends Container {
       const targetPath = convertToAbsolutePath(entryPath, elem.attribs.src);
       if (this.pathToIdMap[targetPath]) {
         elem.attribs.src = 'https://drive.google.com/open?id=' + this.pathToIdMap[targetPath];
+      }
+      const alt = elem.attribs.alt || '';
+      elem.tagName = 'span'; // Google Drive import ignores <code>sth</code>. Use: <span class="class_with_courier_font">sth</span>.
+      elem.attribs.class = 'code';
+      const txt = new Text(`{{markdown}}![${alt}](${elem.attribs.src}){{/markdown}}`);
+      elem.children.push(txt);
+
+      if (elem.parentNode.type === ElementType.Tag) {
+        const el: Element = <Element>elem.parentNode;
+        if (el.tagName === 'a') {
+          const href = el.attribs.href || '';
+          const txt = new Text(`{{markdown}}[![${alt}](${elem.attribs.src})](${href}){{/markdown}}`);
+          const code = new Element('span', { 'class': 'code' }, [ txt ]);
+          domutils.replaceElement(el, code);
+        }
       }
     }
 

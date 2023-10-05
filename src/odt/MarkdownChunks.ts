@@ -333,12 +333,23 @@ export class MarkdownChunks {
     return slice;
   }
 
-  removeChunk(startPara: number) {
-    this.chunks.splice(startPara, 1);
-    for (let i = startPara; i < this.chunks.length; i++) {
+  replace(start: number, end: number, chunk: MarkdownChunk) {
+    const deleteCount = end - start + 1;
+    this.chunks.splice(start, deleteCount, chunk);
+    for (let i = start; i < this.chunks.length; i++) {
       const chunk = this.chunks[i];
       if (chunk.isTag) {
-        chunk.payload.position--;
+        chunk.payload.position -= deleteCount;
+      }
+    }
+  }
+
+  removeChunk(start: number, deleteCount = 1) {
+    this.chunks.splice(start, deleteCount);
+    for (let i = start; i < this.chunks.length; i++) {
+      const chunk = this.chunks[i];
+      if (chunk.isTag) {
+        chunk.payload.position -= deleteCount;
       }
     }
   }

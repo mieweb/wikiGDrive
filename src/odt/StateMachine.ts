@@ -9,7 +9,7 @@ interface TagLeaf {
   payload: TagPayload;
 }
 
-function isMarkdownBeginMacro(innerTxt: string) {
+export function isMarkdownBeginMacro(innerTxt: string) {
   if ('{{markdown}}' === innerTxt) return true;
   if ('{{% markdown %}}' === innerTxt) return true;
 
@@ -20,7 +20,7 @@ function isMarkdownBeginMacro(innerTxt: string) {
   return false;
 }
 
-function isMarkdownEndMacro(innerTxt: string) {
+export function isMarkdownEndMacro(innerTxt: string) {
   if ('{{/markdown}}' === innerTxt) return true;
   if ('{{% /markdown %}}' === innerTxt) return true;
 
@@ -29,6 +29,21 @@ function isMarkdownEndMacro(innerTxt: string) {
   }
 
   return false;
+}
+
+export function isMarkdownMacro(innerTxt) {
+  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
+  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
+  return isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix);
+}
+
+export function stripMarkdownMacro(innerTxt) {
+  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
+  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
+  if (isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix)) {
+    return innerTxt.substring(prefix.length, innerTxt.length - suffix.length);
+  }
+  return innerTxt;
 }
 
 function isPreBeginMacro(innerTxt: string) {
@@ -164,24 +179,27 @@ export class StateMachine {
 
     // POST-PUSH-BEFORE-TREEPOP
 
-    if (tag === '/CODE') {
-      switch (this.currentMode) {
-        case 'md':
-          if (this.parentLevel?.tag === 'P' || !this.parentLevel) {
-            const matchingPos = this.currentLevel.payload.position; // this.parentLevel.payload.position + 1
-            const afterPara = this.markdownChunks.chunks[matchingPos];
-            if (afterPara.isTag === true && afterPara.tag === 'CODE') {
-              afterPara.tag = 'PRE';
-              this.markdownChunks.chunks[this.markdownChunks.length - 1] = {
-                isTag: true,
-                mode: this.currentMode,
-                tag: '/PRE',
-                payload
-              };
-            }
-          }
-      }
-    }
+// Quarantine.
+// TODO: Remove after 2024.10.03
+// Related: code-links.md
+//     if (tag === '/CODE') {
+//       switch (this.currentMode) {
+//         case 'md':
+//           if (this.parentLevel?.tag === 'P' || !this.parentLevel) {
+//             const matchingPos = this.currentLevel.payload.position; // this.parentLevel.payload.position + 1
+//             const afterPara = this.markdownChunks.chunks[matchingPos];
+//             if (afterPara.isTag === true && afterPara.tag === 'CODE') {
+//               afterPara.tag = 'PRE';
+//               this.markdownChunks.chunks[this.markdownChunks.length - 1] = {
+//                 isTag: true,
+//                 mode: this.currentMode,
+//                 tag: '/PRE',
+//                 payload
+//               };
+//             }
+//           }
+//       }
+//     }
 
     if (tag === 'P') {
       switch (this.currentMode) {
@@ -222,7 +240,6 @@ export class StateMachine {
         chunk.mode = 'html';
       }
     }
-
 
     if (tag === 'PRE') {
       const prevTag = this.markdownChunks.chunks[payload.position - 1];
@@ -312,6 +329,20 @@ export class StateMachine {
 
         }
           break;
+      }
+    }
+
+    if (tag === '/CODE') {
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      switch (this.currentMode) {
+        case 'md':
+          if (isMarkdownMacro(innerTxt)) {
+            this.markdownChunks.replace(this.currentLevel.payload.position, payload.position, {
+              isTag: false,
+              mode: this.currentMode,
+              text: stripMarkdownMacro(innerTxt)
+            });
+          }
       }
     }
 
