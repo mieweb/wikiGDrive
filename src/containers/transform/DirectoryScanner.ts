@@ -116,6 +116,10 @@ export class DirectoryScanner {
         continue;
       }
 
+      if (!await existingDirectory.exists(realFileName)) {
+        continue;
+      }
+
       if (await existingDirectory.isDirectory(realFileName)) {
         if (realFileName.endsWith('.assets')) {
           continue;
