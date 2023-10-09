@@ -11,6 +11,7 @@ export async function loadRunningInstance() {
       const json = JSON.parse(content);
       if (json.pid > 0) {
         try {
+          // sending the signal 0 to a given PID just checks if any process with the given PID is running, and you have the permission to send a signal to it.
           process.kill(json.pid, 0);
         } catch (err) {
           return null;

@@ -66,7 +66,6 @@
 ```
 {
   "drive": "https://drive.google.com/drive/folders/FOLDER_ID",
-  "drive_id": "",
   "dest": "/home/user/mieweb/wikigdrive-test",
   "link_mode": "mdURLs",
   "service_account": "wikigdrive.json"

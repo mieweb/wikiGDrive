@@ -110,7 +110,7 @@ export function instrumentLogger(logger, childOpts = {}) {
   };
 }
 
-export function createLogger(eventBus: EventEmitter, workdir: string) {
+export function createLogger(workdir: string, eventBus?: EventEmitter) {
   const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -171,7 +171,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
       console.error('unhandledRejection', reason);
       logger.error('unhandledRejection: ' + reason.stack ? reason.stack : reason.message, reason);
 
-      if (reason?.response?.data?.error === 'invalid_grant') {
+      if (eventBus && reason?.response?.data?.error === 'invalid_grant') {
         eventBus.emit('panic:invalid_grant');
         return;
       }

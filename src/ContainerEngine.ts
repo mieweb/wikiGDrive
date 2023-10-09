@@ -109,6 +109,10 @@ export class ContainerEngine {
     return this.containers[name];
   }
 
+  hasContainer(name: string) {
+    return !!this.containers[name];
+  }
+
   async flushData() {
     for (const container of Object.values(this.containers)) {
       await container.flushData();

@@ -62,8 +62,6 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
 --config /location/of/.wgd - Location of config file
 --dest /location/of/downloaded/content - Destination for downloaded and converted markdown files
 
---drive_id - An ID of the drive
-
 --client_id - ID of google app, alternatively can be passed in .env or through environment variable CLIENT_ID;
 --client_secret - Secret of google app, alternatively can be passed in .env or through environment variable CLIENT_SECRET;
 
@@ -71,8 +69,6 @@ wikigdrive init --drive "https://drive.google.com/drive/folders/FOLDER_ID"
 --link_mode mdURLs - `/filename.md`
 --link_mode dirURLs - `/filename/`
 --link_mode uglyURLs - `/filename.html` - see https://gohugo.io/getting-started/configuration/
-
---without-folder-structure    Download documents into single, flat folder
 ```
 
 List available drive ids that wikigdrive has access to on Google:
@@ -87,22 +83,7 @@ Run one time documents pull
 wikigdrive pull
 ```
 
-Run continuous documents watch
-
-```
-wikigdrive watch --git_update_delay=10
-
---watch - Run program in loop, watch for gdrive changes
---git_update_delay=x - trigger git update hook after x minutes
-```
-
-Status
-
-```
-wikigdrive status
-```
-
-Run server mode for webhooks support (TODO: not implemented yet)
+Run server mode
 
 ```
 wikigdrive server

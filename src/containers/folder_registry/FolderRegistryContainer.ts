@@ -53,6 +53,11 @@ export class FolderRegistryContainer extends Container {
   }
 
   async refreshDrives() {
+    if (!this.engine.hasContainer('google_api')) {
+      this.logger.warn('Not authenticated to Google API. Skipping drives refresh.');
+      return;
+    }
+
     const oldDrives = Object.values(await this.getFolders());
 
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');

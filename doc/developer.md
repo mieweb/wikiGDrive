@@ -50,7 +50,7 @@ docker run --rm --user=$(id -u) -it \
           --publish 127.0.0.1:3000:3000 \
           --publish 127.0.0.1:24678:24678 \
           wikigdrive \
-          ./src/cli.sh --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data server 3000
+          ./src/wikigdrived.sh --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data server 3000
 
 docker rm -f wikigdrive
 
@@ -139,7 +139,7 @@ ZIPKIN_URL=http://localhost:9411`
 ## Debugging
 
 ```
-./src/cli.sh --inspect --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
+./src/wikigdrived.sh --inspect --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
 ```
 
 Chrome

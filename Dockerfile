@@ -17,4 +17,4 @@ RUN cd /usr/src/app/apps/ui && npm install && npm run build
 
 WORKDIR "/usr/src/app"
 
-CMD [ "sh", "-c", "wikigdrive-ts --workdir /data server 3000" ]
+CMD [ "sh", "-c", "wikigdrive --workdir /data server 3000" ]

@@ -15,15 +15,15 @@
     "npm": ">= 8.1.2"
   },
   "bin": {
-    "wgd": "./src/cli.sh",
-    "wikigdrive": "./src/cli.sh",
-    "wikigdrive-ts": "./src/cli.sh"
+    "wgd": "src/wikigdrive.sh",
+    "wikigdrive": "src/wikigdrive.sh",
+    "wikigdrivectl": "src/wikigdrivectl.sh"
   },
-  "main": "src/main.ts",
+  "main": "src/cli/wikigdrive.ts",
   "scripts": {
     "test": "mocha --require ts-node/register --ui bdd test/*.ts test/**/*.ts",
     "lint": "eslint ./apps/**/*.ts ./apps/**/*.vue",
-    "start": "wikigdrive-ts watch --server 3000",
+    "start": "wikigdrive server 3000",
     "build": ""
   },
   "repository": {
