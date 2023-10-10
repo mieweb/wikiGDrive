@@ -143,8 +143,6 @@ export class MainService {
 async function main() {
   const argv = minimist(process.argv.slice(2));
 
-  console.log(argv._);
-
   if (argv._.length < 1 || argv.h || argv.help) {
     await usage(__filename);
     process.exit(0);
@@ -185,11 +183,15 @@ async function main() {
 dotenv.config();
 await addTelemetry(process.env.ZIPKIN_SERVICE || 'wikigdrive', __dirname);
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((err) => {
+try {
+  await main();
+  process.exit(0);
+} catch (err) {
+  if (err.isUsageError) {
+    console.error(err.message);
+    await usage(__filename);
+  } else {
     console.error(err);
-    process.exit(1);
-  });
+  }
+  process.exit(1);
+}

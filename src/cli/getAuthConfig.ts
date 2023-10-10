@@ -1,5 +1,6 @@
 import {FileContentService} from '../utils/FileContentService';
 import {AuthConfig} from '../model/AccountJson';
+import {UsageError} from "./usage";
 
 interface Params {
   client_id?: string;
@@ -25,7 +26,7 @@ export async function getAuthConfig(params: Params, mainFileService: FileContent
   } else {
     const authConfig = await mainFileService.readJson('auth_config.json');
     if (!authConfig) {
-      throw new Error('No authentication credentials provided');
+      throw new UsageError('No authentication credentials provided');
     }
     return authConfig;
   }

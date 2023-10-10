@@ -8,13 +8,11 @@ import {EventEmitter} from 'events';
 
 import {addTelemetry} from '../telemetry';
 import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer';
-import {FileContentService} from '../utils/FileContentService';
 import {getAuthConfig} from './getAuthConfig';
 import {urlToFolderId} from '../utils/idParsers';
 import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer';
-import {ContainerEngine} from '../ContainerEngine';
-import {createLogger} from '../utils/logger/logger';
 import {usage} from './usage';
+import {initEngine} from './initEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,8 +37,7 @@ async function main() {
 
   const workdir = argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data';
 
-  const mainFileService = new FileContentService(workdir);
-  await mainFileService.mkdir('/');
+  const {mainFileService, containerEngine} = await initEngine(workdir);
 
   const params = {
     client_id: argv['client_id'] || process.env.CLIENT_ID,
@@ -52,6 +49,7 @@ async function main() {
 
   const apiContainer = new GoogleApiContainer({ name: 'google_api' }, authConfig);
   await apiContainer.mount(await mainFileService);
+  await containerEngine.registerContainer(apiContainer);
   await apiContainer.run();
 
   const folderId = urlToFolderId(args[0]);
@@ -68,9 +66,6 @@ async function main() {
     throw error;
   });
 
-  const logger = createLogger(workdir, eventBus);
-  const containerEngine = new ContainerEngine(logger, mainFileService);
-
   const folderRegistryContainer = new FolderRegistryContainer({ name: 'folder_registry' });
   await folderRegistryContainer.mount(await mainFileService);
   await containerEngine.registerContainer(folderRegistryContainer);
@@ -80,11 +75,15 @@ async function main() {
   await containerEngine.flushData();
 }
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((err) => {
+try {
+  await main();
+  process.exit(0);
+} catch (err) {
+  if (err.isUsageError) {
+    console.error(err.message);
+    await usage(__filename);
+  } else {
     console.error(err);
-    process.exit(1);
-  });
+  }
+  process.exit(1);
+}

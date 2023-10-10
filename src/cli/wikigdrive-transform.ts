@@ -4,18 +4,15 @@ import path from 'path';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
 import {fileURLToPath} from 'url';
-import {EventEmitter} from 'events';
 
 import {addTelemetry} from '../telemetry';
 import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer';
-import {FileContentService} from '../utils/FileContentService';
 import {getAuthConfig} from './getAuthConfig';
 import {urlToFolderId} from '../utils/idParsers';
 import {TransformContainer} from '../containers/transform/TransformContainer';
-import {ContainerEngine} from '../ContainerEngine';
-import {createLogger} from '../utils/logger/logger';
 import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer';
 import {usage} from './usage';
+import {initEngine} from './initEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,21 +43,7 @@ async function main() {
   const filesIds = args.slice(1);
   const workdir = argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data';
 
-  const mainFileService = new FileContentService(workdir);
-  await mainFileService.mkdir('/');
-
-  const eventBus = new EventEmitter();
-  eventBus.setMaxListeners(0);
-  eventBus.on('panic:invalid_grant', () => {
-    process.exit(1);
-  });
-  eventBus.on('panic', (error) => {
-    throw error;
-  });
-
-  const logger = createLogger(workdir, eventBus);
-
-  const containerEngine = new ContainerEngine(logger, mainFileService);
+  const {mainFileService, containerEngine, logger} = await initEngine(workdir);
 
   const params = {
     client_id: argv['client_id'] || process.env.CLIENT_ID,
@@ -71,6 +54,7 @@ async function main() {
 
   const apiContainer = new GoogleApiContainer({ name: 'google_api' }, authConfig);
   await apiContainer.mount(await mainFileService);
+  await containerEngine.registerContainer(apiContainer);
   await apiContainer.run();
 
   const folderRegistryContainer = new FolderRegistryContainer({ name: 'folder_registry' });
@@ -92,11 +76,15 @@ async function main() {
   await containerEngine.flushData();
 }
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((err) => {
+try {
+  await main();
+  process.exit(0);
+} catch (err) {
+  if (err.isUsageError) {
+    console.error(err.message);
+    await usage(__filename);
+  } else {
     console.error(err);
-    process.exit(1);
-  });
+  }
+  process.exit(1);
+}

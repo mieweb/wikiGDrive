@@ -45,11 +45,15 @@ async function main() {
   await mainFileService.writeJson('auth_config.json', authConfig);
 }
 
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((err) => {
+try {
+  await main();
+  process.exit(0);
+} catch (err) {
+  if (err.isUsageError) {
+    console.error(err.message);
+    await usage(__filename);
+  } else {
     console.error(err);
-    process.exit(1);
-  });
+  }
+  process.exit(1);
+}

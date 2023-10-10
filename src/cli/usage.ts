@@ -5,45 +5,46 @@ import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export class UsageError extends Error {
+  public isUsageError = true;
+}
+
+function locateUsage(usageMarkdown: string, sectionPrefix: string): string {
+  let inSection = false;
+  const retVal = [];
+
+  const lines = usageMarkdown.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('## ' + sectionPrefix)) {
+      inSection = true;
+    } else if (line.startsWith('## ')) {
+      inSection = false;
+    } else {
+      if (inSection) {
+        retVal.push(line);
+      }
+    }
+  }
+
+  return retVal.join('\n');
+}
+
 export async function usage(filename: string) {
-  const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')).toString());
+  const pkg = JSON.parse(new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json'))));
+
+  filename = path.basename(filename);
+
+  const execName = filename.replace(/-.*$/, '');
+  const sectionName = filename.replace(/^.*-(.*).ts/, '$1');
+
+
+  const mdFilename = execName + '_usage.md';
+
+  const usageMarkdown = new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'doc', mdFilename)));
+
+  const commandUsage = locateUsage(usageMarkdown, `${execName} ${sectionName}`) || locateUsage(usageMarkdown, `${execName} usage`);
+  const allCommands = locateUsage(usageMarkdown, 'All commands');
 
   console.log(
-    `version: ${pkg.version}, ${process.env.GIT_SHA}${`
-Usage:
-    $ wikigdrive <command> [args] [<options>]
-
-Main commands:
-
-    wikigdrive config
-        --client_id
-        --client_secret
-        --service_account=./private_key.json
-
-    wikigdrive service 
-
-    wikigdrive add [folder_id_or_url]
-        --drive [shared drive url]
-        --workdir (current working folder)
-        --link_mode [mdURLs|dirURLs|uglyURLs]
-
-    wikigdrive pull [URL to specific file]
-
-    wikigdrive watch (keep scanning for changes, ie: daemon)
-
-Other commands:
-
-    wikigdrive status [ID of document]   - Show status of the document or stats of the entire path.
-    wikigdrive drives
-    wikigdrive sync
-    wikigdrive download
-    wikigdrive transform
-
-Options:
-    --workdir (current working folder)
-
-Examples:
-    $ wikigdrive init
-    $ wikigdrive add https://google.drive...
-    `}`);
+    `${pkg.name} version: ${pkg.version}, ${process.env.GIT_SHA}\n\nUsage:\n${commandUsage.trim()}\n\n${allCommands.trim()}`);
 }
