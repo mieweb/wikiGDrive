@@ -1,3 +1,8 @@
+---
+title: Internals
+navWeight: -15
+---
+
 # Internals
 
 ## File Structure on Server

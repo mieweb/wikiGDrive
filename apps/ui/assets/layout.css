@@ -43,7 +43,6 @@ body,
 .mainbar__content {
   flex: 1 1 auto;
   text-overflow: ellipsis;
-  white-space: nowrap;
   height: calc(100vh - var(--navbar-height));
   overflow: auto;
 }

@@ -1,0 +1,27 @@
+{{ define "layout" }}
+<div class="row">
+  <div class="col-3">
+    {{- block "sidebar" . }}{{- end }}
+  </div>
+  <div class="col-6">
+    {{- block "main" . }}{{- end }}
+  </div>
+  <div class="col-3">
+    {{ if gt (.TableOfContents  | len) 32 }}
+    <aside class="toc-aside position-fixed">
+      <h4>Table of Contents</h4>
+      {{ .TableOfContents }}
+    </aside>
+    {{ end }}
+  </div>
+</div>
+{{- block "footer" . }}{{- end }}
+{{ end }}
+
+{{ define "sidebar" }}
+{{- partial "docs/sidebar" . -}}
+{{ end }}
+
+{{ define "main" }}
+{{ .Content }}
+{{ end }}

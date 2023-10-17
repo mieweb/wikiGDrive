@@ -271,7 +271,7 @@ export const UtilsMixin = {
       const driveId = this.driveId ? this.driveId : 'none';
       const urlSearchParams = new URLSearchParams();
       // urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
-      urlSearchParams.set('redirectTo', window.location.pathname);
+      urlSearchParams.set('redirectTo', window.location.pathname && window.location.pathname.startsWith('/drive') ? window.location.pathname : '/drive');
       const authPath = '/auth/' + driveId + '?' + urlSearchParams.toString();
       this.openAuthRedirWindow(authPath, callback);
     },
@@ -284,7 +284,8 @@ export const UtilsMixin = {
         },
         return_error: true
       });
-      await this.fetch();
+      // await this.fetch();
+      this.$router.push('/');
     }
   }
 };

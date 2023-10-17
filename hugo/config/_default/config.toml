@@ -1,0 +1,14 @@
+title = "WikiGDrive"
+theme="wgd-bootstrap"
+contentDir="../website"
+publishDir="../dist/hugo"
+#uglyURLs="true"
+uglyURLs = false
+
+[build]
+writeStats = true
+
+[module]
+[[module.mounts]]
+    source = './themes/wgd-bootstrap/layouts/_default/_markup'
+    target = 'layouts/_default/_markup'

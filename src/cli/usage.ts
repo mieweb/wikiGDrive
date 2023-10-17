@@ -40,11 +40,12 @@ export async function usage(filename: string) {
 
   const mdFilename = execName + '_usage.md';
 
-  const usageMarkdown = new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'doc', mdFilename)));
+  const usageMarkdown = new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'website', 'docs', 'usage', mdFilename)));
 
   const commandUsage = locateUsage(usageMarkdown, `${execName} ${sectionName}`) || locateUsage(usageMarkdown, `${execName} usage`);
   const allCommands = locateUsage(usageMarkdown, 'All commands');
+  const commonOptions = locateUsage(usageMarkdown, 'Common options');
 
   console.log(
-    `${pkg.name} version: ${pkg.version}, ${process.env.GIT_SHA}\n\nUsage:\n${commandUsage.trim()}\n\n${allCommands.trim()}`);
+    `${pkg.name} version: ${pkg.version}, ${process.env.GIT_SHA}\n\nUsage:\n${commandUsage.trim()}\n\n${commonOptions.trim()}\n\n${allCommands.trim()}`);
 }

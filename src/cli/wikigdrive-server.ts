@@ -153,19 +153,19 @@ async function main() {
 
   const params: CliParams = {
     args: argv._.slice(1),
-    drive: argv['drive'],
+    // drive: argv['drive'],
     workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,
 
-    link_mode: argv['link_mode'] || 'mdURLs',
+    // link_mode: argv['link_mode'] || 'mdURLs',
 
     debug: (argv['debug'] || '').split(',').map(str => str.toLocaleString().trim()),
 
     service_account: argv['service_account'] || null,
     share_email: argv['share_email'] || process.env.SHARE_EMAIL || null,
-    server_port: +argv['server']
+    server_port: +argv['server_port']
   };
 
   const mainService = new MainService(params);

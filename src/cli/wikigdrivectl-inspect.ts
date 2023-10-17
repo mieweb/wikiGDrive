@@ -40,7 +40,7 @@ if (!instance) {
   process.exit(1);
 }
 
-const response = await fetch(`http://localhost:${instance.port}/api/drive/${folderId}/inspect`);
+const response = await fetch(`http://localhost:${instance.port}/api/inspect/${folderId}`);
 const json = await response.json();
 
 console.log(json);

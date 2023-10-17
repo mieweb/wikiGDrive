@@ -6,3 +6,6 @@ node_modules
 dist
 content
 .hugo*
+hugo/resources
+hugo_stats.json
+

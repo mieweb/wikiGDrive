@@ -25,7 +25,7 @@ export default {
   },
   computed: {
     isHtml() {
-      return (this.$route.path.endsWith('.html') || this.$route.path === '/');
+      return (this.$route.path.endsWith('.html') || this.$route.path === '/' || this.$route.path.startsWith('/docs'));
     }
   },
   methods: {

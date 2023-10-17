@@ -21,53 +21,7 @@
 
     <template v-slot:default>
       <div class="container">
-        <div v-if="!isLogged">
-          <StaticContent />
-        </div>
-        <div v-else>
-          <div v-if="loading" class="mt-3">
-            <i class="fa-solid fa-rotate fa-spin"></i>
-          </div>
-
-          <div v-else-if="drivesShared && drivesShared.length > 0" class="mt-3">
-            <table class="table table-hover table-clickable">
-              <thead>
-              <tr>
-                <th>Name</th>
-                <th>Id</th>
-                <th></th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="(item, idx) of drivesShared" :key="idx" @click="selectDrive(item.folderId)">
-                <td>{{item.name}}</td>
-                <td>{{item.folderId}}</td>
-                <td @click.stop="goToGDrive(item.folderId)"><i class="fa-brands fa-google-drive"></i></td>
-              </tr>
-              </tbody>
-            </table>
-
-            <div v-if="drivesNotShared && drivesNotShared.length > 0" class="mt-3">
-              <h3>You also have drives not shared with wikigdrive:</h3>
-              <table class="table table-hover table-clickable">
-                <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Id</th>
-                  <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="(item, idx) of drivesNotShared" :key="idx" @click="selectDrive(item.folderId)">
-                  <td>{{item.name}}</td>
-                  <td>{{item.folderId}}</td>
-                  <td @click.stop="share(item.folderId)"><i class="fa fa-share"></i> Share</td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <StaticContent />
       </div>
     </template>
   </BaseLayout>

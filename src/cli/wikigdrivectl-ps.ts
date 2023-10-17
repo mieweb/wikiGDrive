@@ -15,7 +15,7 @@ process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 dotenv.config();
 const argv = minimist(process.argv.slice(2));
 
-if (argv._.length < 1 || argv.h || argv.help) {
+if (argv.h || argv.help) {
   await usage(__filename);
   process.exit(0);
 }

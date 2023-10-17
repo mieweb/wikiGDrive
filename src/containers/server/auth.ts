@@ -232,7 +232,7 @@ export async function getAuth(req, res: Response, next) {
         driveId: driveId
       });
       setAccessCookie(res, accessToken);
-      res.redirect(redirectTo || '/');
+      res.redirect(redirectTo || '/drive');
       return;
     }
 
@@ -331,8 +331,20 @@ export function authenticateOptionally(logger: Logger, idx = 0) {
   };
 }
 
+function isLocal(req: Request) {
+  const ip = req.socket.remoteAddress;
+  const host = req.get('host');
+  return ip === '127.0.0.1' || ip === '::ffff:127.0.0.1' || ip === '::1' || host.indexOf('localhost') !== -1;
+}
+
 export function authenticate(logger: Logger, idx = 0) {
-  return async (req, res, next) => {
+  return async (req: Request, res, next) => {
+
+    if (isLocal(req)) {
+      next();
+      return ;
+    }
+
     req['driveId'] = '';
     req['logger'] = logger;
     const parts = req.path.split('/');

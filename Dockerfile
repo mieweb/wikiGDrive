@@ -13,7 +13,7 @@ RUN npm link --location=user
 EXPOSE 3000
 VOLUME /data
 
-RUN cd /usr/src/app/apps/ui && npm install && npm run build
+RUN cd /usr/src/app/apps/ui && cp ../../hugo/themes/wgd-bootstrap/layouts/_default/baseof.html index.html && npm install && npm run build
 
 WORKDIR "/usr/src/app"
 

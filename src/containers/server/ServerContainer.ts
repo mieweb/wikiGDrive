@@ -124,9 +124,11 @@ export class ServerContainer extends Container {
   }
 
   private async handleStaticHtml(reqPath: string, url: string) {
+    const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
+    const distPath = path.resolve(HTML_DIR, 'dist');
+    const baseHtmlPath = path.resolve(MAIN_DIR, 'hugo', 'themes', 'wgd-bootstrap', 'layouts', '_default', 'baseof.html');
+
     if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive') || reqPath.endsWith('.html')) {
-      const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
-      const distPath = path.resolve(HTML_DIR, 'dist');
 
       if (fs.existsSync(hugoPath)) {
         const template = fs.readFileSync(hugoPath)
@@ -142,7 +144,7 @@ export class ServerContainer extends Container {
           .replace(/GIT_SHA/g, process.env.GIT_SHA);
         return template;
       } else {
-        const template = fs.readFileSync(HTML_DIR + '/index.html')
+        const template = fs.readFileSync(baseHtmlPath)
           .toString()
           .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
           .replace(/GIT_SHA/g, process.env.GIT_SHA);
@@ -196,12 +198,13 @@ export class ServerContainer extends Container {
       next();
     });
 
-    await this.initRouter(app);
-    await this.initAuth(app);
-
     const distPath = path.resolve(HTML_DIR, 'dist');
     app.use(express.static(distPath));
     app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
+
+    await this.initRouter(app);
+    await this.initAuth(app);
+
     await this.initUiServer(app);
 
     app.use(async (req: express.Request, res: express.Response) => {
@@ -563,7 +566,6 @@ export class ServerContainer extends Container {
         const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
         const folders = await folderRegistryContainer.getFolders();
         inspected['folder'] = folders[driveId];
-
         res.json(inspected);
       } catch (err) {
         next(err);

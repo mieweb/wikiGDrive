@@ -11,13 +11,15 @@ POSITIONAL_ARGS=()
 CMD=""
 INSPECT=""
 
+ORIG_ARGS=$@
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --inspect)
       INSPECT="$1"
       shift # past argument
       ;;
-    --link_mode | --workdir | --drive | --debug | --client_id | --client_secret | --service_account | --share_email)
+    --server_port)
       POSITIONAL_ARGS+=("$1") # save positional arg1
       POSITIONAL_ARGS+=("$2") # save positional arg2
       shift # past argument

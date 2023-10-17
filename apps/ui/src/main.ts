@@ -204,7 +204,17 @@ const router = VueRouter.createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('./pages/MainView.vue')
+      component: () => import('./pages/StaticView.vue')
+    },
+    {
+      path: '/docs',
+      name: 'docs',
+      component: () => import('./pages/StaticView.vue')
+    },
+    {
+      path: '/docs/:pathMatch(.*)*',
+      name: 'docs',
+      component: () => import('./pages/StaticView.vue')
     },
     {
       path: '/:pathMatch(.*)*',
