@@ -96,3 +96,9 @@ body,
   }
 
 }
+
+@media (min-width: 768px) {
+  .position-fixed-md {
+    position: fixed;
+  }
+}

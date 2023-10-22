@@ -194,3 +194,8 @@ a[disabled] {
 .pl-1 {
   padding-left: 10px !important;
 }
+
+.docs__content pre {
+  border-left: 3px solid var(--bs-gray-500);
+  padding: 2em 0 2em 3em;
+}

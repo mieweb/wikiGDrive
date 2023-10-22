@@ -23,6 +23,8 @@ function completedJob(job) {
 
 const emitter = mitt();
 
+const initialHtmlContent = document.body.querySelector('.mainbar__content') ? document.body.querySelector('.mainbar__content').innerHTML : '';
+
 const app: Vue.App = Vue.createApp({
   components: {
     'App': App
@@ -36,7 +38,8 @@ const app: Vue.App = Vue.createApp({
       archive: [],
       jobsMap: {},
       changes: [],
-      changesMap: {}
+      changesMap: {},
+      initialHtmlContent
     };
   },
   template: '<App />',
@@ -142,7 +145,7 @@ const app: Vue.App = Vue.createApp({
         return;
       }
     }
-    console.error('errorCaptured', err);
+    console.error('errorCaptured', Object.keys(err), err);
   }
 });
 
@@ -219,7 +222,7 @@ const router = VueRouter.createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: () => import('./pages/NotFound.vue')
+      component: () => import('./pages/StaticView.vue')
     }
   ]
 });

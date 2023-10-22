@@ -15,7 +15,7 @@
   <link href="/assets/main.css?GIT_SHA" rel="stylesheet" type="text/css" />
   <link href="/assets/prism.css?GIT_SHA" rel="stylesheet" type="text/css" media="(prefers-color-scheme: light)" />
   <link href="/assets/prism-dark.css?GIT_SHA" rel="stylesheet" type="text/css" media="(prefers-color-scheme: dark)" />
-  <link rel="icon" href="/assets/favicon.png" type="image/x-icon" >
+  <link rel="icon" href="/images/logo.svg" type="image/x-icon" >
 
   <script src="/assets/prism.js?GIT_SHA"></script>
   <script src="/src/main.ts?GIT_SHA" type="module"></script>
@@ -24,9 +24,17 @@
 
 <div id="app">
 {{- block "layout" . }}
-{{- block "sidebar" . }}{{- end }}
-{{- block "main" . }}{{- end }}
-{{- block "footer" . }}{{- end }}
+  <div id="main" class="view">
+    {{- partial "navbar" . -}}
+    <div class="mainbar">
+      <div class="mainbar__content">
+        <div class="container mt-3">
+          {{- block "main" . }}{{- end }}
+        </div>
+        {{- block "footer" . }}{{- end }}
+      </div>
+    </div>
+  </div>
 {{- end }}
 </div>
 

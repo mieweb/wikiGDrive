@@ -68,6 +68,7 @@ export default {
   methods: {
     async fetch() {
       const drives = await this.DriveClientService.getDrives();
+      console.log('drives', drives);
       this.drivesShared = drives.filter(d => !!d.exists);
       this.drivesNotShared = drives.filter(d => !d.exists);
     },

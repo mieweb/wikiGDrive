@@ -1,9 +1,7 @@
 <template>
-  <div v-if="isHtml && content" v-html="content"></div>
-  <div v-else-if="!loading">
-    <div class="container">
-      404 NOT FOUND
-    </div>
+  <div class="static-content" v-if="isHtml && content" v-html="content"></div>
+  <div class="container static-content" v-else-if="!loading">
+    404 NOT FOUND
   </div>
 </template>
 <script>
@@ -16,6 +14,7 @@ export default {
     };
   },
   created() {
+    this.content = this.$root.initialHtmlContent;
     this.fetch();
   },
   watch: {
@@ -44,6 +43,10 @@ export default {
           if (div.querySelector('#app')) {
             div = div.querySelector('#app');
           }
+          if (div.querySelector('.mainbar__content')) {
+            div = div.querySelector('.mainbar__content');
+          }
+
           this.content = div.innerHTML;
         }
       } finally {

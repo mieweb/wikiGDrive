@@ -1,5 +1,5 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, NextFunction, Request, Response} from 'express';
+import express, {Express, NextFunction} from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
@@ -23,19 +23,16 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 
 import {SocketManager} from './SocketManager';
-import * as vite from 'vite';
-import {Logger} from 'vite';
-import * as fs from 'fs';
+
 import {
   authenticate,
-  AuthError,
   GoogleUser,
   getAuth,
   authenticateOptionally,
   validateGetAuthState,
   handleDriveUiInstall, handleShare, handlePopupClose
 } from './auth';
-import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
+import {filterParams} from '../../google/driveFetch';
 import {SearchController} from './routes/SearchController';
 import opentelemetry from '@opentelemetry/api';
 import {DriveUiController} from './routes/DriveUiController';
@@ -44,6 +41,9 @@ import {UserAuthClient} from '../../google/AuthClient';
 import {getTokenInfo} from '../../google/GoogleAuthService';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
 import compress from 'compression';
+import {initStaticDistPages} from './static';
+import {initUiServer} from './vuejs';
+import {initErrorHandler} from './error';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,81 +80,6 @@ export class ServerContainer extends Container {
 
   async destroy(): Promise<void> {
     // TODO
-  }
-
-  private async initUiServer(app) {
-    const customLogger: Logger = {
-      hasWarned: false,
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      clearScreen() {},
-      error: (msg: string) => {
-        this.logger.error(msg);
-      },
-      hasErrorLogged: () => {
-        return false;
-      },
-      info: (msg: string) => {
-        this.logger.info(msg);
-      },
-      warn: (msg: string) => {
-        this.logger.warn(msg);
-      },
-      warnOnce: (msg: string) => {
-        this.logger.warn(msg);
-      }
-    };
-
-    const viteInstance = await vite.createServer({
-      root: HTML_DIR,
-      logLevel: 'info',
-      appType: 'custom',
-      server: {
-        middlewareMode: true,
-        watch: {
-          // During tests we edit the files too fast and sometimes chokidar
-          // misses change events, so enforce polling for consistency
-          usePolling: true,
-          interval: 100
-        }
-      },
-      customLogger: customLogger
-    });
-    this.app.set('viteInstance', viteInstance);
-    app.use(viteInstance.middlewares);
-  }
-
-  private async handleStaticHtml(reqPath: string, url: string) {
-    const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
-    const distPath = path.resolve(HTML_DIR, 'dist');
-    const baseHtmlPath = path.resolve(MAIN_DIR, 'hugo', 'themes', 'wgd-bootstrap', 'layouts', '_default', 'baseof.html');
-
-    if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive') || reqPath.endsWith('.html')) {
-
-      if (fs.existsSync(hugoPath)) {
-        const template = fs.readFileSync(hugoPath)
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-        return template;
-      } else
-      if (fs.existsSync(distPath)) {
-        const template = fs.readFileSync(path.join(distPath, 'index.html'))
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-        return template;
-      } else {
-        const template = fs.readFileSync(baseHtmlPath)
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-
-        const viteInstance = this.app.get('viteInstance');
-
-        return await viteInstance.transformIndexHtml(url, template);
-      }
-    }
-    return null;
   }
 
   private async startServer(port) {
@@ -198,83 +123,16 @@ export class ServerContainer extends Container {
       next();
     });
 
+    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
     const distPath = path.resolve(HTML_DIR, 'dist');
     app.use(express.static(distPath));
-    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
 
     await this.initRouter(app);
     await this.initAuth(app);
 
-    await this.initUiServer(app);
-
-    app.use(async (req: express.Request, res: express.Response) => {
-      const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-      if (indexHtml) {
-        res.status(200).header('Content-type', 'text/html').end(indexHtml);
-      } else {
-        res.status(404).json({});
-      }
-    });
-
-    app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
-      if (err.showHtml) {
-        const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-        if (indexHtml) {
-          res.status(err.status).header('Content-type', 'text/html').end(
-            indexHtml.replace('</head', `<meta name="errorMessage" content="${err.message}"></head`)
-          );
-          return;
-        }
-      }
-
-      const code = err.status || 501;
-      switch(code) {
-        case 302:
-          res.redirect('/');
-          return;
-        case 404:
-          {
-            const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-            if (indexHtml) {
-              res.status(404).header('Content-type', 'text/html').end(indexHtml);
-            } else {
-              res.status(code).send({ code, message: err.message, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
-            }
-          }
-          return;
-        case 401:
-          {
-            const redirectTo: string = req.headers['redirect-to'] ? req.headers['redirect-to'].toString() : '';
-
-            const urlSearchParams = new URLSearchParams();
-            if (redirectTo && redirectTo.startsWith('/') && redirectTo.indexOf('//') === -1) {
-              urlSearchParams.set('redirectTo', redirectTo);
-            } else {
-              urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
-            }
-            if (process.env.VERSION === 'dev') {
-              this.logger.warn(err.stack ? err.stack : err.message);
-            } else {
-              this.logger.warn(err.message);
-            }
-
-            if (req['driveId']) {
-              err.authPath = '/auth/' + req['driveId'] + '?' + urlSearchParams.toString();
-            } else {
-              err.authPath = '/auth/none?' + urlSearchParams.toString();
-            }
-            res.status(code).send({ message: err.message, authPath: err.authPath, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
-          }
-          return;
-        default:
-          console.error(err);
-      }
-
-      res.header('Content-type', 'application/json');
-      res.status(code).send({ message: err.message });
-
-      next();
-    });
+    await initStaticDistPages(app);
+    await initUiServer(app, this.logger);
+    await initErrorHandler(app, this.logger);
 
     const server = http.createServer(app);
 

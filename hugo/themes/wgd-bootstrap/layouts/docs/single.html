@@ -1,18 +1,27 @@
 {{ define "layout" }}
-<div class="row">
-  <div class="col-3">
-    {{- block "sidebar" . }}{{- end }}
-  </div>
-  <div class="col-6">
-    {{- block "main" . }}{{- end }}
-  </div>
-  <div class="col-3">
-    {{ if gt (.TableOfContents  | len) 32 }}
-    <aside class="toc-aside position-fixed">
-      <h4>Table of Contents</h4>
-      {{ .TableOfContents }}
-    </aside>
-    {{ end }}
+<div id="main" class="view">
+  {{- partial "navbar" . -}}
+  <div class="mainbar">
+    <div class="mainbar__content">
+      <div class="container mt-3">
+        <div class="row">
+          <div class="col-12 col-md-3 order-2 order-md-0">
+            {{- block "sidebar" . }}{{- end }}
+          </div>
+          <div class="col-12 col-md-6 order-1 order-md-0">
+            {{- block "main" . }}{{- end }}
+          </div>
+          {{ if gt (.TableOfContents  | len) 32 }}
+          <div class="col-12 col-md-3">
+            <aside class="toc-aside position-fixed-md">
+              <h4>Table of Contents</h4>
+              {{ .TableOfContents }}
+            </aside>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {{- block "footer" . }}{{- end }}
@@ -23,5 +32,7 @@
 {{ end }}
 
 {{ define "main" }}
-{{ .Content }}
+<div class="docs__content">
+  {{ .Content }}
+</div>
 {{ end }}

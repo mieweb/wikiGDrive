@@ -20,9 +20,7 @@
     </template>
 
     <template v-slot:default>
-      <div class="container">
-        <StaticContent />
-      </div>
+      <StaticContent />
     </template>
   </BaseLayout>
 </template>
@@ -33,7 +31,6 @@ import BaseLayout from '../layout/BaseLayout.vue';
 import ShareModal from '../components/ShareModal.vue';
 import StaticContent from '../components/StaticContent.vue';
 import NavBar from '../components/NavBar.vue';
-import {awaitValue} from '@swc/helpers';
 
 export default {
   mixins: [ UtilsMixin ],

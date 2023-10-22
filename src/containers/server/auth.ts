@@ -340,11 +340,6 @@ function isLocal(req: Request) {
 export function authenticate(logger: Logger, idx = 0) {
   return async (req: Request, res, next) => {
 
-    if (isLocal(req)) {
-      next();
-      return ;
-    }
-
     req['driveId'] = '';
     req['logger'] = logger;
     const parts = req.path.split('/');
@@ -357,6 +352,10 @@ export function authenticate(logger: Logger, idx = 0) {
     req['logger'] = req['driveId'] ? logger.child({driveId: req['driveId']}) : logger;
 
     if (!req.cookies.accessToken) {
+      if (isLocal(req)) {
+        next();
+        return ;
+      }
       return next(redirError(req, 'No accessToken cookie'));
     }
 
