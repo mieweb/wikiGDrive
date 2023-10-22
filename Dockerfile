@@ -13,7 +13,9 @@ RUN npm link --location=user
 EXPOSE 3000
 VOLUME /data
 
-RUN cd /usr/src/app/apps/ui && cp ../../hugo/themes/wgd-bootstrap/layouts/_default/baseof.html index.html && npm install && npm run build
+RUN cp /usr/src/app/hugo/themes/wgd-bootstrap/layouts/_default/baseof.html /usr/src/app/apps/ui/index.html
+RUN if [[ -d /usr/src/app/dist/hugo/ui ]]; then cp /usr/src/app/dist/hugo/ui/index.html /usr/src/app/apps/ui/index.html ; fi
+RUN cd /usr/src/app/apps/ui && npm install && npm run build
 
 WORKDIR "/usr/src/app"
 

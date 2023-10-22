@@ -41,6 +41,18 @@ jobs:
         node-version: 18
         cache: npm
 
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/hugo:/site" \
+        -v "${GITHUB_WORKSPACE}/website:/website" \
+        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
+        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://dev.wikigdrive.com" \
+        wgd-action-runner:develop /steps/step_render_hugo
+
+    - name: Copy index for vite
+      run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/dev.wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
+
     - uses: whoan/docker-build-with-cache-action@v5
       with:
         image_name: "wikigdrive-develop"
@@ -55,15 +67,6 @@ jobs:
       run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
       continue-on-error: true
 
-    - name: Build hugo docs
-      run: |
-        docker run \
-        -v "${GITHUB_WORKSPACE}/hugo:/site" \
-        -v "${GITHUB_WORKSPACE}/website:/website" \
-        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
-        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://dev.wikigdrive.com" \
-        wgd-action-runner:develop /steps/step_render_hugo
-
     - name: Start
       run: |
         docker run -d --name wikigdrive-develop \
@@ -72,6 +75,7 @@ jobs:
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           -v /home/githubactions/wikigdrive/env.develop:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=wikigdrive-develop" \

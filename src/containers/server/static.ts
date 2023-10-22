@@ -10,7 +10,7 @@ const MAIN_DIR = __dirname + '/../../..';
 
 export async function handleStaticHtml(app: express.Application, reqPath: string, url: string) {
   const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
-  const generatedHtmlPath = path.resolve(MAIN_DIR, 'dist', 'hugo', 'index.html');
+  const generatedHtmlPath = path.resolve(MAIN_DIR, 'dist', 'hugo', 'ui', 'index.html');
   const distPath = path.resolve(HTML_DIR, 'dist');
   const baseHtmlPath = path.resolve(MAIN_DIR, 'hugo', 'themes', 'wgd-bootstrap', 'layouts', '_default', 'baseof.html');
 

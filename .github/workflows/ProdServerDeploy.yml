@@ -42,6 +42,18 @@ jobs:
         node-version: 18
         cache: npm
 
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/hugo:/site" \
+        -v "${GITHUB_WORKSPACE}/website:/website" \
+        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
+        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://wikigdrive.com" \
+        wgd-action-runner:prod /steps/step_render_hugo
+
+    - name: Copy index for vite
+      run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
+
     - uses: whoan/docker-build-with-cache-action@v5
       with:
         image_name: "wikigdrive-prod"
@@ -56,15 +68,6 @@ jobs:
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
       continue-on-error: true
 
-    - name: Build hugo docs
-      run: |
-        docker run \
-        -v "${GITHUB_WORKSPACE}/hugo:/site" \
-        -v "${GITHUB_WORKSPACE}/website:/website" \
-        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
-        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://wikigdrive.com" \
-        wgd-action-runner:prod /steps/step_render_hugo
-
     - name: Start
       run: |
         docker run -d --name wikigdrive-prod \
@@ -72,6 +75,7 @@ jobs:
           -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
           -v /home/githubactions/wikigdrive/env.prod:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
