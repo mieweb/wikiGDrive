@@ -1,7 +1,6 @@
 'use strict';
 
 import path from 'path';
-import fs from 'fs';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
 import {fileURLToPath} from 'url';

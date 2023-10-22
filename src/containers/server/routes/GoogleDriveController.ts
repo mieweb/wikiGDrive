@@ -4,7 +4,6 @@ import {
   RouteGet,
   RouteParamPath,
   RouteParamUser,
-  RoutePost,
   RouteResponse
 } from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
@@ -13,8 +12,6 @@ import {UserConfigService} from '../../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
-import {GoogleApiContainer} from '../../google_api/GoogleApiContainer';
-import {GoogleDriveService} from '../../../google/GoogleDriveService';
 import {UserAuthClient} from '../../../google/AuthClient';
 import {filterParams} from '../../../google/driveFetch';
 

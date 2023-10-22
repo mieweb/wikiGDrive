@@ -10,7 +10,6 @@ import {FileId} from '../model/model';
 import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch';
 import {QuotaLimiter} from './QuotaLimiter';
 import {HasAccessToken} from './AuthClient';
-import {markdownToHtml} from './markdownToHtml';
 
 export interface Changes {
   token: string;

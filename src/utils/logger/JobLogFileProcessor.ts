@@ -52,7 +52,7 @@ export class JobLogFileProcessor {
   processLogFile(logFile: string): Promise<LogLine[]> {
     return new Promise((resolve, reject) => {
       const results = [];
-      const [readStream, stream] = this.createReadStream(logFile);
+      const [, stream] = this.createReadStream(logFile);
 
       stream.on('error', (err) => {
         if (stream.readable) {

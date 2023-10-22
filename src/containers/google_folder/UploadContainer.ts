@@ -105,6 +105,9 @@ export class UploadContainer extends Container {
             if (file.id && file.id !== 'TO_FILL' && entry.performRewrite) {
               const rewrittenHtml = await this.rewriteLinks(entry.performRewrite, entry.path);
               const response = await this.googleDriveService.update(access_token, entry.parent, file.title, MimeTypes.HTML, rewrittenHtml, file.id);
+              if (response) {
+                this.logger.info('[' + entry.path + ']: updated links');
+              }
             }
             break;
         }
