@@ -162,6 +162,7 @@ export class ActionRunnerContainer extends Container {
         }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
+        --user=${process.getuid()} \\
         -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
@@ -181,7 +182,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
+          User: String(process.getuid())
         });
       } else {
         const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
@@ -194,6 +196,7 @@ export class ActionRunnerContainer extends Container {
         }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
+          --user=${process.getuid()} \\
           -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
           -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site" \\
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
@@ -215,7 +218,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
+          User: String(process.getuid())
         });
       }
 
@@ -226,6 +230,7 @@ export class ActionRunnerContainer extends Container {
         this.logger.info(writable.getBuffer().toString());
       }
     } catch (err) {
+      code = err.statusCode || 1;
       this.logger.error(err.stack ? err.stack : err.message);
     }
     return code;

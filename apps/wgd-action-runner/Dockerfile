@@ -19,6 +19,7 @@ RUN npm i -g postcss postcss-cli hugo-extended
 RUN git clone https://github.com/budparr/gohugo-theme-ananke.git /themes/ananke
 
 RUN git init /site
+RUN git config --global --add safe.directory /site
 
 ADD steps/ /steps
 RUN chmod a+x /steps/step_*

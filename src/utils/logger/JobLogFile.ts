@@ -1,10 +1,9 @@
-import Transport, {TransportStreamOptions} from 'winston-transport';
 import path from 'path';
 import fs, {ReadStream} from 'fs';
 import os from 'os';
-import {JobLogFileProcessor} from './JobLogFileProcessor';
 import {StreamOptions} from 'stream';
-
+import Transport, {TransportStreamOptions} from 'winston-transport';
+import {JobLogFileProcessor} from './JobLogFileProcessor';
 
 interface JobLogStreamOptions extends TransportStreamOptions {
   file_options?: StreamOptions<ReadStream>;
@@ -75,6 +74,8 @@ export class JobLogFile extends Transport {
       .replace('%jobId%', jobId)
       .replace('//', '/');
 
+    fs.mkdirSync(dirname, { recursive: true });
+
     const filename = path.join(dirname, this.filename)
       .replace(/%JOB_ID%/g, jobId);
     return fs.createWriteStream(filename, this.options.file_options);
@@ -98,6 +99,8 @@ export class JobLogFile extends Transport {
       .replace('%driveId%', options.driveId)
       .replace('%jobId%', options.jobId)
       .replace('//', '/');
+
+    fs.mkdirSync(dirname, { recursive: true });
 
     const filename = path.join(dirname, this.filename)
       .replace(/%JOB_ID%/g, options.jobId);
