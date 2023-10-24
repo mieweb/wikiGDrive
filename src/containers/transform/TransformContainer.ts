@@ -296,7 +296,6 @@ export class TransformContainer extends Container {
         googleFile,
         destinationDirectory,
         localFile,
-        this.hierarchy,
         this.localLinks,
         this.userConfigService.config
       );
@@ -329,6 +328,7 @@ export class TransformContainer extends Container {
     await this.localLinks.load();
 
     this.hierarchy = await this.loadNavigationHierarchy();
+    await this.writeHugoMenu(this.hierarchy);
 
     const processed = new Set<string>();
     const previouslyFailed = new Set<string>();
@@ -505,6 +505,15 @@ export class TransformContainer extends Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async destroy(): Promise<void> {
+  }
+
+  async writeHugoMenu(hierarchy: NavigationHierarchy) {
+    const menus = {
+      main: Object.values(hierarchy)
+    };
+
+    await this.generatedFileService.mkdir('config/_default');
+    await this.generatedFileService.writeJson('config/_default/menu.en.json', menus);
   }
 
   async loadNavigationHierarchy(): Promise<NavigationHierarchy> {

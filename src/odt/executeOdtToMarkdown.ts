@@ -22,7 +22,7 @@ export async function executeOdtToMarkdown(workerData) {
   const markdown = await converter.convert();
   const links = Array.from(converter.links);
 
-  const frontMatter = generateDocumentFrontMatter(workerData.localFile, workerData.hierarchy, links, workerData.fm_without_version);
+  const frontMatter = generateDocumentFrontMatter(workerData.localFile, links, workerData.fm_without_version);
   const errors = converter.getErrors();
   return { links, frontMatter, markdown, errors };
 }

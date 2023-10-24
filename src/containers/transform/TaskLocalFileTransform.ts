@@ -4,7 +4,6 @@ import {FileContentService} from '../../utils/FileContentService';
 import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile';
 import {SvgTransform} from '../../SvgTransform';
-import {NavigationHierarchy} from './generateNavigationHierarchy';
 import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter';
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown';
 import {OdtProcessor} from '../../odt/OdtProcessor';
@@ -48,7 +47,6 @@ export class TaskLocalFileTransform extends QueueTask {
               private googleFile: GoogleFile,
               private destinationDirectory: FileContentService,
               private localFile: LocalFile,
-              private hierarchy: NavigationHierarchy,
               private localLinks: LocalLinks,
               private userConfig: UserConfig
               ) {
@@ -60,7 +58,7 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    await this.generate(this.localFile, this.hierarchy);
+    await this.generate(this.localFile);
 
     return [];
   }
@@ -125,7 +123,7 @@ export class TaskLocalFileTransform extends QueueTask {
     });
   }
 
-  async generateDocument(localFile: MdFile, googleFile: GoogleFile, hierarchy: NavigationHierarchy) {
+  async generateDocument(localFile: MdFile) {
     let frontMatter;
     let markdown;
     let links = [];
@@ -156,7 +154,7 @@ export class TaskLocalFileTransform extends QueueTask {
       }
       markdown = await converter.convert();
       links = Array.from(converter.links);
-      frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
+      frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
       errors = converter.getErrors();
       this.warnings = errors.length;
     } else {
@@ -169,7 +167,6 @@ export class TaskLocalFileTransform extends QueueTask {
 
       const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
         localFile,
-        hierarchy,
         realFileName: this.realFileName,
         fileNameMap,
         content,
@@ -198,7 +195,7 @@ export class TaskLocalFileTransform extends QueueTask {
     this.localLinks.append(localFile.id, localFile.fileName, links);
   }
 
-  async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
+  async generate(localFile: LocalFile): Promise<void> {
     try {
       const verStr = this.localFile.version ? ' #' + this.localFile.version : ' ';
       if (localFile.type === 'conflict') {
@@ -218,7 +215,7 @@ export class TaskLocalFileTransform extends QueueTask {
         // const googleFile = await this.googleScanner.getFileById(localFile.id);
         // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
         if (this.googleFile) { // && downloadFile
-          await this.generateDocument(localFile, this.googleFile, hierarchy);
+          await this.generateDocument(localFile);
         }
       } else if (localFile.type === 'drawing') {
         this.logger.info('Transforming drawing: ' + this.localFile.fileName + verStr);
