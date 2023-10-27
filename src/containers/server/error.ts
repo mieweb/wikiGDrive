@@ -45,9 +45,9 @@ export async function initErrorHandler(app: express.Application, logger: winston
           urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
         }
         if (process.env.VERSION === 'dev') {
-          this.logger.warn(err.stack ? err.stack : err.message);
+          logger.warn(err.stack ? err.stack : err.message);
         } else {
-          this.logger.warn(err.message);
+          logger.warn(err.message);
         }
 
         if (req['driveId']) {
