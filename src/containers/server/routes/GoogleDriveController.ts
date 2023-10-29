@@ -14,6 +14,8 @@ import {getContentFileService} from '../../transform/utils';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 import {UserAuthClient} from '../../../google/AuthClient';
 import {filterParams} from '../../../google/driveFetch';
+import {GoogleDriveService} from '../../../google/GoogleDriveService';
+import {redirError} from '../auth';
 
 export class GoogleDriveController extends Controller {
 
@@ -60,7 +62,7 @@ export class GoogleDriveController extends Controller {
   @RouteGet('/:driveId/:fileId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getDocs(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string) {
+  async getDocs(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string, @RouteParamUser() user) {
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
@@ -71,18 +73,44 @@ export class GoogleDriveController extends Controller {
     await markdownTreeProcessor.load();
     const [foundTreeItem] = await markdownTreeProcessor.findById(fileId);
 
+    const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
+    this.res.setHeader('wgd-content-dir', contentDir || '');
+    this.res.setHeader('wgd-google-id', fileId);
+
     if (!foundTreeItem) {
+      const googleDriveService = new GoogleDriveService(this.logger, null);
+      const auth = {
+        async getAccessToken(): Promise<string> {
+          return user.google_access_token;
+        }
+      };
+      try {
+        const file = await googleDriveService.getFile(auth, fileId);
+        if (file) {
+          this.res.setHeader('wgd-google-parent-id', file.parentId || '');
+          this.res.setHeader('wgd-google-version', file.version || '');
+          this.res.setHeader('wgd-google-modified-time', file.modifiedTime || '');
+          this.res.setHeader('wgd-mime-type', file.mimeType || '');
+          this.res.setHeader('wgd-last-author', file.lastAuthor || '');
+          this.res.setHeader('Content-type', file.mimeType);
+
+          this.res.send('Not synced');
+          return;
+        }
+      } catch (err) {
+        if (err.status === 401) {
+          throw redirError(this.req, err.message);
+          return;
+        }
+      }
+
       this.res.status(404).send({ message: 'No local' });
       return;
     }
 
     const treeItem = addPreviewUrl(userConfigService.config.hugo_theme, driveId)(foundTreeItem);
 
-    const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
-
-    this.res.setHeader('wgd-content-dir', contentDir || '');
     this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
-    this.res.setHeader('wgd-google-id', treeItem.id || '');
     this.res.setHeader('wgd-google-version', treeItem.version || '');
     this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
     this.res.setHeader('wgd-path', treeItem.path || '');
