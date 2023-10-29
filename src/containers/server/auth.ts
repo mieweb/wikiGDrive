@@ -160,6 +160,23 @@ export async function handlePopupClose(req: Request, res: Response, next) {
   }
 }
 
+function sanitizeRedirect(redirectTo: string) {
+  if ((redirectTo || '').startsWith('/gdocs/')) {
+    const [folderId, fileId] = redirectTo.substring('/gdocs/'.length).split('/');
+    if (folderId.match(/^[A-Z0-9_-]+$/ig) && fileId.match(/^[A-Z0-9_-]+$/ig)) {
+      return `/gdocs/${folderId}/${fileId}`;
+    }
+  }
+
+  const folderId = urlToFolderId(redirectTo);
+
+  if (!folderId) {
+    return '';
+  }
+
+  return `/drive/${folderId}`;
+}
+
 export async function getAuth(req, res: Response, next) {
   try {
     const hostname = req.header('host');
@@ -206,7 +223,7 @@ export async function getAuth(req, res: Response, next) {
       err.showHtml = true;
       throw err;
     }
-    const redirectTo = urlToFolderId(state.get('redirectTo'));
+    const redirectTo = sanitizeRedirect(state.get('redirectTo'));
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
     await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);

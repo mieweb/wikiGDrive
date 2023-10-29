@@ -156,6 +156,9 @@
         <div class="card-header d-flex" v-if="!syncing && selectedFile.path">
           Git
           <ul class="nav flex-row flex-grow-1 flex-shrink-0 justify-content-end">
+            <li>
+              <small v-if="selectedFile.attachments > 0" :title="selectedFile.attachments + ' images'">&nbsp;(<i class="fa-solid fa-paperclip"></i>{{ selectedFile.attachments }})</small>
+            </li>
             <ToolButton
                 v-if="gitStats.initialized"
                 class="pl-1 p-0"
@@ -194,12 +197,12 @@
           </ul>
         </div>
         <GitFooter class="mt-3 mb-3" v-if="!syncing && selectedFile.path">
-          <div v-if="selectedFile.status">
+          <div v-if="selectedFile.status || selectedFile.attachments > 0">
             <div class="input-groups">
               <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
             </div>
           </div>
-          <div v-if="selectedFile.status" class="mb-3">
+          <div v-if="selectedFile.status || selectedFile.attachments > 0" class="mb-3">
             <button v-if="git_remote_url" type="button" class="btn btn-primary" @click="commitSinglePush"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Commit &amp; push</button>
             <button type="button" class="btn btn-primary" @click="commitSingle">Commit</button>
           </div>
@@ -375,6 +378,7 @@ export default {
             mimeType: response.headers.get('wgd-mime-type'),
             previewUrl: response.headers.get('wgd-preview-url'),
             status: response.headers.get('wgd-git-status'),
+            attachments: response.headers.get('wgd-git-attachments'),
             lastAuthor: response.headers.get('wgd-last-author')
           };
 

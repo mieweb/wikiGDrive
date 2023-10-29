@@ -251,7 +251,7 @@ export const UtilsMixin = {
 
       const url = new URL(authPath, 'http://example.com');
       url.searchParams.set('popupWindow', 'true');
-      authPath = url.pathname + '?' + url.search;
+      authPath = url.pathname + (url.search || '');
 
       let authPopup;
       window['authenticated'] = (url) => {

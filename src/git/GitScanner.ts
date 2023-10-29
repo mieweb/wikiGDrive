@@ -13,6 +13,7 @@ export interface GitChange {
     isModified: boolean;
     isDeleted: boolean;
   };
+  attachments?: number;
 }
 
 interface SshParams {
@@ -49,7 +50,7 @@ export class GitScanner {
 
     try {
       await new Promise((resolve, reject) => {
-        exec(command, { cwd: this.rootPath, env: opts.env }, (error, stdoutResult, stderrResult) => {
+        exec(command, { cwd: this.rootPath, env: opts.env, maxBuffer: 1024 * 1024 }, (error, stdoutResult, stderrResult) => {
           stdout = stdoutResult;
           stderr = stderrResult;
           if (error) {
@@ -87,13 +88,14 @@ export class GitScanner {
   }
 
   async changes(): Promise<GitChange[]> {
-    const retVal = {};
+    const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
     const skipOthers = false;
 
     function addEntry(path, state, attachments = 0) {
       if (!retVal[path]) {
         retVal[path] = {
+          cnt: 0,
           path,
           state: {
             isNew: false,

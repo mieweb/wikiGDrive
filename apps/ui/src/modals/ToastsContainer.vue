@@ -37,7 +37,8 @@ export default {
   },
   methods: {
     getHref(hash) {
-      return this.$router.resolve({ path: this.fullDrivePath, hash });
+      const resolved = this.$router.resolve({ path: this.fullDrivePath, hash });
+      return resolved?.fullPath || null;
     },
     links(toast) {
       if (toast.links && 'object' === typeof toast.links) {
