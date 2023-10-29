@@ -30,7 +30,7 @@ import {
   getAuth,
   authenticateOptionally,
   validateGetAuthState,
-  handleDriveUiInstall, handleShare, handlePopupClose
+  handleDriveUiInstall, handleShare, handlePopupClose, redirError
 } from './auth';
 import {filterParams} from '../../google/driveFetch';
 import {SearchController} from './routes/SearchController';
@@ -437,6 +437,10 @@ export class ServerContainer extends Container {
 
         if (!driveId) {
           throw new Error('No DriveId');
+        }
+
+        if (!req.user?.google_access_token) {
+          throw redirError(req, 'Not authenticated');
         }
 
         const googleDriveService = new GoogleDriveService(this.logger, null);

@@ -10,6 +10,7 @@ import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
 import {Container} from '../../../ContainerEngine';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
+import {redirError} from '../auth';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -21,6 +22,10 @@ export class DriveController extends Controller {
 
   @RouteGet('/')
   async getDrives(@RouteParamUser() user) {
+    if (!user?.google_access_token) {
+      throw redirError(this.req, 'Not authenticated');
+    }
+
     const folders = await this.folderRegistryContainer.getFolders();
 
     const googleDriveService = new GoogleDriveService(this.logger, null);

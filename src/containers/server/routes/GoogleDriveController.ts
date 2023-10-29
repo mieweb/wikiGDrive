@@ -63,6 +63,10 @@ export class GoogleDriveController extends Controller {
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
   async getDocs(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string, @RouteParamUser() user) {
+    if (!user?.google_access_token) {
+      throw redirError(this.req, 'Not authenticated');
+    }
+
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
@@ -145,6 +149,7 @@ export class GoogleDriveController extends Controller {
       if (change.state.isDeleted) {
         treeItem['status'] = 'D';
       }
+      this.res.setHeader('wgd-git-attachments', String(change.attachments) || '0');
     }
     this.res.setHeader('wgd-git-status', treeItem['status'] || '');
 

@@ -361,7 +361,7 @@ export class JobManagerContainer extends Container {
                   type: 'upload:failed',
                   err: err.message,
                   links: {
-                    ['#drive_logs:' + currentJob.id]: 'View logs'
+                    ['#drive_logs:job-' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -372,7 +372,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_reset:failed',
                   err: err.message,
                   links: {
-                    ['#drive_logs:' + currentJob.id]: 'View logs'
+                    ['#drive_logs:job-' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -383,7 +383,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_commit:failed',
                   err: err.message,
                   links: {
-                    ['#drive_logs:' + currentJob.id]: 'View logs'
+                    ['#drive_logs:job-' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -394,7 +394,7 @@ export class JobManagerContainer extends Container {
                   type: 'git_push:failed',
                   err: err.message,
                   links: {
-                    ['#drive_logs:' + currentJob.id]: 'View logs'
+                    ['#drive_logs:job-' + currentJob.id]: 'View logs'
                   },
                 });
               }
@@ -406,7 +406,7 @@ export class JobManagerContainer extends Container {
                   type: 'sync:failed',
                   err: err.message,
                   links: {
-                    ['#drive_logs:' + currentJob.id]: 'View logs'
+                    ['#drive_logs:job-' + currentJob.id]: 'View logs'
                   },
                   payload: 'all'
                 });
@@ -655,7 +655,7 @@ export class JobManagerContainer extends Container {
     await gitScanner.initialize();
 
     const fileAssetsPaths = [];
-    for (const path in filePaths.filter(path => path.endsWith('.md'))) {
+    for (const path of filePaths.filter(path => path.endsWith('.md'))) {
       const assetsPath = path.substring(0, path.length - 3) + '.assets';
       if (await transformedFileSystem.exists(assetsPath)) {
         fileAssetsPaths.push(assetsPath);
@@ -669,7 +669,7 @@ export class JobManagerContainer extends Container {
       if (!await transformedFileSystem.exists(fileToRemove)) {
         continue;
       }
-      removeFileAssetsPaths.push(fileToRemove);
+      removeFileAssetsPaths.push(fileToRemove + '/' + fileToRemove);
     }
 
     filePaths.push(...fileAssetsPaths);
@@ -802,7 +802,7 @@ export class JobManagerContainer extends Container {
             type: 'transform:failed',
             err: err.message,
             links: {
-              ['#drive_logs:' + currentJob.id]: 'View logs'
+              ['#drive_logs:job-' + currentJob.id]: 'View logs'
             },
             payload: currentJob.payload || 'all'
           });
@@ -824,7 +824,7 @@ export class JobManagerContainer extends Container {
             type: 'run_action:failed',
             err: err.message,
             links: {
-              ['#drive_logs:' + currentJob.id]: 'View logs'
+              ['#drive_logs:job-' + currentJob.id]: 'View logs'
             }
           });
           throw err;
@@ -857,7 +857,7 @@ export class JobManagerContainer extends Container {
             type: 'git_pull:failed',
             err: err.message,
             links: {
-              ['#drive_logs:' + currentJob.id]: 'View logs'
+              ['#drive_logs:job-' + currentJob.id]: 'View logs'
             },
           });
           throw err;
