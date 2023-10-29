@@ -47,7 +47,7 @@ jobs:
         docker run \
         -v "${GITHUB_WORKSPACE}/hugo:/site" \
         -v "${GITHUB_WORKSPACE}/website:/website" \
-        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
+        -v "/var/www/wikigdrive.com:/dist/hugo" \
         --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://wikigdrive.com" \
         wgd-action-runner:prod /steps/step_render_hugo
 
