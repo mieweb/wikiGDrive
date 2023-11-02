@@ -109,6 +109,9 @@ pre[class*=language-] {
   cursor: pointer;
 }
 
+.bg-nav {
+  background: var(--bs-primary);
+}
 
 @media (prefers-color-scheme: dark) {
   .bg-nav {
