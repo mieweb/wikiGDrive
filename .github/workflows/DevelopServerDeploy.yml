@@ -41,6 +41,9 @@ jobs:
         node-version: 18
         cache: npm
 
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+
     - name: Build hugo docs
       run: |
         docker run \
@@ -59,9 +62,6 @@ jobs:
         image_tag: "${{ github.sha }},latest"
         push_image_and_stages: false
         build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
-
-    - name: Build action runner
-      run: docker build -t "wgd-action-runner:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
     - name: Stop and remove
       run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
