@@ -681,7 +681,7 @@ export class GitScanner {
                 line = line.substring(1);
                 if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:') &&
                   !line.startsWith('menu:') && !line.startsWith('  main:') &&
-                  !line.startsWith('    name:') && !line.startsWith('    identifier:') && !line.startsWith('    weight:')
+                  !line.startsWith('    name:') && !line.startsWith('    identifier:') && !line.startsWith('    weight:') && !line.startsWith('    parent:')
                 ) {
                   current.doAutoCommit = false;
                 }
