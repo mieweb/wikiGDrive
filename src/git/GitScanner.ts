@@ -679,7 +679,10 @@ export class GitScanner {
             if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
               if (line.startsWith('+') || line.startsWith('-')) {
                 line = line.substring(1);
-                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:')) {
+                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:') &&
+                  !line.startsWith('menu:') && !line.startsWith('  main:') &&
+                  !line.startsWith('    name:') && !line.startsWith('    identifier:') && !line.startsWith('    weight:')
+                ) {
                   current.doAutoCommit = false;
                 }
               }
