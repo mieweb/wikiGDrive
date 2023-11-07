@@ -436,8 +436,6 @@ export class JobManagerContainer extends Container {
   }
 
   private async transform(folderId: FileId, jobId: string, filesIds: FileId[] = []) {
-    const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
-    const changesToFetch: GoogleFile[] = await watchChangesContainer.getChanges(folderId);
     const transformContainer = new TransformContainer({
       name: folderId,
       jobId
@@ -474,11 +472,6 @@ export class JobManagerContainer extends Container {
       const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
       await markdownTreeProcessor.load();
 
-      if (filesIds.length > 0) {
-        await this.scheduleRetry(folderId, changesToFetch.filter(file => filesIds.includes(file.id)), markdownTreeProcessor);
-      } else {
-        await this.scheduleRetry(folderId, changesToFetch, markdownTreeProcessor);
-      }
     } finally {
       await this.engine.unregisterContainer(transformContainer.params.name);
     }
