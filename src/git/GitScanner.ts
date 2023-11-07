@@ -624,7 +624,7 @@ export class GitScanner {
       }
 
       const childProcess = spawn('git',
-        ['diff', '--minimal'],
+        ['diff', '--minimal', '--ignore-space-change'],
         { cwd: this.rootPath, env: {} });
       const promise = new Promise((resolve, reject) => {
         childProcess.on('close', resolve);
