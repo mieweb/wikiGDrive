@@ -327,9 +327,6 @@ export class TransformContainer extends Container {
     this.localLinks = new LocalLinks(contentFileService);
     await this.localLinks.load();
 
-    this.hierarchy = await this.loadNavigationHierarchy();
-    await this.writeHugoMenu(this.hierarchy);
-
     const processed = new Set<string>();
     const previouslyFailed = new Set<string>();
 
@@ -403,6 +400,16 @@ export class TransformContainer extends Container {
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.regenerateTree(rootFolderId);
     await markdownTreeProcessor.save();
+
+    this.hierarchy = await this.loadNavigationHierarchy();
+    for (const k in this.hierarchy) {
+      const item = this.hierarchy[k];
+      if (item.identifier) {
+        const [, path] = await markdownTreeProcessor.findById(item.identifier);
+        item.pageRef = path;
+      }
+    }
+    await this.writeHugoMenu(this.hierarchy);
 
     const indexer = new LunrIndexer();
     await markdownTreeProcessor.walkTree((page) => {

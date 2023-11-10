@@ -9,6 +9,7 @@ export interface NavigationHierarchyNode {
   weight: number;
   identifier: FileId;
   parent?: FileId;
+  pageRef?: string;
 }
 
 export interface NavigationHierarchy {
