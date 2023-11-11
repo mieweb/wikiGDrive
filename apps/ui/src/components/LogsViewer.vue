@@ -106,8 +106,6 @@ export default {
 
       logs.sort((a, b) => (a?.timestamp || 0) - (b?.timestamp || 0));
 
-      const firstFetch = this.logs.length === 0;
-
       this.logs.unshift(...logs);
 
       this.innerValue.from = logs[0].timestamp;
