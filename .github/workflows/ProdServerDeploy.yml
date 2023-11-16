@@ -32,7 +32,7 @@ jobs:
 
   build:
     needs: test
-    runs-on: wgd-dev
+    runs-on: wgd-prod
 
     steps:
     - uses: actions/checkout@v3
@@ -73,8 +73,8 @@ jobs:
       run: |
         docker run -d --name wikigdrive-prod \
           -v wikiGDriveProd:/data \
-          -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
-          -v /home/githubactions/wikigdrive/env.prod:/usr/src/app/.env \
+          -v /home/wikigdrive/service_account.json:/service_account.json \
+          -v /home/wikigdrive/env.prod:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
