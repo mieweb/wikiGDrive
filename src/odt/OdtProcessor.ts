@@ -1,4 +1,5 @@
-import {FileContentService} from '../utils/FileContentService';
+import fs from 'fs';
+import path from 'path';
 import JSZip from 'jszip';
 import crypto from 'crypto';
 
@@ -11,23 +12,21 @@ function getExt(fileName) {
 }
 
 export class OdtProcessor {
-  private readonly fileName: string;
   private contentXml: string;
   private stylesXml: string;
   private files: { [p: string]: JSZip.JSZipObject };
   private fileNameMap: { [name: string]: string };
 
-  constructor(private fileSystem: FileContentService, private fileId: string, private contentAddressable = false) {
-    this.fileName = fileId + '.odt';
+  constructor(private odtPath: string, private contentAddressable = false) {
     this.fileNameMap = {};
   }
 
   async load() {
-    if (!await this.fileSystem.exists(this.fileName)) {
+    if (!fs.existsSync(this.odtPath)) {
       return;
     }
     const jsZip = new JSZip();
-    const input = await this.fileSystem.readBuffer(this.fileName);
+    const input: Buffer = fs.readFileSync(this.odtPath);
     const zip = await jsZip.loadAsync(input);
 
     this.files = zip.folder('').files;
@@ -40,9 +39,13 @@ export class OdtProcessor {
     }
   }
 
-  async unzipAssets(destinationDirectory: FileContentService, destinationName: string) {
-    const assetsDirectory = await destinationDirectory.getSubFileService(destinationName.replace(/.md$/, '.assets'));
-    await assetsDirectory.mkdir('');
+  async unzipAssets(destinationPath: string, destinationName: string) {
+    const assetsDirectory = path.join(destinationPath, destinationName.replace(/.md$/, '.assets'));
+
+    if (!fs.existsSync(assetsDirectory)) {
+      fs.mkdirSync(assetsDirectory, { recursive: true });
+    }
+
     const written = [];
     for (const relativePath in this.files) {
       if (!relativePath.endsWith('.png') && !relativePath.endsWith('.jpg')) {
@@ -66,13 +69,13 @@ export class OdtProcessor {
         this.fileNameMap[fileName] = fileName;
       }
       written.push(this.fileNameMap[fileName]);
-      await assetsDirectory.writeBuffer(this.fileNameMap[fileName], buffer);
+      fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
     }
 
-    const files = await assetsDirectory.list('');
+    const files = fs.readdirSync(assetsDirectory);
     for (const file of files) {
       if (written.indexOf(file) === -1) {
-        await assetsDirectory.remove(file);
+        fs.unlinkSync(path.join(assetsDirectory, file));
       }
     }
   }

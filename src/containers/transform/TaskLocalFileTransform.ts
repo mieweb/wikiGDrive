@@ -129,14 +129,17 @@ export class TaskLocalFileTransform extends QueueTask {
     let links = [];
     let errors = [];
 
-    const processor = new OdtProcessor(this.googleFolder, localFile.id, true);
-    await processor.load();
-    await processor.unzipAssets(this.destinationDirectory, this.realFileName);
-    const content = processor.getContentXml();
-    const stylesXml = processor.getStylesXml();
-    const fileNameMap = processor.getFileNameMap();
+    const odtPath = this.googleFolder.getRealPath() + '/' + localFile.id + '.odt';
+    const destinationPath = this.destinationDirectory.getRealPath();
 
     if (SINGLE_THREADED_TRANSFORM) {
+      const processor = new OdtProcessor(odtPath, true);
+      await processor.load();
+      await processor.unzipAssets(destinationPath, this.realFileName);
+      const content = processor.getContentXml();
+      const stylesXml = processor.getStylesXml();
+      const fileNameMap = processor.getFileNameMap();
+
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
       const document = parser.unmarshal(content);
 
@@ -168,9 +171,8 @@ export class TaskLocalFileTransform extends QueueTask {
       const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
         localFile,
         realFileName: this.realFileName,
-        fileNameMap,
-        content,
-        stylesXml,
+        odtPath,
+        destinationPath,
         fm_without_version: this.userConfig.fm_without_version
       });
 
@@ -189,9 +191,6 @@ export class TaskLocalFileTransform extends QueueTask {
     }
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
-    if (process.env.VERSION === 'dev') {
-      await this.destinationDirectory.writeFile(this.realFileName.replace(/.md$/, '.debug.xml'), content);
-    }
     this.localLinks.append(localFile.id, localFile.fileName, links);
   }
 
