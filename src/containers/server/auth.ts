@@ -2,7 +2,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import {decrypt, encrypt} from '../../google/GoogleAuthService';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {Logger} from 'winston';
-import {Request, Response} from 'express';
+import type {Request, Response} from 'express';
 import {UserAuthClient} from '../../google/AuthClient';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {urlToFolderId} from '../../utils/idParsers';

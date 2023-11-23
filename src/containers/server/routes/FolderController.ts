@@ -8,7 +8,7 @@ import {
 import {MimeTypes} from '../../../model/GoogleFile';
 import {AuthConfig} from '../../../model/AccountJson';
 import {FileContentService} from '../../../utils/FileContentService';
-import express from 'express';
+import type * as express from 'express';
 import {TreeItem} from '../../../model/TreeItem';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {DirectoryScanner, isTextFileName} from '../../transform/DirectoryScanner';

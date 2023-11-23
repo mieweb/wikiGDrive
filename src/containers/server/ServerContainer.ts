@@ -1,5 +1,6 @@
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, NextFunction} from 'express';
+import type {Express, NextFunction, Request, Response} from 'express';
+import express from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
@@ -34,7 +35,6 @@ import {
 } from './auth';
 import {filterParams} from '../../google/driveFetch';
 import {SearchController} from './routes/SearchController';
-import opentelemetry from '@opentelemetry/api';
 import {DriveUiController} from './routes/DriveUiController';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
 import {UserAuthClient} from '../../google/AuthClient';
@@ -58,6 +58,14 @@ interface TreeItem {
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
+
+function getDurationInMilliseconds(start) {
+  const NS_PER_SEC = 1e9;
+  const NS_TO_MS = 1e6;
+  const diff = process.hrtime(start);
+
+  return Math.round((diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS);
+}
 
 export class ServerContainer extends Container {
   private logger: winston.Logger;
@@ -97,20 +105,8 @@ export class ServerContainer extends Container {
       next();
     });
 
-    if (process.env.ZIPKIN_URL) {
-      app.use((req, res, next) => {
-        if (req.header('traceparent')) {
-          next();
-          return;
-        }
-
-        const span = opentelemetry.trace.getActiveSpan();
-        if (span) {
-          const traceId = span.spanContext().traceId;
-          res.header('trace-id', traceId);
-        }
-        next();
-      });
+    if (express['addExpressTelemetry']) {
+      express['addExpressTelemetry'](app);
     }
 
     app.use(rateLimit({
@@ -224,9 +220,13 @@ export class ServerContainer extends Container {
   }
 
   async initRouter(app) {
-    app.use(async (req: express.Request, res: express.Response, next: NextFunction) => {
+    app.use(async (req: Request, res: Response, next: NextFunction) => {
       if (req.path.startsWith('/api/')) {
-        this.logger.info(`${req.method} ${req.path}`);
+        const start = process.hrtime();
+        res.on('finish', () => {
+          const durationInMilliseconds = getDurationInMilliseconds(start);
+          this.logger.info(`${req.method} ${req.originalUrl} ${durationInMilliseconds}ms`);
+        });
       }
       next();
     });

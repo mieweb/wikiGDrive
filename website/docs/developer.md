@@ -137,7 +137,7 @@ docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zip
 Set app env var to:
 
 ```
-ZIPKIN_URL=http://localhost:9411`
+ZIPKIN_URL=http://localhost:9411
 ```
 
 ## Debugging

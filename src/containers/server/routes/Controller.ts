@@ -1,6 +1,8 @@
-import express, { Router } from 'express';
+import type { Router } from 'express';
+import type * as express from 'express';
 import SwaggerDocService from './SwaggerDocService';
 import winston from 'winston';
+import {instrumentAndWrap} from '../../../telemetry';
 // import SwaggerDocService from '../api-docs.api/SwaggerDocService';
 
 export const HttpStatus = {
@@ -168,6 +170,7 @@ export class Controller implements ControllerCallContext {
 
   async getRouter() {
     const controllerId = this.constructor.prototype.controllerId;
+    const { Router} = await import('express');
     const router = Router();
 
     for (const key in Controller.routes) {
@@ -261,7 +264,16 @@ export class Controller implements ControllerCallContext {
             }
           }
 
-          const retVal = await bound(...args);
+          let retVal;
+
+          if (process.env.ZIPKIN_URL) {
+            const spanName = req.originalUrl + '.' + route.methodFunc;
+            await instrumentAndWrap(spanName, req, res, async () => {
+              retVal = await bound(...args);
+            });
+          } else {
+            retVal = await bound(...args);
+          }
 
           if ('stream' === route.responseObjectType) {
             return;

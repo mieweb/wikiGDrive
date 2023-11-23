@@ -2,7 +2,6 @@ import opentelemetry, {Span, SpanKind} from '@opentelemetry/api';
 import {ZipkinExporter} from '@opentelemetry/exporter-zipkin';
 import {InstrumentationBase, registerInstrumentations} from '@opentelemetry/instrumentation';
 import {HttpInstrumentation} from '@opentelemetry/instrumentation-http';
-import {ExpressInstrumentation} from '@opentelemetry/instrumentation-express';
 import {Resource} from '@opentelemetry/resources';
 import {NodeTracerProvider} from '@opentelemetry/sdk-trace-node';
 import {AlwaysOnSampler, SimpleSpanProcessor} from '@opentelemetry/sdk-trace-base';
@@ -56,6 +55,36 @@ export function TelemetryMethodDisable() {
   };
 }
 
+export async function instrumentAndWrap(spanName, req, res, func) {
+  const tracer = opentelemetry.trace.getTracer(
+    provider.resource.attributes[SemanticResourceAttributes.SERVICE_NAME].toString(),
+    '1.0'
+  );
+
+  const traceparent = req.header('traceparent');
+
+  const input = { traceparent };
+  const activeContext = opentelemetry.propagation.extract(opentelemetry.context.active(), input);
+
+  return tracer.startActiveSpan(
+    spanName,
+    { kind: SpanKind.SERVER },
+    activeContext,
+    async (span) => {
+    try {
+      const traceId = span.spanContext().traceId;
+      res.header('trace-id', traceId);
+      return await func();
+    } catch (err) {
+      // err.stack = [err.message].concat(stackTrace).join('\n');
+      span.recordException(err);
+      throw err;
+    } finally {
+      span.end();
+    }
+  });
+}
+
 export class ClassInstrumentation extends InstrumentationBase {
   private className: string;
 
@@ -102,22 +131,24 @@ export class ClassInstrumentation extends InstrumentationBase {
           spanName += ')';
         }
 
-        const span = tracer.startSpan(spanName, { kind: SpanKind.INTERNAL });
+        return tracer.startActiveSpan(
+          spanName,
+          { kind: SpanKind.INTERNAL },
+          async (span) => {
+            try {
+              const branch = 'develop';
+              const url = `https://github.com/mieweb/wikiGDrive/blob/${branch}/src${instrumentation.path}`;
+              span.setAttribute('src', url);
 
-        try {
-          const branch = 'develop';
-          const url = `https://github.com/mieweb/wikiGDrive/blob/${branch}/src${instrumentation.path}`;
-          span.setAttribute('src', url);
-
-          return await origMethod.apply(this, args);
-        } catch (err) {
-          err.stack = [err.message].concat(stackTrace).join('\n');
-          span.recordException(err);
-          throw err;
-        } finally {
-          span.end();
-        }
-
+              return await origMethod.apply(this, args);
+            } catch (err) {
+              err.stack = [err.message].concat(stackTrace).join('\n');
+              span.recordException(err);
+              throw err;
+            } finally {
+              span.end();
+            }
+          });
       };
       this.classPrototype[methodName].origMethod = origMethod;
     }
@@ -156,8 +187,7 @@ export async function addTelemetry(serviceName: string, mainDir: string) {
             span.updateName('http_server ' + request.method + ' ' + request['originalUrl'].replace(/\?.*/, ''));
           }
         },
-      }),
-      new ExpressInstrumentation()
+      })
     ],
   });
 
@@ -171,7 +201,6 @@ export async function addTelemetry(serviceName: string, mainDir: string) {
       new ClassInstrumentation(GoogleDriveService.prototype, path.resolve(__dirname, './google/GoogleDriveService').substring(mainDir.length)),
     ]
   });
-
 
   provider.addSpanProcessor(
     new SimpleSpanProcessor(

@@ -2,14 +2,14 @@ import {Logger} from 'vite';
 import * as vite from 'vite';
 import {fileURLToPath} from 'url';
 import path from 'path';
-import express from 'express';
+import type {Application} from 'express';
 import winston from 'winston';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const HTML_DIR = __dirname + '/../../../apps/ui';
 
-export async function initUiServer(app: express.Application, logger: winston.Logger) {
+export async function initUiServer(app: Application, logger: winston.Logger) {
   const customLogger: Logger = {
     hasWarned: false,
     // eslint-disable-next-line @typescript-eslint/no-empty-function
