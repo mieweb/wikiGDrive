@@ -155,6 +155,47 @@ export class ClassInstrumentation extends InstrumentationBase {
   }
 }
 
+export function instrumentFunction<K>(func, telemetryParamCount = 0, telemetryParamOffset = 0) {
+  return async function (...args) {
+    if (!process.env.ZIPKIN_URL) {
+      return await func(...args);
+    }
+
+    const stackTrace = new Error().stack.split('\n').splice(2);
+    const tracer = opentelemetry.trace.getTracer(
+      provider.resource.attributes[SemanticResourceAttributes.SERVICE_NAME].toString(),
+      '1.0'
+    );
+
+    let spanName = func.name;
+    if (telemetryParamCount) {
+      spanName += '(';
+      for (let i = telemetryParamOffset; i < telemetryParamCount + telemetryParamOffset; i++) {
+        if (i > 0) {
+          spanName += ', ';
+        }
+        spanName += args[0];
+      }
+      spanName += ')';
+    }
+
+    return tracer.startActiveSpan(
+      spanName,
+      { kind: SpanKind.INTERNAL },
+      async (span) => {
+        try {
+          return await func(...args);
+        } catch (err) {
+          err.stack = [err.message].concat(stackTrace).join('\n');
+          span.recordException(err);
+          throw err;
+        } finally {
+          span.end();
+        }
+      });
+  };
+}
+
 export async function addTelemetry(serviceName: string, mainDir: string) {
   if (!process.env.ZIPKIN_URL) {
     return;

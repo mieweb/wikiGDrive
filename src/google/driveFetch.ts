@@ -2,6 +2,7 @@ import {Readable} from 'stream';
 import {SimpleFile} from '../model/GoogleFile';
 import opentelemetry from '@opentelemetry/api';
 import {QuotaLimiter} from './QuotaLimiter';
+import {instrumentFunction} from '../telemetry';
 
 async function handleReadable(obj): Promise<string> {
   if (obj instanceof Readable) {
@@ -141,7 +142,8 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
   }
 
   if (!quotaLimiter) {
-    const response = await fetch(url, {
+    const fetchInstrumented = instrumentFunction(fetch, 1);
+    const response = await fetchInstrumented(url, {
       method,
       headers: {
         Authorization: 'Bearer ' + accessToken,
@@ -161,7 +163,8 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
   return await new Promise<Response>(async (resolve, reject) => { /* eslint-disable-line no-async-promise-executor */
     const job = async () => {
       try {
-        const response = await fetch(url, {
+        const fetchInstrumented = instrumentFunction(fetch, 1);
+        const response = await fetchInstrumented(url, {
           method,
           headers: {
             Authorization: 'Bearer ' + accessToken,
