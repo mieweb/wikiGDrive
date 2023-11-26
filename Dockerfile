@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client
 WORKDIR /usr/src/app

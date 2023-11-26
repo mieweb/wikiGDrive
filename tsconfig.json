@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "lib": ["es2021", "dom"],
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "target": "es2021",
+    "lib": ["es2022", "dom"],
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "es2022",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "sourceMap": true,
@@ -15,9 +15,9 @@
     "transpileOnly": true,
     "files": true,
     "compilerOptions": {
-      "module": "ESNext",
+      "module": "node16",
       "esModuleInterop": true,
-      "moduleResolution": "node"
+      "moduleResolution": "node16"
     }
   },
   "exclude": [
