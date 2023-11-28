@@ -240,7 +240,6 @@ export class TransformContainer extends Container {
     const destinationScanner = new DirectoryScanner();
     const destinationFiles = await destinationScanner.scan(destinationDirectory);
     await addBinaryMetaData(destinationFiles, destinationDirectory);
-    await this.removeOutdatedLogEntries(destinationDirectory, destinationFiles);
 
     const localFilesGenerator = new LocalFilesGenerator();
     const filesToGenerate: LocalFile[] = await localFilesGenerator.generateLocalFiles(googleFolderFiles);
@@ -476,6 +475,11 @@ export class TransformContainer extends Container {
           const localFileContent = await contentFileService.readFile(lastLog.filePath);
           const localFile = markDownScanner.parseMarkdown(localFileContent, lastLog.filePath);
           if (!localFile) {
+            continue;
+          }
+
+          const lastLogRedir = this.localLog.findLastFileByPath(dirName ? dirName + '/' + fileName : fileName);
+          if (lastLogRedir?.event === 'removed') {
             continue;
           }
 

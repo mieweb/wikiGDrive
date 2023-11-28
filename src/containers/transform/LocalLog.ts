@@ -73,6 +73,16 @@ export class LocalLog {
     return null;
   }
 
+  findLastFileByPath(filePath: string) {
+    for (let rowNo = this.rows.length - 1; rowNo >= 0; rowNo--) {
+      const row = this.rows[rowNo];
+      if (row.filePath === filePath) {
+        return row;
+      }
+    }
+    return null;
+  }
+
   async remove(filePath: string): Promise<boolean> {
     const originalLength = this.rows.length;
     this.rows = this.rows.filter(logRow => logRow.filePath !== filePath);
@@ -91,4 +101,5 @@ export class LocalLog {
 
     return Object.values(lastOnes).filter(item => item.event !== 'removed');
   }
+
 }
