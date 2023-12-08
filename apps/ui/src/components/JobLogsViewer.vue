@@ -109,7 +109,8 @@ export default {
       return new Date(v).toISOString();
     },
     highLight(str) {
-      return Prism.highlight(str, Prism.languages.markdown, 'markdown');
+      return str;
+      // FIXME: return Prism.highlight(str, Prism.languages.markdown, 'markdown');
     },
     rewriteLinks() {
       const links = this.$el.querySelectorAll('a[data-to-rewrite]');
