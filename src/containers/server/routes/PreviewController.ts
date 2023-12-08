@@ -42,8 +42,9 @@ export class PreviewController extends Controller {
       return;
     }
 
-    const ext = await this.fileSystem.guessExtension(filePath);
-    const mimeType = extToMime[ext];
+    const ext = filePath.substring(filePath.lastIndexOf('.') + 1);
+    const guessedExt = await this.fileSystem.guessExtension(filePath);
+    const mimeType = extToMime[ext] || extToMime[guessedExt];
 
     if (mimeType) {
       this.res.setHeader('Content-type', mimeType);
