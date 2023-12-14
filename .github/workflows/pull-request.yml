@@ -65,4 +65,4 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: docker run -t -v wikiGDriveExample:/data -v /home/githubactions/wikigdrive/service_account.json:/service_account.json -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" wikigdrive-test wikigdrive --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data pull 0AIkOKXbzWCtSUk9PVA
+      run: docker run -t -v wikiGDriveExample:/data -v /home/wikigdrive/service_account.json:/service_account.json -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" wikigdrive-test wikigdrive --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data pull 0AIkOKXbzWCtSUk9PVA

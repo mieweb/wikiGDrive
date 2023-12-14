@@ -73,7 +73,7 @@ docker rm -f wikigdrive
 Link to production's OAUTH configuration:
 https://console.cloud.google.com/apis/credentials/oauthclient/762352378313-3u5pagjnk24g9640a5j1bmlsvobtlq2k.apps.googleusercontent.com?project=wikigdrive
 
-Stored in /home/githubactions/wikigdrive/env.prod
+Stored in /home/wikigdrive/env.prod
 
 ### This is for the Service Account
 https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333?project=wikigdrive
