@@ -36,15 +36,22 @@ export default {
     },
     contentDir: {
       type: String
+    },
+    autoRefresh: {
+      type: Boolean
     }
   },
   data() {
     return {
       errorsOnly: false,
-      logs: []
+      logs: [],
+      intervalHandle: null
     };
   },
   computed: {
+    currentJob() {
+      return this.$root.jobs.find(job => 'job-' + job.id === this.jobId);
+    },
     absPath() {
       return '/drive/' + this.driveId + this.contentDir;
     },
@@ -63,13 +70,19 @@ export default {
       }
       const jobId = this.jobId.substring('job-'.length);
 
-      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?order=asc&jobId=` + (jobId));
+      const response = await this.authenticatedClient.fetchApi(`/api/logs/${this.driveId}?order=asc&jobId=` + (jobId) + '&offset=' + this.logs.length);
       const logs = await response.json();
+
+      if (this.intervalHandle && this.currentJob && this.currentJob.finished) {
+        clearInterval(this.intervalHandle);
+        this.intervalHandle = null;
+      }
+
       if (logs.length === 0) {
         return;
       }
 
-      this.logs = logs;
+      this.logs = this.logs.concat(logs);
 
       if (logs.length > 0) {
         this.handleScroll();
@@ -139,6 +152,18 @@ export default {
 
     this.handleScroll();
     // Prism.highlightElement(this.$refs.code);
+    if (!this.intervalHandle && this.currentJob && !this.currentJob.finished) {
+      this.intervalHandle = setInterval(() => {
+        this.fetch();
+      }, 1000);
+    }
+  },
+  beforeUnmount() {
+    if (!this.intervalHandle) {
+      return;
+    }
+    clearInterval(this.intervalHandle);
+    this.intervalHandle = null;
   }
 };
 </script>

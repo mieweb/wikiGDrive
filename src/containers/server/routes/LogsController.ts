@@ -1,5 +1,5 @@
-import {Controller, RouteGet, RouteParamPath, RouteParamQuery} from './Controller';
-import {Logger, QueryOptions} from 'winston';
+import {Controller, RouteGet, RouteParamPath, RouteParamQuery} from './Controller.ts';
+import {Logger} from 'winston';
 
 export class LogsController extends Controller {
 
@@ -12,7 +12,8 @@ export class LogsController extends Controller {
                   @RouteParamQuery('from') from?: number,
                   @RouteParamQuery('until') until?: number,
                   @RouteParamQuery('jobId') jobId?: string,
-                  @RouteParamQuery('order') order?: 'desc' | 'asc'
+                  @RouteParamQuery('order') order?: 'desc' | 'asc',
+                  @RouteParamQuery('offset') offset?: number
                   ) {
 
     if (!until && !from) {
@@ -44,10 +45,10 @@ export class LogsController extends Controller {
     }));
 
     if (jobId) {
-      return results['jobLogFile'];
+      return results['jobLogFile'].slice(offset || 0);
     }
 
-    return results['dailyRotateFile'].reverse();
+    return results['dailyRotateFile'].reverse().slice(offset || 0);
   }
 
 }

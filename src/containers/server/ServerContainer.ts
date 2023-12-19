@@ -1,29 +1,31 @@
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import type {Express, NextFunction, Request, Response} from 'express';
 import express from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
-import {FileId} from '../../model/model';
-import {saveRunningInstance} from './loadRunningInstance';
-import {urlToFolderId} from '../../utils/idParsers';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer';
 import {fileURLToPath} from 'url';
-import GitController from './routes/GitController';
-import FolderController from './routes/FolderController';
-import {ConfigController} from './routes/ConfigController';
-import {DriveController} from './routes/DriveController';
-import {BackLinksController} from './routes/BackLinksController';
-import {GoogleDriveController} from './routes/GoogleDriveController';
-import {LogsController} from './routes/LogsController';
-import {PreviewController} from './routes/PreviewController';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import compress from 'compression';
 
-import {SocketManager} from './SocketManager';
+import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileId} from '../../model/model.ts';
+import {saveRunningInstance} from './loadRunningInstance.ts';
+import {urlToFolderId} from '../../utils/idParsers.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
+import GitController from './routes/GitController.ts';
+import FolderController from './routes/FolderController.ts';
+import {ConfigController} from './routes/ConfigController.ts';
+import {DriveController} from './routes/DriveController.ts';
+import {BackLinksController} from './routes/BackLinksController.ts';
+import {GoogleDriveController} from './routes/GoogleDriveController.ts';
+import {LogsController} from './routes/LogsController.ts';
+import {PreviewController} from './routes/PreviewController.ts';
+
+import {SocketManager} from './SocketManager.ts';
 
 import {
   authenticate,
@@ -32,18 +34,17 @@ import {
   authenticateOptionally,
   validateGetAuthState,
   handleDriveUiInstall, handleShare, handlePopupClose, redirError
-} from './auth';
-import {filterParams} from '../../google/driveFetch';
-import {SearchController} from './routes/SearchController';
-import {DriveUiController} from './routes/DriveUiController';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {UserAuthClient} from '../../google/AuthClient';
-import {getTokenInfo} from '../../google/GoogleAuthService';
-import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
-import compress from 'compression';
-import {initStaticDistPages} from './static';
-import {initUiServer} from './vuejs';
-import {initErrorHandler} from './error';
+} from './auth.ts';
+import {filterParams} from '../../google/driveFetch.ts';
+import {SearchController} from './routes/SearchController.ts';
+import {DriveUiController} from './routes/DriveUiController.ts';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
+import {UserAuthClient} from '../../google/AuthClient.ts';
+import {getTokenInfo} from '../../google/GoogleAuthService.ts';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
+import {initStaticDistPages} from './static.ts';
+import {initUiServer} from './vuejs.ts';
+import {initErrorHandler} from './error.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
