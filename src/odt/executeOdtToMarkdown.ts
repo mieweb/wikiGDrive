@@ -24,6 +24,7 @@ export async function executeOdtToMarkdown(workerData) {
   }
 
   const converter = new OdtToMarkdown(document, styles, fileNameMap);
+  converter.setRewriteRules(workerData.rewriteRules);
   if (workerData.realFileName === '_index.md') {
     converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'));
   } else {

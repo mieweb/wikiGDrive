@@ -55,6 +55,11 @@
               <label>Config.toml for preview</label>
               <CodeEditor v-model="user_config.config_toml" lang="toml" />
             </div>
+
+            <div class="form-group">
+              <label>Rewrite rules</label>
+              <CodeEditor v-model="user_config.rewrite_rules_yaml" lang="yaml" />
+            </div>
           </form>
           <br/>
           <button class="btn btn-primary" type="button" @click="save">Save</button>

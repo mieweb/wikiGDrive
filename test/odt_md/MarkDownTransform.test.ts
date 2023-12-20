@@ -1,12 +1,12 @@
 import {assert} from 'chai';
 import fs from 'fs';
 
-import {compareTexts} from '../utils';
-import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown';
-import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
-import {UnMarshaller} from '../../src/odt/UnMarshaller';
-import {OdtProcessor} from '../../src/odt/OdtProcessor';
-import {FileContentService} from '../../src/utils/FileContentService';
+import {compareTexts} from '../utils.ts';
+import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
+import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
+import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
+import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
+import {FileContentService} from '../../src/utils/FileContentService.ts';
 
 import path from 'path';
 import { fileURLToPath } from 'url';

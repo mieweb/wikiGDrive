@@ -15,13 +15,14 @@ import {
   TextProperty,
   TextSpace,
   TextSpan
-} from './LibreOffice';
-import {urlToFolderId} from '../utils/idParsers';
-import {MarkdownChunks} from './MarkdownChunks';
-import {isMarkdownMacro, StateMachine} from './StateMachine';
-import {inchesToPixels, inchesToSpaces, spaces} from './utils';
-import {extractPath} from './extractPath';
-import {mergeDeep} from './mergeDeep';
+} from './LibreOffice.ts';
+import {urlToFolderId} from '../utils/idParsers.ts';
+import {MarkdownChunks} from './MarkdownChunks.ts';
+import {isMarkdownMacro, StateMachine} from './StateMachine.ts';
+import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
+import {extractPath} from './extractPath.ts';
+import {mergeDeep} from './mergeDeep.ts';
+import {RewriteRule} from './applyRewriteRule.ts';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -62,6 +63,7 @@ export class OdtToMarkdown {
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
   private picturesDir = '';
+  private rewriteRules: RewriteRule[] = [];
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
     this.stateMachine = new StateMachine(this.chunks);
@@ -115,7 +117,7 @@ export class OdtToMarkdown {
 
     this.stateMachine.postProcess();
 
-    const markdown = this.chunks.toString();
+    const markdown = this.chunks.toString(this.rewriteRules);
     const trimmed = this.trimBreaks(markdown);
     return await this.rewriteHeaders(trimmed);
   }
@@ -326,7 +328,7 @@ export class OdtToMarkdown {
   async drawGToText(drawG: DrawG) {
     this.stateMachine.pushTag('HTML_MODE/');
 
-    const style = this.getStyle(drawG.styleName);
+    this.getStyle(drawG.styleName);
 
     let maxx = 0;
     let maxy = 0;
@@ -681,5 +683,10 @@ export class OdtToMarkdown {
 
   setPicturesDir(picturesDir: string) {
     this.picturesDir = picturesDir;
+  }
+
+  setRewriteRules(rewriteRules: RewriteRule[]) {
+    this.rewriteRules = rewriteRules;
+    this.stateMachine.setRewriteRules(rewriteRules);
   }
 }

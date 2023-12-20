@@ -1,7 +1,7 @@
-import {FileClientService} from './FileClientService.js';
+import {FileClientService} from './FileClientService.ts';
 
 export class CachedFileClientService extends FileClientService {
-  private cache: any;
+  private cache: unknown;
 
   constructor(authenticatedClient) {
     super(authenticatedClient);

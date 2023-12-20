@@ -1,19 +1,20 @@
-import {QueueTask} from '../google_folder/QueueTask';
 import winston from 'winston';
-import {FileContentService} from '../../utils/FileContentService';
-import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
-import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile';
-import {SvgTransform} from '../../SvgTransform';
-import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter';
-import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown';
-import {OdtProcessor} from '../../odt/OdtProcessor';
-import {UnMarshaller} from '../../odt/UnMarshaller';
-import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
-import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
-import {LocalLinks} from './LocalLinks';
-import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer';
-import {JobManagerContainer} from '../job/JobManagerContainer';
-import {UserConfig} from '../google_folder/UserConfigService';
+
+import {QueueTask} from '../google_folder/QueueTask.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {GoogleFile, MimeTypes} from '../../model/GoogleFile.ts';
+import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile.ts';
+import {SvgTransform} from '../../SvgTransform.ts';
+import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter.ts';
+import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown.ts';
+import {OdtProcessor} from '../../odt/OdtProcessor.ts';
+import {UnMarshaller} from '../../odt/UnMarshaller.ts';
+import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice.ts';
+import {OdtToMarkdown} from '../../odt/OdtToMarkdown.ts';
+import {LocalLinks} from './LocalLinks.ts';
+import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer.ts';
+import {JobManagerContainer} from '../job/JobManagerContainer.ts';
+import {UserConfig} from '../google_folder/UserConfigService.ts';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -132,6 +133,8 @@ export class TaskLocalFileTransform extends QueueTask {
     const odtPath = this.googleFolder.getRealPath() + '/' + localFile.id + '.odt';
     const destinationPath = this.destinationDirectory.getRealPath();
 
+    const rewriteRules = this.userConfig.rewrite_rules || [];
+
     if (SINGLE_THREADED_TRANSFORM) {
       const processor = new OdtProcessor(odtPath, true);
       await processor.load();
@@ -150,6 +153,7 @@ export class TaskLocalFileTransform extends QueueTask {
       }
 
       const converter = new OdtToMarkdown(document, styles, fileNameMap);
+      converter.setRewriteRules(rewriteRules);
       if (this.realFileName === '_index.md') {
         converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'));
       } else {
@@ -173,6 +177,7 @@ export class TaskLocalFileTransform extends QueueTask {
         realFileName: this.realFileName,
         odtPath,
         destinationPath,
+        rewriteRules,
         fm_without_version: this.userConfig.fm_without_version
       });
 
