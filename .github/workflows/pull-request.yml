@@ -41,6 +41,9 @@ jobs:
         node-version: 20
         cache: npm
 
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:test" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+
     - name: Build hugo docs
       run: |
         docker run \
@@ -48,7 +51,7 @@ jobs:
         -v "${GITHUB_WORKSPACE}/website:/website" \
         -v "/var/www/test.wikigdrive.com:/dist/hugo" \
         --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://test.wikigdrive.com" \
-        wgd-action-runner:develop /steps/step_render_hugo
+        wgd-action-runner:test /steps/step_render_hugo
 
     - name: Copy index for vite
       run: mkdir -p dist/hugo && cp -rf /var/www/test.wikigdrive.com/* dist/hugo
