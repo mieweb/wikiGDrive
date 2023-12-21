@@ -18,11 +18,17 @@ export function applyRewriteRule(rule: RewriteRule, chunk: Chunk) {
   const href = chunk.href || '';
   const basename = path.basename(href);
   const alt = chunk.alt || '';
+  const chunkTag = chunk.tag || '';
 
-  if (rule.tag && chunk.tag !== rule.tag) {
+  if (rule.tag && chunkTag.replaceAll('/', '') !== rule.tag.replaceAll('/', '')) {
     return { shouldBreak: false };
   }
 
+  if (rule.match && rule.match === '$alt') {
+    if (href !== alt) {
+      return { shouldBreak: false };
+    }
+  } else
   if (rule.match) {
     const matchRegExp = new RegExp(rule.match);
     if (!matchRegExp.test(href)) {

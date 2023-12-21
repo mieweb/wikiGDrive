@@ -4,20 +4,20 @@ import * as htmlparser2 from 'htmlparser2';
 import {ElementType} from 'htmlparser2';
 import * as domutils from 'domutils';
 import {Element, Text} from 'domhandler';
-
 import render from 'dom-serializer';
-import {FileId} from '../../model/model';
-import {MimeTypes} from '../../model/GoogleFile';
-import {LocalFile} from '../../model/LocalFile';
-import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {UserConfigService} from './UserConfigService';
-import {FileContentService} from '../../utils/FileContentService';
-import {getContentFileService} from '../transform/utils';
-import {DirectoryScanner} from '../transform/DirectoryScanner';
-import {getDesiredPath} from '../transform/LocalFilesGenerator';
-import {markdownToHtml} from '../../google/markdownToHtml';
-import {convertToAbsolutePath} from '../../LinkTranslator';
+
+import {FileId} from '../../model/model.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
+import {LocalFile} from '../../model/LocalFile.ts';
+import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {UserConfigService} from './UserConfigService.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {getContentFileService} from '../transform/utils.ts';
+import {DirectoryScanner} from '../transform/DirectoryScanner.ts';
+import {getDesiredPath} from '../transform/LocalFilesGenerator.ts';
+import {markdownToHtml} from '../../google/markdownToHtml.ts';
+import {convertToAbsolutePath} from '../../LinkTranslator.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -85,6 +85,7 @@ export class UploadContainer extends Container {
           case MimeTypes.MARKDOWN:
             if (file.id === 'TO_FILL') {
               file.id = ids.splice(0, 1)[0];
+              file['isNewId'] = true;
             }
             break;
         }
@@ -133,15 +134,27 @@ export class UploadContainer extends Container {
               const html = await markdownToHtml(content);
               entry.performRewrite = html;
               const buffer = Buffer.from(new TextEncoder().encode(html));
-              const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, MimeTypes.HTML, buffer);
-              file.id = response.id;
+              if (file['isNewId']) {
+                const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, MimeTypes.HTML, buffer); // generatedIds not supported to gdocs
+                file.id = response.id;
+                delete file['isNewId'];
+              } else {
+                const response = await this.googleDriveService.update(access_token, entry.parent, file.title, MimeTypes.HTML, buffer, file.id);
+                file.id = response.id;
+              }
             }
             break;
           case MimeTypes.IMAGE_SVG:
             if (file.id && file.id !== 'TO_FILL') {
               const content = await dirFileService.readBuffer(entry.path);
-              const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
-              file.id = response.id;
+              if (file['isNewId']) {
+                const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
+                file.id = response.id;
+                delete file['isNewId'];
+              } else {
+                const response = await this.googleDriveService.update(access_token, entry.parent, file.title, file.mimeType, content, file.id);
+                file.id = response.id;
+              }
             }
             break;
         }
@@ -194,23 +207,26 @@ export class UploadContainer extends Container {
         case MimeTypes.MARKDOWN:
           if (map[getDesiredPath(file.title)]) {
             file.id = map[getDesiredPath(file.title)].id;
+          } else { // Upload only missing
+            file.id = 'TO_FILL';
+            retVal.push({
+              path: parentPath + '/' + file.fileName,
+              file,
+              parent: folderId
+            });
           }
-          retVal.push({
-            path: parentPath + '/' + file.fileName,
-            file,
-            parent: folderId
-          });
           break;
         case MimeTypes.IMAGE_SVG:
           if (map[getDesiredPath(file.title)]) {
             file.id = map[getDesiredPath(file.title)].id;
+          } else { // Upload only missing
+            file.id = 'TO_FILL';
+            retVal.push({
+              path: parentPath + '/' + file.fileName,
+              file,
+              parent: folderId
+            });
           }
-
-          retVal.push({
-            path: parentPath + '/' + file.fileName,
-            file,
-            parent: folderId
-          });
           break;
       }
 

@@ -57,7 +57,7 @@
             </div>
 
             <div class="form-group">
-              <label>Rewrite rules</label>
+              <label>Markdown Links Rewrite Rules</label>
               <CodeEditor v-model="user_config.rewrite_rules_yaml" lang="yaml" />
             </div>
           </form>

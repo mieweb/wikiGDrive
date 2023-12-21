@@ -348,10 +348,17 @@ export class GoogleDriveService {
     formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
     formData.append('Media', new Blob([buffer], { type: mimeType }), name);
 
-    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
-      uploadType: 'multipart',
-      supportsAllDrives: true
-    }, formData);
+    try {
+      return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+        uploadType: 'multipart',
+        supportsAllDrives: true
+      }, formData);
+    } catch (err) {
+      if (409 === parseInt(err.status)) {
+        this.logger.error(`Conflict on uploading: ${id} ${name}`);
+      }
+      throw err;
+    }
   }
 
   async update(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, fileId: FileId) {
