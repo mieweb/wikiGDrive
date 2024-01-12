@@ -1,6 +1,8 @@
-import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks';
-import {fixCharacters, spaces} from './utils';
 import slugify from 'slugify';
+
+import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
+import {fixCharacters, spaces} from './utils.ts';
+import {RewriteRule} from './applyRewriteRule.ts';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -66,6 +68,7 @@ export class StateMachine {
   public errors: string[] = [];
   private readonly tagsTree: TagLeaf[] = [];
   private listLevel = 0;
+  private rewriteRules: RewriteRule[] = [];
 
   currentMode: OutputMode = 'md';
   headersMap: { [id: string]: string } = {};
@@ -280,7 +283,7 @@ export class StateMachine {
     }
 
     if (tag === '/I') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
         this.markdownChunks.removeChunk(payload.position);
         this.markdownChunks.removeChunk(this.currentLevel.payload.position);
@@ -295,7 +298,7 @@ export class StateMachine {
     }
 
     if (tag === '/P' || tag === '/PRE') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       switch (this.currentMode) {
         case 'raw':
         {
@@ -333,7 +336,7 @@ export class StateMachine {
     }
 
     if (tag === '/CODE') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       switch (this.currentMode) {
         case 'md':
           if (isMarkdownMacro(innerTxt)) {
@@ -511,9 +514,7 @@ export class StateMachine {
     for (let position = this.markdownChunks.length - 1; position >= 0; position--) {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag && chunk.tag === 'P') {
-        const origNum = chunk.payload?.number;
         if (nextPara) {
-          const origNextNum = nextPara.payload?.number;
           if (nextPara.payload?.listLevel && !chunk.payload?.listLevel) {
             chunk.payload.listLevel = nextPara?.payload?.listLevel;
           }
@@ -700,14 +701,14 @@ export class StateMachine {
           }
 
           if (nextParaClosing > 0) {
-            const innerText = this.markdownChunks.extractText(position, nextParaClosing);
+            const innerText = this.markdownChunks.extractText(position, nextParaClosing, this.rewriteRules);
             if (innerText.length === 0) {
               continue;
             }
           }
 
           if (previousParaPosition > 0) {
-            const innerText = this.markdownChunks.extractText(previousParaPosition, position);
+            const innerText = this.markdownChunks.extractText(previousParaPosition, position, this.rewriteRules);
             if (innerText.length === 0) {
               continue;
             }
@@ -735,5 +736,9 @@ export class StateMachine {
 
   pushError(error: string) {
     this.errors.push(error);
+  }
+
+  setRewriteRules(rewriteRules: RewriteRule[]) {
+    this.rewriteRules = rewriteRules;
   }
 }

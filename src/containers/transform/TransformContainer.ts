@@ -240,7 +240,6 @@ export class TransformContainer extends Container {
     const destinationScanner = new DirectoryScanner();
     const destinationFiles = await destinationScanner.scan(destinationDirectory);
     await addBinaryMetaData(destinationFiles, destinationDirectory);
-    await this.removeOutdatedLogEntries(destinationDirectory, destinationFiles);
 
     const localFilesGenerator = new LocalFilesGenerator();
     const filesToGenerate: LocalFile[] = await localFilesGenerator.generateLocalFiles(googleFolderFiles);
@@ -479,6 +478,11 @@ export class TransformContainer extends Container {
             continue;
           }
 
+          const lastLogRedir = this.localLog.findLastFileByPath(dirName ? dirName + '/' + fileName : fileName);
+          if (lastLogRedir?.event === 'removed') {
+            continue;
+          }
+
           const redirFile: RedirFile = {
             type: 'redir',
             fileName,
@@ -528,7 +532,8 @@ export class TransformContainer extends Container {
 
     const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation' || googleFile.name === 'navigation');
     if (navigationFile) {
-      const processor = new OdtProcessor(this.filesService, navigationFile.id);
+      const odtPath = this.filesService.getRealPath() + '/' + navigationFile.id + '.odt';
+      const processor = new OdtProcessor(odtPath);
       await processor.load();
       const content = processor.getContentXml();
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');

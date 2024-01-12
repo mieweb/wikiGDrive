@@ -14,10 +14,10 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install -y libkrb5-dev
 
-      - name: Use Node.js 18.x
+      - name: Use Node.js 20.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
 
       - name: Install node_modules
@@ -35,11 +35,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 20.x
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: npm
+
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:test" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
     - name: Build hugo docs
       run: |
@@ -48,7 +51,7 @@ jobs:
         -v "${GITHUB_WORKSPACE}/website:/website" \
         -v "/var/www/test.wikigdrive.com:/dist/hugo" \
         --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://test.wikigdrive.com" \
-        wgd-action-runner:develop /steps/step_render_hugo
+        wgd-action-runner:test /steps/step_render_hugo
 
     - name: Copy index for vite
       run: mkdir -p dist/hugo && cp -rf /var/www/test.wikigdrive.com/* dist/hugo
@@ -65,4 +68,4 @@ jobs:
       continue-on-error: true
 
     - name: Start
-      run: docker run -t -v wikiGDriveExample:/data -v /home/githubactions/wikigdrive/service_account.json:/service_account.json -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" wikigdrive-test wikigdrive --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data pull 0AIkOKXbzWCtSUk9PVA
+      run: docker run -t -v wikiGDriveExample:/data -v /home/wikigdrive/service_account.json:/service_account.json -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" wikigdrive-test wikigdrive --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data pull 0AIkOKXbzWCtSUk9PVA

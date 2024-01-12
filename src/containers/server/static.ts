@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import express from 'express';
+import type {Application, Request, Response, NextFunction} from 'express';
 import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
 
-export async function handleStaticHtml(app: express.Application, reqPath: string, url: string) {
+export async function handleStaticHtml(app: Application, reqPath: string, url: string) {
   const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
   const generatedHtmlPath = path.resolve(MAIN_DIR, 'dist', 'hugo', 'ui', 'index.html');
   const distPath = path.resolve(HTML_DIR, 'dist');
@@ -47,8 +47,8 @@ export async function handleStaticHtml(app: express.Application, reqPath: string
   return null;
 }
 
-export async function initStaticDistPages(app: express.Application) {
-  app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export async function initStaticDistPages(app: Application) {
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
     const indexHtml = await handleStaticHtml(app, req.path, req.originalUrl);
     if (indexHtml) {
       res.status(200).header('Content-type', 'text/html').end(indexHtml);

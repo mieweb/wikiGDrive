@@ -44,7 +44,7 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrive-$CMD.ts" ]]; then
 fi
 
 if test "$INSPECT" = "--inspect"; then
-  /usr/bin/env node --inspect --no-warnings --experimental-specifier-resolution=node --loader $NODE_MODULES/ts-node/esm $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+  /usr/bin/env node --inspect --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
 else
-  /usr/bin/env node --no-warnings --experimental-specifier-resolution=node --loader $NODE_MODULES/ts-node/esm $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+  /usr/bin/env node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
 fi

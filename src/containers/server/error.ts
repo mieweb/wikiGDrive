@@ -1,11 +1,11 @@
-import express, {NextFunction, Request, Response} from 'express';
+import type {Application, NextFunction, Request, Response} from 'express';
 import winston from 'winston';
 
 import {GoogleDriveServiceError} from '../../google/driveFetch';
 import {AuthError} from './auth';
 import {handleStaticHtml} from './static';
 
-export async function initErrorHandler(app: express.Application, logger: winston.Logger) {
+export async function initErrorHandler(app: Application, logger: winston.Logger) {
   app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
     const code = err.status || 501;
     logger.warn(`http error ${code} for: ${req.originalUrl}`);

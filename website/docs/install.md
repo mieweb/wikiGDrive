@@ -1,5 +1,5 @@
 ---
-title: Installation Guide
+title: Install
 navWeight: 990 # Upper weight gets higher precedence, optional.
 ---
 ## Install from NPM

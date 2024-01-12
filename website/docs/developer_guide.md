@@ -6,7 +6,7 @@ navWeight: -15
 
 See [Node setup on the system](#Node-setup-on-the-system) for prereq.
 
-[Example Google Drive Shared Folder](https://drive.google.com/drive/folders/0AIkOKXbzWCtSUk9PVA)
+[Example Google Drive Shared Folder](https://drive.google.com/open?id=0AIkOKXbzWCtSUk9PVA)
 
 # Node setup on the system
 
@@ -70,10 +70,10 @@ docker rm -f wikigdrive
 ## Authentication
 
 ### Client ID for the Web Application Add-On / Authentication
-Link to production's OAUTH configuration:
-https://console.cloud.google.com/apis/credentials/oauthclient/762352378313-3u5pagjnk24g9640a5j1bmlsvobtlq2k.apps.googleusercontent.com?project=wikigdrive
 
-Stored in /home/githubactions/wikigdrive/env.prod
+Link to production's OAUTH configuration: https://console.cloud.google.com/apis/credentials/oauthclient/762352378313-3u5pagjnk24g9640a5j1bmlsvobtlq2k.apps.googleusercontent.com?project=wikigdrive
+
+Stored in /home/wikigdrive/env.prod
 
 ### This is for the Service Account
 https://console.cloud.google.com/iam-admin/serviceaccounts/details/103184696095283927333?project=wikigdrive
@@ -84,7 +84,7 @@ https://console.cloud.google.com/iam-admin/serviceaccounts/details/1031846960952
 
 This is for configuring Google Apps and their Console to permit the Google Marketplace to the store.
 
-See [app_script](../../apps/app-script)
+See folder `/apps/app-script` in the sources
 
 
 ## Runner
@@ -114,7 +114,7 @@ root@wgd-dev:~# docker exec -it wikigdrive-prod bash
 wikigdrive --service_account /service_account.json  drives
 ```
 
-![Code Diagram](https://docs.google.com/drawings/d/e/2PACX-1vREcniLAig0DiPqSxu5QRqgiGHWL5INKfjMlqSvXK9vTbas3JqorzbuONLeTrNOD0MBPC7QB3Gd_NY7/pub?w=960&amp;h=720) [src](https://docs.google.com/drawings/d/1LSveM3s_Fmi9411FW9Z-NA50fbNHHW2y_PQo3NSUPAI/edit)
+![Code Diagram](https://docs.google.com/drawings/d/e/2PACX-1vREcniLAig0DiPqSxu5QRqgiGHWL5INKfjMlqSvXK9vTbas3JqorzbuONLeTrNOD0MBPC7QB3Gd_NY7/pub?w=960&h=720) [src](https://docs.google.com/drawings/d/1LSveM3s_Fmi9411FW9Z-NA50fbNHHW2y_PQo3NSUPAI/edit)
 
 Cool trick to watch changes as they happen in a document:
 
@@ -137,7 +137,7 @@ docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zip
 Set app env var to:
 
 ```
-ZIPKIN_URL=http://localhost:9411`
+ZIPKIN_URL=http://localhost:9411
 ```
 
 ## Debugging
@@ -148,12 +148,18 @@ ZIPKIN_URL=http://localhost:9411`
 
 Chrome
 
-    Go to `chrome://inspect`
+```
+Go to `chrome://inspect`
+```
 
 Visual Studio Code 1.10+
 
-    In the Debug panel, click the settings icon to open .vscode/launch.json. Select "Node.js" for initial setup.
+```
+In the Debug panel, click the settings icon to open .vscode/launch.json. Select "Node.js" for initial setup.
+```
 
 JetBrains WebStorm and other JetBrains IDEs
 
-    Create a new Node.js debug configuration and hit Debug. --inspect will be used by default for Node.js 7+. To disable uncheck js.debugger.node.use.inspect in the IDE Registry. To learn more about running and debugging Node.js in WebStorm and other JetBrains IDEs, check out WebStorm online help.
+```
+Create a new Node.js debug configuration and hit Debug. --inspect will be used by default for Node.js 7+. To disable uncheck js.debugger.node.use.inspect in the IDE Registry. To learn more about running and debugging Node.js in WebStorm and other JetBrains IDEs, check out WebStorm online help.
+```

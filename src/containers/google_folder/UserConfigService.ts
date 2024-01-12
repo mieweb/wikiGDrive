@@ -2,10 +2,11 @@ import path from 'path';
 import fs from 'fs';
 import {exec} from 'child_process';
 import yaml from 'js-yaml';
-import {FileContentService} from '../../utils/FileContentService';
-import {HugoTheme} from '../server/routes/ConfigController';
-import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter';
-import {DEFAULT_ACTIONS} from '../action/ActionRunnerContainer';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {HugoTheme} from '../server/routes/ConfigController.ts';
+import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter.ts';
+import {DEFAULT_ACTIONS} from '../action/ActionRunnerContainer.ts';
+import {RewriteRule} from '../../odt/applyRewriteRule.js';
 
 async function execAsync(command: string) {
   const err = new Error();
@@ -40,6 +41,7 @@ export class UserConfig {
   auto_sync?: boolean;
   fm_without_version?: boolean;
   actions_yaml?: string;
+  rewrite_rules?: RewriteRule[];
 }
 
 const DEFAULT_CONFIG: UserConfig = {
@@ -51,6 +53,19 @@ const DEFAULT_CONFIG: UserConfig = {
     preview_img: 'https://raw.githubusercontent.com/budparr/gohugo-theme-ananke/master/images/screenshot.png'
   }
 };
+
+const DEFAULT_REWRITE_RULES = [
+  {
+    tag: 'A',
+    match: '$alt',
+    template: '$href'
+  },
+  {
+    match: '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/(?:[^\\/\\n\\s]+\\/\\S+\\/|(?:v|e(?:mbed)?)\\/|\\S*?[?&]v=)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})',
+    replace: '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/(?:[^\\/\\n\\s]+\\/\\S+\\/|(?:v|e(?:mbed)?)\\/|\\S*?[?&]v=)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})',
+    template: '[$label](https://youtube.be/$value)'
+  }
+];
 
 export class UserConfigService {
 
@@ -68,6 +83,9 @@ export class UserConfigService {
     }
     if (!this.config.actions_yaml) {
       this.config.actions_yaml = yaml.dump(DEFAULT_ACTIONS, FRONTMATTER_DUMP_OPTS);
+    }
+    if (!this.config.rewrite_rules || this.config.rewrite_rules.length === 0) {
+      this.config.rewrite_rules = DEFAULT_REWRITE_RULES;
     }
 
     return this.config;

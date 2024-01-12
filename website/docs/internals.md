@@ -11,7 +11,7 @@ navWeight: -15
 
 * folders.json - a listing of each google shared folder
 * One folder for each drive
-    * Second folder with the same name with `_transform` on the end to hold markdown version
+   * Second folder with the same name with `_transform` on the end to hold markdown version
 * quota.json - google throttle for limited rate
 
 ```
@@ -81,12 +81,12 @@ navWeight: -15
 
 ## Note this is going away.  Will be replacing this single database with a multi-file version for scale.
 
-- id - Google's fileId
-- name - Title set inside google docs. It is not unique
-- mimeType - Google's mime type or 'conflict' or 'redirect'
-- modifiedTime - Server-size mtime
-- localPath - real local path, unique with handled conflicts and redirects (in case of title rename)
-- lastAuthor - Google's last author if available
+* id - Google's fileId
+* name - Title set inside google docs. It is not unique
+* mimeType - Google's mime type or 'conflict' or 'redirect'
+* modifiedTime - Server-size mtime
+* localPath - real local path, unique with handled conflicts and redirects (in case of title rename)
+* lastAuthor - Google's last author if available
 
 ```
 {
@@ -128,11 +128,11 @@ navWeight: -15
 
 ### local_files.json is indexed with file id
 
-- desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
-- dirty - file needs to be downloaded
-- conflicting - array of fileIds when mimeType = 'conflict'
-- localPath - path to transformed markdown file
-- modifiedTime - fetched from google server
+* desiredLocalPath - slugified name. It is not unique, wikigdrive handles redirects so it is NOT real path in local system
+* dirty - file needs to be downloaded
+* conflicting - array of fileIds when mimeType = 'conflict'
+* localPath - path to transformed markdown file
+* modifiedTime - fetched from google server
 
 ```
 {
@@ -152,13 +152,13 @@ navWeight: -15
 
 ### Transform stage:
 
-0. Get files to transform (does not exist in local_files.json, have different modifiedTime, are trashed), generate desireLocalPaths based on parents
-1. If file is removed - remove .md file, remove images
-2. If file is new (not exists in local_files.json) - add to localFiles, schedule for generation
-3. If file exists but with different desireLocalPath:
-   3.1. Remove old .md, remove old images
-   3.2. Schedule for generation
-   3.3. Generate redir with old localPath
-4. Remove dangling redirects
-5. Check if there are any conflicts (same desireLocalPath)
-6. Check if any conflicts can be removed
+1. Get files to transform (does not exist in local_files.json, have different modifiedTime, are trashed), generate desireLocalPaths based on parents
+2. If file is removed - remove .md file, remove images
+3. If file is new (not exists in local_files.json) - add to localFiles, schedule for generation
+4. If file exists but with different desireLocalPath:
+  * Remove old .md, remove old images
+  * Schedule for generation
+  * Generate redir with old localPath
+5. Remove dangling redirects
+6. Check if there are any conflicts (same desireLocalPath)
+7. Check if any conflicts can be removed

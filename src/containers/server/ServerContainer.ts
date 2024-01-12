@@ -1,28 +1,31 @@
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, NextFunction} from 'express';
+import type {Express, NextFunction, Request, Response} from 'express';
+import express from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
-import {FileId} from '../../model/model';
-import {saveRunningInstance} from './loadRunningInstance';
-import {urlToFolderId} from '../../utils/idParsers';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer';
 import {fileURLToPath} from 'url';
-import GitController from './routes/GitController';
-import FolderController from './routes/FolderController';
-import {ConfigController} from './routes/ConfigController';
-import {DriveController} from './routes/DriveController';
-import {BackLinksController} from './routes/BackLinksController';
-import {GoogleDriveController} from './routes/GoogleDriveController';
-import {LogsController} from './routes/LogsController';
-import {PreviewController} from './routes/PreviewController';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import compress from 'compression';
 
-import {SocketManager} from './SocketManager';
+import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileId} from '../../model/model.ts';
+import {saveRunningInstance} from './loadRunningInstance.ts';
+import {urlToFolderId} from '../../utils/idParsers.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
+import GitController from './routes/GitController.ts';
+import FolderController from './routes/FolderController.ts';
+import {ConfigController} from './routes/ConfigController.ts';
+import {DriveController} from './routes/DriveController.ts';
+import {BackLinksController} from './routes/BackLinksController.ts';
+import {GoogleDriveController} from './routes/GoogleDriveController.ts';
+import {LogsController} from './routes/LogsController.ts';
+import {PreviewController} from './routes/PreviewController.ts';
+
+import {SocketManager} from './SocketManager.ts';
 
 import {
   authenticate,
@@ -31,19 +34,17 @@ import {
   authenticateOptionally,
   validateGetAuthState,
   handleDriveUiInstall, handleShare, handlePopupClose, redirError
-} from './auth';
-import {filterParams} from '../../google/driveFetch';
-import {SearchController} from './routes/SearchController';
-import opentelemetry from '@opentelemetry/api';
-import {DriveUiController} from './routes/DriveUiController';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {UserAuthClient} from '../../google/AuthClient';
-import {getTokenInfo} from '../../google/GoogleAuthService';
-import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
-import compress from 'compression';
-import {initStaticDistPages} from './static';
-import {initUiServer} from './vuejs';
-import {initErrorHandler} from './error';
+} from './auth.ts';
+import {filterParams} from '../../google/driveFetch.ts';
+import {SearchController} from './routes/SearchController.ts';
+import {DriveUiController} from './routes/DriveUiController.ts';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
+import {UserAuthClient} from '../../google/AuthClient.ts';
+import {getTokenInfo} from '../../google/GoogleAuthService.ts';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
+import {initStaticDistPages} from './static.ts';
+import {initUiServer} from './vuejs.ts';
+import {initErrorHandler} from './error.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,14 @@ interface TreeItem {
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
+
+function getDurationInMilliseconds(start) {
+  const NS_PER_SEC = 1e9;
+  const NS_TO_MS = 1e6;
+  const diff = process.hrtime(start);
+
+  return Math.round((diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS);
+}
 
 export class ServerContainer extends Container {
   private logger: winston.Logger;
@@ -97,20 +106,8 @@ export class ServerContainer extends Container {
       next();
     });
 
-    if (process.env.ZIPKIN_URL) {
-      app.use((req, res, next) => {
-        if (req.header('traceparent')) {
-          next();
-          return;
-        }
-
-        const span = opentelemetry.trace.getActiveSpan();
-        if (span) {
-          const traceId = span.spanContext().traceId;
-          res.header('trace-id', traceId);
-        }
-        next();
-      });
+    if (express['addExpressTelemetry']) {
+      express['addExpressTelemetry'](app);
     }
 
     app.use(rateLimit({
@@ -224,9 +221,13 @@ export class ServerContainer extends Container {
   }
 
   async initRouter(app) {
-    app.use(async (req: express.Request, res: express.Response, next: NextFunction) => {
+    app.use(async (req: Request, res: Response, next: NextFunction) => {
       if (req.path.startsWith('/api/')) {
-        this.logger.info(`${req.method} ${req.path}`);
+        const start = process.hrtime();
+        res.on('finish', () => {
+          const durationInMilliseconds = getDurationInMilliseconds(start);
+          this.logger.info(`${req.method} ${req.originalUrl} ${durationInMilliseconds}ms`);
+        });
       }
       next();
     });

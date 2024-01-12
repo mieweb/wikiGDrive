@@ -4,8 +4,6 @@ import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
 import {TransformContainer} from '../transform/TransformContainer';
 
 import {fileURLToPath} from 'url';
-import {WatchChangesContainer} from '../changes/WatchChangesContainer';
-import {GoogleFile} from '../../model/GoogleFile';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
 import {WorkerPool} from './WorkerPool';

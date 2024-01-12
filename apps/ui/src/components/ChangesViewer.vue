@@ -50,7 +50,6 @@
           Jobs
         </div>
         <div class="card-body">
-
           <div class="row py-1 align-items-center" v-if="last_job.dateStr">
             <div class="col-8">
               <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync </span>
@@ -64,40 +63,26 @@
             </div>
           </div>
 
-          <table class="table table-bordered jobs-list mt-3" v-if="active_jobs.length > 0">
+          <table class="table table-bordered jobs-list mt-3">
             <thead>
-            <th>Job</th>
-            <th>Progress</th>
+              <tr>
+                <th>Job</th>
+                <th>Started</th>
+                <th>Finished</th>
+              </tr>
             </thead>
-            <tbody>
-            <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
+
+            <tbody v-if="active_jobs_reverse.length > 0">
+            <tr v-for="(job, idx) of active_jobs_reverse" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
               <td>{{ job.title }}</td>
+              <td>{{ job.startedStr || job.state }}</td>
               <td>
                 <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
-                <span v-else>{{ job.state }}</span>
+                <a v-if="job.id && job.started" class="btn float-end" :href="'#drive_logs:job-' + job.id" @click.prevent="showLogs(job)">Logs</a>
               </td>
             </tr>
             </tbody>
-          </table>
 
-          <div v-if="active_jobs.length === 0" class="mt-3">
-            No active jobs
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card mt-3" v-if="archive.length > 0">
-        <div class="card-header">
-          Jobs done
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered jobs-list mt-3">
-            <thead>
-            <th>Job</th>
-            <th>Started</th>
-            <th>Finished</th>
-            </thead>
             <tbody>
             <tr v-for="(job, idx) of archive" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state, 'text-danger': 'failed' === job.state, 'text-warning': job.progress && job.progress.warnings > 0 }">
               <td>{{ job.title }}</td>
@@ -111,7 +96,6 @@
             </tbody>
           </table>
         </div>
-
       </div>
 
     </div>
@@ -133,6 +117,18 @@ export default {
   },
   components: {StatusToolBar},
   computed: {
+    active_jobs_reverse() {
+      return [].concat(this.active_jobs)
+        .map(a => {
+          return {
+            ...a,
+            finishedStr: a.finished ? new Date(a.finished).toISOString() : undefined,
+            startedStr: a.started ? new Date(a.started).toISOString() : undefined,
+            durationStr: a.started && a.finished ? Math.round((+new Date(a.finished) - +new Date(a.started)) / 100)/10 + 's' : undefined
+          };
+        })
+        .reverse();
+    },
     fileChanges() {
       return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');
     },

@@ -14,7 +14,8 @@ const __dirname = path.dirname(__filename);
 describe('OdtLoad', () => {
   it('test content.xml transform to object', async () => {
     const fileSystem = new FileContentService(__dirname);
-    const processor = new OdtProcessor(fileSystem, 'example_document');
+    const odtPath = fileSystem.getRealPath() + '/' + 'example_document.odt';
+    const processor = new OdtProcessor(odtPath);
     await processor.load();
 
     const content = processor.getContentXml();
