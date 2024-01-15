@@ -23,7 +23,8 @@
           </div>
         </div>
 
-        <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <JobsViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <ChangesViewer v-if="activeTab === 'changes'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
         <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
 
@@ -114,6 +115,7 @@ import LogsViewer from '../components/LogsViewer.vue';
 import JobLogsViewer from '../components/JobLogsViewer.vue';
 import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
+import JobsViewer from '../components/JobsViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
 import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
@@ -143,6 +145,7 @@ export default {
     JobLogsViewer,
     ZipkinViewer,
     ChangesViewer,
+    JobsViewer,
     UserSettings,
     DangerSettings,
     WorkflowsEditor,
@@ -179,7 +182,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'workflows';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'changes' && this.activeTab !== 'workflows';
     },
     jobs() {
       return this.$root.jobs || [];
