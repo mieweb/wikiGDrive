@@ -42,10 +42,6 @@ export class OdtProcessor {
   async unzipAssets(destinationPath: string, destinationName: string) {
     const assetsDirectory = path.join(destinationPath, destinationName.replace(/.md$/, '.assets'));
 
-    if (!fs.existsSync(assetsDirectory)) {
-      fs.mkdirSync(assetsDirectory, { recursive: true });
-    }
-
     const written = [];
     for (const relativePath in this.files) {
       if (!relativePath.endsWith('.png') && !relativePath.endsWith('.jpg')) {
@@ -69,13 +65,24 @@ export class OdtProcessor {
         this.fileNameMap[fileName] = fileName;
       }
       written.push(this.fileNameMap[fileName]);
+      if (!fs.existsSync(assetsDirectory)) {
+        fs.mkdirSync(assetsDirectory, { recursive: true });
+      }
       fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
     }
 
-    const files = fs.readdirSync(assetsDirectory);
-    for (const file of files) {
-      if (written.indexOf(file) === -1) {
-        fs.unlinkSync(path.join(assetsDirectory, file));
+    if (fs.existsSync(assetsDirectory)) {
+      const files = fs.readdirSync(assetsDirectory);
+      for (const file of files) {
+        if (written.indexOf(file) === -1) {
+          fs.unlinkSync(path.join(assetsDirectory, file));
+        }
+      }
+    }
+
+    if (written.length === 0) {
+      if (fs.existsSync(assetsDirectory)) {
+        fs.rmSync(assetsDirectory, { recursive: true, force: true });
       }
     }
   }

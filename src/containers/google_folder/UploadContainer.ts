@@ -135,10 +135,12 @@ export class UploadContainer extends Container {
               entry.performRewrite = html;
               const buffer = Buffer.from(new TextEncoder().encode(html));
               if (file['isNewId']) {
+                this.logger.info(`Uploading new document: ${file.fileName} to folder: ${entry.parent}`);
                 const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, MimeTypes.HTML, buffer); // generatedIds not supported to gdocs
                 file.id = response.id;
                 delete file['isNewId'];
               } else {
+                this.logger.info(`Updating document: ${file.fileName} to folder: ${entry.parent}`);
                 const response = await this.googleDriveService.update(access_token, entry.parent, file.title, MimeTypes.HTML, buffer, file.id);
                 file.id = response.id;
               }
@@ -148,10 +150,12 @@ export class UploadContainer extends Container {
             if (file.id && file.id !== 'TO_FILL') {
               const content = await dirFileService.readBuffer(entry.path);
               if (file['isNewId']) {
+                this.logger.info(`Uploading new diagram: ${file.fileName} to folder: ${entry.parent}`);
                 const response = await this.googleDriveService.upload(access_token, entry.parent, file.title, file.mimeType, content, file.id);
                 file.id = response.id;
                 delete file['isNewId'];
               } else {
+                this.logger.info(`Updating diagram: ${file.fileName} to folder: ${entry.parent}`);
                 const response = await this.googleDriveService.update(access_token, entry.parent, file.title, file.mimeType, content, file.id);
                 file.id = response.id;
               }
@@ -192,6 +196,14 @@ export class UploadContainer extends Container {
 
     for (const file of Object.values(files)) {
       const fullPath = parentPath + '/' + file.fileName;
+
+      if (!file.title) {
+        this.logger.warn(`Skipping upload: ${fullPath}. No title, check frontmatter.`);
+        continue;
+      }
+
+      this.logger.info(`Scheduled upload: ${fullPath}`);
+
       switch (file.mimeType) {
         case MimeTypes.FOLDER_MIME:
           if (file.id === 'TO_FILL') {
@@ -202,7 +214,7 @@ export class UploadContainer extends Container {
               file.id = map[file.title].id;
             }
           }
-          await this.uploadDir(file.id, await dirFileService.getSubFileService(file.fileName), fullPath);
+          retVal.push(...await this.uploadDir(file.id, await dirFileService.getSubFileService(file.fileName), fullPath));
           break;
         case MimeTypes.MARKDOWN:
           if (map[getDesiredPath(file.title)]) {
@@ -251,6 +263,8 @@ export class UploadContainer extends Container {
     await this.addIds(this.params.folderId, contentFileService, files);
     await this.uploadFiles(this.params.folderId, contentFileService, files);
     await this.updateLinks(this.params.folderId, contentFileService, files);
+
+    this.logger.info('Upload finished');
   }
 
   onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void) {

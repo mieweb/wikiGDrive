@@ -206,8 +206,9 @@ export class TransformContainer extends Container {
   private filterFilesIds: FileId[];
   private userConfigService: UserConfigService;
 
-  private progressNotifyCallback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void;
+  private progressNotifyCallback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void;
   private transformLog: TransformLog;
+  private isFailed = false;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -314,9 +315,12 @@ export class TransformContainer extends Container {
     const contentFileService = await getContentFileService(this.generatedFileService, this.userConfigService);
 
     const queueTransformer = new QueueTransformer(this.logger);
-    queueTransformer.onProgressNotify(({ total, completed, warnings }) => {
+    queueTransformer.onProgressNotify(({ total, completed, warnings, failed }) => {
+      if (failed > 0) {
+        this.isFailed = true;
+      }
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed, warnings });
+        this.progressNotifyCallback({ total, completed, warnings, failed });
       }
     });
 
@@ -419,6 +423,10 @@ export class TransformContainer extends Container {
     await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
   }
 
+  public failed() {
+    return this.isFailed;
+  }
+
   async rewriteLinks(destinationDirectory: FileContentService) {
     const files = await destinationDirectory.list();
     for (const fileName of files) {
@@ -454,9 +462,9 @@ export class TransformContainer extends Container {
 
     const markDownScanner = new DirectoryScanner();
     const transformerQueue = new QueueTransformer(this.logger);
-    transformerQueue.onProgressNotify(({ total, completed, warnings }) => {
+    transformerQueue.onProgressNotify(({ total, completed, warnings, failed }) => {
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed, warnings });
+        this.progressNotifyCallback({ total, completed, warnings, failed });
       }
     });
 
@@ -547,7 +555,7 @@ export class TransformContainer extends Container {
     return {};
   }
 
-  onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number, warnings?: number }) => void) {
+  onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
     this.progressNotifyCallback = callback;
   }
 
