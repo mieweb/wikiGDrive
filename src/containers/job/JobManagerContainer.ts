@@ -151,9 +151,13 @@ export class JobManagerContainer extends Container {
     await driveFileSystem.writeJson('.jobs.json', driveJobs);
   }
 
-  async scheduleWorker(type: string, payload: any): Promise<any> {
-    return this.workerPool.schedule(type, payload)
-      .catch(err => this.engine.logger.error('Worker error', err));
+  async scheduleWorker(type: string, payload: unknown): Promise<unknown> {
+    try {
+      return await this.workerPool.schedule(type, payload);
+    } catch(err) {
+      this.engine.logger.error('Worker error ' + err);
+      throw err;
+    }
   }
 
   async schedule(driveId: FileId, job: Job) {
@@ -447,7 +451,7 @@ export class JobManagerContainer extends Container {
 
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
-    transformContainer.onProgressNotify(({ completed, total, warnings }) => {
+    transformContainer.onProgressNotify(({ completed, total, warnings, failed }) => {
       if (!this.driveJobsMap[folderId]) {
         return;
       }
@@ -457,6 +461,7 @@ export class JobManagerContainer extends Container {
         job.progress = {
           completed: completed,
           total: total,
+          failed: failed,
           warnings
         };
         this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
@@ -465,6 +470,9 @@ export class JobManagerContainer extends Container {
     await this.engine.registerContainer(transformContainer);
     try {
       await transformContainer.run(folderId);
+      if (transformContainer.failed()) {
+        throw new Error('Transform failed');
+      }
 
       const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
       const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);

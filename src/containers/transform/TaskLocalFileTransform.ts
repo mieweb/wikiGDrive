@@ -52,6 +52,7 @@ export class TaskLocalFileTransform extends QueueTask {
               private userConfig: UserConfig
               ) {
     super(logger);
+    this.retries = 0;
 
     if (!this.localFile.fileName) {
       throw new Error(`No fileName for: ${this.localFile.id}`);
@@ -237,6 +238,7 @@ export class TaskLocalFileTransform extends QueueTask {
       this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
     } catch (err) {
       this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.stack ? err.stack : err.message);
+      throw err;
     }
   }
 
