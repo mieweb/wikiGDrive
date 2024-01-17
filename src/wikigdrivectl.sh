@@ -46,7 +46,7 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts" ]]; then
 fi
 
 if test "$INSPECT" = "--inspect"; then
-  /usr/bin/env node --inspect --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
+  /usr/bin/env node --inspect --no-warnings --enable-source-maps --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
 else
-  /usr/bin/env node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
+  /usr/bin/env node --no-warnings --enable-source-maps --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
 fi
