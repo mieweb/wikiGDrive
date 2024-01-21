@@ -64,6 +64,7 @@ export class OdtToMarkdown {
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
   private picturesDir = '';
   private rewriteRules: RewriteRule[] = [];
+  private counters: { [key: string]: number } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
     this.stateMachine = new StateMachine(this.chunks);
@@ -638,9 +639,9 @@ export class OdtToMarkdown {
 
     const continueNumbering = list.continueNumbering === 'true';
 
-    this.stateMachine.pushTag('UL', { counterId: list.id, listStyle, continueNumbering });
+    this.stateMachine.pushTag('UL', { listId: list.id, continueList: list.continueList, listStyle, continueNumbering });
     for (const listItem of list.list) {
-      this.stateMachine.pushTag('LI', { counterId: list.id, listStyle });
+      this.stateMachine.pushTag('LI', { listId: list.id });
       for (const item of listItem.list) {
         if (item.type === 'paragraph') {
           await this.paragraphToText(<TextParagraph>item);
@@ -651,7 +652,7 @@ export class OdtToMarkdown {
       }
       this.stateMachine.pushTag('/LI');
     }
-    this.stateMachine.pushTag('/UL', { counterId: list.id, listStyle });
+    this.stateMachine.pushTag('/UL', { listId: list.id, listStyle });
   }
 
   async officeTextToText(content: OfficeText): Promise<void> {

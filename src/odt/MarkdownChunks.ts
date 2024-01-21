@@ -21,7 +21,8 @@ export interface TagPayload {
   lang?: string;
   position?: number;
   id?: string;
-  counterId?: string;
+  listId?: string;
+  continueList?: string;
   href?: string;
   alt?: string;
   marginLeft?: number;
