@@ -140,7 +140,7 @@ export class StateMachine {
       this.listLevel++;
       payload.listLevel = this.listLevel;
 
-      if (payload.continueNumbering) {
+      if (payload.continueNumbering || payload.continueList) {
         this.preserveMinLevel = this.listLevel;
       }
 
@@ -152,7 +152,7 @@ export class StateMachine {
       if (this.currentLevel?.tag === 'UL') {
         payload.listLevel = this.currentLevel.payload.listLevel;
         const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
-        payload.number = this.fetchListNo(listStyleName);
+        payload.number = payload.number || this.fetchListNo(listStyleName);
         payload.number++;
         this.storeListNo(listStyleName, payload.number);
       }

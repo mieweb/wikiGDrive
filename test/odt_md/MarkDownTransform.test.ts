@@ -16,6 +16,12 @@ const __dirname = path.dirname(__filename);
 
 describe('MarkDownTransformTest', () => {
 
+  it('test ./nested-ordered-list.md.markdown', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/nested-ordered-list.md').toString();
+    const markdown = await transformOdt('nested-ordered-list');
+    assert.ok(compareTexts(testMarkdown, markdown));
+  });
+
   it('test ./raw-html.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/raw-html.md').toString();
     const markdown = await transformOdt('raw-html');
