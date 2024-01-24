@@ -47,6 +47,7 @@ export interface MarkdownTextChunk {
   isTag: false;
   mode: OutputMode;
   text: string;
+  comment?: string;
 }
 
 export interface MarkdownTagChunk {
@@ -54,6 +55,7 @@ export interface MarkdownTagChunk {
   mode: OutputMode;
   tag?: TAG;
   payload: TagPayload;
+  comment?: string;
 }
 
 type MarkdownChunk = MarkdownTextChunk | MarkdownTagChunk;
@@ -402,7 +404,10 @@ export class MarkdownChunks {
 
   toString(rules: RewriteRule[] = []) {
     // console.log(this.chunks.map(c => debugChunkToText(c)).join('\n'));
-    return chunksToText(this.chunks, rules).join('');
+    return chunksToText(this.chunks, rules).join('')
+      .split('\n')
+      .map(line => line.trim().length > 0 ? line : '')
+      .join('\n');
   }
 
   extractText(start: number, end: number, rules: RewriteRule[] = []) {
@@ -455,6 +460,10 @@ export class MarkdownChunks {
         line += chunk.text
           .replace(/\n/g, '\\n')
           .replace(/\t/g, '[TAB]');
+      }
+
+      if (chunk.comment) {
+        line += ' // ' + chunk.comment;
       }
 
       logger.log(line);

@@ -68,7 +68,7 @@ describe('MarkDownTransformTest', () => {
   it('test ./example-document.md.markdown', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
     const markdown = await transformOdt('example-document');
-    assert.ok(compareTexts(testMarkdown, markdown));
+    assert.ok(compareTexts(testMarkdown, markdown, false));
   });
 
   it('test ./intro-to-the-system.md.markdown', async () => {
@@ -110,7 +110,7 @@ describe('MarkDownTransformTest', () => {
   it('test ./pre-mie', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/pre-mie.md').toString();
     const markdown = await transformOdt('pre-mie');
-    assert.ok(compareTexts(testMarkdown, markdown));
+    assert.ok(compareTexts(testMarkdown, markdown, false));
   });
 
   it('test ./td-bullets', async () => {

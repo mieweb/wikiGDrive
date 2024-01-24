@@ -1,7 +1,7 @@
 import slugify from 'slugify';
 
 import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
-import {fixCharacters, spaces} from './utils.ts';
+import {fixCharacters, inchesToSpaces, spaces} from './utils.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
 
 interface TagLeaf {
@@ -177,7 +177,8 @@ export class StateMachine {
       isTag: true,
       mode: this.currentMode,
       tag: tag,
-      payload
+      payload,
+      comment: 'pushTag'
     });
 
     // POST-PUSH-BEFORE-TREEPOP
@@ -252,7 +253,8 @@ export class StateMachine {
           isTag: true,
           mode: this.currentMode,
           tag: 'BR/',
-          payload: {}
+          payload: {},
+          comment: 'Merging PRE tags'
         };
       }
     }
@@ -373,7 +375,8 @@ export class StateMachine {
     this.markdownChunks.push({
       isTag: false,
       mode: this.currentMode,
-      text: txt
+      text: txt,
+      comment: 'pushText'
     });
   }
 
@@ -559,7 +562,8 @@ export class StateMachine {
             isTag: true,
             mode: 'md',
             tag: 'BR/',
-            payload: {}
+            payload: {},
+            comment: 'Next tag is not BR/'
           });
         }
       }
@@ -568,10 +572,11 @@ export class StateMachine {
         const prevTag = this.markdownChunks.chunks[position - 1];
         if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
           this.markdownChunks.chunks.splice(position - 1, 0, {
-            isTag: true,
+            isTag: false,
             mode: 'md',
-            tag: 'BR/',
-            payload: {}
+            text: '\n',
+            // payload: {},
+            comment: 'Add empty line before: ' + chunk.tag
           });
           position++;
         }
@@ -583,7 +588,10 @@ export class StateMachine {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
         const level = (chunk.payload.listLevel || 1) - 1;
-        const indent = spaces(level * 3);
+        let indent = spaces(level * 3);
+        if (chunk.payload.style?.paragraphProperties?.marginLeft) {
+          indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
+        }
         const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
         const firstStr = indent + listStr;
         const otherStr = indent + spaces(listStr.length);
@@ -717,14 +725,37 @@ export class StateMachine {
             }
           }
 
-          this.markdownChunks.chunks.splice(position, 2, {
-            isTag: true,
-            tag: 'BR/',
-            mode: 'md',
-            payload: {}
-          });
-          position--;
-          previousParaPosition = 0;
+          const findFirstTextAfterPos = (start: number): string | null => {
+            for (let pos = start + 1; pos < this.markdownChunks.chunks.length; pos++) {
+              if ('text' in this.markdownChunks.chunks[pos]) {
+                return this.markdownChunks.chunks[pos].text;
+              }
+            }
+            return null;
+          };
+
+          const nextText = findFirstTextAfterPos(nextParaClosing);
+          if (nextText === '* ' || nextText?.trim().length === 0) {
+            this.markdownChunks.chunks.splice(position, 2, {
+              isTag: false,
+              text: '\n',
+              mode: 'md',
+              comment: 'End of line, but next line is list'
+            });
+            position--;
+            previousParaPosition = 0;
+          } else {
+            this.markdownChunks.chunks.splice(position, 2, {
+              isTag: true,
+              tag: 'BR/',
+              mode: 'md',
+              payload: {},
+              comment: 'End of line, two paras merge together'
+            });
+            position--;
+            previousParaPosition = 0;
+          }
+
         }
       }
     }

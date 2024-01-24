@@ -24,18 +24,18 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
 
 
 <table>
-  <tr>
-    <td>Heading 1</td>
-    <td>Heading 2</td>
-    <td>Heading 3</td>
-    <td>Heading 4</td>
-    <td>Heading 5</td>
-  </tr>
-  <tr>
-    <td>Cell 1</td>
-    <td>Cell 2</td>
-    <td>Cell 3</td>
-    <td>Cell 4
+<tr>
+<td>Heading 1</td>
+<td>Heading 2</td>
+<td>Heading 3</td>
+<td>Heading 4</td>
+<td>Heading 5</td>
+</tr>
+<tr>
+<td>Cell 1</td>
+<td>Cell 2</td>
+<td>Cell 3</td>
+<td>Cell 4
 <table>
 <tr>
 <td>C1</td>
@@ -47,14 +47,14 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
 </tr>
 </table>
 After subtable</td>
-    <td>Cell 5</td>
-  </tr>
+<td>Cell 5</td>
+</tr>
 </table>
 
 
 ### Heading 3 - a diagram with links
 
-[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
+[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8) 
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
 
 ### Heading 3 - with a Table of contents
@@ -87,7 +87,7 @@ After subtable</td>
 ```
 This is monospaced text. This should line up  |
                                     with this |
-  
+
 ```
 
 
@@ -166,12 +166,12 @@ This is after the horizontal line.
 
 * Bullet 1
 * Bullet 2
-  * SubBullet 1
-  * SubBullet 2
+    * SubBullet 1
+    * SubBullet 2
 * Bullet 3
-  1. SubNumeric 1
-  2. SubNumeric 2
-  3. SubNumeric 3
+    1. SubNumeric 1
+    2. SubNumeric 2
+    3. SubNumeric 3
 1. Alpha 1
 2. Alpha 2
 3. Alpha 3
@@ -195,7 +195,7 @@ Some **bold** **_boldanditalic_*** italic*  text
 
 ## Footnotes
 
- 1Footnotes should display as a footnote, and should always display at the very end of the document (page)**?** This is some sample text with a footnote.
+1Footnotes should display as a footnote, and should always display at the very end of the document (page)**?** This is some sample text with a footnote.
 
 
 
