@@ -102,7 +102,8 @@ export class ServerContainer extends Container {
 
     app.use((req, res, next) => {
       res.header('GIT_SHA', process.env.GIT_SHA);
-      res.header('x-frame-options', 'ALLOW-FROM https://docs.google.com/');
+      // res.header('x-frame-options', 'ALLOW-FROM https://docs.google.com/');
+      res.header('Content-Security-Policy', 'frame-ancestors \'self\' https://*.googleusercontent.com https://docs.google.com;');
       next();
     });
 
