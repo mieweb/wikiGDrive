@@ -41,7 +41,7 @@ async function main() {
   process.env.PWD = process.cwd();
 
   const filesIds = args.slice(1);
-  const workdir = argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data';
+  const workdir = argv['workdir'] || process.env.VOLUME_DATA || '/data';
 
   const {mainFileService, containerEngine, logger} = await initEngine(workdir);
 
