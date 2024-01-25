@@ -16,36 +16,38 @@ export class LocalLog {
   }
 
   async load() {
+    this.rows = [];
     if (!await this.transformFileService.exists(LOG_NAME)) {
-      this.rows = [];
       return;
     }
     const content = await this.transformFileService.readFile(LOG_NAME) || '';
     const rows = content.split('\n').map(row => row.trim()).filter(row => !!row);
     rows.shift();
-    this.rows = rows.map(row => {
+    for (const row of rows) {
       const cells = row.split(';');
 
-      return {
+      this.append({
         filePath: cells[0],
         mtime: parseInt(cells[1]),
         id: cells[2],
         type: cells[3],
         event: cells[4]
-      };
-    });
+      });
+    }
   }
 
   append(row: LogRow) {
     if (row.id === 'TO_FILL') {
       return;
     }
-    if (row.type === 'touched') {
+    if (row.event === 'touched') {
       if (this.findLastFile(row.id)) {
         return;
       }
     }
-    row.mtime = +new Date();
+    if (!row.mtime) {
+      row.mtime = +new Date();
+    }
     this.rows.push(row);
   }
 
