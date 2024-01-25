@@ -29,7 +29,7 @@ async function main() {
   // PWD is null on Windows, so we can set it here
   process.env.PWD = process.cwd();
 
-  const workdir = argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data';
+  const workdir = argv['workdir'] || process.env.VOLUME_DATA || '/data';
 
   const mainFileService = new FileContentService(workdir);
   await mainFileService.mkdir('/');

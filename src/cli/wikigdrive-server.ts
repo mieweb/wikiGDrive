@@ -61,7 +61,7 @@ export class MainService {
   }
 
   async init() {
-    this.mainFileService = new FileContentService(this.params.workdir || process.cwd());
+    this.mainFileService = new FileContentService(this.params.workdir || '/data');
     await this.mainFileService.mkdir('/');
 
     this.authConfig = await getAuthConfig(this.params, this.mainFileService);
@@ -154,7 +154,7 @@ async function main() {
   const params: CliParams = {
     args: argv._.slice(1),
     // drive: argv['drive'],
-    workdir: argv['workdir'] || process.env.WIKIGDRIVE_WORKDIR || '/data',
+    workdir: argv['workdir'] || process.env.VOLUME_DATA || '/data',
 
     client_id: argv['client_id'] || process.env.CLIENT_ID,
     client_secret: argv['client_secret'] || process.env.CLIENT_SECRET,
