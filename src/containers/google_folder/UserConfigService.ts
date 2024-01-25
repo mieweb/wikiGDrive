@@ -56,11 +56,13 @@ const DEFAULT_CONFIG: UserConfig = {
 
 const DEFAULT_REWRITE_RULES = [
   {
+    mode: 'MD',
     tag: 'A',
     match: '$alt',
-    template: '$href'
+    template: '$href',
   },
   {
+    mode: 'MD',
     match: '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/(?:[^\\/\\n\\s]+\\/\\S+\\/|(?:v|e(?:mbed)?)\\/|\\S*?[?&]v=)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})',
     replace: '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/(?:[^\\/\\n\\s]+\\/\\S+\\/|(?:v|e(?:mbed)?)\\/|\\S*?[?&]v=)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})',
     template: '[$label](https://youtube.be/$value)'
