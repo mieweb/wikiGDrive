@@ -21,7 +21,7 @@ import {UploadContainer} from '../google_folder/UploadContainer';
 
 const __filename = fileURLToPath(import.meta.url);
 
-export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action' | 'upload';
+export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_fetch' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action' | 'upload';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export function initJob(): { id: string, state: JobState } {
@@ -199,6 +199,12 @@ export class JobManagerContainer extends Container {
           type: 'transform:scheduled',
           payload: job.payload ? job.payload : 'all'
         });
+        driveJobs.jobs.push(job);
+        break;
+      case 'git_fetch':
+        if (driveJobs.jobs.find(subJob => subJob.type === 'git_fetch' && notCompletedJob(subJob))) {
+          return;
+        }
         driveJobs.jobs.push(job);
         break;
       case 'git_pull':
@@ -588,6 +594,36 @@ export class JobManagerContainer extends Container {
     }
   }
 
+  private async gitFetch(driveId: FileId, jobId: string) {
+    const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
+    try {
+      const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
+      const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      await gitScanner.initialize();
+
+      const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+      const userConfigService = new UserConfigService(googleFileSystem);
+
+      await gitScanner.fetch({
+        privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+      });
+
+      await this.schedule(driveId, {
+        ...initJob(),
+        type: 'run_action',
+        title: 'Run action: on git_fetch',
+        trigger: 'git_fetch'
+      });
+
+      return {};
+    } catch (err) {
+      logger.error(err.stack ? err.stack : err.message);
+      if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        return { error: 'Failed to authenticate' };
+      }
+      throw err;
+    }
+  }
   private async gitPull(driveId: FileId, jobId: string) {
     const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
     try {
@@ -829,6 +865,31 @@ export class JobManagerContainer extends Container {
           throw err;
         } finally {
           driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('run_action'));
+        }
+        break;
+      case 'git_fetch':
+        try {
+          await this.gitFetch(driveId, currentJob.id);
+          await this.clearGitCache(driveId);
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_fetch'));
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Git fetch done',
+            type: 'git_fetch:done',
+            links: {
+              '#git_log': 'View git history'
+            },
+          });
+        } catch (err) {
+          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_fetch'));
+          this.engine.emit(driveId, 'toasts:added', {
+            title: 'Git fetch failed',
+            type: 'git_fetch:failed',
+            err: err.message,
+            links: {
+              ['#drive_logs:job-' + currentJob.id]: 'View logs'
+            },
+          });
+          throw err;
         }
         break;
       case 'git_pull':
