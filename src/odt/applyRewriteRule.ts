@@ -5,6 +5,7 @@ export interface RewriteRule {
   match: string;
   replace?: string;
   template: string;
+  mode?: string;
 }
 
 export interface Chunk {
@@ -20,7 +21,11 @@ export function applyRewriteRule(rule: RewriteRule, chunk: Chunk) {
   const alt = chunk.alt || '';
   const chunkTag = chunk.tag || '';
 
-  if (rule.tag && chunkTag.replaceAll('/', '') !== rule.tag.replaceAll('/', '')) {
+  if (rule.tag && chunkTag.replaceAll('/', '').toLowerCase() !== rule.tag.replaceAll('/', '').toLowerCase()) {
+    return { shouldBreak: false };
+  }
+
+  if (rule.mode && rule.mode.toLowerCase() !== chunk.mode.toLowerCase()) {
     return { shouldBreak: false };
   }
 
