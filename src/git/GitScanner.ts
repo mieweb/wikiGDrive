@@ -214,6 +214,14 @@ export class GitScanner {
     });
   }
 
+  async fetch(sshParams?: SshParams) {
+    await this.exec(`git fetch`, {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+      }
+    });
+  }
+
   async pushToDir(dir: string, localBranch = 'master') {
     await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
   }

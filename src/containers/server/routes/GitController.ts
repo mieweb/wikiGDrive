@@ -93,6 +93,16 @@ export default class GitController extends Controller {
     return output;
   }
 
+  @RoutePost('/:driveId/fetch')
+  async fetch(@RouteParamPath('driveId') driveId: string) {
+    await this.jobManagerContainer.schedule(driveId, {
+      ...initJob(),
+      type: 'git_fetch',
+      title: 'Git Fetch'
+    });
+    return { driveId };
+  }
+
   @RoutePost('/:driveId/pull')
   async pull(@RouteParamPath('driveId') driveId: string) {
     await this.jobManagerContainer.schedule(driveId, {
