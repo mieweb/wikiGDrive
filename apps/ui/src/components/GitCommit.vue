@@ -43,7 +43,7 @@
 
         <GitFooter v-if="isSomethingChecked" :checked="checked">
           <div class="input-groups">
-            <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
+            <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
           </div>
           <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
           <button type="button" class="btn btn-primary" @click="submitCommitBranch">Commit into Branch</button>
@@ -97,7 +97,7 @@ export default {
       user_config: {},
       checked: {},
       gitChanges: null,
-      message: '',
+      commitMsg: '',
       diffs: [],
       selectedPath: '',
       isSomethingChecked: false
@@ -131,6 +131,12 @@ export default {
           Prism.highlightElement(elem);
         }
       });
+    },
+    checked: {
+      deep: true,
+      handler() {
+        this.generateCommitMsg();
+      }
     }
   },
   async created() {
@@ -158,6 +164,10 @@ export default {
 
       if (path) {
         this.diffs = await this.GitClientService.getDiff(this.driveId, path);
+
+        this.checked = {
+          [path.substring(1)]: true
+        };
       }
     },
     async fetch() {
@@ -193,7 +203,7 @@ export default {
       window.open(url, '_blank');
     },
     async submitCommitBranch(event) {
-      if (!this.message) {
+      if (!this.commitMsg) {
         alert('No commit message');
         return;
       }
@@ -218,15 +228,15 @@ export default {
 
         await this.commitBranch({
           branch,
-          message: this.message,
+          message: this.commitMsg,
           filePath: filePath,
           removeFilePath: []
         });
-        this.message = '';
+        this.commitMsg = '';
       });
     },
     async submitCommit(event) {
-      if (!this.message) {
+      if (!this.commitMsg) {
         alert('No commit message');
         return;
       }
@@ -252,11 +262,11 @@ export default {
 
         try {
           await this.commit({
-            message: this.message,
+            message: this.commitMsg,
             filePath: filePath,
             removeFilePath: removeFilePath
           });
-          this.message = '';
+          this.commitMsg = '';
         } catch (err) {
           if (err.message === 'cannot push non-fastforwardable reference') {
             if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
@@ -320,6 +330,31 @@ export default {
           this.checked[item.path] = true;
         }
         this.isSomethingChecked = true;
+      }
+    },
+    async generateCommitMsg() {
+      if (Object.keys(this.checked).length > 1) {
+        this.commitMsg = '';
+      }
+      if (Object.keys(this.checked).length === 1) {
+        const path = Object.keys(this.checked)[0];
+        try {
+          const response = await this.authenticatedClient.fetchApi(`/api/file/${this.driveId}/${path}`);
+
+          const body = await response.text();
+          const lines = body.split('\n');
+
+          const titleLine = lines.find(line => line.startsWith('title: '));
+          const title = titleLine ? titleLine.substring('title: '.length).replace(/^'(.+)'$/, '$1') : '';
+
+          const lastAuthor = response.headers.get('wgd-last-author');
+
+          if (lastAuthor && title) {
+            this.commitMsg = `${lastAuthor} updated ${title}`;
+          }
+        } catch (err) {
+          console.warn(err);
+        }
       }
     }
   }

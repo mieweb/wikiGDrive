@@ -277,6 +277,7 @@ export default class FolderController extends Controller {
         this.res.setHeader('wgd-file-name', treeItem.fileName || '');
         this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
         this.res.setHeader('wgd-preview-url', previewUrl);
+        this.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
 
         if (await transformedFileSystem.isDirectory(filePath)) {
           const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);

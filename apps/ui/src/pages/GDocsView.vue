@@ -361,6 +361,9 @@ export default {
         try {
           const response = await this.authenticatedClient.fetchApi(`/api/gdrive/${this.driveId}/${fileId}`);
 
+          const body = await response.text();
+          const lines = body.split('\n');
+
           const path = response.headers.get('wgd-path') || '';
           const fileName = response.headers.get('wgd-file-name') || '';
 
@@ -392,8 +395,18 @@ export default {
             }
           }
 
+          if (!this.commitMsg) {
+            const titleLine = lines.find(line => line.startsWith('title: '));
+            const title = titleLine ? titleLine.substring('title: '.length).replace(/^'(.+)'$/, '$1') : '';
+
+            if (this.selectedFile.lastAuthor && title) {
+              this.commitMsg = `${this.selectedFile.lastAuthor} updated ${title}`;
+            }
+          }
+
           this.notRegistered = false;
         } catch (err) {
+          this.commitMsg = '';
           if (err.code === 404) {
             this.shareEmail = err.share_email;
             this.notRegistered = true;
