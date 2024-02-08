@@ -1,4 +1,4 @@
-import {FileContentService} from '../../utils/FileContentService';
+import {FileContentService} from '../../utils/FileContentService.ts';
 
 interface Link {
   fileId: string;
@@ -58,6 +58,19 @@ export class LocalLinks {
       }
     }
     return Array.from(retVal);
+  }
+
+  getLinks(fileId) {
+    for (const link of this.links) {
+      if (link.fileId === fileId) {
+        const links = link.links
+          .filter(link => link.startsWith('gdoc:'))
+          .map(link => link.substring('gdoc:'.length));
+
+        return links;
+      }
+    }
+    return [];
   }
 
   async save() {
