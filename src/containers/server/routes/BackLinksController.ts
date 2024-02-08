@@ -1,9 +1,9 @@
-import {Controller, RouteGet, RouteParamPath} from './Controller';
-import {FileContentService} from '../../../utils/FileContentService';
-import {LocalLinks} from '../../transform/LocalLinks';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
-import {getContentFileService} from '../../transform/utils';
+import {Controller, RouteGet, RouteParamPath} from './Controller.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {LocalLinks} from '../../transform/LocalLinks.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
+import {getContentFileService} from '../../transform/utils.ts';
 
 export class BackLinksController extends Controller {
 
@@ -25,10 +25,23 @@ export class BackLinksController extends Controller {
     const localLinks = new LocalLinks(contentFileService);
     await localLinks.load();
 
+    const linkFileIds = localLinks.getLinks(fileId);
+    const links = [];
+    for (const linkFileId of linkFileIds) {
+      const [file] = await markdownTreeProcessor.findById(linkFileId);
+      if (file) {
+        links.push({
+          folderId: file.parentId,
+          fileId: linkFileId,
+          path: file.path,
+          name: file.fileName
+        });
+      }
+    }
+
     const backLinkFileIds = localLinks.getBackLinks(fileId);
     const backlinks = [];
     for (const backLinkFileId of backLinkFileIds) {
-
       const [file] = await markdownTreeProcessor.findById(backLinkFileId);
       if (file) {
         backlinks.push({
@@ -40,7 +53,7 @@ export class BackLinksController extends Controller {
       }
     }
 
-    return backlinks;
+    return { backlinks, links };
   }
 
 }
