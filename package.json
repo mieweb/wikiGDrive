@@ -1,8 +1,8 @@
 {
   "name": "@mieweb/wikigdrive",
   "version": "2.0.0-alpha",
-  "type": "module",
   "description": "Google Drive to MarkDown synchronization",
+  "type": "module",
   "keywords": [
     "GDrive",
     "CLI",
@@ -29,9 +29,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mieweb/wikiGDrive.git"
-  },
-  "publishConfig": {
-    "@mieweb:registry": "https://npm.pkg.github.com"
   },
   "author": {
     "name": "Medical Informatics Engineering",
