@@ -3,8 +3,8 @@ import path from 'path';
 import {exec, spawn} from 'child_process';
 
 import {Logger} from 'winston';
-import {UserConfig} from '../containers/google_folder/UserConfigService';
-import {TelemetryMethod} from '../telemetry';
+import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
+import {TelemetryMethod} from '../telemetry.ts';
 
 export interface GitChange {
   path: string;
@@ -215,14 +215,14 @@ export class GitScanner {
   }
 
   async fetch(sshParams?: SshParams) {
-    await this.exec(`git fetch`, {
+    await this.exec('git fetch', {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
     });
   }
 
-  async pushToDir(dir: string, localBranch = 'master') {
+  async pushToDir(dir: string) {
     await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
   }
 
@@ -290,6 +290,7 @@ export class GitScanner {
   }
 
   async resetToLocal(sshParams?: SshParams) {
+    await this.exec('git checkout master --force', {});
     await this.exec('git reset --hard HEAD', {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
@@ -634,7 +635,7 @@ export class GitScanner {
       const childProcess = spawn('git',
         ['diff', '--minimal', '--ignore-space-change'],
         { cwd: this.rootPath, env: {} });
-      const promise = new Promise((resolve, reject) => {
+      const promise = new Promise((resolve) => {
         childProcess.on('close', resolve);
       });
 
