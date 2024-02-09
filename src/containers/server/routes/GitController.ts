@@ -1,14 +1,14 @@
-import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, RoutePost, RouteUse} from './Controller';
-import {GitScanner} from '../../../git/GitScanner';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {FileContentService} from '../../../utils/FileContentService';
-import {initJob, JobManagerContainer} from '../../job/JobManagerContainer';
-import {ContainerEngine} from '../../../ContainerEngine';
+import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, RoutePost, RouteUse} from './Controller.ts';
+import {GitScanner} from '../../../git/GitScanner.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {initJob, JobManagerContainer} from '../../job/JobManagerContainer.ts';
+import {ContainerEngine} from '../../../ContainerEngine.ts';
 
 interface CommitPost {
   message: string;
-  filePath: string[];
-  removeFilePath: string[];
+  filePaths: string[];
+  removeFilePaths: string[];
 }
 
 interface CmdPost {
@@ -65,12 +65,12 @@ export default class GitController extends Controller {
   @RoutePost('/:driveId/commit')
   async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
     const message = body.message;
-    const filePaths: string[] = Array.isArray(body.filePath)
-      ? body.filePath
-      : (body.filePath ? [body.filePath] : []);
-    const removeFilePaths: string[] = Array.isArray(body.removeFilePath)
-      ? body.removeFilePath
-      : (body.removeFilePath ? [body.removeFilePath] : []);
+    const filePaths: string[] = Array.isArray(body.filePaths)
+      ? body.filePaths
+      : (body.filePaths ? [body.filePaths] : []);
+    const removeFilePaths: string[] = Array.isArray(body.removeFilePaths)
+      ? body.removeFilePaths
+      : (body.removeFilePaths ? [body.removeFilePaths] : []);
 
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
@@ -84,7 +84,7 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/cmd')
-  async postCmd(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CmdPost, @RouteParamUser() user) {
+  async postCmd(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CmdPost) {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();

@@ -2,15 +2,21 @@
 
 cd /repo
 
+git reset --keep
 git stash clear
-git stash push
 
-git stash apply stash@{0}
+COMMIT=$(git rev-parse HEAD)
 
-git branch -D wgd/$BRANCH
+git update-index --really-refresh
+git stash push --keep-index
+git stash list
+git stash apply stash@{0} || exit 1
+
+git branch -D wgd/$BRANCH || true
 git checkout -b wgd/$BRANCH
-git commit -m "$MESSAGE" $FILES
-git checkout master
+git add $FILES
+git commit -m "$MESSAGE"
 
-git reset --hard
+git checkout master --force
+git reset --soft $COMMIT
 git stash apply stash@{0}

@@ -198,6 +198,8 @@ export default {
           el.scrollIntoView();
         }
       });
+
+      this.isSomethingChecked = Object.keys(this.checked).length > 0;
     },
     open(url) {
       window.open(url, '_blank');
@@ -215,22 +217,26 @@ export default {
       }
 
       const branch = window.prompt('Enter branch name');
+      if (!branch) {
+        alert('No branch name');
+        return;
+      }
 
       await disableElement(event, async () => {
-        const filePath = [];
+        const filePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
           const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (!change?.state?.isDeleted) {
-            filePath.push(checkedFileName);
+            filePaths.push(checkedFileName);
           }
         }
 
         await this.commitBranch({
           branch,
           message: this.commitMsg,
-          filePath: filePath,
-          removeFilePath: []
+          filePaths: filePaths,
+          removeFilePaths: []
         });
         this.commitMsg = '';
       });
@@ -248,23 +254,23 @@ export default {
       }
 
       await disableElement(event, async () => {
-        const filePath = [];
-        const removeFilePath = [];
+        const filePaths = [];
+        const removeFilePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
           const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (change?.state?.isDeleted) {
-            removeFilePath.push(checkedFileName);
+            removeFilePaths.push(checkedFileName);
           } else {
-            filePath.push(checkedFileName);
+            filePaths.push(checkedFileName);
           }
         }
 
         try {
           await this.commit({
             message: this.commitMsg,
-            filePath: filePath,
-            removeFilePath: removeFilePath
+            filePaths: filePaths,
+            removeFilePath: removeFilePaths
           });
           this.commitMsg = '';
         } catch (err) {
