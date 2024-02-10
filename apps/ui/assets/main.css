@@ -8,7 +8,6 @@ nav {
   justify-content: space-between;
   display: flex;
   align-items: center;
-  background-color: #2196F3;
   color: #FFF;
 }
 
@@ -110,6 +109,9 @@ pre[class*=language-] {
   cursor: pointer;
 }
 
+.bg-nav {
+  background: var(--bs-primary);
+}
 
 @media (prefers-color-scheme: dark) {
   .bg-nav {
@@ -167,6 +169,9 @@ a[disabled] {
 .border-left-0 {
   border-left: none;
 }
+.border-left-0-not-first:not(:first-of-type) {
+  border-left: none;
+}
 
 .mh-auto {
   min-height: auto !important;
@@ -191,4 +196,9 @@ a[disabled] {
 
 .pl-1 {
   padding-left: 10px !important;
+}
+
+.docs__content pre {
+  border-left: 3px solid var(--bs-gray-500);
+  padding: 2em 0 2em 3em;
 }

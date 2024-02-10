@@ -1,14 +1,18 @@
+import yaml from 'js-yaml';
+
 import {Controller, RouteGet, RouteParamBody, RouteParamPath, RoutePost, RoutePut} from './Controller';
 import {FileContentService} from '../../../utils/FileContentService';
 import {GitScanner} from '../../../git/GitScanner';
 import {UserConfigService} from '../../google_folder/UserConfigService';
 import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
+import {ContainerEngine} from '../../../ContainerEngine';
 
 export interface ConfigBody {
   config: {
     remote_branch: string;
     config_toml?: string;
     transform_subdir?: string;
+    rewrite_rules_yaml?: string;
     hugo_theme: HugoTheme;
     auto_sync: boolean;
     fm_without_version: boolean;
@@ -38,7 +42,7 @@ async function loadHugoThemes(filesService: FileContentService) {
 
 export class ConfigController extends Controller {
 
-  constructor(subPath: string, private readonly filesService: FileContentService, private folderRegistryContainer: FolderRegistryContainer) {
+  constructor(subPath: string, private readonly filesService: FileContentService, private folderRegistryContainer: FolderRegistryContainer, private engine: ContainerEngine) {
     super(subPath);
   }
 
@@ -46,7 +50,7 @@ export class ConfigController extends Controller {
     const hugo_themes = await loadHugoThemes(this.filesService);
 
     return {
-      config: userConfigService.config,
+      config: { ...userConfigService.config, rewrite_rules_yaml: yaml.dump(userConfigService.config.rewrite_rules || []) },
       public_key: await userConfigService.getDeployKey(),
       hugo_themes
     };
@@ -89,8 +93,19 @@ export class ConfigController extends Controller {
     if (body.config?.config_toml) {
       userConfigService.config.config_toml = body.config?.config_toml;
     }
-    if (body.config?.transform_subdir) {
-      userConfigService.config.transform_subdir = body.config?.transform_subdir;
+    if (body.config?.rewrite_rules_yaml) {
+      userConfigService.config.rewrite_rules = yaml.load(body.config?.rewrite_rules_yaml);
+    }
+    let modified = false;
+    if ('string' === typeof body.config?.transform_subdir) {
+      let trimmed = body.config?.transform_subdir.trim();
+      if (trimmed.length > 0 && !trimmed.startsWith('/')) {
+        trimmed = '/' + trimmed;
+      }
+      if (userConfigService.config.transform_subdir !== trimmed) {
+        modified = true;
+      }
+      userConfigService.config.transform_subdir = trimmed;
     }
     if (body.config?.actions_yaml) {
       userConfigService.config.actions_yaml = body.config?.actions_yaml;
@@ -105,6 +120,13 @@ export class ConfigController extends Controller {
     } else
     if (body.remote_url === '') {
       await gitScanner.setRemoteUrl('');
+    }
+
+    if (modified) {
+      this.engine.emit(driveId, 'toasts:added', {
+        title: 'Config modified',
+        type: 'tree:changed'
+      });
     }
 
     return {

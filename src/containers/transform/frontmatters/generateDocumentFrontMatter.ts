@@ -1,10 +1,9 @@
 import yaml from 'js-yaml';
 
-import {NavigationHierarchy} from '../generateNavigationHierarchy';
 import {MdFile} from '../../../model/LocalFile';
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
 
-export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarchy: NavigationHierarchy, links: string[],
+export function generateDocumentFrontMatter(localFile: MdFile, links: string[],
                                             fm_without_version = false) {
   const obj = {
     id: localFile.id,
@@ -18,18 +17,6 @@ export function generateDocumentFrontMatter(localFile: MdFile, navigationHierarc
     source: 'https://drive.google.com/open?id=' + localFile.id,
     wikigdrive: !fm_without_version ? process.env.GIT_SHA : undefined
   };
-
-  if (navigationHierarchy[localFile.id]) {
-    const navigationData = navigationHierarchy[localFile.id];
-    obj['menu'] = {
-      main: {
-        name: navigationData.name,
-        identifier: navigationData.identifier,
-        parent: navigationData.parent,
-        weight: navigationData.weight,
-      }
-    };
-  }
 
   const fmt = yaml.dump(obj, FRONTMATTER_DUMP_OPTS);
 

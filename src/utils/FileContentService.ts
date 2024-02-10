@@ -8,6 +8,9 @@ export class FileContentService extends FileService {
   constructor(protected readonly rootPath: string = '/', virtualPath = '/') {
     super(rootPath);
     this.virtualPath = virtualPath || '/';
+    if (!this.virtualPath.endsWith('/')) {
+      this.virtualPath += '/';
+    }
   }
 
   async readFile(filePath: string): Promise<string> {
@@ -44,6 +47,11 @@ export class FileContentService extends FileService {
     if (!subPath) {
       throw new Error('Empty subPath');
     }
+
+    if (subPath.startsWith('/')) { // this.virtualPath always ends with '/'
+      subPath = subPath.substring(1);
+    }
+
     const subFileService = new FileContentService(
       pathResolve(this.rootPath, subPath),
       virtualPath !== undefined ? virtualPath : this.virtualPath + subPath + '/'

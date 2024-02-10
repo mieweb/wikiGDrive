@@ -10,6 +10,7 @@ import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
 import {Container} from '../../../ContainerEngine';
 import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
 import {getContentFileService} from '../../transform/utils';
+import {redirError} from '../auth';
 
 export class DriveController extends Controller {
   constructor(subPath: string,
@@ -21,6 +22,10 @@ export class DriveController extends Controller {
 
   @RouteGet('/')
   async getDrives(@RouteParamUser() user) {
+    if (!user?.google_access_token) {
+      throw redirError(this.req, 'Not authenticated');
+    }
+
     const folders = await this.folderRegistryContainer.getFolders();
 
     const googleDriveService = new GoogleDriveService(this.logger, null);
@@ -59,13 +64,21 @@ export class DriveController extends Controller {
     const tocFile = transformedTree.find(item => item.path === '/toc.md');
     const navFile = transformedTree.find(item => item.path === '/.navigation.md' || item.path === '/navigation.md');
 
-    const contentPrefix = userConfigService.config.transform_subdir ? `/${userConfigService.config.transform_subdir}` : '';
+    let tocFilePath = null;
+    let navFilePath = null;
+
+    if (userConfigService.config.transform_subdir && userConfigService.config.transform_subdir.length > 0) {
+      const contentPrefix = (!userConfigService.config.transform_subdir.startsWith('/') ? '/' : '')
+        + userConfigService.config.transform_subdir;
+      tocFilePath = tocFile ? contentPrefix + tocFile.path : null;
+      navFilePath = navFile ? contentPrefix + navFile.path : null;
+    }
 
     return {
       ...drive,
       gitStats: await gitScanner.getStats(userConfig),
-      tocFilePath: tocFile ? contentPrefix + tocFile.path : null,
-      navFilePath: navFile ? contentPrefix + navFile.path : null
+      tocFilePath,
+      navFilePath
     };
   }
 

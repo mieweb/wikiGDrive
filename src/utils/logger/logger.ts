@@ -4,6 +4,7 @@ import path from 'path';
 import {DailyRotateFile} from './DailyRotateFile';
 import {fileURLToPath} from 'url';
 import {ansi_colors} from './colors';
+import {JobLogFile} from './JobLogFile';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -109,7 +110,7 @@ export function instrumentLogger(logger, childOpts = {}) {
   };
 }
 
-export function createLogger(eventBus: EventEmitter, workdir: string) {
+export function createLogger(workdir: string, eventBus?: EventEmitter) {
   const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -133,6 +134,12 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
   }));
 
   const dirname = path.join(workdir, '%driveId%', '.logs');
+  logger.add(new JobLogFile({
+    format: winston.format.json(),
+    zippedArchive: true,
+    dirname: dirname,
+    filename: 'job-%JOB_ID%.log'
+  }));
   logger.add(new DailyRotateFile({
     format: winston.format.json(),
     zippedArchive: true,
@@ -164,7 +171,7 @@ export function createLogger(eventBus: EventEmitter, workdir: string) {
       console.error('unhandledRejection', reason);
       logger.error('unhandledRejection: ' + reason.stack ? reason.stack : reason.message, reason);
 
-      if (reason?.response?.data?.error === 'invalid_grant') {
+      if (eventBus && reason?.response?.data?.error === 'invalid_grant') {
         eventBus.emit('panic:invalid_grant');
         return;
       }

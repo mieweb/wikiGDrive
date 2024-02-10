@@ -1,5 +1,5 @@
 <template>
-  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
+  <GitCommit v-if="activeTab === 'git_commit'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :selectedFolder="selectedFolder" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
   <GitInfo v-else-if="activeTab === 'git_info'" :folderPath="folderPath" :contentDir="contentDir" :selectedFile="selectedFile" :active-tab="activeTab" :sidebar="sidebar" :shareEmail="shareEmail" />
   <BaseLayout v-else :share-email="shareEmail" :sidebar="sidebar">
     <template v-slot:navbar="{ collapsed, collapse }">
@@ -15,55 +15,94 @@
 
     <template v-slot:default>
       <NotRegistered v-if="notRegistered" :share-email="shareEmail" />
-      <div v-if="notFound" class="container">
-        <div class="alert alert-warning text-wrap">
-          404 NOT FOUND: {{ notFound }}
+      <div v-else>
+
+        <div v-if="notFound" class="container">
+          <div class="alert alert-warning text-wrap">
+            404 NOT FOUND: {{ notFound }}
+          </div>
+        </div>
+
+        <JobsViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <ChangesViewer v-if="activeTab === 'changes'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
+        <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
+
+        <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
+
+        <div v-if="activeTab === 'drive_logs'">
+          <JobLogsViewer v-if="activeTabParams[0]" contentDir="contentDir" :active-tab="activeTab" :jobId="activeTabParams[0]" />
+          <LogsViewer v-else :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
+        </div>
+
+        <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
+        <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
+        <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
+        <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
+
+        <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
+          <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+        </div>
+        <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
+          <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+        </div>
+        <div v-else-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
+          <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        </div>
+        <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType && selectedFile.mimeType.startsWith('text/')">
+          <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
+        </div>
+        <div>
+          <div v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound">
+            <DriveTools
+                 :folderPath="folderPath"
+                 :selectedFile="selectedFile"
+                 :selected-folder="selectedFolder"
+                 :active-tab="activeTab"
+                 :tree-empty="treeEmpty"
+                 :drive-empty="driveEmpty"
+                 :tree-version="treeVersion"
+            />
+
+            <GitSettings :active-tab="activeTab" v-if="!github_url" :tree-empty="treeEmpty">
+              <template v-slot:header>
+                <div class="card-header alert-danger">
+                  Git is not configured
+                </div>
+              </template>
+              <template v-slot:toolbar>
+                <span></span>
+              </template>
+              <template v-slot:sidebar>
+                <span></span>
+              </template>
+            </GitSettings>
+
+            <UserSettings v-if="!contentDir && !(activeTab === 'drive_config' || activeTab === 'drive_config_git')" :activeTab="activeTab">
+              <template v-slot:header>
+                <div class="card-header alert-danger">
+                  Content subdirectory must be set and start with /
+                </div>
+              </template>
+              <template v-slot:toolbar>
+                <span></span>
+              </template>
+              <template v-slot:sidebar>
+                <span></span>
+              </template>
+            </UserSettings>
+
+          </div>
+<!--          <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown') && !selectedFolder.path" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />-->
         </div>
       </div>
-
-      <ChangesViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
-      <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
-      <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" />
-
-      <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
-      <LogsViewer v-if="activeTab === 'drive_logs'" :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
-      <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
-      <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
-      <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
-      <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
-
-      <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-        <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
-      </div>
-      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
-        <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
-      </div>
-      <div v-else-if="(activeTab === 'html') && ['application/binary', 'application/pdf'].includes(selectedFile.mimeType)">
-        <IframePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
-      </div>
-      <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType && selectedFile.mimeType.startsWith('text/')">
-        <FileEditor :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
-      </div>
-      <div v-else>
-        <DriveTools v-if="(!activeTab || activeTab === 'html') && !selectedFile.id && !notFound"
-                    :folderPath="folderPath"
-                    :selectedFile="selectedFile"
-                    :selected-folder="selectedFolder"
-                    :active-tab="activeTab"
-                    :tree-empty="treeEmpty"
-                    :tree-version="treeVersion"
-        />
-        <IframePreview v-else-if="(activeTab === 'html' || activeTab === 'markdown')" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" />
-      </div>
-
-
     </template>
   </BaseLayout>
 </template>
 <script lang="ts">
 import BaseLayout from '../layout/BaseLayout.vue';
-import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
-import {UtilsMixin} from '../components/UtilsMixin.ts';
+import {UiMixin} from '../components/UiMixin.ts';
+import {DEFAULT_TAB, UtilsMixin} from '../components/UtilsMixin.ts';
 import FilesTree from '../components/FilesTree.vue';
 import NotRegistered from './NotRegistered.vue';
 import FilePreview from '../components/FilePreview.vue';
@@ -73,8 +112,10 @@ import FileEditor from '../components/FileEditor.vue';
 import NavTabs from '../components/NavTabs.vue';
 import NavSearch from '../components/NavSearch.vue';
 import LogsViewer from '../components/LogsViewer.vue';
+import JobLogsViewer from '../components/JobLogsViewer.vue';
 import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
+import JobsViewer from '../components/JobsViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
 import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
@@ -101,8 +142,10 @@ export default {
     IframePreview,
     FileEditor,
     LogsViewer,
+    JobLogsViewer,
     ZipkinViewer,
     ChangesViewer,
+    JobsViewer,
     UserSettings,
     DangerSettings,
     WorkflowsEditor,
@@ -117,9 +160,14 @@ export default {
       folderPath: '',
       contentDir: '',
       activeTab: DEFAULT_TAB,
+      activeTabParams: [],
       files: [],
-      selectedFile: {},
+      selectedFile: {
+        id: null,
+        mimeType: ''
+      },
       selectedFolder: {},
+      driveEmpty: false,
       treeEmpty: false,
       treeVersion: null,
       notFound: false,
@@ -134,7 +182,7 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'workflows';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'changes' && this.activeTab !== 'workflows';
     },
     jobs() {
       return this.$root.jobs || [];
@@ -151,17 +199,19 @@ export default {
     this.fetch();
     this.rootFolder = this.$root.drive;
     this.emitter.on('tree:changed', () => {
-      this.fetch();
+      this.$nextTick(() => {
+        this.fetch();
+      });
     });
   },
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+      [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
   },
   methods: {
     async fetchFolder(driveId, filePath) {
@@ -169,6 +219,7 @@ export default {
       this.contentDir = pathContent.contentDir;
       this.folderPath = filePath;
       this.files = pathContent.files || [];
+      this.driveEmpty = pathContent.driveEmpty;
       this.treeEmpty = pathContent.treeEmpty;
       this.treeVersion = pathContent.treeVersion;
       return pathContent;
@@ -195,7 +246,7 @@ export default {
           const file = this.files.find(file => (file.realFileName || file.fileName) === baseName) || {
             path: filePath.replace('/' + driveId + this.contentDir, '')
           };
-          this.selectedFolder = null;
+          this.selectedFolder = {};
           this.selectedFile = file || {};
         } else {
           parts.push(baseName);

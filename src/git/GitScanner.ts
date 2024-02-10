@@ -3,8 +3,8 @@ import path from 'path';
 import {exec, spawn} from 'child_process';
 
 import {Logger} from 'winston';
-import {UserConfig} from '../containers/google_folder/UserConfigService';
-import {TelemetryMethod} from '../telemetry';
+import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
+import {TelemetryMethod} from '../telemetry.ts';
 
 export interface GitChange {
   path: string;
@@ -13,6 +13,7 @@ export interface GitChange {
     isModified: boolean;
     isDeleted: boolean;
   };
+  attachments?: number;
 }
 
 interface SshParams {
@@ -49,7 +50,7 @@ export class GitScanner {
 
     try {
       await new Promise((resolve, reject) => {
-        exec(command, { cwd: this.rootPath, env: opts.env }, (error, stdoutResult, stderrResult) => {
+        exec(command, { cwd: this.rootPath, env: opts.env, maxBuffer: 1024 * 1024 }, (error, stdoutResult, stderrResult) => {
           stdout = stdoutResult;
           stderr = stderrResult;
           if (error) {
@@ -87,44 +88,45 @@ export class GitScanner {
   }
 
   async changes(): Promise<GitChange[]> {
-    const retVal = [];
+    const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
     const skipOthers = false;
+
+    function addEntry(path, state, attachments = 0) {
+      if (!retVal[path]) {
+        retVal[path] = {
+          cnt: 0,
+          path,
+          state: {
+            isNew: false,
+            isDeleted: false,
+            isModified: false
+          }
+        };
+      }
+      retVal[path].cnt++;
+      for (const k in state) {
+        retVal[path].state[k] = state[k];
+      }
+      if (attachments > 0) {
+        retVal[path].attachments = (retVal[path].attachments || 0) + attachments;
+      }
+    }
 
     try {
       const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
       for (const line of result.stdout.split('\n')) {
         const parts = line.split(/\s/);
         const path = parts[parts.length - 1];
+
         if (line.match(/^A\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: true,
-              isDeleted: false,
-              isModified: false
-            }
-          });
+          addEntry(path, { isNew: true });
         }
         if (line.match(/^M\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: false,
-              isDeleted: false,
-              isModified: true
-            }
-          });
+          addEntry(path, { isModified: true });
         }
         if (line.match(/^D\s/)) {
-          retVal.push({
-            path,
-            state: {
-              isNew: false,
-              isDeleted: true,
-              isModified: false
-            }
-          });
+          addEntry(path, { isDeleted: true });
         }
       }
     } catch (err) {
@@ -142,20 +144,26 @@ export class GitScanner {
       if (!line.trim()) {
         continue;
       }
-      retVal.push({
-        path: line
-          .trim()
-          .replace(/^"/, '')
-          .replace(/"$/, ''),
-        state: {
-          isNew: true,
-          isDeleted: false,
-          isModified: false
-        }
-      });
+      const path = line
+        .trim()
+        .replace(/^"/, '')
+        .replace(/"$/, '');
+
+      if (path.indexOf('.assets/') > -1) {
+        const idx = path.indexOf('.assets/');
+        const mdPath = path.substring(0, idx) + '.md';
+        addEntry(mdPath, { isModified: true }, 1);
+        continue;
+      }
+
+      addEntry(path, { isNew: true });
     }
 
-    return retVal;
+    const retValArr: GitChange[] = Object.values(retVal);
+    retValArr.sort((a, b) => {
+      return a.path.localeCompare(b.path);
+    });
+    return retValArr;
   }
 
   async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
@@ -206,7 +214,15 @@ export class GitScanner {
     });
   }
 
-  async pushToDir(dir: string, localBranch = 'master') {
+  async fetch(sshParams?: SshParams) {
+    await this.exec('git fetch', {
+      env: {
+        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
+      }
+    });
+  }
+
+  async pushToDir(dir: string) {
     await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
   }
 
@@ -274,6 +290,7 @@ export class GitScanner {
   }
 
   async resetToLocal(sshParams?: SshParams) {
+    await this.exec('git checkout master --force', {});
     await this.exec('git reset --hard HEAD', {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
@@ -355,7 +372,13 @@ export class GitScanner {
       if (fileNamesStr.length > 0) {
         await this.exec(`git add -N ${fileNamesStr}`);
       }
+      if (fileName === '') {
+        await this.exec('git add -N *');
+      }
 
+      if (fileName.endsWith('.md')) {
+        fileName = fileName.substring(0, fileName.length - '.md'.length) + '.*' + ' ' + fileName.substring(0, fileName.length - '.md'.length) + '.*/*';
+      }
 
       const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: true });
 
@@ -440,6 +463,16 @@ export class GitScanner {
         }
         retVal.push(current);
       }
+
+      retVal.sort((a, b) => {
+        if (a.newFile.endsWith('.md') && b.newFile.startsWith(a.newFile.replace('.md', '.assets/'))) {
+          return -1;
+        }
+        if (b.newFile.endsWith('.md') && a.newFile.startsWith(b.newFile.replace('.md', '.assets/'))) {
+          return 1;
+        }
+        return a.newFile.localeCompare(b.newFile);
+      });
 
       return retVal;
     } catch (err) {
@@ -600,9 +633,9 @@ export class GitScanner {
       }
 
       const childProcess = spawn('git',
-        ['diff', '--minimal'],
+        ['diff', '--minimal', '--ignore-space-change'],
         { cwd: this.rootPath, env: {} });
-      const promise = new Promise((resolve, reject) => {
+      const promise = new Promise((resolve) => {
         childProcess.on('close', resolve);
       });
 
@@ -655,7 +688,10 @@ export class GitScanner {
             if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-')) {
               if (line.startsWith('+') || line.startsWith('-')) {
                 line = line.substring(1);
-                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:')) {
+                if (!line.startsWith('wikigdrive:') && !line.startsWith('version:') && !line.startsWith('lastAuthor:') && !line.startsWith('date:') &&
+                  !line.startsWith('menu:') && !line.startsWith('  main:') &&
+                  !line.startsWith('    name:') && !line.startsWith('    identifier:') && !line.startsWith('    weight:') && !line.startsWith('    parent:')
+                ) {
                   current.doAutoCommit = false;
                 }
               }

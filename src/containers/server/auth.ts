@@ -2,10 +2,11 @@ import jsonwebtoken from 'jsonwebtoken';
 import {decrypt, encrypt} from '../../google/GoogleAuthService';
 import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {Logger} from 'winston';
-import {Request, Response} from 'express';
+import type {Request, Response} from 'express';
 import {UserAuthClient} from '../../google/AuthClient';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {urlToFolderId} from '../../utils/idParsers';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
 
 export class AuthError extends Error {
   public status: number;
@@ -159,6 +160,23 @@ export async function handlePopupClose(req: Request, res: Response, next) {
   }
 }
 
+function sanitizeRedirect(redirectTo: string) {
+  if ((redirectTo || '').startsWith('/gdocs/')) {
+    const [folderId, fileId] = redirectTo.substring('/gdocs/'.length).split('/');
+    if (folderId.match(/^[A-Z0-9_-]+$/ig) && fileId.match(/^[A-Z0-9_-]+$/ig)) {
+      return `/gdocs/${folderId}/${fileId}`;
+    }
+  }
+
+  const folderId = urlToFolderId(redirectTo);
+
+  if (!folderId) {
+    return '';
+  }
+
+  return `/drive/${folderId}`;
+}
+
 export async function getAuth(req, res: Response, next) {
   try {
     const hostname = req.header('host');
@@ -169,12 +187,43 @@ export async function getAuth(req, res: Response, next) {
 
     const driveId = urlToFolderId(state.get('driveId'));
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+
+    const shareDrive = !!state.get('shareDrive');
+    if (driveId && shareDrive) {
+      const googleDriveService = new GoogleDriveService(this.logger, null);
+      const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+
+      await googleDriveService.shareDrive(await authClient.getAccessToken(), driveId, this.params.share_email);
+
+      await folderRegistryContainer.registerFolder(driveId);
+      res.redirect('/drive/' + driveId);
+      return;
+    }
+
+    const uploadDrive = !!state.get('uploadDrive');
+    if (driveId && uploadDrive) {
+      const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
+      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+      await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
+        type: 'upload',
+        title: 'Uploading to Google Drive',
+        access_token: await authClient.getAccessToken()
+      });
+
+      res.redirect('/drive/' + driveId);
+      return;
+    }
+
     if (driveId && !folderRegistryContainer.hasFolder(driveId)) {
       const err = new AuthError('Folder not registered', 404);
       err.showHtml = true;
       throw err;
     }
-    const redirectTo = urlToFolderId(state.get('redirectTo'));
+    const redirectTo = sanitizeRedirect(state.get('redirectTo'));
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
     await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
@@ -200,7 +249,7 @@ export async function getAuth(req, res: Response, next) {
         driveId: driveId
       });
       setAccessCookie(res, accessToken);
-      res.redirect(redirectTo || '/');
+      res.redirect(redirectTo || '/drive');
       return;
     }
 
@@ -299,8 +348,15 @@ export function authenticateOptionally(logger: Logger, idx = 0) {
   };
 }
 
+function isLocal(req: Request) {
+  const ip = req.socket.remoteAddress;
+  const host = req.get('host');
+  return ip === '127.0.0.1' || ip === '::ffff:127.0.0.1' || ip === '::1' || host.indexOf('localhost') !== -1;
+}
+
 export function authenticate(logger: Logger, idx = 0) {
-  return async (req, res, next) => {
+  return async (req: Request, res, next) => {
+
     req['driveId'] = '';
     req['logger'] = logger;
     const parts = req.path.split('/');
@@ -313,6 +369,10 @@ export function authenticate(logger: Logger, idx = 0) {
     req['logger'] = req['driveId'] ? logger.child({driveId: req['driveId']}) : logger;
 
     if (!req.cookies.accessToken) {
+      if (isLocal(req)) {
+        next();
+        return ;
+      }
       return next(redirError(req, 'No accessToken cookie'));
     }
 

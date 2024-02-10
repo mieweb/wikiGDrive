@@ -12,12 +12,13 @@ const CONCURRENCY = SINGLE_THREADED_TRANSFORM ? 4 : os.cpus().length;
 export class QueueTransformer {
   private q: QueueObject<QueueTask>;
   private logger: winston.Logger;
-  private progressCallback: ({total, completed}: { total: number; completed: number; warnings: number }) => void;
+  private progressCallback: ({total, completed}: { total: number; completed: number; warnings: number; failed: number }) => void;
 
   private progress = {
     completed: 0,
     total: 0,
-    warnings: 0
+    warnings: 0,
+    failed: 0
   };
 
   constructor(logger: winston.Logger) {
@@ -27,21 +28,13 @@ export class QueueTransformer {
     this.q.error((err: QueueTaskError, queueTask) => {
       this.logger.error(err.stack ? err.stack : err.message);
 
-      if (403 === err.code) {
-        // this.progress.failed++;
-        // this.eventBus.emit('sync:progress', this.progress);
-        this.progress.completed++;
-        this.notify();
-        return;
-      }
-
       if (queueTask.retries > 0) {
         queueTask.retries--;
         this.q.push(queueTask);
       } else {
-        // this.progress.failed++;
+        this.progress.failed++;
         // this.eventBus.emit('sync:progress', this.progress);
-        this.progress.completed++;
+        // this.progress.completed++;
         this.notify();
       }
     });
@@ -73,13 +66,13 @@ export class QueueTransformer {
     this.notify();
   }
 
-  onProgressNotify(progressCallback: ({total, completed, warnings}: { total: number; completed: number; warnings: number }) => void) {
+  onProgressNotify(progressCallback: ({total, completed, warnings, failed}: { total: number; completed: number; warnings: number; failed: number }) => void) {
     this.progressCallback = progressCallback;
   }
 
   notify() {
     if (this.progressCallback) {
-      this.progressCallback({ completed: this.progress.completed, total: this.progress.total, warnings: this.progress.warnings });
+      this.progressCallback({ completed: this.progress.completed, total: this.progress.total, warnings: this.progress.warnings, failed: this.progress.failed });
     }
   }
 }

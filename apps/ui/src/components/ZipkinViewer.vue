@@ -52,7 +52,7 @@ export default {
   data() {
     return {
       traces: [],
-      ZIPKIN_URL
+      ZIPKIN_URL: ZIPKIN_URL.startsWith('http://localhost:9411') ? ZIPKIN_URL + '/zipkin' : ZIPKIN_URL
     };
   },
   created() {

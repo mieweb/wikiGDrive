@@ -216,7 +216,7 @@ export class TextChangeEnd {
 export class TextParagraph implements TextSection {
   type = 'paragraph';
   bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace| DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace | DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }
@@ -248,12 +248,14 @@ export class TextListItem {
 @XmlElement()
 @XmlAttribute('text:style-name', 'styleName')
 @XmlAttribute('text:continue-numbering', 'continueNumbering')
+@XmlAttribute('text:continue-list', 'continueList')
 @XmlAttribute('xml:id', 'id')
 @XmlElementChild('text:list-item', 'list', 'TextListItem', {isArray: true})
 export class TextList implements TextSection {
   type = 'list';
   id?: string;
   continueNumbering?: string;
+  continueList?: string;
   list: Array<TextListItem> = [];
   styleName: string; // WWNum3 is for List Bullet. WWNum2 is for List Number. WWNum1 is for List Alpha
 }

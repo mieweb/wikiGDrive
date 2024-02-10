@@ -1,49 +1,50 @@
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import express, {Express, NextFunction, Request, Response} from 'express';
+import type {Express, NextFunction, Request, Response} from 'express';
+import express from 'express';
 import http from 'http';
 import {WebSocketServer} from 'ws';
 import winston from 'winston';
 import path from 'path';
-import {FileId} from '../../model/model';
-import {saveRunningInstance} from './loadRunningInstance';
-import {urlToFolderId} from '../../utils/idParsers';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {DriveJobsMap, JobManagerContainer} from '../job/JobManagerContainer';
 import {fileURLToPath} from 'url';
-import GitController from './routes/GitController';
-import FolderController from './routes/FolderController';
-import {ConfigController} from './routes/ConfigController';
-import {DriveController} from './routes/DriveController';
-import {BackLinksController} from './routes/BackLinksController';
-import {GoogleDriveController} from './routes/GoogleDriveController';
-import {LogsController} from './routes/LogsController';
-import {PreviewController} from './routes/PreviewController';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import compress from 'compression';
 
-import {SocketManager} from './SocketManager';
-import * as vite from 'vite';
-import {Logger} from 'vite';
-import * as fs from 'fs';
+import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileId} from '../../model/model.ts';
+import {saveRunningInstance} from './loadRunningInstance.ts';
+import {urlToFolderId} from '../../utils/idParsers.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {DriveJobsMap, initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
+import GitController from './routes/GitController.ts';
+import FolderController from './routes/FolderController.ts';
+import {ConfigController} from './routes/ConfigController.ts';
+import {DriveController} from './routes/DriveController.ts';
+import {BackLinksController} from './routes/BackLinksController.ts';
+import {GoogleDriveController} from './routes/GoogleDriveController.ts';
+import {LogsController} from './routes/LogsController.ts';
+import {PreviewController} from './routes/PreviewController.ts';
+
+import {SocketManager} from './SocketManager.ts';
+
 import {
   authenticate,
-  AuthError,
   GoogleUser,
   getAuth,
   authenticateOptionally,
   validateGetAuthState,
-  handleDriveUiInstall, handleShare, handlePopupClose
-} from './auth';
-import {filterParams, GoogleDriveServiceError} from '../../google/driveFetch';
-import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
-import {SearchController} from './routes/SearchController';
-import opentelemetry from '@opentelemetry/api';
-import {DriveUiController} from './routes/DriveUiController';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {UserAuthClient} from '../../google/AuthClient';
-import {getTokenInfo} from '../../google/GoogleAuthService';
-import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
+  handleDriveUiInstall, handleShare, handlePopupClose, redirError
+} from './auth.ts';
+import {filterParams} from '../../google/driveFetch.ts';
+import {SearchController} from './routes/SearchController.ts';
+import {DriveUiController} from './routes/DriveUiController.ts';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
+import {UserAuthClient} from '../../google/AuthClient.ts';
+import {getTokenInfo} from '../../google/GoogleAuthService.ts';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
+import {initStaticDistPages} from './static.ts';
+import {initUiServer} from './vuejs.ts';
+import {initErrorHandler} from './error.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,14 @@ interface TreeItem {
 }
 
 export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
+
+function getDurationInMilliseconds(start) {
+  const NS_PER_SEC = 1e9;
+  const NS_TO_MS = 1e6;
+  const diff = process.hrtime(start);
+
+  return Math.round((diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS);
+}
 
 export class ServerContainer extends Container {
   private logger: winston.Logger;
@@ -82,79 +91,6 @@ export class ServerContainer extends Container {
     // TODO
   }
 
-  private async initUiServer(app) {
-    const customLogger: Logger = {
-      hasWarned: false,
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      clearScreen() {},
-      error: (msg: string) => {
-        this.logger.error(msg);
-      },
-      hasErrorLogged: () => {
-        return false;
-      },
-      info: (msg: string) => {
-        this.logger.info(msg);
-      },
-      warn: (msg: string) => {
-        this.logger.warn(msg);
-      },
-      warnOnce: (msg: string) => {
-        this.logger.warn(msg);
-      }
-    };
-
-    const viteInstance = await vite.createServer({
-      root: HTML_DIR,
-      logLevel: 'info',
-      appType: 'custom',
-      server: {
-        middlewareMode: true,
-        watch: {
-          // During tests we edit the files too fast and sometimes chokidar
-          // misses change events, so enforce polling for consistency
-          usePolling: true,
-          interval: 100
-        }
-      },
-      customLogger: customLogger
-    });
-    this.app.set('viteInstance', viteInstance);
-    app.use(viteInstance.middlewares);
-  }
-
-  private async handleStaticHtml(reqPath: string, url: string) {
-    if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive') || reqPath.endsWith('.html')) {
-      const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
-      const distPath = path.resolve(HTML_DIR, 'dist');
-
-      if (fs.existsSync(hugoPath)) {
-        const template = fs.readFileSync(hugoPath)
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-        return template;
-      } else
-      if (fs.existsSync(distPath)) {
-        const template = fs.readFileSync(path.join(distPath, 'index.html'))
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-        return template;
-      } else {
-        const template = fs.readFileSync(HTML_DIR + '/index.html')
-          .toString()
-          .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-          .replace(/GIT_SHA/g, process.env.GIT_SHA);
-
-        const viteInstance = this.app.get('viteInstance');
-
-        return await viteInstance.transformIndexHtml(url, template);
-      }
-    }
-    return null;
-  }
-
   private async startServer(port) {
     const app = this.app = express();
 
@@ -166,23 +102,13 @@ export class ServerContainer extends Container {
 
     app.use((req, res, next) => {
       res.header('GIT_SHA', process.env.GIT_SHA);
+      // res.header('x-frame-options', 'ALLOW-FROM https://docs.google.com/');
+      res.header('Content-Security-Policy', 'frame-ancestors \'self\' https://*.googleusercontent.com https://docs.google.com;');
       next();
     });
 
-    if (process.env.ZIPKIN_URL) {
-      app.use((req, res, next) => {
-        if (req.header('traceparent')) {
-          next();
-          return;
-        }
-
-        const span = opentelemetry.trace.getActiveSpan();
-        if (span) {
-          const traceId = span.spanContext().traceId;
-          res.header('trace-id', traceId);
-        }
-        next();
-      });
+    if (express['addExpressTelemetry']) {
+      express['addExpressTelemetry'](app);
     }
 
     app.use(rateLimit({
@@ -195,79 +121,16 @@ export class ServerContainer extends Container {
       next();
     });
 
+    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
+    const distPath = path.resolve(HTML_DIR, 'dist');
+    app.use(express.static(distPath));
+
     await this.initRouter(app);
     await this.initAuth(app);
 
-    const distPath = path.resolve(HTML_DIR, 'dist');
-    app.use(express.static(distPath));
-    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
-    await this.initUiServer(app);
-
-    app.use(async (req: express.Request, res: express.Response) => {
-      const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-      if (indexHtml) {
-        res.status(200).header('Content-type', 'text/html').end(indexHtml);
-      } else {
-        res.status(404).json({});
-      }
-    });
-
-    app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
-      if (err.showHtml) {
-        const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-        if (indexHtml) {
-          console.error('eee', err);
-          res.status(err.status).header('Content-type', 'text/html').end(
-            indexHtml.replace('</head', `<meta name="errorMessage" content="${err.message}"></head`)
-          );
-          return;
-        }
-      }
-
-      const code = err.status || 501;
-      switch(code) {
-        case 302:
-          res.redirect('/');
-          return;
-        case 404:
-          {
-            const indexHtml = await this.handleStaticHtml(req.path, req.originalUrl);
-            if (indexHtml) {
-              res.status(404).header('Content-type', 'text/html').end(indexHtml);
-            } else {
-              res.status(code).send({ code, message: err.message, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
-            }
-          }
-          return;
-        case 401:
-          {
-            const redirectTo: string = req.headers['redirect-to'] ? req.headers['redirect-to'].toString() : '';
-
-            const urlSearchParams = new URLSearchParams();
-            if (redirectTo && redirectTo.startsWith('/') && redirectTo.indexOf('//') === -1) {
-              urlSearchParams.set('redirectTo', redirectTo);
-            } else {
-              urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
-            }
-            this.logger.error(err.stack ? err.stack : err.message);
-
-            if (req['driveId']) {
-              err.authPath = '/auth/' + req['driveId'] + '?' + urlSearchParams.toString();
-            } else {
-              err.authPath = '/auth/none?' + urlSearchParams.toString();
-            }
-            res.status(code).send({ message: err.message, authPath: err.authPath, stack: process.env.VERSION === 'dev' ? err.stack : undefined });
-          }
-          return;
-        default:
-          console.error(err);
-      }
-
-      res.header('Content-type', 'application/json');
-      res.status(code).send({ message: err.message });
-
-      next();
-    });
+    await initStaticDistPages(app);
+    await initUiServer(app, this.logger);
+    await initErrorHandler(app, this.logger);
 
     const server = http.createServer(app);
 
@@ -359,6 +222,19 @@ export class ServerContainer extends Container {
   }
 
   async initRouter(app) {
+    app.use(async (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith('/api/')) {
+        const start = process.hrtime();
+        res.on('finish', () => {
+          const durationInMilliseconds = getDurationInMilliseconds(start);
+          this.logger.info(`${req.method} ${req.originalUrl} ${durationInMilliseconds}ms`);
+        });
+      }
+      next();
+    });
+
+    app.use(compress());
+
     const driveController = new DriveController('/api/drive', this.filesService,
       <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.authContainer);
     app.use('/api/drive', authenticate(this.logger), await driveController.getRouter());
@@ -370,13 +246,13 @@ export class ServerContainer extends Container {
     const folderController = new FolderController('/api/file', this.filesService, this.engine);
     app.use('/api/file', authenticate(this.logger), await folderController.getRouter());
 
-    const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService, this.authContainer);
+    const googleDriveController = new GoogleDriveController('/api/gdrive', this.filesService);
     app.use('/api/gdrive', authenticate(this.logger), await googleDriveController.getRouter());
 
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
 
-    const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'));
+    const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.engine);
     app.use('/api/config', authenticate(this.logger), await configController.getRouter());
 
     const logsController = new LogsController('/api/logs', this.logger);
@@ -434,6 +310,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'run_action',
           title: 'Run action: on ' + req.params.trigger,
           trigger: req.params.trigger,
@@ -453,6 +330,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           title: 'Transform Markdown'
         });
@@ -470,6 +348,7 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           payload: fileId,
           title: 'Transform Single'
@@ -487,10 +366,12 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'sync_all',
           title: 'Syncing all'
         });
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           title: 'Transform markdown'
         });
@@ -518,11 +399,13 @@ export class ServerContainer extends Container {
 
         const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'sync',
           payload: fileId,
           title: 'Syncing file: ' + fileTitle
         });
         await jobManagerContainer.schedule(driveId, {
+          ...initJob(),
           type: 'transform',
           payload: fileId,
           title: 'Transform markdown'
@@ -543,7 +426,6 @@ export class ServerContainer extends Container {
         const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
         const folders = await folderRegistryContainer.getFolders();
         inspected['folder'] = folders[driveId];
-
         res.json(inspected);
       } catch (err) {
         next(err);
@@ -557,6 +439,10 @@ export class ServerContainer extends Container {
 
         if (!driveId) {
           throw new Error('No DriveId');
+        }
+
+        if (!req.user?.google_access_token) {
+          throw redirError(req, 'Not authenticated');
         }
 
         const googleDriveService = new GoogleDriveService(this.logger, null);

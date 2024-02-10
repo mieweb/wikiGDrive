@@ -47,6 +47,24 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
         uses: 'push_branch'
       }
     ]
+  },
+  {
+    on: 'git_reset',
+    steps: [
+      {
+        name: 'render_hugo',
+        uses: 'render_hugo',
+      }
+    ]
+  },
+  {
+    on: 'git_pull',
+    steps: [
+      {
+        name: 'render_hugo',
+        uses: 'render_hugo',
+      }
+    ]
   }
 ];
 
@@ -55,10 +73,11 @@ export class ActionRunnerContainer extends Container {
   private generatedFileService: FileContentService;
   private userConfigService: UserConfigService;
   private tempFileService: FileContentService;
+  private isErr = false;
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
   }
 
   async convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {
@@ -99,7 +118,7 @@ export class ActionRunnerContainer extends Container {
     const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
 
     const contentDir = config.transform_subdir ?
-      `/${driveIdTransform}/${config.transform_subdir}` :
+      `/${driveIdTransform}${ !config.transform_subdir.startsWith('/') ? '/' : '' }${config.transform_subdir}` :
       `/${driveIdTransform}`;
     const docker = new Docker({socketPath: '/var/run/docker.sock'});
 
@@ -143,6 +162,7 @@ export class ActionRunnerContainer extends Container {
         }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
+        --user=${process.getuid()} \\
         -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
@@ -162,7 +182,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
+          User: String(process.getuid())
         });
       } else {
         const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
@@ -175,6 +196,7 @@ export class ActionRunnerContainer extends Container {
         }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
 
         this.logger.info(`DockerAPI:\ndocker run \\
+          --user=${process.getuid()} \\
           -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
           -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site" \\
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
@@ -196,7 +218,8 @@ export class ActionRunnerContainer extends Container {
               `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
             ]
           },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`)
+          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
+          User: String(process.getuid())
         });
       }
 
@@ -207,6 +230,7 @@ export class ActionRunnerContainer extends Container {
         this.logger.info(writable.getBuffer().toString());
       }
     } catch (err) {
+      code = err.statusCode || 1;
       this.logger.error(err.stack ? err.stack : err.message);
     }
     return code;
@@ -219,6 +243,8 @@ export class ActionRunnerContainer extends Container {
     await gitScanner.initialize();
 
     const ownerRepo = await gitScanner.getOwnerRepo();
+
+    this.isErr = false;
 
     const actionDefs = await this.convertActionYaml(config.actions_yaml);
     for (const actionDef of actionDefs) {
@@ -264,6 +290,7 @@ export class ActionRunnerContainer extends Container {
             break;
         }
         if (0 !== lastCode) {
+          this.isErr = true;
           break;
         }
       }
@@ -291,5 +318,9 @@ export class ActionRunnerContainer extends Container {
       }
     }
     return additionalEnv;
+  }
+
+  public failed() {
+    return this.isErr;
   }
 }

@@ -5,9 +5,9 @@
 import {Logger} from 'winston';
 import {Writable} from 'stream';
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
-import {Drive} from '../containers/folder_registry/FolderRegistryContainer';
+import {Drive, Permission} from '../containers/folder_registry/FolderRegistryContainer';
 import {FileId} from '../model/model';
-import {driveFetch, driveFetchStream} from './driveFetch';
+import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch';
 import {QuotaLimiter} from './QuotaLimiter';
 import {HasAccessToken} from './AuthClient';
 
@@ -126,7 +126,7 @@ export class GoogleDriveService {
       q: query,
       pageToken: pageToken,
       pageSize: 1000,
-      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents)',
+      fields: 'nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents, md5Checksum)',
       // fields: 'nextPageToken, files(*)',
       includeItemsFromAllDrives: true,
       supportsAllDrives: true,
@@ -153,28 +153,7 @@ export class GoogleDriveService {
     }
   }
 
-  async listPermissions(auth: HasAccessToken, fileId: string, pageToken?: string) {
-    const params = {
-      fileId: fileId,
-      supportsAllDrives: true,
-      // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
-      fields: '*',
-      pageToken: pageToken
-    };
-    const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
-
-    const permissions = [];
-
-    if (res.nextPageToken) {
-      const nextItems = await this.listPermissions(auth, fileId, res.nextPageToken);
-      permissions.push(...nextItems);
-    }
-    permissions.push(...res.permissions);
-
-    return permissions;
-  }
-
-  async getFile(auth: HasAccessToken, fileId: FileId) {
+  async getFile(auth: HasAccessToken, fileId: FileId): Promise<GoogleFile> {
     try {
       const params = {
         fileId: fileId,
@@ -279,16 +258,137 @@ export class GoogleDriveService {
     };
   }
 
-  async shareDrive(accessToken: string, fileId: string, email: string) {
+  async listPermissions(accessToken: string, fileId: string, pageToken?: string): Promise<Permission[]> {
     const params = {
-      requestBody: {
-        type: 'user',
-        role: 'reader',
-        emailAddress: email
-      },
-      fileId,
-      fields: 'id',
+      fileId: fileId,
+      supportsAllDrives: true,
+      // fields: 'id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, version, exportLinks, trashed, parents'
+      fields: '*',
+      pageToken: pageToken
     };
-    return await driveFetch(this.quotaLimiter, accessToken, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
+    const res = await driveFetch(this.quotaLimiter, accessToken, 'GET', `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, params);
+
+    const permissions = [];
+
+    if (res.nextPageToken) {
+      const nextItems = await this.listPermissions(accessToken, fileId, res.nextPageToken);
+      permissions.push(...nextItems);
+    }
+    permissions.push(...res.permissions);
+
+    return permissions;
+  }
+
+  async shareDrive(accessToken: string, fileId: string, email: string): Promise<Permission> {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
+    return await driveFetch(this.quotaLimiter, accessToken, 'POST', url, {
+      sendNotificationEmail: true,
+      supportsAllDrives: true
+    }, {
+      emailAddress: email,
+      type: 'user',
+      role: 'reader'
+    });
+  }
+
+  async createDir(accessToken: string, folderId: FileId, name: string) {
+    const url = 'https://www.googleapis.com/upload/drive/v3/files';
+
+    const metadata = {
+      name,
+      'mimeType' : 'application/vnd.google-apps.folder',
+      parents: [folderId],
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+
+    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+      uploadType: 'multipart',
+      supportsAllDrives: true
+    }, formData);
+  }
+
+  async generateIds(accessToken: string, count: number): Promise<FileId[]> {
+    const url = 'https://www.googleapis.com/drive/v3/files/generateIds';
+
+    const response = await driveFetch(this.quotaLimiter, accessToken, 'GET', url, {
+      count: String(count),
+      space: 'drive',
+      type: 'files'
+    });
+
+    return response.ids;
+  }
+
+  async upload(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, id?: FileId) {
+    const url = 'https://www.googleapis.com/upload/drive/v3/files';
+
+    let googleMimeType = 'application/octet-stream';
+    switch (mimeType) {
+      case MimeTypes.IMAGE_SVG:
+        // 'mimeType': MimeTypes.DRAWING_MIME, // Error: Bad Request
+        googleMimeType = MimeTypes.IMAGE_SVG;
+        break;
+      case MimeTypes.HTML:
+        googleMimeType = MimeTypes.DOCUMENT_MIME;
+        break;
+    }
+
+    const metadata = {
+      name,
+      mimeType: googleMimeType,
+      parents: [folderId],
+      id,
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+    formData.append('Media', new Blob([buffer], { type: mimeType }), name);
+
+    try {
+      return await driveFetchMultipart(this.quotaLimiter, accessToken, 'POST', url, {
+        uploadType: 'multipart',
+        supportsAllDrives: true
+      }, formData);
+    } catch (err) {
+      if (409 === parseInt(err.status)) {
+        this.logger.error(`Conflict on uploading: ${id} ${name}`);
+      }
+      throw err;
+    }
+  }
+
+  async update(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, fileId: FileId) {
+    const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}`;
+
+    let googleMimeType = 'application/octet-stream';
+    switch (mimeType) {
+      case MimeTypes.IMAGE_SVG:
+        // 'mimeType': MimeTypes.DRAWING_MIME, // Error: Bad Request
+        googleMimeType = MimeTypes.IMAGE_SVG;
+        break;
+      case MimeTypes.HTML:
+        googleMimeType = MimeTypes.DOCUMENT_MIME;
+        break;
+    }
+
+    const metadata = {
+      name,
+      mimeType: googleMimeType,
+      // parents: [folderId],
+      fields: '*'
+    };
+
+    const formData  = new FormData();
+    formData.append('Metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' }) );
+    formData.append('Media', new Blob([buffer], { type: mimeType }), name);
+
+    return await driveFetchMultipart(this.quotaLimiter, accessToken, 'PATCH', url, {
+      uploadType: 'multipart',
+      supportsAllDrives: true
+    }, formData);
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <ErrorView v-if="errorMessage" :errorMessage="errorMessage">
   </ErrorView>
-  <router-view v-else class="view main-content"></router-view>
+  <router-view v-else class="router-view"></router-view>
   <ModalsContainer></ModalsContainer>
   <ToastsContainer></ToastsContainer>
 </template>

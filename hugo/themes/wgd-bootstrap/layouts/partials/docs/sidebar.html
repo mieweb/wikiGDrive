@@ -1,0 +1,7 @@
+{{ $path := printf "docs/" }}
+{{ $currentLink := .RelPermalink }}
+<aside class="xmainbar__sidebar position-fixed-md">
+  {{ range where $.Site.Pages "RelPermalink" "==" "/docs/" }}
+  {{ partial "docs/tree.html" ( dict "currentLink" $currentLink "topLevel" true "ctx" . ) }}
+  {{ end }}
+</aside>

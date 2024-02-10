@@ -1,12 +1,12 @@
-import {FileContentService} from '../../utils/FileContentService';
-import {TreeItem} from '../../model/TreeItem';
-import {DirectoryScanner, RESERVED_NAMES} from './DirectoryScanner';
-import {MimeTypes} from '../../model/GoogleFile';
-import {FileId} from '../../model/model';
+import { FileContentService } from '../../utils/FileContentService.ts';
+import { TreeItem } from '../../model/TreeItem.ts';
+import { DirectoryScanner, RESERVED_NAMES } from './DirectoryScanner.ts';
+import { MimeTypes } from '../../model/GoogleFile.ts';
+import { FileId } from '../../model/model.ts';
 
 type CallBack<K> = (treeItem: K) => boolean;
 
-export type TreeItemTuple = [ TreeItem?, string? ];
+export type TreeItemTuple = [TreeItem?, string?];
 
 export class MarkdownTreeProcessor {
   private driveTree: TreeItem[] = [];
@@ -19,7 +19,9 @@ export class MarkdownTreeProcessor {
   }
 
   async save() {
-    this.driveTree[0]['wikigdrive'] = process.env.GIT_SHA;
+    if (this.driveTree[0]) {
+      this.driveTree[0]['wikigdrive'] = process.env.GIT_SHA;
+    }
     await this.driveFileSystem.writeJson('.tree.json', this.driveTree);
   }
 
@@ -91,7 +93,7 @@ export class MarkdownTreeProcessor {
     for (const file of children) {
       const part = file['realFileName'];
       if (callBack(file)) {
-        return [ file, curPath ? curPath + '/' + part : part ];
+        return [file, curPath ? curPath + '/' + part : part];
       }
     }
 
@@ -142,6 +144,6 @@ export class MarkdownTreeProcessor {
       return null;
     }
 
-    return this.driveTree[0]['wikigdrive'];
+    return this.driveTree[0]['wikigdrive'] || null;
   }
 }

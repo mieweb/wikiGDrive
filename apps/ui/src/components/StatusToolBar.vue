@@ -1,11 +1,18 @@
 <template>
   <ul class="nav nav-tabs mt-2">
     <ToolButton
-        v-if="!isGDocsPreview"
-        :active="activeTab === 'sync'"
-        :to="{ name: 'drive', params: { driveId }, hash: '#sync' }"
-        icon="fa-solid fa-computer me-1"
-        title="Sync"
+      v-if="!isGDocsPreview"
+      :active="activeTab === 'sync'"
+      :to="{ name: 'drive', params: { driveId }, hash: '#sync' }"
+      icon="fa-solid fa-computer me-1"
+      title="Sync"
+    />
+    <ToolButton
+      v-if="!isGDocsPreview"
+      :active="activeTab === 'changes'"
+      :to="{ name: 'drive', params: { driveId }, hash: '#changes' }"
+      icon="fa-solid fa-code-compare me-1"
+      :title="'Changes: ' + changes.length"
     />
     <ToolButton
         v-if="!isGDocsPreview"

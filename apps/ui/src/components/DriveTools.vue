@@ -37,14 +37,19 @@
         </a>
       </li>
 
-      <li class="list-group-item" v-if="treeEmpty && !isGDocsPreview">
+      <li class="list-group-item" v-if="selectedFolder.contentDir && treeEmpty && !isGDocsPreview">
         Markdown tree empty
         <a class="btn btn-outline-secondary me-2" @click.prevent="syncAll">Sync All</a>
       </li>
-      <li class="list-group-item" v-else-if="treeVersion && treeVersion !== GIT_SHA">
+      <li class="list-group-item" v-else-if="selectedFolder.contentDir && treeVersion && treeVersion !== GIT_SHA">
         Markdowns were generated with version: <em>{{treeVersion}}</em>.<br/>
         WikiGDrive is now running: <em>{{GIT_SHA}}</em>.<br/>
         <a class="btn btn-outline-secondary me-2" @click.prevent="transformAll">Update your entire tree now?</a>
+      </li>
+
+      <li class="list-group-item" v-if="selectedFolder.contentDir">
+        Synchronize to Google Drive
+        <a class="btn btn-outline-secondary me-2" @click.prevent="uploadGdrive">Upload missing markdowns to Google Drive</a>
       </li>
     </ul>
   </div>
@@ -59,6 +64,10 @@ export default {
   mixins: [UtilsMixin, UiMixin],
   components: {ToolButton},
   props: {
+    driveEmpty: {
+      type: Boolean,
+      default: false
+    },
     treeEmpty: {
       type: Boolean,
       default: false

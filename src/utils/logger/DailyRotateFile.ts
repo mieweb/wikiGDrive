@@ -9,8 +9,6 @@ import crypto from 'crypto';
 import {DailyRotateFileProcessor} from './DailyRotateFileProcessor';
 import {StreamOptions} from 'stream';
 
-const MESSAGE = 'message';
-
 const loggerDefaults = {
   json: false,
   colorize: false,
@@ -183,10 +181,11 @@ export class DailyRotateFile extends Transport {
   }
 
   log(info, callback) {
-    const logStream = this.getLogStream(info.driveId);
-    // logStream.write(info[MESSAGE] + this.options.eol);
-    logStream.write(JSON.stringify(info) + this.options.eol);
-    this.emit('logged', info);
+    if (!info?.jobId) {
+      const logStream = this.getLogStream(info.driveId);
+      logStream.write(JSON.stringify(info) + this.options.eol);
+      this.emit('logged', info);
+    }
 
     if (callback) {
       callback(null, true);
@@ -213,6 +212,11 @@ export class DailyRotateFile extends Transport {
     }
 
     options = options || {};
+
+    if (options.jobId) {
+      callback(null, []);
+      return [];
+    }
 
     // limit
     options.rows = options.rows || options.limit || 10;

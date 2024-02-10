@@ -30,6 +30,10 @@ export function urlToFolderId(url: string): string | null {
     url = url.replace(/drive.google.com\/.*\/open/, 'https://drive.google.com/open');
   }
 
+  if (url.startsWith('http://drive.google.com/')) {
+    url = url.replace('http://drive.google.com/', 'https://drive.google.com/');
+  }
+
   if (url.indexOf('https://drive.google.com/open?id%3D') > -1) {
     url = url.replace('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
   }

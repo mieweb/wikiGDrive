@@ -14,6 +14,13 @@ export interface Drive {
   new?: boolean;
 }
 
+export interface Permission {
+  id: string;
+  type: 'user';
+  role: 'reader';
+  kind: string; // drive#permission
+}
+
 export interface Folder {
   id: FileId;
   name: string;
@@ -46,6 +53,11 @@ export class FolderRegistryContainer extends Container {
   }
 
   async refreshDrives() {
+    if (!this.engine.hasContainer('google_api')) {
+      this.logger.warn('Not authenticated to Google API. Skipping drives refresh.');
+      return;
+    }
+
     const oldDrives = Object.values(await this.getFolders());
 
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
@@ -94,11 +106,12 @@ export class FolderRegistryContainer extends Container {
   }
 
   async unregisterFolder(folderId: FileId) {
-    delete this.folders[folderId];
-
-    this.engine.emit(folderId, 'drive:unregister', this.folders[folderId]);
-
-    await this.flushData();
+    if (this.folders[folderId]) {
+      this.logger.info('Unregistered folder: ' + folderId);
+      delete this.folders[folderId];
+      await this.flushData();
+      this.engine.emit(folderId, 'drive:unregister', this.folders[folderId]);
+    }
   }
 
   getFolders() {

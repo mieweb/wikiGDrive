@@ -1,6 +1,8 @@
-import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks';
-import {fixCharacters, spaces} from './utils';
 import slugify from 'slugify';
+
+import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
+import {fixCharacters, inchesToSpaces, spaces} from './utils.ts';
+import {RewriteRule} from './applyRewriteRule.ts';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -9,7 +11,7 @@ interface TagLeaf {
   payload: TagPayload;
 }
 
-function isMarkdownBeginMacro(innerTxt: string) {
+export function isMarkdownBeginMacro(innerTxt: string) {
   if ('{{markdown}}' === innerTxt) return true;
   if ('{{% markdown %}}' === innerTxt) return true;
 
@@ -20,7 +22,7 @@ function isMarkdownBeginMacro(innerTxt: string) {
   return false;
 }
 
-function isMarkdownEndMacro(innerTxt: string) {
+export function isMarkdownEndMacro(innerTxt: string) {
   if ('{{/markdown}}' === innerTxt) return true;
   if ('{{% /markdown %}}' === innerTxt) return true;
 
@@ -29,6 +31,21 @@ function isMarkdownEndMacro(innerTxt: string) {
   }
 
   return false;
+}
+
+export function isMarkdownMacro(innerTxt) {
+  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
+  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
+  return isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix);
+}
+
+export function stripMarkdownMacro(innerTxt) {
+  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
+  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
+  if (isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix)) {
+    return innerTxt.substring(prefix.length, innerTxt.length - suffix.length);
+  }
+  return innerTxt;
 }
 
 function isPreBeginMacro(innerTxt: string) {
@@ -51,6 +68,7 @@ export class StateMachine {
   public errors: string[] = [];
   private readonly tagsTree: TagLeaf[] = [];
   private listLevel = 0;
+  private rewriteRules: RewriteRule[] = [];
 
   currentMode: OutputMode = 'md';
   headersMap: { [id: string]: string } = {};
@@ -122,7 +140,7 @@ export class StateMachine {
       this.listLevel++;
       payload.listLevel = this.listLevel;
 
-      if (payload.continueNumbering) {
+      if (payload.continueNumbering || payload.continueList) {
         this.preserveMinLevel = this.listLevel;
       }
 
@@ -134,7 +152,7 @@ export class StateMachine {
       if (this.currentLevel?.tag === 'UL') {
         payload.listLevel = this.currentLevel.payload.listLevel;
         const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
-        payload.number = this.fetchListNo(listStyleName);
+        payload.number = payload.number || this.fetchListNo(listStyleName);
         payload.number++;
         this.storeListNo(listStyleName, payload.number);
       }
@@ -159,29 +177,33 @@ export class StateMachine {
       isTag: true,
       mode: this.currentMode,
       tag: tag,
-      payload
+      payload,
+      comment: 'pushTag'
     });
 
     // POST-PUSH-BEFORE-TREEPOP
 
-    if (tag === '/CODE') {
-      switch (this.currentMode) {
-        case 'md':
-          if (this.parentLevel?.tag === 'P' || !this.parentLevel) {
-            const matchingPos = this.currentLevel.payload.position; // this.parentLevel.payload.position + 1
-            const afterPara = this.markdownChunks.chunks[matchingPos];
-            if (afterPara.isTag === true && afterPara.tag === 'CODE') {
-              afterPara.tag = 'PRE';
-              this.markdownChunks.chunks[this.markdownChunks.length - 1] = {
-                isTag: true,
-                mode: this.currentMode,
-                tag: '/PRE',
-                payload
-              };
-            }
-          }
-      }
-    }
+// Quarantine.
+// TODO: Remove after 2024.10.03
+// Related: code-links.md
+//     if (tag === '/CODE') {
+//       switch (this.currentMode) {
+//         case 'md':
+//           if (this.parentLevel?.tag === 'P' || !this.parentLevel) {
+//             const matchingPos = this.currentLevel.payload.position; // this.parentLevel.payload.position + 1
+//             const afterPara = this.markdownChunks.chunks[matchingPos];
+//             if (afterPara.isTag === true && afterPara.tag === 'CODE') {
+//               afterPara.tag = 'PRE';
+//               this.markdownChunks.chunks[this.markdownChunks.length - 1] = {
+//                 isTag: true,
+//                 mode: this.currentMode,
+//                 tag: '/PRE',
+//                 payload
+//               };
+//             }
+//           }
+//       }
+//     }
 
     if (tag === 'P') {
       switch (this.currentMode) {
@@ -223,7 +245,6 @@ export class StateMachine {
       }
     }
 
-
     if (tag === 'PRE') {
       const prevTag = this.markdownChunks.chunks[payload.position - 1];
       if (prevTag.isTag && prevTag.tag === '/PRE') {
@@ -232,7 +253,8 @@ export class StateMachine {
           isTag: true,
           mode: this.currentMode,
           tag: 'BR/',
-          payload: {}
+          payload: {},
+          comment: 'Merging PRE tags'
         };
       }
     }
@@ -263,7 +285,7 @@ export class StateMachine {
     }
 
     if (tag === '/I') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
         this.markdownChunks.removeChunk(payload.position);
         this.markdownChunks.removeChunk(this.currentLevel.payload.position);
@@ -278,7 +300,7 @@ export class StateMachine {
     }
 
     if (tag === '/P' || tag === '/PRE') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position);
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       switch (this.currentMode) {
         case 'raw':
         {
@@ -315,6 +337,20 @@ export class StateMachine {
       }
     }
 
+    if (tag === '/CODE') {
+      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
+      switch (this.currentMode) {
+        case 'md':
+          if (isMarkdownMacro(innerTxt)) {
+            this.markdownChunks.replace(this.currentLevel.payload.position, payload.position, {
+              isTag: false,
+              mode: this.currentMode,
+              text: stripMarkdownMacro(innerTxt)
+            });
+          }
+      }
+    }
+
     if (isClosing(tag)) {
       this.tagsTree.pop();
     }
@@ -339,7 +375,8 @@ export class StateMachine {
     this.markdownChunks.push({
       isTag: false,
       mode: this.currentMode,
-      text: txt
+      text: txt,
+      comment: 'pushText'
     });
   }
 
@@ -480,9 +517,7 @@ export class StateMachine {
     for (let position = this.markdownChunks.length - 1; position >= 0; position--) {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag && chunk.tag === 'P') {
-        const origNum = chunk.payload?.number;
         if (nextPara) {
-          const origNextNum = nextPara.payload?.number;
           if (nextPara.payload?.listLevel && !chunk.payload?.listLevel) {
             chunk.payload.listLevel = nextPara?.payload?.listLevel;
           }
@@ -527,7 +562,8 @@ export class StateMachine {
             isTag: true,
             mode: 'md',
             tag: 'BR/',
-            payload: {}
+            payload: {},
+            comment: 'Next tag is not BR/'
           });
         }
       }
@@ -536,10 +572,11 @@ export class StateMachine {
         const prevTag = this.markdownChunks.chunks[position - 1];
         if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
           this.markdownChunks.chunks.splice(position - 1, 0, {
-            isTag: true,
+            isTag: false,
             mode: 'md',
-            tag: 'BR/',
-            payload: {}
+            text: '\n',
+            // payload: {},
+            comment: 'Add empty line before: ' + chunk.tag
           });
           position++;
         }
@@ -551,7 +588,10 @@ export class StateMachine {
       const chunk = this.markdownChunks.chunks[position];
       if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
         const level = (chunk.payload.listLevel || 1) - 1;
-        const indent = spaces(level * 3);
+        let indent = spaces(level * 3);
+        if (chunk.payload.style?.paragraphProperties?.marginLeft) {
+          indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
+        }
         const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
         const firstStr = indent + listStr;
         const otherStr = indent + spaces(listStr.length);
@@ -669,14 +709,14 @@ export class StateMachine {
           }
 
           if (nextParaClosing > 0) {
-            const innerText = this.markdownChunks.extractText(position, nextParaClosing);
+            const innerText = this.markdownChunks.extractText(position, nextParaClosing, this.rewriteRules);
             if (innerText.length === 0) {
               continue;
             }
           }
 
           if (previousParaPosition > 0) {
-            const innerText = this.markdownChunks.extractText(previousParaPosition, position);
+            const innerText = this.markdownChunks.extractText(previousParaPosition, position, this.rewriteRules);
             if (innerText.length === 0) {
               continue;
             }
@@ -685,14 +725,37 @@ export class StateMachine {
             }
           }
 
-          this.markdownChunks.chunks.splice(position, 2, {
-            isTag: true,
-            tag: 'BR/',
-            mode: 'md',
-            payload: {}
-          });
-          position--;
-          previousParaPosition = 0;
+          const findFirstTextAfterPos = (start: number): string | null => {
+            for (let pos = start + 1; pos < this.markdownChunks.chunks.length; pos++) {
+              if ('text' in this.markdownChunks.chunks[pos]) {
+                return this.markdownChunks.chunks[pos].text;
+              }
+            }
+            return null;
+          };
+
+          const nextText = findFirstTextAfterPos(nextParaClosing);
+          if (nextText === '* ' || nextText?.trim().length === 0) {
+            this.markdownChunks.chunks.splice(position, 2, {
+              isTag: false,
+              text: '\n',
+              mode: 'md',
+              comment: 'End of line, but next line is list'
+            });
+            position--;
+            previousParaPosition = 0;
+          } else {
+            this.markdownChunks.chunks.splice(position, 2, {
+              isTag: true,
+              tag: 'BR/',
+              mode: 'md',
+              payload: {},
+              comment: 'End of line, two paras merge together'
+            });
+            position--;
+            previousParaPosition = 0;
+          }
+
         }
       }
     }
@@ -704,5 +767,9 @@ export class StateMachine {
 
   pushError(error: string) {
     this.errors.push(error);
+  }
+
+  setRewriteRules(rewriteRules: RewriteRule[]) {
+    this.rewriteRules = rewriteRules;
   }
 }

@@ -9,10 +9,12 @@
 
     <template v-slot:sidebar="{ collapse }">
       <GitSideBar
+          ref="git_sidebar"
           :selectedPath="selectedPath"
           :gitChanges="gitChanges"
           :checked="checked"
           @toggle="toggle"
+          @toggleAll="toggleAll"
           @setCurrentDiff="setCurrentDiff"
           @collapse="collapse"
       />
@@ -21,7 +23,6 @@
     <form>
       <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
-
         <div v-if="file_deleted" class="flex-grow-1">
           <div class="alert-warning p-3 mb-3">
             File deleted
@@ -42,7 +43,7 @@
 
         <GitFooter v-if="isSomethingChecked" :checked="checked">
           <div class="input-groups">
-            <textarea v-grow class="form-control" placeholder="Commit message" v-model="message"></textarea>
+            <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
           </div>
           <button type="button" class="btn btn-primary" @click="submitCommit">Commit</button>
           <button type="button" class="btn btn-primary" @click="submitCommitBranch">Commit into Branch</button>
@@ -88,14 +89,15 @@ export default {
     contentDir: {
       type: String
     },
-    selectedFile: Object
+    selectedFile: Object,
+    selectedFolder: Object
   },
   data() {
     return {
       user_config: {},
       checked: {},
       gitChanges: null,
-      message: '',
+      commitMsg: '',
       diffs: [],
       selectedPath: '',
       isSomethingChecked: false
@@ -103,7 +105,8 @@ export default {
   },
   computed: {
     file_deleted() {
-      return !this.selectedFile.id && !['/toc.md'].includes(this.selectedFile.path);
+      return false;
+      // return !this.selectedFile.id && !this.selectedFolder?.path && !['/toc.md'].includes(this.selectedFile.path);
     },
     git_remote_url() {
       return this.user_config.remote_url || '';
@@ -128,6 +131,12 @@ export default {
           Prism.highlightElement(elem);
         }
       });
+    },
+    checked: {
+      deep: true,
+      handler() {
+        this.generateCommitMsg();
+      }
     }
   },
   async created() {
@@ -155,6 +164,10 @@ export default {
 
       if (path) {
         this.diffs = await this.GitClientService.getDiff(this.driveId, path);
+
+        this.checked = {
+          [path.substring(1)]: true
+        };
       }
     },
     async fetch() {
@@ -178,12 +191,21 @@ export default {
 
       const responseConfig = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
       this.user_config = await responseConfig.json();
+
+      this.$nextTick(() => {
+        const el = this.$el.querySelector('[data-path="' + this.selectedPath + '"]');
+        if (el) {
+          el.scrollIntoView();
+        }
+      });
+
+      this.isSomethingChecked = Object.keys(this.checked).length > 0;
     },
     open(url) {
       window.open(url, '_blank');
     },
     async submitCommitBranch(event) {
-      if (!this.message) {
+      if (!this.commitMsg) {
         alert('No commit message');
         return;
       }
@@ -195,28 +217,32 @@ export default {
       }
 
       const branch = window.prompt('Enter branch name');
+      if (!branch) {
+        alert('No branch name');
+        return;
+      }
 
       await disableElement(event, async () => {
-        const filePath = [];
+        const filePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
           const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (!change?.state?.isDeleted) {
-            filePath.push(checkedFileName);
+            filePaths.push(checkedFileName);
           }
         }
 
         await this.commitBranch({
           branch,
-          message: this.message,
-          filePath: filePath,
-          removeFilePath: []
+          message: this.commitMsg,
+          filePaths: filePaths,
+          removeFilePaths: []
         });
-        this.message = '';
+        this.commitMsg = '';
       });
     },
     async submitCommit(event) {
-      if (!this.message) {
+      if (!this.commitMsg) {
         alert('No commit message');
         return;
       }
@@ -228,25 +254,25 @@ export default {
       }
 
       await disableElement(event, async () => {
-        const filePath = [];
-        const removeFilePath = [];
+        const filePaths = [];
+        const removeFilePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
           const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (change?.state?.isDeleted) {
-            removeFilePath.push(checkedFileName);
+            removeFilePaths.push(checkedFileName);
           } else {
-            filePath.push(checkedFileName);
+            filePaths.push(checkedFileName);
           }
         }
 
         try {
           await this.commit({
-            message: this.message,
-            filePath: filePath,
-            removeFilePath: removeFilePath
+            message: this.commitMsg,
+            filePaths: filePaths,
+            removeFilePath: removeFilePaths
           });
-          this.message = '';
+          this.commitMsg = '';
         } catch (err) {
           if (err.message === 'cannot push non-fastforwardable reference') {
             if (window.confirm('Git error: ' + err.message + '. Do you want to reset git repository with remote branch?')) {
@@ -269,6 +295,15 @@ export default {
           window.location.hash = '#drive_logs';
         }
       });
+    },
+    toggleAll() {
+      if (Object.keys(this.checked).length === this.gitChanges.length) {
+        this.checked = {};
+      } else {
+        for (const change of this.gitChanges) {
+          this.checked[change.path] = true;
+        }
+      }
     },
     toggle(path) {
       if (this.checked[path]) {
@@ -301,6 +336,31 @@ export default {
           this.checked[item.path] = true;
         }
         this.isSomethingChecked = true;
+      }
+    },
+    async generateCommitMsg() {
+      if (Object.keys(this.checked).length > 1) {
+        this.commitMsg = '';
+      }
+      if (Object.keys(this.checked).length === 1) {
+        const path = Object.keys(this.checked)[0];
+        try {
+          const response = await this.authenticatedClient.fetchApi(`/api/file/${this.driveId}/${path}`);
+
+          const body = await response.text();
+          const lines = body.split('\n');
+
+          const titleLine = lines.find(line => line.startsWith('title: '));
+          const title = titleLine ? titleLine.substring('title: '.length).replace(/^'(.+)'$/, '$1') : '';
+
+          const lastAuthor = response.headers.get('wgd-last-author');
+
+          if (lastAuthor && title) {
+            this.commitMsg = `${lastAuthor} updated ${title}`;
+          }
+        } catch (err) {
+          console.warn(err);
+        }
       }
     }
   }

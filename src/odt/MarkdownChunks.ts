@@ -1,5 +1,6 @@
-import {ListStyle, Style, TextProperty} from './LibreOffice';
-import {inchesToMm, inchesToPixels} from './utils';
+import {ListStyle, Style, TextProperty} from './LibreOffice.ts';
+import {inchesToPixels} from './utils.ts';
+import {applyRewriteRule, RewriteRule} from './applyRewriteRule.ts';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
@@ -20,7 +21,8 @@ export interface TagPayload {
   lang?: string;
   position?: number;
   id?: string;
-  counterId?: string;
+  listId?: string;
+  continueList?: string;
   href?: string;
   alt?: string;
   marginLeft?: number;
@@ -45,6 +47,7 @@ export interface MarkdownTextChunk {
   isTag: false;
   mode: OutputMode;
   text: string;
+  comment?: string;
 }
 
 export interface MarkdownTagChunk {
@@ -52,10 +55,12 @@ export interface MarkdownTagChunk {
   mode: OutputMode;
   tag?: TAG;
   payload: TagPayload;
+  comment?: string;
 }
 
 type MarkdownChunk = MarkdownTextChunk | MarkdownTagChunk;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function debugChunkToText(chunk: MarkdownChunk) {
   if (chunk.isTag === false) {
     return chunk.text;
@@ -184,7 +189,7 @@ function chunkToText(chunk: MarkdownChunk) {
         case '/A':
           return `](${chunk.payload.href})`;
         case 'SVG/':
-          return `<object type="image/svg+xml" data="${chunk.payload.href}" ></object>`;
+          return `![](${chunk.payload.href})`;
         case 'IMG/':
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
@@ -312,6 +317,80 @@ function chunkToText(chunk: MarkdownChunk) {
 
 }
 
+
+function chunksToText(chunks: MarkdownChunk[], rules: RewriteRule[]) {
+  const retVal = [];
+
+  for (let chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
+    const chunk = chunks[chunkNo];
+
+    if ('tag' in chunk && ['SVG/', 'IMG/'].includes(chunk.tag)) {
+      let broke = false;
+      for (const rule of rules) {
+        const { shouldBreak, text } = applyRewriteRule(rule, {
+          ...chunk,
+          href: 'payload' in chunk ? chunk.payload?.href : undefined,
+          alt: 'payload' in chunk ? chunk.payload?.alt : undefined
+        });
+
+        if (shouldBreak) {
+          retVal.push(text);
+          broke = true;
+          break;
+        }
+      }
+
+      if (broke) {
+        continue;
+      }
+    }
+
+    if ('tag' in chunk && 'A' === chunk.tag) {
+      let matchingNo = -1;
+
+      for (let idx = chunkNo + 1; idx < chunks.length; idx++) {
+        const chunkEnd = chunks[idx];
+        if ('tag' in chunkEnd && chunkEnd.tag === '/A') {
+          matchingNo = idx;
+          break;
+        }
+      }
+
+      if (matchingNo !== -1) {
+        const alt = chunksToText(chunks.slice(chunkNo + 1, matchingNo).filter(i => !i.isTag), rules).join('');
+        let broke = false;
+        for (const rule of rules) {
+          const { shouldBreak, text } = applyRewriteRule(rule, {
+            ...chunk,
+            href: 'payload' in chunk ? chunk.payload?.href : undefined,
+            alt
+          });
+
+          if (shouldBreak) {
+            retVal.push(text);
+            broke = true;
+            break;
+          }
+        }
+
+        if (broke) {
+          chunks.splice(chunkNo, matchingNo - chunkNo);
+          continue;
+        }
+      }
+    }
+
+    retVal.push(chunkToText(chunk));
+  }
+
+  // chunks.map(c => chunkToText(c));
+/*
+*/
+
+  return retVal;
+}
+
+
 export class MarkdownChunks {
   chunks: MarkdownChunk[] = [];
 
@@ -323,22 +402,36 @@ export class MarkdownChunks {
     this.chunks.push(s);
   }
 
-  toString() {
+  toString(rules: RewriteRule[] = []) {
     // console.log(this.chunks.map(c => debugChunkToText(c)).join('\n'));
-    return this.chunks.map(c => chunkToText(c)).join('');
+    return chunksToText(this.chunks, rules).join('')
+      .split('\n')
+      .map(line => line.trim().length > 0 ? line : '')
+      .join('\n');
   }
 
-  extractText(start: number, end: number) {
-    const slice = this.chunks.slice(start, end).filter(i => !i.isTag).map(c => chunkToText(c)).join('');
+  extractText(start: number, end: number, rules: RewriteRule[] = []) {
+    const slice = chunksToText(this.chunks.slice(start, end).filter(i => !i.isTag), rules).join('');
     return slice;
   }
 
-  removeChunk(startPara: number) {
-    this.chunks.splice(startPara, 1);
-    for (let i = startPara; i < this.chunks.length; i++) {
+  replace(start: number, end: number, chunk: MarkdownChunk) {
+    const deleteCount = end - start + 1;
+    this.chunks.splice(start, deleteCount, chunk);
+    for (let i = start; i < this.chunks.length; i++) {
       const chunk = this.chunks[i];
       if (chunk.isTag) {
-        chunk.payload.position--;
+        chunk.payload.position -= deleteCount;
+      }
+    }
+  }
+
+  removeChunk(start: number, deleteCount = 1) {
+    this.chunks.splice(start, deleteCount);
+    for (let i = start; i < this.chunks.length; i++) {
+      const chunk = this.chunks[i];
+      if (chunk.isTag) {
+        chunk.payload.position -= deleteCount;
       }
     }
   }
@@ -367,6 +460,10 @@ export class MarkdownChunks {
         line += chunk.text
           .replace(/\n/g, '\\n')
           .replace(/\t/g, '[TAB]');
+      }
+
+      if (chunk.comment) {
+        line += ' // ' + chunk.comment;
       }
 
       logger.log(line);

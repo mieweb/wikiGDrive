@@ -11,12 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: sudo apt-get update
       - run: sudo apt-get install -y libkrb5-dev
 
-      - name: Use Node.js 18.x
+      - name: Use Node.js 20.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
 
       - name: Install node_modules
@@ -35,11 +36,26 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Use Node.js 18.x
+    - name: Use Node.js 20.x
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: npm
+
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/hugo:/site" \
+        -v "${GITHUB_WORKSPACE}/website:/website" \
+        -v "/var/www/dev.wikigdrive.com:/dist/hugo" \
+        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://dev.wikigdrive.com" \
+        wgd-action-runner:develop /steps/step_render_hugo
+
+    - name: Copy index for vite
+      run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/dev.wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
 
     - uses: whoan/docker-build-with-cache-action@v5
       with:
@@ -48,37 +64,25 @@ jobs:
         push_image_and_stages: false
         build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
-    - name: Build action runner
-      run: docker build -t "wgd-action-runner:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
-
     - name: Stop and remove
       run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
       continue-on-error: true
-
-    - name: Build hugo docs
-      run: |
-        docker run \
-        -v "${GITHUB_WORKSPACE}/doc:/site/doc" \
-        -v "${GITHUB_WORKSPACE}/themes:/site/themes" \
-        -v "${GITHUB_WORKSPACE}/config.toml:/site/config.toml" \
-        -v "/var/www/dev.wikigdrive.com:/site/dist/hugo" \
-        --env CONFIG_TOML="/site/config.toml" --env BASE_URL="https://dev.wikigdrive.com" \
-        wgd-action-runner:develop /steps/step_render_hugo
 
     - name: Start
       run: |
         docker run -d --name wikigdrive-develop \
           --restart unless-stopped \
           -v wikiGDriveDevelop:/data \
-          -v /home/githubactions/wikigdrive/service_account.json:/service_account.json \
-          -v /home/githubactions/wikigdrive/env.develop:/usr/src/app/.env \
+          -v /home/wikigdrive/service_account.json:/service_account.json \
+          -v /home/wikigdrive/env.develop:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=wikigdrive-develop" \
           --link=zipkin:zipkin \
           --publish 127.0.0.1:4000:3000 \
-          "wikigdrive-develop:${GITHUB_SHA}" wikigdrive-ts \
+          "wikigdrive-develop:${GITHUB_SHA}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \

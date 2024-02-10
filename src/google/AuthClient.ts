@@ -132,6 +132,36 @@ export class UserAuthClient implements HasAccessToken {
     }).toString();
   }
 
+  async getWebDriveShareUrl(redirect_uri: string, state: string): Promise<string> {
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id: this.client_id,
+      redirect_uri,
+      // access_type: 'offline',
+      prompt: 'consent select_account',
+      response_type: 'code',
+      include_granted_scopes: 'true',
+      scope: [
+        'https://www.googleapis.com/auth/drive'
+      ].join(' '),
+      state
+    }).toString();
+  }
+
+  async getUploadDriveUrl(redirect_uri: string, state: string): Promise<string> {
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id: this.client_id,
+      redirect_uri,
+      // access_type: 'offline',
+      prompt: 'consent select_account',
+      response_type: 'code',
+      include_granted_scopes: 'true',
+      scope: [
+        'https://www.googleapis.com/auth/drive.file'
+      ].join(' '),
+      state
+    }).toString();
+  }
+
   async getWebAuthUrl(redirect_uri: string, state: string): Promise<string> {
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
       client_id: this.client_id,

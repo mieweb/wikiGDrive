@@ -11,7 +11,22 @@
         <router-link :to="{ name: 'home' }">WikiGDrive</router-link>
       </span>
     </span>
-    <slot></slot>
+    <slot>
+      <ul class="navbar-nav mr-auto align-items-center justify-content-start">
+        <li class="nav-item">
+          <a class="nav-link" :class="{'active': $route.path.startsWith('/docs')}" href="/docs">Documentation</a>
+        </li>
+        <li class="nav-item" v-if="isLogged">
+          <a class="nav-link" :class="{'active': $route.path.startsWith('/drive')}" href="/drive">Drives</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav mr-auto align-items-center">
+        <li>
+          <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
+          <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
+        </li>
+      </ul>
+    </slot>
   </nav>
 </template>
 <script>

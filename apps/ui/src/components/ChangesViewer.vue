@@ -34,86 +34,7 @@
             </tbody>
           </table>
         </div>
-        <div class="card-footer" v-if="active_jobs.length === 0">
-          <div class="btn-group">
-            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
-            <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
-          </div>
-        </div>
       </div>
-
-      <div class="card mt-3">
-        <div class="card-header">
-          Jobs
-        </div>
-        <div class="card-body">
-
-          <div class="row py-1 align-items-center" v-if="last_job.dateStr">
-            <div class="col-8">
-              <span v-if="last_job.kind === 'full'" class="fw-bold">Last full sync </span>
-              <span v-else class="fw-bold">Last synced </span>
-              <span class="small text-muted">{{ last_job.dateStr }} </span>
-              <span v-if="last_job.durationStr" class="small text-muted">&nbsp;{{ last_job.durationStr }}</span>
-            </div>
-            <div v-if="last_transform.durationStr" class="col-8">
-              <span class="fw-bold">Last transform took</span>
-              <span class="small text-muted">&nbsp;{{ last_transform.durationStr }}</span>
-            </div>
-          </div>
-
-          <table class="table table-bordered jobs-list mt-3" v-if="active_jobs.length > 0">
-            <thead>
-            <th>Job</th>
-            <th>Progress</th>
-            </thead>
-            <tbody>
-            <tr v-for="(job, idx) of active_jobs" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state }">
-              <td>{{ job.title }}</td>
-              <td>
-                <span v-if="job.progress && job.progress.total > job.progress.completed">&nbsp;{{ job.progress.completed }} / {{ job.progress.total }}</span>
-                <span v-else>{{ job.state }}</span>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-
-          <div v-if="active_jobs.length === 0" class="mt-3">
-            No active jobs
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card mt-3" v-if="archive.length > 0">
-        <div class="card-header">
-          Jobs done
-        </div>
-        <div class="card-body">
-            <table class="table table-bordered jobs-list mt-3">
-            <thead>
-            <th>Job</th>
-            <th>Started</th>
-            <th>Finished</th>
-            </thead>
-            <tbody>
-            <tr v-for="(job, idx) of archive" :key="idx" class="jobs-list__item" :class="{ active: 'running' === job.state, 'text-danger': 'failed' === job.state, 'text-warning': job.progress && job.progress.warnings > 0 }">
-              <td>{{ job.title }}</td>
-              <td>{{ job.startedStr }}</td>
-              <td>
-                {{ job.finishedStr }}
-                ({{ job.durationStr }})
-                <button class="btn float-end" @click="showLogs(job)">Logs</button>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-
     </div>
   </div>
 </template>
@@ -135,19 +56,6 @@ export default {
   computed: {
     fileChanges() {
       return this.changes.filter(change => change.mimeType !== 'application/vnd.google-apps.folder');
-    },
-    archive() {
-      const arr = [].concat(this.$root.archive);
-      arr.sort((a, b) => b.finished - a.finished);
-
-      return arr.map(a => {
-        return {
-          ...a,
-          finishedStr: new Date(a.finished).toISOString(),
-          startedStr: new Date(a.started).toISOString(),
-          durationStr: Math.round((+new Date(a.finished) - +new Date(a.started)) / 100)/10 + 's'
-        };
-      });
     }
   },
   methods: {
@@ -175,13 +83,6 @@ export default {
           this.$router.push(`/drive/${this.driveId}${path}`);
         }
       }
-    },
-    showLogs(job) {
-      this.$emit('showLogs', {
-        from: job.started,
-        until: job.finished
-      });
-      this.setActiveTab('drive_logs');
     }
   }
 };

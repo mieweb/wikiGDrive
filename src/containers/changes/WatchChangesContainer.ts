@@ -6,7 +6,7 @@ import {fileURLToPath} from 'url';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
 import {GoogleFile} from '../../model/GoogleFile';
 import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
-import {JobManagerContainer} from '../job/JobManagerContainer';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
 import {UserConfigService} from '../google_folder/UserConfigService';
 import {type FileId} from '../../model/model';
 import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry';
@@ -62,6 +62,12 @@ export class WatchChangesContainer extends Container {
     });
     this.engine.subscribe('drive:unregister', (driveId) => {
       this.stopWatching(driveId);
+      this.engine.emit(driveId, 'toasts:added', {
+        type: 'drive:unregister',
+        links: {},
+        title: 'WikiGDrive access to Google Drive removed',
+        description: `Access for ${this.params.share_email} has been removed`
+      });
     });
   }
 
@@ -87,11 +93,13 @@ export class WatchChangesContainer extends Container {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
       await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
         type: 'sync',
         payload: fileIdsString,
         title: 'Syncing file: ' + fileIdsString
       });
       await jobManagerContainer.schedule(driveId, {
+        ...initJob(),
         type: 'transform',
         title: 'Transform markdown'
       });
@@ -113,6 +121,10 @@ export class WatchChangesContainer extends Container {
         await this.watchDriveChanges(driveId);
       } catch (err) {
         this.logger.warn(err.message);
+        if (err.status === 403 && err.message.indexOf('The attempted action requires shared drive membership') > -1) {
+          const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
+          await folderRegistryContainer.refreshDrives();
+        }
       }
     }, 3000);
   }

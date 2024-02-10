@@ -27,7 +27,8 @@ then
 fi
 
 cat /site/tmp_dir/config.toml
-hugo --config="$CONFIG_TOML" --verbose --baseURL="$BASE_URL"
+#hugo --logLevel debug --config="$CONFIG_TOML" --baseURL="$BASE_URL"
+hugo --logLevel info --config="$CONFIG_TOML" --baseURL="$BASE_URL"
 
 CODE=$?
 

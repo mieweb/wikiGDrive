@@ -7,7 +7,7 @@ import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../Lin
 import {LocalFilesGenerator} from './LocalFilesGenerator';
 import {QueueTransformer} from './QueueTransformer';
 import {generateNavigationHierarchy, NavigationHierarchy} from './generateNavigationHierarchy';
-import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile';
+import {ConflictFile, LocalFile, LocalFileMap, RedirFile} from '../../model/LocalFile';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform';
 import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
 import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml';
@@ -206,8 +206,9 @@ export class TransformContainer extends Container {
   private filterFilesIds: FileId[];
   private userConfigService: UserConfigService;
 
-  private progressNotifyCallback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void;
+  private progressNotifyCallback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void;
   private transformLog: TransformLog;
+  private isFailed = false;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -223,7 +224,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
     this.transformLog = new TransformLog();
     this.logger.add(this.transformLog);
   }
@@ -295,7 +296,6 @@ export class TransformContainer extends Container {
         googleFile,
         destinationDirectory,
         localFile,
-        this.hierarchy,
         this.localLinks,
         this.userConfigService.config
       );
@@ -308,12 +308,19 @@ export class TransformContainer extends Container {
   }
 
   async run(rootFolderId: FileId) {
+    if (!(this.userConfigService.config.transform_subdir || '').startsWith('/')) {
+      this.logger.warn('Content subdirectory must be set and start with /');
+      return;
+    }
     const contentFileService = await getContentFileService(this.generatedFileService, this.userConfigService);
 
     const queueTransformer = new QueueTransformer(this.logger);
-    queueTransformer.onProgressNotify(({ total, completed, warnings }) => {
+    queueTransformer.onProgressNotify(({ total, completed, warnings, failed }) => {
+      if (failed > 0) {
+        this.isFailed = true;
+      }
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed, warnings });
+        this.progressNotifyCallback({ total, completed, warnings, failed });
       }
     });
 
@@ -322,8 +329,6 @@ export class TransformContainer extends Container {
     await this.localLog.load();
     this.localLinks = new LocalLinks(contentFileService);
     await this.localLinks.load();
-
-    this.hierarchy = await this.loadNavigationHierarchy();
 
     const processed = new Set<string>();
     const previouslyFailed = new Set<string>();
@@ -399,6 +404,16 @@ export class TransformContainer extends Container {
     await markdownTreeProcessor.regenerateTree(rootFolderId);
     await markdownTreeProcessor.save();
 
+    this.hierarchy = await this.loadNavigationHierarchy();
+    for (const k in this.hierarchy) {
+      const item = this.hierarchy[k];
+      if (item.identifier) {
+        const [, path] = await markdownTreeProcessor.findById(item.identifier);
+        item.pageRef = path;
+      }
+    }
+    await this.writeHugoMenu(this.hierarchy);
+
     const indexer = new LunrIndexer();
     await markdownTreeProcessor.walkTree((page) => {
       indexer.addPage(page);
@@ -406,6 +421,10 @@ export class TransformContainer extends Container {
     });
     await this.generatedFileService.mkdir('/.private');
     await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
+  }
+
+  public failed() {
+    return this.isFailed;
   }
 
   async rewriteLinks(destinationDirectory: FileContentService) {
@@ -421,7 +440,7 @@ export class TransformContainer extends Container {
         const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)/ig, (str: string) => {
           const fileId = str.substring('gdoc:'.length);
           const lastLog = this.localLog.findLastFile(fileId);
-          if (lastLog) {
+          if (lastLog && lastLog.event !== 'removed') {
             if (fileName.endsWith('.svg')) {
               return convertToRelativeSvgPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
             } else {
@@ -443,9 +462,9 @@ export class TransformContainer extends Container {
 
     const markDownScanner = new DirectoryScanner();
     const transformerQueue = new QueueTransformer(this.logger);
-    transformerQueue.onProgressNotify(({ total, completed, warnings }) => {
+    transformerQueue.onProgressNotify(({ total, completed, warnings, failed }) => {
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed, warnings });
+        this.progressNotifyCallback({ total, completed, warnings, failed });
       }
     });
 
@@ -464,6 +483,11 @@ export class TransformContainer extends Container {
           const localFileContent = await contentFileService.readFile(lastLog.filePath);
           const localFile = markDownScanner.parseMarkdown(localFileContent, lastLog.filePath);
           if (!localFile) {
+            continue;
+          }
+
+          const lastLogRedir = this.localLog.findLastFileByPath(dirName ? dirName + '/' + fileName : fileName);
+          if (lastLogRedir?.event === 'removed') {
             continue;
           }
 
@@ -502,12 +526,22 @@ export class TransformContainer extends Container {
   async destroy(): Promise<void> {
   }
 
+  async writeHugoMenu(hierarchy: NavigationHierarchy) {
+    const menus = {
+      main: Object.values(hierarchy)
+    };
+
+    await this.generatedFileService.mkdir('config/_default');
+    await this.generatedFileService.writeJson('config/_default/menu.en.json', menus);
+  }
+
   async loadNavigationHierarchy(): Promise<NavigationHierarchy> {
     const googleFiles: GoogleFile[] = await this.filesService.readJson('.folder-files.json') || [];
 
     const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation' || googleFile.name === 'navigation');
     if (navigationFile) {
-      const processor = new OdtProcessor(this.filesService, navigationFile.id);
+      const odtPath = this.filesService.getRealPath() + '/' + navigationFile.id + '.odt';
+      const processor = new OdtProcessor(odtPath);
       await processor.load();
       const content = processor.getContentXml();
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
@@ -521,7 +555,23 @@ export class TransformContainer extends Container {
     return {};
   }
 
-  onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number, warnings?: number }) => void) {
+  onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
     this.progressNotifyCallback = callback;
+  }
+
+  async removeOutdatedLogEntries(destinationDirectory: FileContentService, destinationFiles: LocalFileMap) {
+    const prefix = destinationDirectory.getVirtualPath();
+    const logFiles = await this.localLog.getDirFiles(prefix);
+    for (const logEntry of logFiles) {
+      const fileName = logEntry.filePath.substring(prefix.length);
+      if (!destinationFiles[fileName]) {
+        this.localLog.append({
+          filePath: logEntry.filePath,
+          id: logEntry.id,
+          type: logEntry.type,
+          event: 'removed',
+        });
+      }
+    }
   }
 }

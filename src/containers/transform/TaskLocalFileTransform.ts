@@ -1,20 +1,20 @@
-import {QueueTask} from '../google_folder/QueueTask';
 import winston from 'winston';
-import {FileContentService} from '../../utils/FileContentService';
-import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
-import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile';
-import {SvgTransform} from '../../SvgTransform';
-import {NavigationHierarchy} from './generateNavigationHierarchy';
-import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter';
-import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown';
-import {OdtProcessor} from '../../odt/OdtProcessor';
-import {UnMarshaller} from '../../odt/UnMarshaller';
-import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
-import {OdtToMarkdown} from '../../odt/OdtToMarkdown';
-import {LocalLinks} from './LocalLinks';
-import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer';
-import {JobManagerContainer} from '../job/JobManagerContainer';
-import {UserConfig} from '../google_folder/UserConfigService';
+
+import {QueueTask} from '../google_folder/QueueTask.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {GoogleFile, MimeTypes} from '../../model/GoogleFile.ts';
+import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile.ts';
+import {SvgTransform} from '../../SvgTransform.ts';
+import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter.ts';
+import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown.ts';
+import {OdtProcessor} from '../../odt/OdtProcessor.ts';
+import {UnMarshaller} from '../../odt/UnMarshaller.ts';
+import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice.ts';
+import {OdtToMarkdown} from '../../odt/OdtToMarkdown.ts';
+import {LocalLinks} from './LocalLinks.ts';
+import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer.ts';
+import {JobManagerContainer} from '../job/JobManagerContainer.ts';
+import {UserConfig} from '../google_folder/UserConfigService.ts';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -48,11 +48,11 @@ export class TaskLocalFileTransform extends QueueTask {
               private googleFile: GoogleFile,
               private destinationDirectory: FileContentService,
               private localFile: LocalFile,
-              private hierarchy: NavigationHierarchy,
               private localLinks: LocalLinks,
               private userConfig: UserConfig
               ) {
     super(logger);
+    this.retries = 0;
 
     if (!this.localFile.fileName) {
       throw new Error(`No fileName for: ${this.localFile.id}`);
@@ -60,7 +60,7 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async run(): Promise<QueueTask[]> {
-    await this.generate(this.localFile, this.hierarchy);
+    await this.generate(this.localFile);
 
     return [];
   }
@@ -125,20 +125,25 @@ export class TaskLocalFileTransform extends QueueTask {
     });
   }
 
-  async generateDocument(localFile: MdFile, googleFile: GoogleFile, hierarchy: NavigationHierarchy) {
+  async generateDocument(localFile: MdFile) {
     let frontMatter;
     let markdown;
     let links = [];
     let errors = [];
 
-    const processor = new OdtProcessor(this.googleFolder, localFile.id, true);
-    await processor.load();
-    await processor.unzipAssets(this.destinationDirectory, this.realFileName);
-    const content = processor.getContentXml();
-    const stylesXml = processor.getStylesXml();
-    const fileNameMap = processor.getFileNameMap();
+    const odtPath = this.googleFolder.getRealPath() + '/' + localFile.id + '.odt';
+    const destinationPath = this.destinationDirectory.getRealPath();
+
+    const rewriteRules = this.userConfig.rewrite_rules || [];
 
     if (SINGLE_THREADED_TRANSFORM) {
+      const processor = new OdtProcessor(odtPath, true);
+      await processor.load();
+      await processor.unzipAssets(destinationPath, this.realFileName);
+      const content = processor.getContentXml();
+      const stylesXml = processor.getStylesXml();
+      const fileNameMap = processor.getFileNameMap();
+
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
       const document = parser.unmarshal(content);
 
@@ -149,6 +154,7 @@ export class TaskLocalFileTransform extends QueueTask {
       }
 
       const converter = new OdtToMarkdown(document, styles, fileNameMap);
+      converter.setRewriteRules(rewriteRules);
       if (this.realFileName === '_index.md') {
         converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'));
       } else {
@@ -156,7 +162,7 @@ export class TaskLocalFileTransform extends QueueTask {
       }
       markdown = await converter.convert();
       links = Array.from(converter.links);
-      frontMatter = generateDocumentFrontMatter(localFile, hierarchy, links, this.userConfig.fm_without_version);
+      frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
       errors = converter.getErrors();
       this.warnings = errors.length;
     } else {
@@ -169,11 +175,10 @@ export class TaskLocalFileTransform extends QueueTask {
 
       const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
         localFile,
-        hierarchy,
         realFileName: this.realFileName,
-        fileNameMap,
-        content,
-        stylesXml,
+        odtPath,
+        destinationPath,
+        rewriteRules,
         fm_without_version: this.userConfig.fm_without_version
       });
 
@@ -192,13 +197,10 @@ export class TaskLocalFileTransform extends QueueTask {
     }
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
-    if (process.env.VERSION === 'dev') {
-      await this.destinationDirectory.writeFile(this.realFileName.replace(/.md$/, '.debug.xml'), content);
-    }
     this.localLinks.append(localFile.id, localFile.fileName, links);
   }
 
-  async generate(localFile: LocalFile, hierarchy: NavigationHierarchy): Promise<void> {
+  async generate(localFile: LocalFile): Promise<void> {
     try {
       const verStr = this.localFile.version ? ' #' + this.localFile.version : ' ';
       if (localFile.type === 'conflict') {
@@ -218,7 +220,7 @@ export class TaskLocalFileTransform extends QueueTask {
         // const googleFile = await this.googleScanner.getFileById(localFile.id);
         // const downloadFile = await this.downloadFilesStorage.findFile(f => f.id === localFile.id);
         if (this.googleFile) { // && downloadFile
-          await this.generateDocument(localFile, this.googleFile, hierarchy);
+          await this.generateDocument(localFile);
         }
       } else if (localFile.type === 'drawing') {
         this.logger.info('Transforming drawing: ' + this.localFile.fileName + verStr);
@@ -236,6 +238,7 @@ export class TaskLocalFileTransform extends QueueTask {
       this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
     } catch (err) {
       this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.stack ? err.stack : err.message);
+      throw err;
     }
   }
 

@@ -66,8 +66,13 @@ export class DriveUiController extends Controller {
       await markdownTreeProcessor.load();
       const [file, drivePath] = await markdownTreeProcessor.findById(fileId);
       if (file && drivePath) {
-        const transformSubDir = userConfigService.config.transform_subdir ? '/' + userConfigService.config.transform_subdir : '';
-        this.res.redirect(`/drive/${driveId}${transformSubDir || ''}/${drivePath}`);
+        if (userConfigService.config.transform_subdir.length > 0) {
+          const transformSubDir = (!userConfigService.config.transform_subdir.startsWith('/') ? '/' : '')
+            + userConfigService.config.transform_subdir;
+          this.res.redirect(`/drive/${driveId}${transformSubDir}/${drivePath}`);
+        } else {
+          this.res.redirect(`/drive/${driveId}`);
+        }
         return;
       } else {
         this.res.redirect(`/drive/${driveId}`);

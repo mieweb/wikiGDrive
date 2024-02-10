@@ -15,12 +15,14 @@ import {
   TextProperty,
   TextSpace,
   TextSpan
-} from './LibreOffice';
-import {urlToFolderId} from '../utils/idParsers';
-import {MarkdownChunks} from './MarkdownChunks';
-import {StateMachine} from './StateMachine';
-import {inchesToPixels, inchesToSpaces, spaces} from './utils';
-import {extractPath} from './extractPath';
+} from './LibreOffice.ts';
+import {urlToFolderId} from '../utils/idParsers.ts';
+import {MarkdownChunks} from './MarkdownChunks.ts';
+import {isMarkdownMacro, StateMachine} from './StateMachine.ts';
+import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
+import {extractPath} from './extractPath.ts';
+import {mergeDeep} from './mergeDeep.ts';
+import {RewriteRule} from './applyRewriteRule.ts';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -32,6 +34,28 @@ interface FileNameMap {
   [name: string]: string
 }
 
+function getInnerText(span: TextSpan) {
+  let retVal = '';
+  for (const child of span.list) {
+    if (typeof child === 'string') {
+      retVal += child;
+      continue;
+    }
+    switch (child.type) {
+      case 'line_break':
+        retVal += '\n';
+        break;
+      case 'tab':
+        retVal += '\t';
+        break;
+      case 'space':
+        retVal += spaces((<TextSpace>child).chars || 1);
+        break;
+    }
+  }
+  return retVal;
+}
+
 export class OdtToMarkdown {
 
   private readonly stateMachine: StateMachine;
@@ -39,16 +63,18 @@ export class OdtToMarkdown {
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
   private picturesDir = '';
+  private rewriteRules: RewriteRule[] = [];
+  private counters: { [key: string]: number } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
     this.stateMachine = new StateMachine(this.chunks);
   }
 
-  getStyle(styleName): Style {
+  getStyle(styleName: string): Style {
     if (!this.styles[styleName]) {
       const docStyle = this.documentStyles?.styles?.styles.find(a => a.name === styleName);
       if (docStyle) {
-        return docStyle;
+        return structuredClone(docStyle);
       }
 
       return {
@@ -62,8 +88,7 @@ export class OdtToMarkdown {
     }
 
     const parentStyle = this.getStyle(this.styles[styleName].parentStyleName);
-
-    return Object.assign({}, parentStyle, this.styles[styleName]);
+    return structuredClone(mergeDeep(parentStyle, this.styles[styleName]));
   }
 
   getListStyle(listStyleName): ListStyle {
@@ -93,7 +118,37 @@ export class OdtToMarkdown {
 
     this.stateMachine.postProcess();
 
-    return await this.rewriteHeaders(this.chunks.toString());
+    const markdown = this.chunks.toString(this.rewriteRules);
+    const trimmed = this.trimBreaks(markdown);
+    return await this.rewriteHeaders(trimmed);
+  }
+
+  trimBreaks(markdown: string) {
+    const rows = markdown.split('\n');
+
+    let inSidePre = false;
+    for (let i = 0; i < rows.length - 1; i++) {
+      if (rows[i].substring(0, 3) === '```') {
+        inSidePre = !inSidePre;
+      }
+
+      if (inSidePre && (rows[i].match(/[^ ] {2}$/))) {
+        rows[i] = rows[i].replace(/ {2}$/, '');
+        continue;
+      }
+
+      if ((rows[i].match(/[^ ] {2}$/)) && rows[i + 1].trim().length === 0) {
+        rows[i] = rows[i].replace(/ {2}$/, '');
+        continue;
+      }
+
+      if (rows[i] === '  ') {
+        rows[i] = '';
+        continue;
+      }
+    }
+
+    return rows.join('\n');
   }
 
   getErrors() {
@@ -274,7 +329,7 @@ export class OdtToMarkdown {
   async drawGToText(drawG: DrawG) {
     this.stateMachine.pushTag('HTML_MODE/');
 
-    const style = this.getStyle(drawG.styleName);
+    this.getStyle(drawG.styleName);
 
     let maxx = 0;
     let maxy = 0;
@@ -389,6 +444,32 @@ export class OdtToMarkdown {
       this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
     }
 
+    let codeElementsCount = 0;
+    let textElementsCount = 0;
+    for (const paraChild of paragraph.list) {
+      if (typeof paraChild === 'string') {
+        textElementsCount++;
+        continue;
+      }
+      if (paraChild.type === 'span') {
+        const paraSpan = <TextSpan>paraChild;
+        const spanStyle = this.getStyle(paraSpan.styleName);
+
+        const innerTxt = getInnerText(paraSpan);
+        if (isMarkdownMacro(innerTxt)) {
+          continue;
+        }
+        if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+          codeElementsCount++;
+        }
+      }
+    }
+
+    const onlyCodeChildren = codeElementsCount > 0 && codeElementsCount + textElementsCount === paragraph.list.length;
+    if (onlyCodeChildren) {
+      this.stateMachine.pushTag('PRE');
+    }
+
 /*    switch (this.top.mode) {
       case 'html':
         this.stateMachine.pushTag('P');
@@ -440,12 +521,16 @@ export class OdtToMarkdown {
           {
             const span = <TextSpan>child;
             const spanStyle = this.getStyle(span.styleName);
-            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && paragraph.list.length === 1) {
-              this.stateMachine.pushTag('PRE');
+            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && onlyCodeChildren) {
               const span2 = Object.assign({}, span);
               span2.styleName = '';
               await this.spanToText(span2);
-              this.stateMachine.pushTag('/PRE');
+            } else if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+              this.stateMachine.pushTag('CODE');
+              const span2 = Object.assign({}, span);
+              span2.styleName = '';
+              await this.spanToText(span2);
+              this.stateMachine.pushTag('/CODE');
             } else {
               await this.spanToText(span);
             }
@@ -504,6 +589,10 @@ export class OdtToMarkdown {
       this.stateMachine.pushTag('/H4');
     }
 
+    if (onlyCodeChildren) {
+      this.stateMachine.pushTag('/PRE');
+    }
+
     if (this.isCourier(paragraph.styleName)) {
       this.stateMachine.pushTag('/PRE');
     } else {
@@ -550,9 +639,9 @@ export class OdtToMarkdown {
 
     const continueNumbering = list.continueNumbering === 'true';
 
-    this.stateMachine.pushTag('UL', { counterId: list.id, listStyle, continueNumbering });
+    this.stateMachine.pushTag('UL', { listId: list.id, continueList: list.continueList, listStyle, continueNumbering });
     for (const listItem of list.list) {
-      this.stateMachine.pushTag('LI', { counterId: list.id, listStyle });
+      this.stateMachine.pushTag('LI', { listId: list.id });
       for (const item of listItem.list) {
         if (item.type === 'paragraph') {
           await this.paragraphToText(<TextParagraph>item);
@@ -563,7 +652,7 @@ export class OdtToMarkdown {
       }
       this.stateMachine.pushTag('/LI');
     }
-    this.stateMachine.pushTag('/UL', { counterId: list.id, listStyle });
+    this.stateMachine.pushTag('/UL', { listId: list.id, listStyle });
   }
 
   async officeTextToText(content: OfficeText): Promise<void> {
@@ -595,5 +684,10 @@ export class OdtToMarkdown {
 
   setPicturesDir(picturesDir: string) {
     this.picturesDir = picturesDir;
+  }
+
+  setRewriteRules(rewriteRules: RewriteRule[]) {
+    this.rewriteRules = rewriteRules;
+    this.stateMachine.setRewriteRules(rewriteRules);
   }
 }

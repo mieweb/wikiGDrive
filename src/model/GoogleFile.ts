@@ -31,7 +31,9 @@ export const MimeTypes = {
   PRESENTATION_MIME: 'application/vnd.google-apps.presentation',
   APPS_SCRIPT: 'application/vnd.google-apps.script',
   MARKDOWN: 'text/x-markdown',
-  SHORTCUT: 'application/vnd.google-apps.shortcut'
+  SHORTCUT: 'application/vnd.google-apps.shortcut',
+  IMAGE_SVG: 'image/svg+xml',
+  HTML: 'text/html'
 };
 export const MimeToExt = {
   'image/svg+xml': '.svg',

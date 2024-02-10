@@ -1,4 +1,4 @@
-import htmlparser2 from 'htmlparser2';
+import * as htmlparser2 from 'htmlparser2';
 
 // TODO https://relaxng.org/relaxng.rng
 // TODO namespaces
@@ -48,8 +48,6 @@ function addXmlHandlers(classType) {
     const elemDef: XmlElementDef = classType._elems[xmlElementTag];
     if (elemDef) {
       if (!elemDef.classTypeName || typeof elemDef.classTypeName !== 'string') {
-        // context.parser.startIndex
-        console.log('elemDef', xmlElementTag, elemDef);
         throw new Error('noClassType for tag: ' + xmlElementTag + ', fieldName: ' + elemDef.fieldName);
       }
 
@@ -190,6 +188,9 @@ export class UnMarshaller {
   }
 
   public unmarshal(content) {
+    if ('string' !== typeof content) {
+      content = new TextDecoder().decode(content);
+    }
     this.parser.write(content);
     this.parser.end();
     return this.top.val['retVal'];

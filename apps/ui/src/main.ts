@@ -23,6 +23,8 @@ function completedJob(job) {
 
 const emitter = mitt();
 
+const initialHtmlContent = document.body.querySelector('.mainbar__content') ? document.body.querySelector('.mainbar__content').innerHTML : '';
+
 const app: Vue.App = Vue.createApp({
   components: {
     'App': App
@@ -36,7 +38,8 @@ const app: Vue.App = Vue.createApp({
       archive: [],
       jobsMap: {},
       changes: [],
-      changesMap: {}
+      changesMap: {},
+      initialHtmlContent
     };
   },
   template: '<App />',
@@ -53,6 +56,7 @@ const app: Vue.App = Vue.createApp({
     this.emitter.on('*', async (type) => {
       switch (type) {
         case 'run_action:done':
+        case 'git_fetch:done':
         case 'git_pull:done':
         case 'git_push:done':
         case 'git_reset:done':
@@ -142,7 +146,7 @@ const app: Vue.App = Vue.createApp({
         return;
       }
     }
-    console.error('errorCaptured', err);
+    console.error('errorCaptured', Object.keys(err), err);
   }
 });
 
@@ -204,12 +208,22 @@ const router = VueRouter.createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('./pages/MainView.vue')
+      component: () => import('./pages/StaticView.vue')
+    },
+    {
+      path: '/docs',
+      name: 'docs',
+      component: () => import('./pages/StaticView.vue')
+    },
+    {
+      path: '/docs/:pathMatch(.*)*',
+      name: 'docs',
+      component: () => import('./pages/StaticView.vue')
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: () => import('./pages/NotFound.vue')
+      component: () => import('./pages/StaticView.vue')
     }
   ]
 });

@@ -36,6 +36,21 @@
                   </div>
                 </td>
               </tr>
+              <tr v-else>
+                <td>
+                  <div class="d-flex" data-bs-toggle="tooltip" data-bs-placement="bottom" :title="selectedFile.path">
+                    <strong>Path:&nbsp;</strong>
+                    <span class="text-overflow">
+                      <span class="small text-muted">Not synced</span>
+                    </span>
+                    <span class="small text-muted text-end">
+                        <button class="btn btn-white bg-white text-primary btn-sm" v-if="selectedFile.id" @click="syncSingle($event, selectedFile)" title="Sync single">
+                          <i class="fa-solid fa-rotate" :class="{'fa-spin': syncing}"></i>
+                        </button>
+                      </span>
+                  </div>
+                </td>
+              </tr>
 
               <tr v-if="selectedFile.modifiedTime">
                 <td class="text-overflow">
@@ -138,9 +153,12 @@
           </div>
         </div>
 
-        <div class="card-header d-flex" v-if="!syncing">
+        <div class="card-header d-flex" v-if="!syncing && selectedFile.path">
           Git
           <ul class="nav flex-row flex-grow-1 flex-shrink-0 justify-content-end">
+            <li>
+              <small v-if="selectedFile.attachments > 0" :title="selectedFile.attachments + ' images'">&nbsp;(<i class="fa-solid fa-paperclip"></i>{{ selectedFile.attachments }})</small>
+            </li>
             <ToolButton
                 v-if="gitStats.initialized"
                 class="pl-1 p-0"
@@ -178,13 +196,13 @@
             />
           </ul>
         </div>
-        <GitFooter class="mt-3 mb-3" v-if="!syncing">
-          <div v-if="selectedFile.status">
+        <GitFooter class="mt-3 mb-3" v-if="!syncing && selectedFile.path">
+          <div v-if="selectedFile.status || selectedFile.attachments > 0">
             <div class="input-groups">
               <textarea v-grow class="form-control" placeholder="Commit message" v-model="commitMsg"></textarea>
             </div>
           </div>
-          <div v-if="selectedFile.status" class="mb-3">
+          <div v-if="selectedFile.status || selectedFile.attachments > 0" class="mb-3">
             <button v-if="git_remote_url" type="button" class="btn btn-primary" @click="commitSinglePush"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Commit &amp; push</button>
             <button type="button" class="btn btn-primary" @click="commitSingle">Commit</button>
           </div>
@@ -205,8 +223,8 @@
 <script lang="js">
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import {DEFAULT_TAB, UiMixin} from '../components/UiMixin.ts';
-import {disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
+import {UiMixin} from '../components/UiMixin.ts';
+import {DEFAULT_TAB, disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
 import {GitMixin} from '../components/GitMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
 import NotRegistered from './NotRegistered.vue';
@@ -237,6 +255,7 @@ export default {
       untransformed: null,
       commitMsg: '',
       activeTab: DEFAULT_TAB,
+      activeTabParams: [],
       folderPath: '',
       contentDir: '',
       selectedFile: {},
@@ -254,8 +273,8 @@ export default {
       }
     };
   },
-  created() {
-    this.fetch();
+  async created() {
+    await this.fetch();
   },
   computed: {
     change() {
@@ -287,14 +306,14 @@ export default {
   watch: {
     async $route() {
       await this.fetch();
-      this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+      [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
     },
     async active_jobs() {
       await this.fetch();
     }
   },
   mounted() {
-    this.activeTab = this.$route.hash.replace(/^#/, '') || DEFAULT_TAB;
+    [this.activeTab, ...this.activeTabParams] = this.getActiveTab();
   },
   methods: {
     async commitSinglePush(event) {
@@ -342,6 +361,9 @@ export default {
         try {
           const response = await this.authenticatedClient.fetchApi(`/api/gdrive/${this.driveId}/${fileId}`);
 
+          const body = await response.text();
+          const lines = body.split('\n');
+
           const path = response.headers.get('wgd-path') || '';
           const fileName = response.headers.get('wgd-file-name') || '';
 
@@ -359,6 +381,7 @@ export default {
             mimeType: response.headers.get('wgd-mime-type'),
             previewUrl: response.headers.get('wgd-preview-url'),
             status: response.headers.get('wgd-git-status'),
+            attachments: response.headers.get('wgd-git-attachments'),
             lastAuthor: response.headers.get('wgd-last-author')
           };
 
@@ -372,11 +395,23 @@ export default {
             }
           }
 
+          if (!this.commitMsg) {
+            const titleLine = lines.find(line => line.startsWith('title: '));
+            const title = titleLine ? titleLine.substring('title: '.length).replace(/^'(.+)'$/, '$1') : '';
+
+            if (this.selectedFile.lastAuthor && title) {
+              this.commitMsg = `${this.selectedFile.lastAuthor} updated ${title}`;
+            }
+          }
+
           this.notRegistered = false;
         } catch (err) {
+          this.commitMsg = '';
           if (err.code === 404) {
             this.shareEmail = err.share_email;
             this.notRegistered = true;
+          } else {
+            throw err;
           }
         }
       }

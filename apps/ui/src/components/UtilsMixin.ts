@@ -1,3 +1,5 @@
+export const DEFAULT_TAB = 'html';
+
 export async function disableElement(event, handler) {
   const origAttr = event.target.getAttribute('disabled');
   if ('disabled' === origAttr) {
@@ -111,6 +113,10 @@ export const UtilsMixin = {
     }
   },
   methods: {
+    getActiveTab() {
+      const parts = (this.$route.hash.replace(/^#/, '') || DEFAULT_TAB).split(':');
+      return parts;
+    },
     setActiveTab(tab, selectedFilePath) {
       if (this.isAddon) {
         if (this.fullDrivePath) {
@@ -214,6 +220,15 @@ export const UtilsMixin = {
         });
       });
     },
+    async uploadGdrive(event) {
+      await disableElement(event, async () => {
+        const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/upload', { method: 'get'});
+        const json = await response.json();
+        if (json.shareUrl) {
+          window.location = json.shareUrl;
+        }
+      });
+    },
     async transformSingle(event, selectedFile) {
       await disableElement(event, async () => {
         await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
@@ -236,7 +251,7 @@ export const UtilsMixin = {
 
       const url = new URL(authPath, 'http://example.com');
       url.searchParams.set('popupWindow', 'true');
-      authPath = url.pathname + '?' + url.search;
+      authPath = url.pathname + (url.search || '');
 
       let authPopup;
       window['authenticated'] = (url) => {
@@ -256,7 +271,7 @@ export const UtilsMixin = {
       const driveId = this.driveId ? this.driveId : 'none';
       const urlSearchParams = new URLSearchParams();
       // urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
-      urlSearchParams.set('redirectTo', window.location.pathname);
+      urlSearchParams.set('redirectTo', window.location.pathname && window.location.pathname.startsWith('/drive') ? window.location.pathname : '/drive');
       const authPath = '/auth/' + driveId + '?' + urlSearchParams.toString();
       this.openAuthRedirWindow(authPath, callback);
     },
@@ -269,7 +284,8 @@ export const UtilsMixin = {
         },
         return_error: true
       });
-      await this.fetch();
+      // await this.fetch();
+      this.$router.push('/');
     }
   }
 };

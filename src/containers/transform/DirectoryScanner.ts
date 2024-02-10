@@ -7,7 +7,28 @@ import yaml from 'js-yaml';
 import {LOG_NAME} from './LocalLog';
 
 export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
-  '.tree.json', '.gitignore'];
+  '.tree.json'];
+
+export const RESERVED_DIR_NAMES = ['.git'];
+
+export function isTextFileName(fileName) {
+  if (fileName.endsWith('.txt')) {
+    return true;
+  }
+  if (fileName.endsWith('.gitignore')) {
+    return true;
+  }
+  if (fileName.endsWith('.ts')) {
+    return true;
+  }
+  if (fileName.endsWith('.css')) {
+    return true;
+  }
+  if (fileName.endsWith('.md')) {
+    return true;
+  }
+  return false;
+}
 
 export function stripConflict(localPath: string) {
   const parts = localPath.split('.');
@@ -95,7 +116,15 @@ export class DirectoryScanner {
         continue;
       }
 
+      if (!await existingDirectory.exists(realFileName)) {
+        continue;
+      }
+
       if (await existingDirectory.isDirectory(realFileName)) {
+        if (realFileName.endsWith('.assets')) {
+          continue;
+        }
+
         if (await existingDirectory.exists(`${realFileName}/.wgd-directory.yaml`)) {
           const yamlContent = await existingDirectory.readFile(`${realFileName}/.wgd-directory.yaml`);
           const props = yaml.load(yamlContent);
@@ -112,7 +141,24 @@ export class DirectoryScanner {
             const map: {[realFileName: string]: LocalFile} = props.fileMap || {};
             this.files[realFileName] = directory;
           }
+        } else {
+          if (RESERVED_DIR_NAMES.indexOf(realFileName) > -1) {
+            continue;
+          }
+          const directory: Directory = {
+            type: 'directory',
+            fileName: stripConflict(realFileName),
+            id: 'TO_FILL',
+            mimeType: MimeTypes.FOLDER_MIME,
+            modifiedTime: 'TO_FILL',
+            title: stripConflict(realFileName)
+          };
+          this.files[realFileName] = directory;
         }
+        continue;
+      }
+
+      if (realFileName.endsWith('.debug.xml')) {
         continue;
       }
 
@@ -131,7 +177,7 @@ export class DirectoryScanner {
           modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
           version: yamlFile ? yamlFile.version : undefined,
           mimeType: 'image/svg+xml',
-          title: stripConflict(realFileName)
+          title: stripConflict(realFileName).replace(/.svg$/, '')
         };
         this.files[realFileName] = drawingFile;
       } else
@@ -147,11 +193,11 @@ export class DirectoryScanner {
           const mdFile: MdFile = {
             type: 'md',
             fileName: stripConflict(realFileName),
-            id: undefined,
+            id: yamlFile ? yamlFile.id : 'TO_FILL',
             modifiedTime: yamlFile ? yamlFile.modifiedTime : 'TO_FILL',
             version: undefined,
             mimeType: 'text/x-markdown',
-            title: stripConflict(realFileName),
+            title: stripConflict(realFileName).replace(/.md/, ''),
             lastAuthor: ''
           };
           this.files[realFileName] = mdFile;
@@ -169,6 +215,7 @@ export class DirectoryScanner {
             if (realFileName.endsWith('.js')) return 'text/javascript';
             if (realFileName.endsWith('.sh')) return 'text/x-sh';
             if (realFileName.endsWith('.toml')) return 'text/toml';
+            if (isTextFileName(realFileName)) return 'text/plain';
             return 'application/binary';
           })(realFileName),
           title: stripConflict(realFileName)

@@ -1,19 +1,15 @@
 import {LinkMode} from './model';
 
 export interface CliParams {
-  link_mode: LinkMode;
+  // link_mode: LinkMode; // TODO: remove ???
   workdir: string;
-  drive_id: string;
-  drive: string;
-  command: string;
+  // drive: string; // TODO: remove ???
   args: string[];
   debug: string[];
-  force: boolean;
 
   client_id?: string;
   client_secret?: string;
   service_account?: string;
-  git_update_delay: number;
   server_port?: number;
   share_email?: string;
 }
