@@ -156,9 +156,9 @@ navWeight: -15
 2. If file is removed - remove .md file, remove images
 3. If file is new (not exists in local_files.json) - add to localFiles, schedule for generation
 4. If file exists but with different desireLocalPath:
-  * Remove old .md, remove old images
-  * Schedule for generation
-  * Generate redir with old localPath
+   * Remove old .md, remove old images
+   * Schedule for generation
+   * Generate redir with old localPath
 5. Remove dangling redirects
 6. Check if there are any conflicts (same desireLocalPath)
 7. Check if any conflicts can be removed

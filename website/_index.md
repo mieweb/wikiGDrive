@@ -1,5 +1,6 @@
 ---
 #layout: overridden inside /hugo/themes/wgd-bootstrap/layouts/index.html
+title: _index
 ---
 # wikiGDrive
 
@@ -15,7 +16,7 @@ WikiGDrive is a node app that uses the [Google Drive API](https://developers.goo
 
 [Google Drive Notes](https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#)
 | [Github Project](https://github.com/mieweb/wikiGDrive/projects)
-| [Github Developer Notes](docs/developer_guide.md)
+| [Github Developer Notes](docs/developer-guide.md)
 
 With a "Shared Drive" as the key, WikiGDrive:
 
@@ -30,7 +31,7 @@ WikiGDrive scans for changes in the drive and then refresh the local converted f
 
 ## Developer Documentation
 
-* [Developer README](docs/developer_guide.md)
+* [Developer README](docs/developer-guide.md)
 * [Internals](docs/internals.md)
 
 ## Install from NPM

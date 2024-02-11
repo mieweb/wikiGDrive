@@ -6,17 +6,13 @@ navWeight: 1000 # Upper weight gets higher precedence, optional.
 
 Google Drive to MarkDown synchronization
 
-[![Develop Server Deploy](https://github.com/mieweb/wikiGDrive/actions/workflows/DevelopServerDeploy.yml/badge.svg?branch=develop&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/DevelopServerDeploy.yml)
-[![Prod Server Deploy](https://github.com/mieweb/wikiGDrive/actions/workflows/ProdServerDeploy.yml/badge.svg?branch=master&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/ProdServerDeploy.yml)
-[![CodeQL](https://github.com/mieweb/wikiGDrive/actions/workflows/codeql-analysis.yml/badge.svg?branch=master&event=push)](https://github.com/mieweb/wikiGDrive/actions/workflows/codeql-analysis.yml?query=event%3Apush+branch%3Amaster+)
-
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
 ![Diagram](./diagram.svg)
 
 [Google Drive Notes](https://docs.google.com/document/d/1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY/edit#)
 | [Github Project](https://github.com/mieweb/wikiGDrive/projects)
-| [Github Developer Notes](./developer_guide.md)
+| [Github Developer Notes](./developer-guide.md)
 
 With a "Shared Drive" as the key, WikiGDrive:
 
@@ -31,7 +27,7 @@ WikiGDrive scans for changes in the drive and then refresh the local converted f
 
 ## Developer Documentation
 
-* [Developer README](./developer_guide.md)
+* [Developer README](./developer-guide.md)
 * [Internals](./internals.md)
 
 ## Usage and options
