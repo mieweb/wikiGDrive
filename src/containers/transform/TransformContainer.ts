@@ -558,20 +558,4 @@ export class TransformContainer extends Container {
   onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
     this.progressNotifyCallback = callback;
   }
-
-  async removeOutdatedLogEntries(destinationDirectory: FileContentService, destinationFiles: LocalFileMap) {
-    const prefix = destinationDirectory.getVirtualPath();
-    const logFiles = await this.localLog.getDirFiles(prefix);
-    for (const logEntry of logFiles) {
-      const fileName = logEntry.filePath.substring(prefix.length);
-      if (!destinationFiles[fileName]) {
-        this.localLog.append({
-          filePath: logEntry.filePath,
-          id: logEntry.id,
-          type: logEntry.type,
-          event: 'removed',
-        });
-      }
-    }
-  }
 }
