@@ -29,6 +29,27 @@ function locateUsage(usageMarkdown: string, sectionPrefix: string): string {
   return retVal.join('\n');
 }
 
+function indentMarkdownCodes(markdown: string) {
+  const retVal = [];
+
+  const lines = markdown.split('\n');
+  let inCode = false;
+  for (const line of lines) {
+    if (line === '```') {
+      inCode = !inCode;
+      continue;
+    }
+
+    if (inCode) {
+      retVal.push('    ' + line);
+    } else {
+      retVal.push(line);
+    }
+  }
+
+  return retVal.join('\n');
+}
+
 export async function usage(filename: string) {
   const pkg = JSON.parse(new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json'))));
 
@@ -38,13 +59,15 @@ export async function usage(filename: string) {
   const sectionName = filename.replace(/^.*-(.*).ts/, '$1');
 
 
-  const mdFilename = execName + '_usage.md';
+  const mdFilename = execName + '-usage.md';
 
   const usageMarkdown = new TextDecoder().decode(fs.readFileSync(path.resolve(__dirname, '..', '..', 'website', 'docs', 'usage', mdFilename)));
 
-  const commandUsage = locateUsage(usageMarkdown, `${execName} ${sectionName}`) || locateUsage(usageMarkdown, `${execName} usage`);
-  const allCommands = locateUsage(usageMarkdown, 'All commands');
-  const commonOptions = locateUsage(usageMarkdown, 'Common options');
+  const indentedMarkdown = indentMarkdownCodes(usageMarkdown);
+
+  const commandUsage = locateUsage(indentedMarkdown, `${execName} ${sectionName}`) || locateUsage(indentedMarkdown, `${execName} usage`);
+  const allCommands = locateUsage(indentedMarkdown, 'All commands');
+  const commonOptions = locateUsage(indentedMarkdown, 'Common options');
 
   console.log(
     `${pkg.name} version: ${pkg.version}, ${process.env.GIT_SHA}\n\nUsage:\n${commandUsage.trim()}\n\n${commonOptions.trim()}\n\n${allCommands.trim()}`);
