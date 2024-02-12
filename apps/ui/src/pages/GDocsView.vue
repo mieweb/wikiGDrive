@@ -329,11 +329,11 @@ export default {
       }
 
       const folderPath = this.folderPath.endsWith('/') ? this.folderPath : this.folderPath + '/';
-      const filePath = folderPath + this.selectedFile.fileName;
+      const filePaths = folderPath + this.selectedFile.fileName;
 
       await this.commit({
         message: this.commitMsg,
-        filePath
+        filePaths
       });
       this.commitMsg = '';
       return true;
