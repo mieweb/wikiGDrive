@@ -1,8 +1,19 @@
 import slugify from 'slugify';
 
 import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
-import {fixCharacters, inchesToSpaces, spaces} from './utils.ts';
+import {fixCharacters} from './utils.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
+import {postProcessHeaders} from './postprocess/postProcessHeaders.js';
+import {postProcessPreMacros} from './postprocess/postProcessPreMacros.js';
+import {addIndentsAndBullets} from './postprocess/addIndentsAndBullets.js';
+import {fixBold} from './postprocess/fixBold.js';
+import {hideSuggestedChanges} from './postprocess/hideSuggestedChanges.js';
+import {addEmptyLines} from './postprocess/addEmptyLines.js';
+import {mergeParagraphs} from './postprocess/mergeParagraphs.js';
+import {removePreWrappingAroundMacros} from './postprocess/removePreWrappingAroundMacros.js';
+import {fixListParagraphs} from './postprocess/fixListParagraphs.js';
+import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInlineFormatting.js';
+import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.js';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -46,22 +57,6 @@ export function stripMarkdownMacro(innerTxt) {
     return innerTxt.substring(prefix.length, innerTxt.length - suffix.length);
   }
   return innerTxt;
-}
-
-function isPreBeginMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}');
-}
-
-function isPreEndMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% /pre ') && innerTxt.endsWith(' %}}');
-}
-
-function isBeginMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
-}
-
-function isEndMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }
 
 export class StateMachine {
@@ -381,384 +376,17 @@ export class StateMachine {
   }
 
   postProcess() {
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-
-      if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        const tagOpening = chunk.tag.substring(1);
-        if (prevChunk.isTag && prevChunk.tag === tagOpening) {
-          this.markdownChunks.removeChunk(position);
-          this.markdownChunks.removeChunk(position - 1);
-          position -= 2;
-          continue;
-        }
-      }
-
-
-      if (chunk.isTag && chunk.tag === 'PRE') {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag && prevChunk.tag === 'P') {
-          this.markdownChunks.removeChunk(position - 1);
-          position--;
-          continue;
-        }
-      }
-
-      if (chunk.isTag && chunk.tag === '/PRE') {
-        const prevChunk = this.markdownChunks.chunks[position + 1];
-        if (prevChunk?.isTag && prevChunk.tag === '/P') {
-          this.markdownChunks.removeChunk(position + 1);
-          position--;
-          continue;
-        }
-      }
-    }
-
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag === false && isMarkdownBeginMacro(chunk.text)) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        const postChunk = this.markdownChunks.chunks[position + 1];
-        if (prevChunk.isTag && prevChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-          this.markdownChunks.removeChunk(position - 1);
-          postChunk.tag = 'PRE';
-          position--;
-          continue;
-        }
-      }
-
-      if (chunk.isTag === false && isMarkdownEndMacro(chunk.text)) {
-        const preChunk = this.markdownChunks.chunks[position - 1];
-        const postChunk = this.markdownChunks.chunks[position + 1];
-        if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-          preChunk.tag = '/PRE';
-          this.markdownChunks.removeChunk(position + 1);
-          position--;
-          continue;
-        }
-      }
-    }
-
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag === false && chunk.text.startsWith('```') && chunk.text.length > 3) {
-        const preChunk = this.markdownChunks.chunks[position - 2];
-        if (preChunk.isTag && preChunk.tag === 'PRE') {
-          preChunk.payload.lang = chunk.text.substring(3);
-          this.markdownChunks.removeChunk(position);
-          position--;
-          continue;
-        }
-      }
-    }
-
-    for (let position = 1; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag && ['/B', '/I'].indexOf(chunk.tag) > -1) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag === false && prevChunk.mode === 'md') {
-          const text = prevChunk.text;
-          const removedTrailingSpaces = text.replace(/[\s]+$/, '');
-          const spaces = text.substring(removedTrailingSpaces.length);
-          if (spaces.length > 0) {
-            prevChunk.text = removedTrailingSpaces;
-            this.markdownChunks.chunks.splice(position + 1, 0, {
-              isTag: false,
-              mode: 'md',
-              text: spaces
-            });
-            position++;
-          }
-        }
-      }
-    }
-
-    const matching = {
-      '/B': 'B',
-      '/I': 'I'
-    };
-
-    const double = ['B', 'I', '/B', '/I'];
-
-    for (let position = 1; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag && Object.keys(matching).indexOf(chunk.tag) > -1) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag && prevChunk.tag === matching[chunk.tag]) {
-          this.markdownChunks.removeChunk(position);
-          this.markdownChunks.removeChunk(position - 1);
-          position-=2;
-          continue;
-        }
-      }
-
-      if (chunk.isTag && ['PRE'].indexOf(chunk.tag) > -1) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag && prevChunk.tag === '/PRE') {
-          prevChunk.tag = 'BR/';
-          this.markdownChunks.removeChunk(position);
-          position--;
-          continue;
-        }
-      }
-
-      if (chunk.isTag && double.indexOf(chunk.tag) > -1) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag && prevChunk.tag == chunk.tag) {
-          this.markdownChunks.removeChunk(position);
-          position--;
-          continue;
-        }
-      }
-    }
-
-    let nextPara = null;
-    for (let position = this.markdownChunks.length - 1; position >= 0; position--) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag && chunk.tag === 'P') {
-        if (nextPara) {
-          if (nextPara.payload?.listLevel && !chunk.payload?.listLevel) {
-            chunk.payload.listLevel = nextPara?.payload?.listLevel;
-          }
-          if (!chunk.payload?.bullet && nextPara.payload?.number === chunk.payload?.number && nextPara.payload?.listLevel === chunk.payload?.listLevel) {
-            delete nextPara.payload.number;
-          }
-        }
-        nextPara = chunk;
-      }
-    }
-
-    let inChange = false;
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag && chunk.tag === 'CHANGE') {
-        inChange = true;
-        this.markdownChunks.removeChunk(position);
-        position--;
-        continue;
-      }
-      if (chunk.isTag && chunk.tag === '/CHANGE') {
-        inChange = false;
-        this.markdownChunks.removeChunk(position);
-        position--;
-        continue;
-      }
-
-      if (inChange) {
-        this.markdownChunks.removeChunk(position);
-        position--;
-      }
-    }
-
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-
-      if (position + 1 < this.markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
-        const nextTag = this.markdownChunks.chunks[position + 1];
-
-        if (!(nextTag.isTag && nextTag.tag === 'BR/')) {
-          this.markdownChunks.chunks.splice(position + 1, 0, {
-            isTag: true,
-            mode: 'md',
-            tag: 'BR/',
-            payload: {},
-            comment: 'Next tag is not BR/'
-          });
-        }
-      }
-
-      if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
-        const prevTag = this.markdownChunks.chunks[position - 1];
-        if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
-          this.markdownChunks.chunks.splice(position - 1, 0, {
-            isTag: false,
-            mode: 'md',
-            text: '\n',
-            // payload: {},
-            comment: 'Add empty line before: ' + chunk.tag
-          });
-          position++;
-        }
-      }
-    }
-
-    // ADD indents and bullets
-    for (let position = 0; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-      if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
-        const level = (chunk.payload.listLevel || 1) - 1;
-        let indent = spaces(level * 3);
-        if (chunk.payload.style?.paragraphProperties?.marginLeft) {
-          indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
-        }
-        const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
-        const firstStr = indent + listStr;
-        const otherStr = indent + spaces(listStr.length);
-
-        let prevEmptyLine = 1;
-        for (let position2 = position + 1; position2 < this.markdownChunks.length; position2++) {
-          const chunk2 = this.markdownChunks.chunks[position2];
-          if (chunk2.isTag === true && chunk2.tag === '/P' && chunk.mode === 'md') {
-            position += position2 - position - 1;
-            break;
-          }
-
-          if (chunk2.isTag === true && ['BR/'].indexOf(chunk2.tag) > -1) {
-            prevEmptyLine = 2;
-            continue;
-          }
-
-          if (chunk2.isTag === false && chunk2.text.startsWith('{{% ') && chunk2.text.endsWith(' %}}')) {
-            const innerText = chunk2.text.substring(3, chunk2.text.length - 3);
-            if (innerText.indexOf(' %}}') === -1) {
-              continue;
-            }
-          }
-
-          if (prevEmptyLine > 0) {
-            this.markdownChunks.chunks.splice(position2, 0, {
-              mode: 'md',
-              isTag: false,
-              text: prevEmptyLine === 1 ? firstStr : otherStr
-            });
-            prevEmptyLine = 0;
-            position2++;
-          }
-        }
-      }
-    }
-
-    for (let position = 1; position < this.markdownChunks.length; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-
-      if (chunk.isTag === false && chunk.mode === 'md') {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag === false && prevChunk.mode === 'md') {
-          prevChunk.text = prevChunk.text + chunk.text;
-          this.markdownChunks.removeChunk(position);
-          position-=2;
-          continue;
-        }
-      }
-
-      if (chunk.isTag === false && isPreBeginMacro(chunk.text)) {
-        const prevChunk = this.markdownChunks.chunks[position - 1];
-        if (prevChunk.isTag && prevChunk.tag === 'PRE') {
-          this.markdownChunks.chunks.splice(position + 1, 0, {
-            isTag: true,
-            tag: 'PRE',
-            mode: 'md',
-            payload: {}
-          });
-          this.markdownChunks.removeChunk(position - 1);
-          position--;
-          continue;
-        }
-      }
-
-      if (chunk.isTag === false && isPreEndMacro(chunk.text)) {
-        const postChunk = this.markdownChunks.chunks[position + 1];
-        if (postChunk.isTag && postChunk.tag === '/PRE') {
-          this.markdownChunks.removeChunk(position + 1);
-          this.markdownChunks.chunks.splice(position, 0, {
-            isTag: true,
-            tag: '/PRE',
-            mode: 'md',
-            payload: {}
-          });
-        }
-      }
-    }
-
-    let previousParaPosition = 0;
-    const macros = [];
-    for (let position = 0; position < this.markdownChunks.length - 1; position++) {
-      const chunk = this.markdownChunks.chunks[position];
-
-      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === 'P') {
-        previousParaPosition = position;
-        continue;
-      }
-
-      if (chunk.isTag === false && chunk.mode === 'md' && isBeginMacro(chunk.text)) {
-        macros.push(chunk.text);
-        continue;
-      }
-
-      if (chunk.isTag === false && chunk.mode === 'md' && isEndMacro(chunk.text)) {
-        continue;
-      }
-
-      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === '/P') {
-        const nextChunk = this.markdownChunks.chunks[position + 1];
-
-        if (macros.length > 0) {
-          continue;
-        }
-
-        if (nextChunk.isTag && nextChunk.mode === 'md' && nextChunk.tag === 'P') {
-
-          let nextParaClosing = 0;
-          for (let position2 = position + 1; position2 < this.markdownChunks.length; position2++) {
-            const chunk2 = this.markdownChunks.chunks[position2];
-            if (chunk2.isTag && chunk2.mode === 'md' && chunk2.tag === '/P') {
-              nextParaClosing = position2;
-              break;
-            }
-          }
-
-          if (nextParaClosing > 0) {
-            const innerText = this.markdownChunks.extractText(position, nextParaClosing, this.rewriteRules);
-            if (innerText.length === 0) {
-              continue;
-            }
-          }
-
-          if (previousParaPosition > 0) {
-            const innerText = this.markdownChunks.extractText(previousParaPosition, position, this.rewriteRules);
-            if (innerText.length === 0) {
-              continue;
-            }
-            if (innerText.endsWith(' %}}')) {
-              continue;
-            }
-          }
-
-          const findFirstTextAfterPos = (start: number): string | null => {
-            for (let pos = start + 1; pos < this.markdownChunks.chunks.length; pos++) {
-              if ('text' in this.markdownChunks.chunks[pos]) {
-                return this.markdownChunks.chunks[pos].text;
-              }
-            }
-            return null;
-          };
-
-          const nextText = findFirstTextAfterPos(nextParaClosing);
-          if (nextText === '* ' || nextText?.trim().length === 0) {
-            this.markdownChunks.chunks.splice(position, 2, {
-              isTag: false,
-              text: '\n',
-              mode: 'md',
-              comment: 'End of line, but next line is list'
-            });
-            position--;
-            previousParaPosition = 0;
-          } else {
-            this.markdownChunks.chunks.splice(position, 2, {
-              isTag: true,
-              tag: 'BR/',
-              mode: 'md',
-              payload: {},
-              comment: 'End of line, two paras merge together'
-            });
-            position--;
-            previousParaPosition = 0;
-          }
-
-        }
-      }
-    }
+    postProcessHeaders(this.markdownChunks);
+    removePreWrappingAroundMacros(this.markdownChunks);
+    removeInsideDoubleCodeBegin(this.markdownChunks);
+    fixSpacesInsideInlineFormatting(this.markdownChunks);
+    fixBold(this.markdownChunks);
+    fixListParagraphs(this.markdownChunks);
+    hideSuggestedChanges(this.markdownChunks);
+    addEmptyLines(this.markdownChunks);
+    addIndentsAndBullets(this.markdownChunks);
+    postProcessPreMacros(this.markdownChunks);
+    mergeParagraphs(this.markdownChunks, this.rewriteRules);
 
     if (process.env.DEBUG_COLORS) {
       this.markdownChunks.dump();
