@@ -153,6 +153,22 @@ export class StateMachine {
         this.storeListNo(listStyleName, payload.number);
       }
     }
+/* List indents should be determined from marginLefts, which are different per doc. Damnit !!!
+    if (tag === 'P') {
+      if (this.currentLevel?.tag === 'LI') {
+        // payload.listLevel = this.currentLevel.payload.listLevel;
+        const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
+        payload.listLevel = inchesToSpaces(payload.style?.paragraphProperties?.marginLeft) / 2;
+
+        if (payload.listLevel !== this.currentLevel.payload.listLevel) {
+          console.log('EEEEEEEEEEEEEEE', payload.listLevel, this.currentLevel.payload.listLevel, payload.style?.paragraphProperties?.marginLeft);
+        }
+        payload.number = payload.number || this.fetchListNo(listStyleName);
+        payload.number++;
+        this.storeListNo(listStyleName, payload.number);
+      }
+    }
+*/
 
     // PRE-PUSH-PRE-TREEPUSH
 
