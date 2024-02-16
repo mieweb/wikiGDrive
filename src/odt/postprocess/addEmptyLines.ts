@@ -5,10 +5,10 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
   for (let position = 0; position < markdownChunks.length; position++) {
     const chunk = markdownChunks.chunks[position];
 
-    if (position + 1 < markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
+    if (position + 1 < markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4', 'IMG/', 'SVG/', '/UL'].indexOf(chunk.tag) > -1) {
       const nextTag = markdownChunks.chunks[position + 1];
 
-      if (!(nextTag.isTag && nextTag.tag === 'BR/')) {
+      if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD')) {
         markdownChunks.chunks.splice(position + 1, 0, {
           isTag: true,
           mode: 'md',
@@ -19,9 +19,9 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
       }
     }
 
-    if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
+    if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/', 'UL'].indexOf(chunk.tag) > -1) {
       const prevTag = markdownChunks.chunks[position - 1];
-      if (!(prevTag.isTag && prevTag.tag === 'BR/')) {
+      if (!(prevTag.isTag && prevTag.tag === 'BR/') && !(prevTag.isTag && prevTag.tag === 'TD')) {
         markdownChunks.chunks.splice(position - 1, 0, {
           isTag: false,
           mode: 'md',
