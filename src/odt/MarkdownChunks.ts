@@ -12,7 +12,7 @@ export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'TOC' | '/TOC' | 'SVG/' | 'IMG/' |
   'EMB_SVG' | '/EMB_SVG' | 'EMB_SVG_G' | '/EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | '/EMB_SVG_TEXT' |
   'EMB_SVG_TSPAN' | '/EMB_SVG_TSPAN' |
-  'CHANGE' | '/CHANGE' | 'HTML_MODE/' | 'MD_MODE/';
+  'CHANGE' | '/CHANGE' | 'HTML_MODE/' | 'MD_MODE/' | 'COMMENT';
 
 export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
 export const isClosing = (tag: TAG) => tag.startsWith('/');
