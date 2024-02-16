@@ -223,11 +223,14 @@ export class StateMachine {
       }
     }
 
+    // Inside list item tags like <strong> needs to be html tags
     if (this.currentMode === 'md' && tag === '/P' && this.parentLevel?.tag === 'LI') {
       for (let pos = this.currentLevel.payload.position + 1; pos < payload.position; pos++) {
         const chunk = this.markdownChunks.chunks[pos];
         if (chunk.isTag && chunk.tag === 'A') continue;
         if (chunk.isTag && chunk.tag === '/A') continue;
+        if (chunk.isTag && chunk.tag === 'IMG/') continue;
+        if (chunk.isTag && chunk.tag === 'SVG/') continue;
 
         chunk.mode = 'html';
       }
