@@ -23,6 +23,7 @@ import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
+import {postProcessText} from './postprocess/postProcessText.js';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -120,7 +121,8 @@ export class OdtToMarkdown {
 
     const markdown = this.chunks.toString(this.rewriteRules);
     const trimmed = this.trimBreaks(markdown);
-    return await this.rewriteHeaders(trimmed);
+    const rewrittenHeaders = await this.rewriteHeaders(trimmed);
+    return postProcessText(rewrittenHeaders);
   }
 
   trimBreaks(markdown: string) {
