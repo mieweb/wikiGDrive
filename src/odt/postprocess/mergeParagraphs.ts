@@ -1,12 +1,11 @@
 import {MarkdownChunks} from '../MarkdownChunks.js';
 import {RewriteRule} from '../applyRewriteRule.js';
 
-
-function isBeginMacro(innerTxt: string) {
+export function isBeginMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }
 
-function isEndMacro(innerTxt: string) {
+export function isEndMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }
 
