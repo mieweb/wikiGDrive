@@ -41,7 +41,7 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
             mode: 'md',
             isTag: false,
             text: prevEmptyLine === 1 ? firstStr : otherStr,
-            comment: 'Indent or bullet'
+            comment: 'Indent or bullet, level: ' + level
           });
           prevEmptyLine = 0;
           position2++;
