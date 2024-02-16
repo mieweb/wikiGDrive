@@ -14,6 +14,7 @@ import {removePreWrappingAroundMacros} from './postprocess/removePreWrappingArou
 import {fixListParagraphs} from './postprocess/fixListParagraphs.js';
 import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInlineFormatting.js';
 import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.js';
+import {trimEndOfParagraphs} from './postprocess/trimEndOfParagraphs.js';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -394,6 +395,7 @@ export class StateMachine {
     addIndentsAndBullets(this.markdownChunks);
     postProcessPreMacros(this.markdownChunks);
     mergeParagraphs(this.markdownChunks, this.rewriteRules);
+    trimEndOfParagraphs(this.markdownChunks);
 
     if (process.env.DEBUG_COLORS) {
       this.markdownChunks.dump();
