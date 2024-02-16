@@ -1,6 +1,7 @@
 #### Test Methodology
 
 MIE will report a count of messages for each supported message type:
+
 * NewRx
 * RxChangeRequest
 * RxChangeResponse
