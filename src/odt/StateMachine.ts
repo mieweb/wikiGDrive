@@ -304,10 +304,12 @@ export class StateMachine {
         {
           switch (innerTxt) {
             case '{{/rawhtml}}':
+              // this.markdownChunks[payload.position].comment = 'Switching to md - {{/rawhtml}}';
               this.currentMode = 'md';
               break;
           }
           if (isMarkdownEndMacro(innerTxt)) {
+            // this.markdownChunks[payload.position].comment = 'Switching to md - isMarkdownEndMacro';
             this.currentMode = 'md';
           }
         }
@@ -323,10 +325,12 @@ export class StateMachine {
 
           switch (innerTxt) {
             case '{{rawhtml}}':
+              // this.markdownChunks[payload.position].comment = 'Switching to raw - {{rawhtml}}';
               this.currentMode = 'raw';
               break;
           }
           if (isMarkdownBeginMacro(innerTxt)) {
+            // this.markdownChunks[payload.position].comment = 'Switching to raw - isMarkdownBeginMacro';
             this.currentMode = 'raw';
           }
 
