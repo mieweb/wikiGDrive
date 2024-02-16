@@ -40,7 +40,8 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
           markdownChunks.chunks.splice(position2, 0, {
             mode: 'md',
             isTag: false,
-            text: prevEmptyLine === 1 ? firstStr : otherStr
+            text: prevEmptyLine === 1 ? firstStr : otherStr,
+            comment: 'Indent or bullet'
           });
           prevEmptyLine = 0;
           position2++;
