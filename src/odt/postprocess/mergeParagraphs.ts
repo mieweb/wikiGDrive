@@ -67,20 +67,20 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         const findFirstTextAfterPos = (start: number): string | null => {
           for (let pos = start + 1; pos < markdownChunks.chunks.length; pos++) {
             const currentChunk = markdownChunks.chunks[pos];
-            if ('text' in currentChunk && currentChunk.text.trim() !== '') {
+            if ('text' in currentChunk && currentChunk.text !== '') {
               return currentChunk.text;
             }
           }
           return null;
         };
 
-        const nextText = findFirstTextAfterPos(position);
+        const nextText = findFirstTextAfterPos(nextParaClosing);
         if (nextText === '* ' || nextText?.trim().length === 0) {
           markdownChunks.chunks.splice(position, 2, {
             isTag: false,
             text: '\n',
             mode: 'md',
-            comment: 'End of line, but next line is list'
+            comment: 'End of line, but next line is list' + nextText + ' ' + nextParaClosing
           });
           position--;
           previousParaPosition = 0;
