@@ -67,14 +67,14 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         const findFirstTextAfterPos = (start: number): string | null => {
           for (let pos = start + 1; pos < markdownChunks.chunks.length; pos++) {
             const currentChunk = markdownChunks.chunks[pos];
-            if ('text' in currentChunk) {
+            if ('text' in currentChunk && currentChunk.text.trim() !== '') {
               return currentChunk.text;
             }
           }
           return null;
         };
 
-        const nextText = findFirstTextAfterPos(nextParaClosing);
+        const nextText = findFirstTextAfterPos(position);
         if (nextText === '* ' || nextText?.trim().length === 0) {
           markdownChunks.chunks.splice(position, 2, {
             isTag: false,
