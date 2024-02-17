@@ -54,7 +54,7 @@ After subtable</td>
 
 ### Heading 3 - a diagram with links
 
-[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8) 
+[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)   
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
 
 ### Heading 3 - with a Table of contents

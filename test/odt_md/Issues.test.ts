@@ -37,6 +37,13 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown, false));
   });
 
+  it('test ./issue-434-2', async () => {
+    // https://github.com/mieweb/wikiGDrive/issues/434
+    const testMarkdown = fs.readFileSync(__dirname + '/issue-434-2.md').toString();
+    const markdown = await transformOdt('issue-434-2');
+    assert.ok(compareTexts(testMarkdown, markdown, false));
+  });
+
   it('test ./issue-435-436', async () => {
     // https://github.com/mieweb/wikiGDrive/issues/435
     // https://github.com/mieweb/wikiGDrive/issues/436
