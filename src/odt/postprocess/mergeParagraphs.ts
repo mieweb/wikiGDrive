@@ -67,7 +67,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         const findFirstTextAfterPos = (start: number): string | null => {
           for (let pos = start + 1; pos < markdownChunks.chunks.length; pos++) {
             const currentChunk = markdownChunks.chunks[pos];
-            if ('text' in currentChunk) {
+            if ('text' in currentChunk && currentChunk.text !== '') {
               return currentChunk.text;
             }
           }
@@ -80,7 +80,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
             isTag: false,
             text: '\n',
             mode: 'md',
-            comment: 'End of line, but next line is list'
+            comment: 'End of line, but next line is list' + nextText + ' ' + nextParaClosing
           });
           position--;
           previousParaPosition = 0;
