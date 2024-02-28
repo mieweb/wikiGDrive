@@ -3,18 +3,19 @@ import slugify from 'slugify';
 import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
 import {fixCharacters} from './utils.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {postProcessHeaders} from './postprocess/postProcessHeaders.js';
-import {postProcessPreMacros} from './postprocess/postProcessPreMacros.js';
-import {addIndentsAndBullets} from './postprocess/addIndentsAndBullets.js';
-import {fixBold} from './postprocess/fixBold.js';
-import {hideSuggestedChanges} from './postprocess/hideSuggestedChanges.js';
-import {addEmptyLines} from './postprocess/addEmptyLines.js';
-import {mergeParagraphs} from './postprocess/mergeParagraphs.js';
-import {removePreWrappingAroundMacros} from './postprocess/removePreWrappingAroundMacros.js';
-import {fixListParagraphs} from './postprocess/fixListParagraphs.js';
-import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInlineFormatting.js';
-import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.js';
-import {trimEndOfParagraphs} from './postprocess/trimEndOfParagraphs.js';
+import {postProcessHeaders} from './postprocess/postProcessHeaders.ts';
+import {postProcessPreMacros} from './postprocess/postProcessPreMacros.ts';
+import {addIndentsAndBullets} from './postprocess/addIndentsAndBullets.ts';
+import {fixBold} from './postprocess/fixBold.ts';
+import {hideSuggestedChanges} from './postprocess/hideSuggestedChanges.ts';
+import {addEmptyLines} from './postprocess/addEmptyLines.ts';
+import {mergeParagraphs} from './postprocess/mergeParagraphs.ts';
+import {removePreWrappingAroundMacros} from './postprocess/removePreWrappingAroundMacros.ts';
+import {fixListParagraphs} from './postprocess/fixListParagraphs.ts';
+import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInlineFormatting.ts';
+import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.ts';
+import {trimEndOfParagraphs} from './postprocess/trimEndOfParagraphs.ts';
+import {processListsAndNumbering} from './postprocess/processListsAndNumbering.ts';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -63,46 +64,13 @@ export function stripMarkdownMacro(innerTxt) {
 export class StateMachine {
   public errors: string[] = [];
   private readonly tagsTree: TagLeaf[] = [];
-  private listLevel = 0;
   private rewriteRules: RewriteRule[] = [];
 
   currentMode: OutputMode = 'md';
   headersMap: { [id: string]: string } = {};
-
-  counters: { [id: string]: number } = {};
-  private preserveMinLevel = 999;
+  private listLevels: string[] = [];
 
   constructor(public markdownChunks: MarkdownChunks) {
-  }
-
-  fetchListNo(styleName: string) {
-    if (this.counters[styleName]) {
-      return this.counters[styleName];
-    }
-    return 0;
-  }
-
-  storeListNo(styleName: string, val: number) {
-    if (!styleName) {
-      return;
-    }
-    this.counters[styleName] = val;
-  }
-
-  clearListsNo(styleNamePrefix: string, minLevel) {
-    for (const k in this.counters) {
-      if (!k.startsWith(styleNamePrefix)) {
-        continue;
-      }
-      const level = parseInt(k.substring(styleNamePrefix.length));
-      if (level < minLevel) {
-        continue;
-      }
-      if (level > minLevel + 1) {
-        // continue;
-      }
-      this.counters[k] = 0;
-    }
   }
 
   get parentLevel() {
@@ -117,58 +85,8 @@ export class StateMachine {
     }
   }
 
-  getParentListStyleName(): string {
-    for (let i = this.tagsTree.length - 1; i >=0; i--) {
-      const leaf = this.tagsTree[i];
-      if (leaf.tag === 'UL') {
-        if (leaf.payload.listStyle?.name) {
-          return leaf.payload.listStyle.name;
-        }
-      }
-    }
-    return null;
-  }
-
   pushTag(tag: TAG, payload: TagPayload = {}) {
     payload.position = this.markdownChunks.length;
-
-    if (tag === 'UL') {
-      this.listLevel++;
-      payload.listLevel = this.listLevel;
-
-      if (payload.continueNumbering || payload.continueList) {
-        this.preserveMinLevel = this.listLevel;
-      }
-
-      if (!(this.preserveMinLevel <= this.listLevel)) {
-        this.clearListsNo((payload.listStyle?.name || this.getParentListStyleName()) + '_', this.listLevel);
-      }
-    }
-    if (tag === 'LI') {
-      if (this.currentLevel?.tag === 'UL') {
-        payload.listLevel = this.currentLevel.payload.listLevel;
-        const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
-        payload.number = payload.number || this.fetchListNo(listStyleName);
-        payload.number++;
-        this.storeListNo(listStyleName, payload.number);
-      }
-    }
-/* List indents should be determined from marginLefts, which are different per doc. Damnit !!!
-    if (tag === 'P') {
-      if (this.currentLevel?.tag === 'LI') {
-        // payload.listLevel = this.currentLevel.payload.listLevel;
-        const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + payload.listLevel;
-        payload.listLevel = inchesToSpaces(payload.style?.paragraphProperties?.marginLeft) / 2;
-
-        if (payload.listLevel !== this.currentLevel.payload.listLevel) {
-          console.log('EEEEEEEEEEEEEEE', payload.listLevel, this.currentLevel.payload.listLevel, payload.style?.paragraphProperties?.marginLeft);
-        }
-        payload.number = payload.number || this.fetchListNo(listStyleName);
-        payload.number++;
-        this.storeListNo(listStyleName, payload.number);
-      }
-    }
-*/
 
     // PRE-PUSH-PRE-TREEPUSH
 
@@ -216,29 +134,6 @@ export class StateMachine {
 //           }
 //       }
 //     }
-
-    if (tag === 'P') {
-      switch (this.currentMode) {
-        case 'md':
-          if (this.parentLevel?.tag === 'TOC') {
-            payload.bullet = true;
-          }
-          if (this.parentLevel?.tag === 'LI') {
-            const level = this.parentLevel.payload.listLevel;
-            const listStyle = this.parentLevel.payload.listStyle || this.currentLevel.payload.listStyle;
-            const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
-
-            payload.listLevel = level;
-
-            if (isNumeric) {
-              payload.number = this.parentLevel.payload.number;
-            } else {
-              payload.bullet = true;
-            }
-          }
-          break;
-      }
-    }
 
     // Inside list item tags like <strong> needs to be html tags
     if (this.currentMode === 'md' && tag === '/P' && this.parentLevel?.tag === 'LI') {
@@ -314,6 +209,16 @@ export class StateMachine {
       this.currentMode = 'md';
     }
 
+    if (['/H1', '/H2', '/H3', '/H4'].includes(tag) && 'md' === this.currentMode) {
+      if (this.currentLevel.payload.bookmarkName) {
+        const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
+        const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
+        if (slug) {
+          this.headersMap[this.currentLevel.payload.bookmarkName] = slug;
+        }
+      }
+    }
+
     if (tag === '/P' || tag === '/PRE') {
       const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
       switch (this.currentMode) {
@@ -333,13 +238,6 @@ export class StateMachine {
           break;
         case 'md':
         {
-          if (this.currentLevel.payload.bookmarkName) {
-            const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
-            if (slug) {
-              this.headersMap[this.currentLevel.payload.bookmarkName] = slug;
-            }
-          }
-
           switch (innerTxt) {
             case '{{rawhtml}}':
               // this.markdownChunks[payload.position].comment = 'Switching to raw - {{rawhtml}}';
@@ -375,18 +273,6 @@ export class StateMachine {
     }
 
     // POST-PUSH-AFTER-TREEPOP
-
-    if (tag === '/LI') {
-      if (this.currentLevel?.tag === 'UL') {
-        // this.currentLevel.payload.number++;
-        // const listStyleName = (payload.listStyle?.name || this.getParentListStyleName()) + '_' + this.listLevel;
-        // this.storeListNo(listStyleName, this.currentLevel.payload.number);
-      }
-    }
-    if (tag === '/UL') {
-      this.listLevel--;
-      this.preserveMinLevel = 999;
-    }
   }
 
   pushText(txt: string) {
@@ -400,6 +286,7 @@ export class StateMachine {
   }
 
   postProcess() {
+    processListsAndNumbering(this.markdownChunks);
     postProcessHeaders(this.markdownChunks);
     removePreWrappingAroundMacros(this.markdownChunks);
     removeInsideDoubleCodeBegin(this.markdownChunks);
@@ -424,5 +311,9 @@ export class StateMachine {
 
   setRewriteRules(rewriteRules: RewriteRule[]) {
     this.rewriteRules = rewriteRules;
+  }
+
+  setListLevels(listLevels: string[]) {
+    this.listLevels = listLevels;
   }
 }

@@ -1,5 +1,5 @@
-import {FileService, pathResolve} from './FileService';
 import identify from 'identify-filetype';
+import {FileService, pathResolve} from './FileService.ts';
 
 export class FileContentService extends FileService {
 

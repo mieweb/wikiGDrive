@@ -23,7 +23,7 @@ import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {postProcessText} from './postprocess/postProcessText.js';
+import {postProcessText} from './postprocess/postProcessText.ts';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -65,7 +65,6 @@ export class OdtToMarkdown {
   private readonly chunks: MarkdownChunks = new MarkdownChunks();
   private picturesDir = '';
   private rewriteRules: RewriteRule[] = [];
-  private counters: { [key: string]: number } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
     this.stateMachine = new StateMachine(this.chunks);
@@ -101,11 +100,26 @@ export class OdtToMarkdown {
   }
 
   async convert(): Promise<string> {
+    const listLevelsObj = {};
+    const listMargins = {};
+
     if (this.document.automaticStyles) {
       for (const namedStyle of this.document.automaticStyles.styles) {
         this.styles[namedStyle.name] = namedStyle;
       }
+
+      for (const namedStyle of this.document.automaticStyles.styles) {
+        if (namedStyle.listStyleName) {
+          listLevelsObj[namedStyle.paragraphProperties?.marginLeft] = true;
+          listMargins[namedStyle.listStyleName] = namedStyle.paragraphProperties?.marginLeft;
+        }
+      }
     }
+
+    const listLevels = Object.keys(listLevelsObj);
+    listLevels.sort((a, b) => inchesToPixels(a) - inchesToPixels(b));
+
+    this.stateMachine.setListLevels(listLevels);
 
     for (const tableOfContent of this.document.body.text.list) {
       if (tableOfContent.type === 'toc') {
@@ -440,6 +454,18 @@ export class OdtToMarkdown {
     const listStyle = this.getListStyle(style.listStyleName);
     const bookmarkName = paragraph.bookmark?.name || null;
 
+    if (this.hasStyle(paragraph, 'Heading_20_1')) {
+      this.stateMachine.pushTag('H1', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_2')) {
+      this.stateMachine.pushTag('H2', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_3')) {
+      this.stateMachine.pushTag('H3', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_4')) {
+      this.stateMachine.pushTag('H4', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+    } else
     if (this.isCourier(paragraph.styleName)) {
       this.stateMachine.pushTag('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
     } else {
@@ -484,19 +510,6 @@ export class OdtToMarkdown {
           }
         }
     }*/
-
-    if (this.hasStyle(paragraph, 'Heading_20_1')) {
-      this.stateMachine.pushTag('H1');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_2')) {
-      this.stateMachine.pushTag('H2');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_3')) {
-      this.stateMachine.pushTag('H3');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_4')) {
-      this.stateMachine.pushTag('H4');
-    }
 
     if (!this.isCourier(paragraph.styleName)) {
       if (style.textProperties?.fontWeight === 'bold') {
@@ -578,23 +591,22 @@ export class OdtToMarkdown {
       }
     }
 
-    if (this.hasStyle(paragraph, 'Heading_20_1')) {
-      this.stateMachine.pushTag('/H1');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_2')) {
-      this.stateMachine.pushTag('/H2');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_3')) {
-      this.stateMachine.pushTag('/H3');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_4')) {
-      this.stateMachine.pushTag('/H4');
-    }
-
     if (onlyCodeChildren) {
       this.stateMachine.pushTag('/PRE');
     }
 
+    if (this.hasStyle(paragraph, 'Heading_20_1')) {
+      this.stateMachine.pushTag('/H1');
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_2')) {
+      this.stateMachine.pushTag('/H2');
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_3')) {
+      this.stateMachine.pushTag('/H3');
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_4')) {
+      this.stateMachine.pushTag('/H4');
+    } else
     if (this.isCourier(paragraph.styleName)) {
       this.stateMachine.pushTag('/PRE');
     } else {

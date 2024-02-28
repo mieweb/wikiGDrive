@@ -4,7 +4,7 @@ import {applyRewriteRule, RewriteRule} from './applyRewriteRule.ts';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
-export type TAG = 'HR/' | 'BR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
+export type TAG = 'HR/' | 'BR/' | 'EMPTY_LINE/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
   'H1' | 'H2' | 'H3' | 'H4' | '/H1' | '/H2' | '/H3' | '/H4' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
@@ -67,6 +67,14 @@ function debugChunkToText(chunk: MarkdownChunk) {
   }
 
   return chunk.tag;
+}
+
+export function addComment(chunk: MarkdownTagChunk, comment: string) {
+  if (chunk.comment) {
+    chunk.comment += ' ' + comment;
+  } else {
+    chunk.comment = comment;
+  }
 }
 
 export function textStyleToString(textProperty: TextProperty) {
@@ -144,6 +152,8 @@ function chunkToText(chunk: MarkdownChunk) {
           return '\n';
         case 'BR/':
           return '\n';
+        case 'EMPTY_LINE/':
+          return '\n';
       }
       break;
     case 'md':
@@ -154,6 +164,8 @@ function chunkToText(chunk: MarkdownChunk) {
           return '\n';
         case 'BR/':
           return '  \n';
+        case 'EMPTY_LINE/':
+          return '\n';
         case 'PRE':
           return '\n```'+ (chunk.payload?.lang || '') +'\n';
         case '/PRE':
@@ -182,6 +194,14 @@ function chunkToText(chunk: MarkdownChunk) {
           return '### ';
         case 'H4':
           return '#### ';
+        case '/H1':
+          return '\n';
+        case '/H2':
+          return '\n';
+        case '/H3':
+          return '\n';
+        case '/H4':
+          return '\n';
         case 'HR/':
           return '\n___\n ';
         case 'A':
@@ -202,6 +222,8 @@ function chunkToText(chunk: MarkdownChunk) {
       switch (chunk.tag) {
         case 'BR/':
           return '\n';
+        case 'EMPTY_LINE/':
+          return '<br />';
         case 'HR/':
           return '<hr />';
         case 'B':
@@ -455,6 +477,10 @@ export class MarkdownChunks {
 
       if (chunk.isTag === true) {
         line += chunk.tag;
+
+        if (chunk.tag === 'UL') {
+          line += ` (Level: ${chunk.payload.listLevel})`;
+        }
       }
       if (chunk.isTag === false) {
         line += chunk.text

@@ -1,4 +1,4 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
 
 export function removeInsideDoubleCodeBegin(markdownChunks: MarkdownChunks) {
   for (let position = 0; position < markdownChunks.length; position++) {

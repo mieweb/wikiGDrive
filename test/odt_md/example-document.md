@@ -169,9 +169,9 @@ This is after the horizontal line.
    * SubBullet 1
    * SubBullet 2
 * Bullet 3
-1. SubNumeric 1
-2. SubNumeric 2
-3. SubNumeric 3
+   1. SubNumeric 1
+   2. SubNumeric 2
+   3. SubNumeric 3
 1. Alpha 1
 2. Alpha 2
 3. Alpha 3

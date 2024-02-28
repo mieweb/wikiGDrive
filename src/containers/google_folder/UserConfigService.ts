@@ -6,7 +6,7 @@ import {FileContentService} from '../../utils/FileContentService.ts';
 import {HugoTheme} from '../server/routes/ConfigController.ts';
 import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter.ts';
 import {DEFAULT_ACTIONS} from '../action/ActionRunnerContainer.ts';
-import {RewriteRule} from '../../odt/applyRewriteRule.js';
+import {RewriteRule} from '../../odt/applyRewriteRule.ts';
 
 async function execAsync(command: string) {
   const err = new Error();

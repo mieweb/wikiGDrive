@@ -1,8 +1,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { diffLines } from 'diff';
-import {ansi_colors} from '../src/utils/logger/colors';
+import { diffLines, createPatch } from 'diff';
+import {ansi_colors} from '../src/utils/logger/colors.ts';
 
 export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
@@ -13,33 +13,53 @@ function trailSpacesReplacer(x) {
   return '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'.substring(0, x.length);
 }
 
-export function compareTexts(input, output, ignoreWhitespace = true) {
+export function compareTexts(input, output, ignoreWhitespace = true, fileName = 'file.txt') {
+  if (!ignoreWhitespace) {
+    const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: false, newlineIsToken: true });
+    if (patch.indexOf('@@') > -1) {
+      console.log(patch);
+      return false;
+    }
+    return true;
+  }
+
   if (ignoreWhitespace) {
     input = input.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
     output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
   }
-  const diff = diffLines(input, output, {
-    ignoreWhitespace
-  }).filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
+
+  const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: true, newlineIsToken: true });
+  if (patch.indexOf('@@') > -1) {
+    console.log(patch);
+    return false;
+  }
+  return true;
+/*
+
+  let diff = diffLines(input, output, {
+    ignoreWhitespace,
+    newlineIsToken: true
+  });
+  if (ignoreWhitespace) {
+    diff = diff.filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
+  }
 
   for (const part of diff) {
     if (part.added) {
-      console.log(ansi_colors.green(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
     if (part.removed) {
-      console.log(ansi_colors.red(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
       continue;
     }
-    console.log(part.value);
   }
 
   return diff.length === 0;
+*/
 }
 
 export function compareTextsWithLines(input, output) {
   const diff = diffLines(input, output, {
-    ignoreWhitespace: true,
+    ignoreWhitespace: true
   }).filter(row => (row.added || row.removed));
 
   diff.forEach(function(part) {

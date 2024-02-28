@@ -1,4 +1,4 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
 
 export function fixListParagraphs(markdownChunks: MarkdownChunks) {
   let nextPara = null;

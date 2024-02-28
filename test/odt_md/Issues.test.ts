@@ -20,14 +20,14 @@ describe('MarkDownTransformTest', () => {
     // https://github.com/mieweb/wikiGDrive/issues/431
     const testMarkdown = fs.readFileSync(__dirname + '/issue-431.md').toString();
     const markdown = await transformOdt('issue-431');
-    assert.ok(compareTexts(testMarkdown, markdown, false));
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-431.md'));
   });
 
   it('test ./issue-432', async () => {
     // https://github.com/mieweb/wikiGDrive/issues/432
     const testMarkdown = fs.readFileSync(__dirname + '/issue-432.md').toString();
     const markdown = await transformOdt('issue-432');
-    assert.ok(compareTexts(testMarkdown, markdown, false));
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-432.md'));
   });
 
   it('test ./issue-434', async () => {
@@ -41,7 +41,7 @@ describe('MarkDownTransformTest', () => {
     // https://github.com/mieweb/wikiGDrive/issues/434
     const testMarkdown = fs.readFileSync(__dirname + '/issue-434-2.md').toString();
     const markdown = await transformOdt('issue-434-2');
-    assert.ok(compareTexts(testMarkdown, markdown, false));
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-434-2.md'));
   });
 
   it('test ./issue-435-436', async () => {
@@ -49,10 +49,18 @@ describe('MarkDownTransformTest', () => {
     // https://github.com/mieweb/wikiGDrive/issues/436
     const testMarkdown = fs.readFileSync(__dirname + '/issue-435-436.md').toString();
     const markdown = await transformOdt('issue-435-436');
-    assert.ok(compareTexts(testMarkdown, markdown, false));
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-435-436.md'));
+  });
+
+  it('test ./issue-443', async () => {
+    // https://github.com/mieweb/wikiGDrive/issues/443
+    const testMarkdown = fs.readFileSync(__dirname + '/issue-443.md').toString();
+    const markdown = await transformOdt('issue-443');
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-443.md'));
   });
 
 });
+
 async function transformOdt(id: string) {
   const folder = new FileContentService(__dirname);
   const odtPath = folder.getRealPath() + '/' + id + '.odt';
