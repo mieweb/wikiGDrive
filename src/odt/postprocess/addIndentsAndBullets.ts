@@ -1,5 +1,5 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
-import {spaces} from '../utils.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {spaces} from '../utils.ts';
 
 export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
 // ADD indents and bullets
@@ -7,6 +7,11 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
     const chunk = markdownChunks.chunks[position];
     if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
       const level = (chunk.payload.listLevel || 1) - 1;
+
+      if (!chunk.payload.listLevel) {
+        continue;
+      }
+
       // let indent = spaces(level * 4); GDocs not fully compatible
       // if (chunk.payload.style?.paragraphProperties?.marginLeft) {
       //   indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);

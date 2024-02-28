@@ -1,4 +1,4 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
 
 function isPreBeginMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}');
@@ -24,7 +24,7 @@ export function postProcessPreMacros(markdownChunks: MarkdownChunks) {
 
     if (chunk.isTag === false && isPreBeginMacro(chunk.text)) {
       const prevChunk = markdownChunks.chunks[position - 1];
-      if (prevChunk.isTag && prevChunk.tag === 'PRE') {
+      if (prevChunk && prevChunk.isTag && prevChunk.tag === 'PRE') {
         markdownChunks.chunks.splice(position + 1, 0, {
           isTag: true,
           tag: 'PRE',
@@ -39,7 +39,7 @@ export function postProcessPreMacros(markdownChunks: MarkdownChunks) {
 
     if (chunk.isTag === false && isPreEndMacro(chunk.text)) {
       const postChunk = markdownChunks.chunks[position + 1];
-      if (postChunk.isTag && postChunk.tag === '/PRE') {
+      if (postChunk && postChunk.isTag && postChunk.tag === '/PRE') {
         markdownChunks.removeChunk(position + 1);
         markdownChunks.chunks.splice(position, 0, {
           isTag: true,

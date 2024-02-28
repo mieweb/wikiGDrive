@@ -1,5 +1,5 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
-import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../StateMachine.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../StateMachine.ts';
 
 export function removePreWrappingAroundMacros(markdownChunks: MarkdownChunks) {
   for (let position = 0; position < markdownChunks.length; position++) {

@@ -1,4 +1,4 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
+import {MarkdownChunks} from '../MarkdownChunks.ts';
 
 export function trimEndOfParagraphs(markdownChunks: MarkdownChunks) {
   for (let position = 1; position < markdownChunks.length; position++) {

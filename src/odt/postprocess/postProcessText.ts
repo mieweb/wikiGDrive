@@ -1,5 +1,5 @@
-import {} from '../StateMachine.js';
-import {isBeginMacro, isEndMacro} from './mergeParagraphs.js';
+import {} from '../StateMachine.ts';
+import {isBeginMacro, isEndMacro} from './mergeParagraphs.ts';
 
 export function emptyString(str: string) {
   return str.trim().length === 0;
