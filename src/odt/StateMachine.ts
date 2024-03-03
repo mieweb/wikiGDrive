@@ -16,6 +16,7 @@ import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInli
 import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.ts';
 import {trimEndOfParagraphs} from './postprocess/trimEndOfParagraphs.ts';
 import {processListsAndNumbering} from './postprocess/processListsAndNumbering.ts';
+import {addEmptyLinesAfterParas} from './postprocess/addEmptyLinesAfterParas.js';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -108,7 +109,7 @@ export class StateMachine {
       mode: this.currentMode,
       tag: tag,
       payload,
-      comment: 'pushTag'
+      comment: 'StateMachine.ts: pushTag'
     });
 
     // POST-PUSH-BEFORE-TREEPOP
@@ -164,7 +165,7 @@ export class StateMachine {
           mode: this.currentMode,
           tag: 'BR/',
           payload: {},
-          comment: 'Merging PRE tags'
+          comment: 'StateMachine.ts: Merging PRE tags'
         };
       }
     }
@@ -262,7 +263,8 @@ export class StateMachine {
             this.markdownChunks.replace(this.currentLevel.payload.position, payload.position, {
               isTag: false,
               mode: this.currentMode,
-              text: stripMarkdownMacro(innerTxt)
+              text: stripMarkdownMacro(innerTxt),
+              comment: 'StateMachine.ts: replace code part with stripped macro'
             });
           }
       }
@@ -281,7 +283,7 @@ export class StateMachine {
       isTag: false,
       mode: this.currentMode,
       text: txt,
-      comment: 'pushText'
+      comment: 'StateMachine.ts: pushText'
     });
   }
 
@@ -294,11 +296,12 @@ export class StateMachine {
     fixBold(this.markdownChunks);
     fixListParagraphs(this.markdownChunks);
     hideSuggestedChanges(this.markdownChunks);
+    trimEndOfParagraphs(this.markdownChunks);
+    addEmptyLinesAfterParas(this.markdownChunks);
     addEmptyLines(this.markdownChunks);
     addIndentsAndBullets(this.markdownChunks);
     postProcessPreMacros(this.markdownChunks);
     mergeParagraphs(this.markdownChunks, this.rewriteRules);
-    trimEndOfParagraphs(this.markdownChunks);
 
     if (process.env.DEBUG_COLORS) {
       this.markdownChunks.dump();

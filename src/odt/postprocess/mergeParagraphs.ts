@@ -1,4 +1,4 @@
-import {addComment, MarkdownChunks, TAG} from '../MarkdownChunks.ts';
+import {addComment, MarkdownChunks} from '../MarkdownChunks.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
 
 export function isBeginMacro(innerTxt: string) {
@@ -12,18 +12,6 @@ export function isEndMacro(innerTxt: string) {
 export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: RewriteRule[]) {
   let previousParaOpening = 0;
   const macros = [];
-
-  function findNext(tag: TAG, start: number) {
-    let nextParaClosing = 0;
-    for (let idx = start + 1; idx < markdownChunks.length; idx++) {
-      const chunk = markdownChunks.chunks[idx];
-      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === tag) {
-        nextParaClosing = idx;
-        break;
-      }
-    }
-    return nextParaClosing;
-  }
 
   function findFirstTextAfterPos(start: number): string | null {
     for (let pos = start + 1; pos < markdownChunks.chunks.length; pos++) {
@@ -56,13 +44,13 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
       const nextChunk = markdownChunks.chunks[position + 1];
 
       if (macros.length > 0) {
-        addComment(chunk, 'macros.length > 0');
+        addComment(chunk, 'mergeParagraphs.ts: macros.length > 0');
         continue;
       }
 
       if (nextChunk.isTag && nextChunk.mode === 'md' && nextChunk.tag === 'P') {
-        const nextParaOpening = findNext('P', position);
-        const nextParaClosing = findNext('/P', position);
+        const nextParaOpening = markdownChunks.findNext('P', position);
+        const nextParaClosing = markdownChunks.findNext('/P', position);
 
         if (nextParaOpening > 0 && nextParaOpening < nextParaClosing) {
           const innerText = markdownChunks.extractText(nextParaOpening, nextParaClosing, rewriteRules);
@@ -82,11 +70,11 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         if (previousParaOpening > 0) {
           const innerText = markdownChunks.extractText(previousParaOpening, position, rewriteRules);
           if (innerText.length === 0) {
-            addComment(chunk, 'innerText.length === 0');
+            addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
             continue;
           }
           if (innerText.endsWith(' %}}')) {
-            addComment(chunk, 'innerText.endsWith(\' %}}\')');
+            addComment(chunk, 'mergeParagraphs.ts: innerText.endsWith(\' %}}\')');
             continue;
           }
         }
@@ -94,27 +82,28 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         const nextText = findFirstTextAfterPos(position);
         if (nextText === '* ' || nextText?.trim().length === 0) {
           markdownChunks.chunks.splice(position, 2, {
-            isTag: false,
-            text: '\n',
+            isTag: true,
+            tag: 'EOL/',
             mode: 'md',
-            comment: 'End of line, but next line is list'
+            comment: 'mergeParagraphs.ts: End of line, but next line is list',
+            payload: {}
           });
           position--;
           previousParaOpening = 0;
         } else {
           markdownChunks.chunks.splice(position, 2, {
             isTag: true,
-            tag: 'BR/',
+            tag: 'EOL/', // Or BR/ ?
             mode: 'md',
             payload: {},
-            comment: 'End of line, two paras merge together'
+            comment: 'mergeParagraphs.ts: End of line, two paras merge together'
           });
           position--;
           previousParaOpening = 0;
         }
 
       } else {
-        addComment(chunk, 'nextChunk is not P');
+        addComment(chunk, 'mergeParagraphs.ts: nextChunk is not P');
       }
     }
   }

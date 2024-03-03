@@ -10,7 +10,7 @@
 
 {{% tip %}}  
    If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.  
-   ![](1000020100000311000001824A182983854F26CB.png)  
+      ![](1000020100000311000001824A182983854F26CB.png)
 {{% /tip %}}
 
    3. <strong>Required for Certification</strong>: Select this to indicate the panel action is required for members of the panel. Leave unchecked if the panel action is voluntary. If checked, a panel member failing or becoming overdue for the action will become de-certified from the panel.
@@ -22,7 +22,7 @@
       1. <strong>Date of Birth</strong>: Triggers the panel action on the panel member's date of birth, on a schedule determined by the starting age and frequency. Assumes the panel member's DOB has been captured in the chart demographics.
       2. <strong>Other Action (Triggered)</strong>: The Other Action (Triggered) trigger date allows users to trigger a panel action at the same time as another action item, indicated in this panel action. For example, an action to trigger an Audiogram may be for Entry, Routine, or Exit actions; if checked, other actions may use this panel action as a trigger. This option must be selected for the action to display in the Related Action list. The Related Action list displays when then Trigger Date is set to Other Action (Triggered) or Prior Action (Completed). Additionally, action items can be configured to trigger with the Representative Events, as needed, if that programming is utilized. This allows all action items to trigger together for a panel. Triggers with all the same date are usually tied to representative event.
 
-      ![](100002010000033B00000036339CF669B6C2B512.png)
+         ![](100002010000033B00000036339CF669B6C2B512.png)
 
       3. <strong>Point in Time</strong>: The Point in Time trigger date allows users to trigger an action item on the same day and month, each year (must be MM/DD format).
       4. <strong>Panel Expiration</strong>: Triggers on the expiration date specified in the panel status. Most panels will be configured with a representative event as the
@@ -38,5 +38,4 @@
 {{% /note %}}
 
    13. <strong>Instructions</strong>: Free text instructions for a provider to perform this action item, if necessary. Could be instructions or pass/fail criteria, etc.
-
 

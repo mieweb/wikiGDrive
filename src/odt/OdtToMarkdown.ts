@@ -377,7 +377,7 @@ export class OdtToMarkdown {
     this.stateMachine.pushTag('/EMB_SVG');
     this.stateMachine.pushTag('MD_MODE/');
 
-    this.stateMachine.pushTag('BR/');
+    this.stateMachine.pushTag('EMPTY_LINE/');
     this.stateMachine.pushTag('B');
     this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
     this.stateMachine.pushError('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');

@@ -35,6 +35,15 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
     }
   }
 
+  function getTopList() {
+    for (let i = stack.length - 1; i >=0; i--) {
+      if (stack[i].tag === 'LI') {
+        return stack[i];
+      }
+    }
+    return null;
+  }
+
   function getTopListStyleName(): string {
     for (let i = stack.length - 1; i >=0; i--) {
       const leaf = stack[i];
@@ -61,6 +70,7 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
 
   const margins = {};
 
+  let lastItem = null;
   for (let position = 0; position < markdownChunks.length; position++) {
     const chunk = markdownChunks.chunks[position];
     if (!chunk.isTag) {
@@ -88,6 +98,11 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
 
     const parentLevel = topElement(stack);
 
+    if ('IMG/' === tag) {
+      const level = lastItem?.payload?.listLevel;
+      chunk.payload.listLevel = level;
+    }
+
     if (['TOC', 'UL', 'LI', 'P'].includes(tag)) {
       stack.push({
         tag,
@@ -95,6 +110,10 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
       });
     } else {
       continue;
+    }
+
+    if ('LI' === tag) {
+      lastItem = chunk;
     }
 
     const listLevel = stack.filter(item => item.tag === 'UL').length;
