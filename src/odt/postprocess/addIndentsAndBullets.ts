@@ -2,13 +2,17 @@ import {MarkdownChunks} from '../MarkdownChunks.ts';
 import {spaces} from '../utils.ts';
 
 export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
-// ADD indents and bullets
   for (let position = 0; position < markdownChunks.length; position++) {
     const chunk = markdownChunks.chunks[position];
+
     if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
       const level = (chunk.payload.listLevel || 1) - 1;
 
       if (!chunk.payload.listLevel) {
+        continue;
+      }
+
+      if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
         continue;
       }
 
@@ -46,12 +50,45 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
             mode: 'md',
             isTag: false,
             text: prevEmptyLine === 1 ? firstStr : otherStr,
-            comment: 'Indent or bullet, level: ' + level
+            comment: `addIndentsAndBullets.ts: Indent (${chunk.payload.bullet ? 'bullet' : 'number ' + chunk.payload.number}), level: ` + level + ', prevEmptyLine: ' + (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0)
           });
           prevEmptyLine = 0;
           position2++;
         }
       }
+    }
+  }
+
+  let lastItem = null;
+  for (let position = 0; position < markdownChunks.length; position++) {
+    const chunk = markdownChunks.chunks[position];
+
+    if (chunk.isTag === true && chunk.tag === 'LI' && chunk.mode === 'md') {
+      lastItem = chunk;
+    }
+
+    if (chunk.isTag === true && chunk.tag === 'IMG/' && chunk.mode === 'md') {
+      const level = (chunk.payload.listLevel || 1) - 1;
+
+      if (level > 0) {
+        let indent = spaces(level * 3);
+
+        if (lastItem.payload.bullet) {
+          indent += '  ';
+        } else
+        if (lastItem.payload.number > 0) {
+          indent += '   ';
+        }
+
+        markdownChunks.chunks.splice(position, 0, {
+          mode: 'md',
+          isTag: false,
+          text: indent,
+          comment: 'ddIndentsAndBullets.ts: Indent image, level: ' + level
+        });
+      }
+      position++;
+      continue;
     }
   }
 

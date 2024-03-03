@@ -14,7 +14,8 @@ export function fixSpacesInsideInlineFormatting(markdownChunks: MarkdownChunks) 
           markdownChunks.chunks.splice(position + 1, 0, {
             isTag: false,
             mode: 'md',
-            text: spaces
+            text: spaces,
+            comment: 'fixSpacesInsideInlineFormatting.ts: spaces.length > 0'
           });
           position++;
         }

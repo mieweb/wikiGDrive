@@ -1,10 +1,14 @@
 import {ListStyle, Style, TextProperty} from './LibreOffice.ts';
 import {inchesToPixels} from './utils.ts';
 import {applyRewriteRule, RewriteRule} from './applyRewriteRule.ts';
+import {ansi_colors} from '../utils/logger/colors.js';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
-export type TAG = 'HR/' | 'BR/' | 'EMPTY_LINE/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
+export type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
+  'BR/' | // BR/ is intentional line break (2 spaces at the end of line) - shift+enter
+  'EOL/' | // EOL/ is line ending
+  'EMPTY_LINE/' | // EMPTY_LINE/ is blank line (it can be merged or removed)
   'H1' | 'H2' | 'H3' | 'H4' | '/H1' | '/H2' | '/H3' | '/H4' |
   'P' | '/P' | 'CODE' | '/CODE' | 'PRE' | '/PRE' |
   'UL' | '/UL' | 'LI' | '/LI' | 'A' | '/A' |
@@ -152,6 +156,8 @@ function chunkToText(chunk: MarkdownChunk) {
           return '\n';
         case 'BR/':
           return '\n';
+        case 'EOL/':
+          return '\n';
         case 'EMPTY_LINE/':
           return '\n';
       }
@@ -161,9 +167,11 @@ function chunkToText(chunk: MarkdownChunk) {
         case 'P':
           break;
         case '/P':
-          return '\n';
+          return '';
         case 'BR/':
           return '  \n';
+        case 'EOL/':
+          return '\n';
         case 'EMPTY_LINE/':
           return '\n';
         case 'PRE':
@@ -221,6 +229,8 @@ function chunkToText(chunk: MarkdownChunk) {
     case 'html':
       switch (chunk.tag) {
         case 'BR/':
+          return '\n';
+        case 'EOL/':
           return '\n';
         case 'EMPTY_LINE/':
           return '<br />';
@@ -337,6 +347,7 @@ function chunkToText(chunk: MarkdownChunk) {
       break;
   }
 
+  return '';
 }
 
 
@@ -489,10 +500,32 @@ export class MarkdownChunks {
       }
 
       if (chunk.comment) {
-        line += ' // ' + chunk.comment;
+        line += '\t// ' + chunk.comment;
+      }
+
+      if (logger === console) {
+        if (line.indexOf('StateMachine.ts:') > -1) {
+          console.log(ansi_colors.gray(line));
+          continue;
+        }
+        console.log(line);
+        continue;
       }
 
       logger.log(line);
+
     }
+  }
+
+  findNext(tag: TAG, start: number) {
+    let nextTagPosition = -1;
+    for (let idx = start + 1; idx < this.chunks.length; idx++) {
+      const chunk = this.chunks[idx];
+      if (chunk.isTag && chunk.mode === 'md' && chunk.tag === tag) {
+        nextTagPosition = idx;
+        break;
+      }
+    }
+    return nextTagPosition;
   }
 }

@@ -96,50 +96,30 @@ This is monospaced text. This should line up  |
 Code blocks are part of the Markdown spec, but syntax highlighting isn't. However, many renderers -- like Github's and *Markdown Here* -- support syntax highlighting. Which languages are supported and how those language names should be written will vary from renderer to renderer. *Markdown Here* supports highlighting for dozens of languages (and not-really-languages, like diffs and HTTP headers); to see the complete list, and how to write the language names, see the [highlight.js demo page](http://softwaremaniacs.org/media/soft/highlight/test.html).
 
 
-
-
 ### Typescript / Javascript
 
 {{% markdown %}}
-
 ```javascript
 
 class MyClass {
-
   public static myValue: string;
-
   constructor(init: string) {
-
     this.myValue = init;
-
   }
-
 }
-
 import fs = require("fs");
-
 module MyModule {
-
   export interface MyInterface extends Other {
-
     myProperty: any;
-
   }
-
 }
-
 declare magicNumber number;
-
 myArray.forEach(() => { }); // fat arrow syntax
-
 ```
-
 {{% /markdown %}}
 
 
-
 ## Video
-
 
 
 From Youtube:
@@ -150,13 +130,10 @@ From Youtube:
 ## Horizontal Lines
 
 
-
 This is some text separated by a horizontal line
 
 
 ___
-
-
 
 
 This is after the horizontal line.
@@ -180,11 +157,9 @@ This is after the horizontal line.
 
 Some **bold** **_boldanditalic_*** italic*  text
 
-
 ## Equations
 
 ### 	Using the actual equation object
-
 
 
 
@@ -197,7 +172,4 @@ Some **bold** **_boldanditalic_*** italic*  text
 
 1Footnotes should display as a footnote, and should always display at the very end of the document (page)**?** This is some sample text with a footnote.
 
-
-
 This is some other data.
-

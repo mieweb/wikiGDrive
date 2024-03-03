@@ -8,16 +8,31 @@ export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function trailSpacesReplacer(x) {
   x = x.replace(/\n/g, '');
   return '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'.substring(0, x.length);
+}
+
+function consoleColorPatch(patch: string) {
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('-')) {
+      console.log(ansi_colors.red(line));
+      continue;
+    }
+    if (line.startsWith('+')) {
+      console.log(ansi_colors.green(line));
+      continue;
+    }
+    console.log(line);
+  }
 }
 
 export function compareTexts(input, output, ignoreWhitespace = true, fileName = 'file.txt') {
   if (!ignoreWhitespace) {
     const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: false, newlineIsToken: true });
     if (patch.indexOf('@@') > -1) {
-      console.log(patch);
+      consoleColorPatch(patch);
       return false;
     }
     return true;
@@ -30,31 +45,10 @@ export function compareTexts(input, output, ignoreWhitespace = true, fileName = 
 
   const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: true, newlineIsToken: true });
   if (patch.indexOf('@@') > -1) {
-    console.log(patch);
+    consoleColorPatch(patch);
     return false;
   }
   return true;
-/*
-
-  let diff = diffLines(input, output, {
-    ignoreWhitespace,
-    newlineIsToken: true
-  });
-  if (ignoreWhitespace) {
-    diff = diff.filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
-  }
-
-  for (const part of diff) {
-    if (part.added) {
-      continue;
-    }
-    if (part.removed) {
-      continue;
-    }
-  }
-
-  return diff.length === 0;
-*/
 }
 
 export function compareTextsWithLines(input, output) {

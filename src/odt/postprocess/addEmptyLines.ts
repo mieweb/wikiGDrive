@@ -24,18 +24,18 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
       //     mode: 'md',
       //     tag: 'EMPTY_LINE/',
       //     payload: {},
-      //     comment: 'Between images'
+      //     comment: 'addEmptyLines.ts: Between images'
       //   });
       //   // position+=2;
       //   continue;
       // }
-      if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD')) {
+      if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD') && !(nextTag.isTag && nextTag.tag === 'EMPTY_LINE/')) {
         markdownChunks.chunks.splice(position + 1, 0, {
           isTag: true,
           mode: 'md',
-          tag: 'BR/',
+          tag: 'EMPTY_LINE/',
           payload: {},
-          comment: 'Next tag is not BR/, current is ' + chunk.tag
+          comment: 'addEmptyLines.ts: Add empty line after: ' + chunk.tag
         });
       }
     }
@@ -55,14 +55,22 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
         // continue;
       }
 
-      if (!(prevTag.isTag && prevTag.tag === 'BR/') && !(prevTag.isTag && prevTag.tag === 'TD')) {
+      if (!(prevTag.isTag && prevTag.tag === 'BR/') && !(prevTag.isTag && prevTag.tag === 'TD') && !(prevTag.isTag && prevTag.tag === 'EMPTY_LINE/')) {
         markdownChunks.chunks.splice(position, 0, {
-          isTag: false,
+          isTag: true,
           mode: 'md',
-          text: '\n',
+          tag: 'EMPTY_LINE/',
           // payload: {},
-          comment: 'Add empty line before: ' + chunk.tag
+          comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag,
+          payload: {}
         });
+        // markdownChunks.chunks.splice(position, 0, {
+        //   isTag: false,
+        //   mode: 'md',
+        //   text: '\n',
+        //   // payload: {},
+        //   comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag
+        // });
         position++;
       }
     }
@@ -82,15 +90,15 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
     markdownChunks.chunks.splice(position + 1, 1, {
       isTag: true,
       mode: 'md',
-      tag: 'BR/',
+      tag: 'EMPTY_LINE/',
       payload: {},
-      comment: 'Between images /P'
+      comment: 'addEmptyLines.ts: Between images /P'
     }, {
       isTag: true,
-        mode: 'md',
-        tag: 'EMPTY_LINE/',
-        payload: {},
-      comment: 'Between images /P'
+      mode: 'md',
+      tag: 'EMPTY_LINE/',
+      payload: {},
+      comment: 'addEmptyLines.ts: Between images /P'
     });
   }
 
