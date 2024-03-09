@@ -97,7 +97,7 @@ The [Actions Runner](https://github.com/mieweb/wikiGDrive/settings/actions/runne
 The service runs
 
 ```
-new: 184.175.182.23
+new: 184.175.182.25
 
 OLD:
 ssh -p 22121 vps1.ovh.wikigdrive.com
