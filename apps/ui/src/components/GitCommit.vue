@@ -224,11 +224,14 @@ export default {
 
       await disableElement(event, async () => {
         const filePaths = [];
+        const removeFilePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
           const change = this.gitChanges.find(change => change.path === checkedFileName);
           if (!change?.state?.isDeleted) {
             filePaths.push(checkedFileName);
+          } else {
+            removeFilePaths.push(checkedFileName);
           }
         }
 
@@ -236,7 +239,7 @@ export default {
           branch,
           message: this.commitMsg,
           filePaths: filePaths,
-          removeFilePaths: []
+          removeFilePaths
         });
         this.commitMsg = '';
       });
