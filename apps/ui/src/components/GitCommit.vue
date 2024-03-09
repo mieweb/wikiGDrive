@@ -273,7 +273,7 @@ export default {
           await this.commit({
             message: this.commitMsg,
             filePaths: filePaths,
-            removeFilePath: removeFilePaths
+            removeFilePaths
           });
           this.commitMsg = '';
         } catch (err) {
