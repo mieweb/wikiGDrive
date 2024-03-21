@@ -5,7 +5,7 @@ import {ansi_colors} from '../utils/logger/colors.js';
 
 export type OutputMode = 'md' | 'html' | 'raw';
 
-export type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' |
+export type TAG = 'HR/' | 'B' | '/B' | 'I' | '/I' | 'BI' | '/BI' | 'BLANK/' |
   'BR/' | // BR/ is intentional line break (2 spaces at the end of line) - shift+enter
   'EOL/' | // EOL/ is line ending
   'EMPTY_LINE/' | // EMPTY_LINE/ is blank line (it can be merged or removed)
@@ -160,6 +160,8 @@ function chunkToText(chunk: MarkdownChunk) {
           return '\n';
         case 'EMPTY_LINE/':
           return '\n';
+        case 'BLANK/':
+          return '';
       }
       break;
     case 'md':
@@ -444,7 +446,7 @@ export class MarkdownChunks {
   }
 
   extractText(start: number, end: number, rules: RewriteRule[] = []) {
-    const slice = chunksToText(this.chunks.slice(start, end).filter(i => !i.isTag), rules).join('');
+    const slice = chunksToText(this.chunks.slice(start, end).filter(i => !i.isTag || ['BR/', 'EOL/', 'EMPTY_LINE/'].includes(i.tag)), rules).join('');
     return slice;
   }
 
@@ -459,8 +461,14 @@ export class MarkdownChunks {
     }
   }
 
-  removeChunk(start: number, deleteCount = 1) {
-    this.chunks.splice(start, deleteCount);
+  removeChunk(start: number, deleteCount = 1, comment = '') {
+    this.chunks.splice(start, deleteCount, {
+      mode: 'raw',
+      isTag: true,
+      tag: 'BLANK/',
+      payload: {},
+      comment
+    });
     for (let i = start; i < this.chunks.length; i++) {
       const chunk = this.chunks[i];
       if (chunk.isTag) {

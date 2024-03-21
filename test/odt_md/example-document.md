@@ -9,18 +9,11 @@
 
 # Heading 1
 
-
-
 ## Heading level 2
-
-
 
 Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com/) and a link to a document on the [shared drive](gdoc:1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY) with multiple versions of [the link](gdoc:1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY) because people cut and paste. [Link to test page](gdoc:1iou0QW09pdUhaNtS1RfjJh12lxKAbbq91-SHGihXu_4). Link to [doc in another folder](gdoc:1G4xwfBdH5mvEQyGN16TD2vFUHP8aNgU7wPst-2QTZug).
 
-
-
 ### Heading level 3 - with a table
-
 
 
 <table>
@@ -54,12 +47,10 @@ After subtable</td>
 
 ### Heading 3 - a diagram with links
 
-[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)   
+[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8) 
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
 
 ### Heading 3 - with a Table of contents
-
-
 
 * [Heading 1](#heading-1)
 * [Heading level 2](#heading-level-2)
@@ -70,11 +61,7 @@ After subtable</td>
 * [Image](#image)
 * [Preformatted Text](#preformatted-text)
 
-
-
 # Other examples
-
-
 
 ## Image
 
@@ -83,13 +70,11 @@ After subtable</td>
 ## Preformatted Text
 
 
-
 ```
 This is monospaced text. This should line up  |
                                     with this |
 
 ```
-
 
 ## Code
 
@@ -121,14 +106,12 @@ myArray.forEach(() => { }); // fat arrow syntax
 
 ## Video
 
-
 From Youtube:
 
 [Google Drive, Docs, and Project Management with GSuite](https://www.youtube.com/watch?v=v6QAIWLCz8I&t=1743s)
 
 
 ## Horizontal Lines
-
 
 This is some text separated by a horizontal line
 
@@ -160,8 +143,6 @@ Some **bold** **_boldanditalic_*** italic*  text
 ## Equations
 
 ### 	Using the actual equation object
-
-
 
 
 ### Text equivalent

@@ -7,19 +7,19 @@ export function hideSuggestedChanges(markdownChunks: MarkdownChunks) {
     if (chunk.isTag && chunk.tag === 'CHANGE') {
       inChange = true;
       markdownChunks.removeChunk(position);
-      position--;
+      // position--;
       continue;
     }
     if (chunk.isTag && chunk.tag === '/CHANGE') {
       inChange = false;
       markdownChunks.removeChunk(position);
-      position--;
+      // position--;
       continue;
     }
 
     if (inChange) {
       markdownChunks.removeChunk(position);
-      position--;
+      // position--;
     }
   }
 

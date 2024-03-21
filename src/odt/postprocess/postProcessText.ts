@@ -1,4 +1,3 @@
-import {} from '../StateMachine.ts';
 import {isBeginMacro, isEndMacro} from './mergeParagraphs.ts';
 
 export function emptyString(str: string) {

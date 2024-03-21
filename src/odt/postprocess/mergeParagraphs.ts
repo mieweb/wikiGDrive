@@ -45,6 +45,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
 
       if (macros.length > 0) {
         addComment(chunk, 'mergeParagraphs.ts: macros.length > 0');
+        macros.splice(0, macros.length);
         continue;
       }
 
@@ -63,14 +64,22 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
             //   payload: {}
             // });
             // position--;
-            continue;
+            // continue;
           }
         }
 
         if (previousParaOpening > 0) {
           const innerText = markdownChunks.extractText(previousParaOpening, position, rewriteRules);
           if (innerText.length === 0) {
-            addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
+            //addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
+            markdownChunks.chunks.splice(previousParaOpening, position - previousParaOpening + 1, {
+              mode: 'md',
+              isTag: true,
+              tag: 'EMPTY_LINE/',
+              payload: {},
+              comment: 'mergeParagraphs.ts: convert empty paragraph to EMPTY_LINE/'
+            });
+            position--;
             continue;
           }
           if (innerText.endsWith(' %}}')) {
@@ -91,18 +100,38 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
           position--;
           previousParaOpening = 0;
         } else {
-          markdownChunks.chunks.splice(position, 2, {
-            isTag: true,
-            tag: 'EOL/', // Or BR/ ?
-            mode: 'md',
-            payload: {},
-            comment: 'mergeParagraphs.ts: End of line, two paras merge together'
-          });
+          const prevTag = markdownChunks.chunks[position - 1];
+          if (prevTag.isTag && prevTag.tag === 'EMPTY_LINE/') {
+            markdownChunks.chunks.splice(position, 2);
+          } else {
+            markdownChunks.chunks.splice(position, 2, {
+              isTag: true,
+              tag: 'BR/',
+              mode: 'md',
+              payload: {},
+              comment: 'mergeParagraphs.ts: End of line, two paras merge together'
+            });
+          }
           position--;
           previousParaOpening = 0;
         }
 
       } else {
+        if (previousParaOpening > 0) {
+          const innerText = markdownChunks.extractText(previousParaOpening, position, rewriteRules);
+          if (innerText.length === 0) {
+            //addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
+            markdownChunks.chunks.splice(previousParaOpening, position - previousParaOpening + 1, {
+              mode: 'md',
+              isTag: true,
+              tag: 'EMPTY_LINE/',
+              payload: {},
+              comment: 'mergeParagraphs.ts: convert empty paragraph to EMPTY_LINE/'
+            });
+            position--;
+            continue;
+          }
+        }
         addComment(chunk, 'mergeParagraphs.ts: nextChunk is not P');
       }
     }
