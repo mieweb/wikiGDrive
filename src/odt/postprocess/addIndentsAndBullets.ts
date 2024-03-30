@@ -1,19 +1,18 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {spaces} from '../utils.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-
+export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
       const level = (chunk.payload.listLevel || 1) - 1;
 
       if (!chunk.payload.listLevel) {
-        continue;
+        return;
       }
 
       if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
-        continue;
+        return;
       }
 
       // let indent = spaces(level * 4); GDocs not fully compatible
@@ -26,8 +25,8 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
       const otherStr = indent + spaces(listStr.length);
 
       let prevEmptyLine = 1;
-      for (let position2 = position + 1; position2 < markdownChunks.length; position2++) {
-        const chunk2 = markdownChunks.chunks[position2];
+      for (let position2 = ctx.nodeIdx + 1; position2 < chunk.parent.children.length; position2++) {
+        const chunk2 = chunk.parent.children[position2];
         if (chunk2.isTag === true && chunk2.tag === '/P' && chunk.mode === 'md') {
           position += position2 - position - 1;
           break;
@@ -46,7 +45,7 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
         }
 
         if (prevEmptyLine > 0) {
-          markdownChunks.chunks.splice(position2, 0, {
+          chunk.parent.children.splice(position2, 0, {
             mode: 'md',
             isTag: false,
             text: prevEmptyLine === 1 ? firstStr : otherStr,
@@ -54,15 +53,14 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
           });
           prevEmptyLine = 0;
           position2++;
+          return;
         }
       }
     }
-  }
+  });
 
   let lastItem = null;
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag === true && chunk.tag === 'LI' && chunk.mode === 'md') {
       lastItem = chunk;
     }
@@ -80,16 +78,15 @@ export function addIndentsAndBullets(markdownChunks: MarkdownChunks) {
           indent += '   ';
         }
 
-        markdownChunks.chunks.splice(position, 0, {
+        chunk.parent.children.splice(ctx.nodeIdx, 0, {
           mode: 'md',
           isTag: false,
           text: indent,
-          comment: 'ddIndentsAndBullets.ts: Indent image, level: ' + level
+          comment: 'addIndentsAndBullets.ts: Indent image, level: ' + level
         });
       }
-      position++;
-      continue;
+      return;
     }
-  }
+  });
 
 }

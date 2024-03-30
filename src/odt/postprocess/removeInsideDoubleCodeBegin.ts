@@ -1,16 +1,17 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function removeInsideDoubleCodeBegin(markdownChunks: MarkdownChunks) {
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-    if (chunk.isTag === false && chunk.text.startsWith('```') && chunk.text.length > 3) {
-      const preChunk = markdownChunks.chunks[position - 2];
-      if (preChunk.isTag && preChunk.tag === 'PRE') {
-        preChunk.payload.lang = chunk.text.substring(3);
-        markdownChunks.removeChunk(position);
-        position--;
-        continue;
+export function removeInsideDoubleCodeBegin(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (preChunk) => {
+    if (preChunk.isTag === true && preChunk.tag === 'PRE') {
+      if (preChunk.children.length > 0) {
+
+        const firstChild = preChunk.children[0];
+        if (firstChild.isTag === false && firstChild.text.startsWith('```') && firstChild.text.length > 3) {
+            preChunk.payload.lang = firstChild.text.substring(3);
+            preChunk.children.splice(0, 1);
+        }
       }
     }
-  }
+  });
 }

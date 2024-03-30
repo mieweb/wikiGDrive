@@ -1,22 +1,7 @@
-import slugify from 'slugify';
-
-import {isClosing, isOpening, MarkdownChunks, OutputMode, TAG, TagPayload} from './MarkdownChunks.ts';
-import {fixCharacters} from './utils.ts';
+import {MarkdownNodes, OutputMode, TAG, TagPayload} from './MarkdownNodes.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {postProcessHeaders} from './postprocess/postProcessHeaders.ts';
-import {postProcessPreMacros} from './postprocess/postProcessPreMacros.ts';
-import {addIndentsAndBullets} from './postprocess/addIndentsAndBullets.ts';
-import {fixBold} from './postprocess/fixBold.ts';
-import {hideSuggestedChanges} from './postprocess/hideSuggestedChanges.ts';
-import {addEmptyLines} from './postprocess/addEmptyLines.ts';
-import {mergeParagraphs} from './postprocess/mergeParagraphs.ts';
-import {removePreWrappingAroundMacros} from './postprocess/removePreWrappingAroundMacros.ts';
-import {fixListParagraphs} from './postprocess/fixListParagraphs.ts';
-import {fixSpacesInsideInlineFormatting} from './postprocess/fixSpacesInsideInlineFormatting.ts';
-import {removeInsideDoubleCodeBegin} from './postprocess/removeInsideDoubleCodeBegin.ts';
-import {trimEndOfParagraphs} from './postprocess/trimEndOfParagraphs.ts';
-import {processListsAndNumbering} from './postprocess/processListsAndNumbering.ts';
-import {addEmptyLinesAfterParas} from './postprocess/addEmptyLinesAfterParas.js';
+import {isMarkdownBeginMacro, isMarkdownEndMacro} from './macroUtils.ts';
+import {extractText} from './markdownNodesUtils.js';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -25,53 +10,13 @@ interface TagLeaf {
   payload: TagPayload;
 }
 
-export function isMarkdownBeginMacro(innerTxt: string) {
-  if ('{{markdown}}' === innerTxt) return true;
-  if ('{{% markdown %}}' === innerTxt) return true;
-
-  if (innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}')) {
-    // return true;
-  }
-
-  return false;
-}
-
-export function isMarkdownEndMacro(innerTxt: string) {
-  if ('{{/markdown}}' === innerTxt) return true;
-  if ('{{% /markdown %}}' === innerTxt) return true;
-
-  if (innerTxt.startsWith('{{% /pre ') && innerTxt.endsWith(' %}}')) {
-    // return true;
-  }
-
-  return false;
-}
-
-export function isMarkdownMacro(innerTxt) {
-  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
-  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
-  return isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix);
-}
-
-export function stripMarkdownMacro(innerTxt) {
-  const prefix = innerTxt.substring(0, innerTxt.indexOf('}}') + '}}'.length);
-  const suffix = innerTxt.substring(innerTxt.lastIndexOf('{{'));
-  if (isMarkdownBeginMacro(prefix) && isMarkdownEndMacro(suffix)) {
-    return innerTxt.substring(prefix.length, innerTxt.length - suffix.length);
-  }
-  return innerTxt;
-}
-
 export class StateMachine {
-  public errors: string[] = [];
   private readonly tagsTree: TagLeaf[] = [];
   private rewriteRules: RewriteRule[] = [];
 
   currentMode: OutputMode = 'md';
-  headersMap: { [id: string]: string } = {};
-  private listLevels: string[] = [];
 
-  constructor(public markdownChunks: MarkdownChunks) {
+  constructor(public markdownChunks: MarkdownNodes) {
   }
 
   get parentLevel() {
@@ -86,31 +31,31 @@ export class StateMachine {
     }
   }
 
-  pushTag(tag: TAG, payload: TagPayload = {}) {
+  async pushTag(tag: TAG, payload: TagPayload = {}) {
     payload.position = this.markdownChunks.length;
 
     // PRE-PUSH-PRE-TREEPUSH
 
-    if (isOpening(tag)) {
-      this.tagsTree.push({
-        mode: this.currentMode,
-        tag,
-        payload,
-        level: this.tagsTree.length
-      });
-    }
-
-    // PRE-PUSH-AFTER-TREEPUSH
-
-    // PUSH
-
-    this.markdownChunks.push({
-      isTag: true,
-      mode: this.currentMode,
-      tag: tag,
-      payload,
-      comment: 'StateMachine.ts: pushTag'
-    });
+    // if (isOpening(tag)) {
+    //   this.tagsTree.push({
+    //     mode: this.currentMode,
+    //     tag,
+    //     payload,
+    //     level: this.tagsTree.length
+    //   });
+    // }
+    //
+    // // PRE-PUSH-AFTER-TREEPUSH
+    //
+    // // PUSH
+    //
+    // this.markdownChunks.push({
+    //   isTag: true,
+    //   mode: this.currentMode,
+    //   tag: tag,
+    //   payload,
+    //   comment: 'StateMachine.ts: pushTag'
+    // });
 
     // POST-PUSH-BEFORE-TREEPOP
 
@@ -136,102 +81,95 @@ export class StateMachine {
 //       }
 //     }
 
-    // Inside list item tags like <strong> needs to be html tags
-    if (this.currentMode === 'md' && tag === '/P' && this.parentLevel?.tag === 'LI') {
-      for (let pos = this.currentLevel.payload.position + 1; pos < payload.position; pos++) {
-        const chunk = this.markdownChunks.chunks[pos];
-        if (chunk.isTag && chunk.tag === 'A') continue;
-        if (chunk.isTag && chunk.tag === '/A') continue;
-        if (chunk.isTag && chunk.tag === 'IMG/') continue;
-        if (chunk.isTag && chunk.tag === 'SVG/') continue;
+    // REFACT
+    // if (this.currentMode === 'md' && tag === '/TABLE') {
+    //   for (let pos = this.currentLevel.payload.position; pos < payload.position + 1; pos++) {
+    //     const chunk = this.markdownChunks.chunks[pos];
+    //     chunk.mode = 'html';
+    //   }
+    // }
+    // /REFACT
 
-        chunk.mode = 'html';
-      }
-    }
+    // REFACT
+    // if (tag === 'PRE') {
+    //   const prevTag = this.markdownChunks.chunks[payload.position - 1];
+    //   if (prevTag.isTag && prevTag.tag === '/PRE') {
+    //     this.markdownChunks.removeChunk(payload.position - 1);
+    //     this.markdownChunks.chunks[payload.position] = {
+    //       isTag: true,
+    //       mode: this.currentMode,
+    //       tag: 'BR/',
+    //       payload: {},
+    //       comment: 'StateMachine.ts: Merging PRE tags'
+    //     };
+    //   }
+    // }
+    // /REFACT
 
-    if (this.currentMode === 'md' && tag === '/TABLE') {
-      for (let pos = this.currentLevel.payload.position; pos < payload.position + 1; pos++) {
-        const chunk = this.markdownChunks.chunks[pos];
-        chunk.mode = 'html';
-      }
-    }
+    // REFACT
+    // if (tag === 'B' && ['H1', 'H2', 'H3', 'H4', 'BI'].indexOf(this.parentLevel?.tag) > -1) {
+    //   this.markdownChunks.removeChunk(payload.position);
+    // }
+    // if (tag === '/B' && ['H1', 'H2', 'H3', 'H4', '/BI'].indexOf(this.parentLevel?.tag) > -1) {
+    //   this.markdownChunks.removeChunk(payload.position);
+    // }
+    // /REFACT
 
-    if (tag === 'PRE') {
-      const prevTag = this.markdownChunks.chunks[payload.position - 1];
-      if (prevTag.isTag && prevTag.tag === '/PRE') {
-        this.markdownChunks.removeChunk(payload.position - 1);
-        this.markdownChunks.chunks[payload.position] = {
-          isTag: true,
-          mode: this.currentMode,
-          tag: 'BR/',
-          payload: {},
-          comment: 'StateMachine.ts: Merging PRE tags'
-        };
-      }
-    }
+    // REFACT
+    // if (tag === 'P' && this.parentLevel?.tag === 'TD') {
+    //   this.markdownChunks.removeChunk(payload.position);
+    // }
+    // if (tag === '/P' && this.parentLevel?.tag === 'TD') {
+    //   this.markdownChunks.chunks[payload.position] = {
+    //     isTag: true,
+    //     mode: this.currentMode,
+    //     tag: 'BR/',
+    //     payload: {}
+    //   };
+    // }
+    // if (tag === '/TD') {
+    //   const prevChunk = this.markdownChunks.chunks[payload.position - 1];
+    //   if (prevChunk.isTag && prevChunk.tag === 'BR/') {
+    //     this.markdownChunks.removeChunk(payload.position - 1);
+    //   }
+    // }
+    // /REFACT
 
-    if (tag === 'B' && ['H1', 'H2', 'H3', 'H4', 'BI'].indexOf(this.parentLevel?.tag) > -1) {
-      this.markdownChunks.removeChunk(payload.position);
-    }
-    if (tag === '/B' && ['H1', 'H2', 'H3', 'H4', '/BI'].indexOf(this.parentLevel?.tag) > -1) {
-      this.markdownChunks.removeChunk(payload.position);
-    }
+    // REFACT
+    // if (tag === '/I') {
+    //   const innerTxt = extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
+    //   if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
+    //     this.markdownChunks.removeChunk(payload.position);
+    //     this.markdownChunks.removeChunk(this.currentLevel.payload.position);
+    //   }
+    // }
+    // /REFACT
 
-    if (tag === 'P' && this.parentLevel?.tag === 'TD') {
-      this.markdownChunks.removeChunk(payload.position);
-    }
-    if (tag === '/P' && this.parentLevel?.tag === 'TD') {
-      this.markdownChunks.chunks[payload.position] = {
-        isTag: true,
-        mode: this.currentMode,
-        tag: 'BR/',
-        payload: {}
-      };
-    }
-    if (tag === '/TD') {
-      const prevChunk = this.markdownChunks.chunks[payload.position - 1];
-      if (prevChunk.isTag && prevChunk.tag === 'BR/') {
-        this.markdownChunks.removeChunk(payload.position - 1);
-      }
-    }
+    // if (tag === 'HTML_MODE/') {
+    //   this.currentMode = 'html';
+    // }
+    // if (tag === 'MD_MODE/') {
+    //   this.currentMode = 'md';
+    // }
 
-    if (tag === '/I') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
-      if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
-        this.markdownChunks.removeChunk(payload.position);
-        this.markdownChunks.removeChunk(this.currentLevel.payload.position);
-      }
-    }
-
-    if (tag === 'HTML_MODE/') {
-      this.currentMode = 'html';
-    }
-    if (tag === 'MD_MODE/') {
-      this.currentMode = 'md';
-    }
-
-    if (['/H1', '/H2', '/H3', '/H4'].includes(tag) && 'md' === this.currentMode) {
-      if (this.currentLevel.payload.bookmarkName) {
-        const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
-        const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
-        if (slug) {
-          this.headersMap[this.currentLevel.payload.bookmarkName] = slug;
-        }
-      }
-    }
+    // REFACT
+    // if (['/H1', '/H2', '/H3', '/H4'].includes(tag) && 'md' === this.currentMode) {
+    //   if (this.currentLevel.payload.bookmarkName) {
+    //     const innerTxt = extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
+    //     const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
+    //     if (slug) {
+    //       this.headersMap[this.currentLevel.payload.bookmarkName] = slug;
+    //     }
+    //   }
+    // }
+    // /REFACT
 
     if (tag === '/P' || tag === '/PRE') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
+      const innerTxt = await extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
       switch (this.currentMode) {
         case 'raw':
         {
-          switch (innerTxt) {
-            case '{{/rawhtml}}':
-              // this.markdownChunks[payload.position].comment = 'Switching to md - {{/rawhtml}}';
-              this.currentMode = 'md';
-              break;
-          }
-          if (isMarkdownEndMacro(innerTxt)) {
+          if (innerTxt === '{{/rawhtml}}' || isMarkdownEndMacro(innerTxt)) {
             // this.markdownChunks[payload.position].comment = 'Switching to md - isMarkdownEndMacro';
             this.currentMode = 'md';
           }
@@ -239,13 +177,7 @@ export class StateMachine {
           break;
         case 'md':
         {
-          switch (innerTxt) {
-            case '{{rawhtml}}':
-              // this.markdownChunks[payload.position].comment = 'Switching to raw - {{rawhtml}}';
-              this.currentMode = 'raw';
-              break;
-          }
-          if (isMarkdownBeginMacro(innerTxt)) {
+          if (innerTxt === '{{rawhtml}}' || isMarkdownBeginMacro(innerTxt)) {
             // this.markdownChunks[payload.position].comment = 'Switching to raw - isMarkdownBeginMacro';
             this.currentMode = 'raw';
           }
@@ -255,68 +187,27 @@ export class StateMachine {
       }
     }
 
-    if (tag === '/CODE') {
-      const innerTxt = this.markdownChunks.extractText(this.currentLevel.payload.position, payload.position, this.rewriteRules);
-      switch (this.currentMode) {
-        case 'md':
-          if (isMarkdownMacro(innerTxt)) {
-            this.markdownChunks.replace(this.currentLevel.payload.position, payload.position, {
-              isTag: false,
-              mode: this.currentMode,
-              text: stripMarkdownMacro(innerTxt),
-              comment: 'StateMachine.ts: replace code part with stripped macro'
-            });
-          }
-      }
-    }
+    // REFACT
+    // if (tag === '/CODE') {
+    //   const innerTxt = await extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
+    //   switch (this.currentMode) {
+    //     case 'md':
+    //       if (isMarkdownMacro(innerTxt)) {
+    //         this.markdownChunks.replace(this.currentLevel.payload.position, payload.position, {
+    //           isTag: false,
+    //           mode: this.currentMode,
+    //           text: stripMarkdownMacro(innerTxt),
+    //           comment: 'StateMachine.ts: replace code part with stripped macro'
+    //         });
+    //       }
+    //   }
+    // }
+    // /REFACT
 
-    if (isClosing(tag)) {
-      this.tagsTree.pop();
-    }
+    // if (isClosing(tag)) {
+    //   this.tagsTree.pop();
+    // }
 
     // POST-PUSH-AFTER-TREEPOP
-  }
-
-  pushText(txt: string) {
-    txt = fixCharacters(txt);
-    this.markdownChunks.push({
-      isTag: false,
-      mode: this.currentMode,
-      text: txt,
-      comment: 'StateMachine.ts: pushText'
-    });
-  }
-
-  postProcess() {
-    processListsAndNumbering(this.markdownChunks);
-    postProcessHeaders(this.markdownChunks);
-    removePreWrappingAroundMacros(this.markdownChunks);
-    removeInsideDoubleCodeBegin(this.markdownChunks);
-    fixSpacesInsideInlineFormatting(this.markdownChunks);
-    fixBold(this.markdownChunks);
-    fixListParagraphs(this.markdownChunks);
-    hideSuggestedChanges(this.markdownChunks);
-    trimEndOfParagraphs(this.markdownChunks);
-    addEmptyLinesAfterParas(this.markdownChunks);
-    addEmptyLines(this.markdownChunks);
-    addIndentsAndBullets(this.markdownChunks);
-    postProcessPreMacros(this.markdownChunks);
-    mergeParagraphs(this.markdownChunks, this.rewriteRules);
-
-    if (process.env.DEBUG_COLORS) {
-      this.markdownChunks.dump();
-    }
-  }
-
-  pushError(error: string) {
-    this.errors.push(error);
-  }
-
-  setRewriteRules(rewriteRules: RewriteRule[]) {
-    this.rewriteRules = rewriteRules;
-  }
-
-  setListLevels(listLevels: string[]) {
-    this.listLevels = listLevels;
   }
 }

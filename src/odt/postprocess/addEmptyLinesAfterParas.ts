@@ -1,38 +1,36 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function addEmptyLinesAfterParas(markdownChunks: MarkdownChunks) {
-
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-    const nextChunk = markdownChunks.chunks[position + 1] || null;
-    const prevChunk = markdownChunks.chunks[position - 1] || null;
-
+export function addEmptyLinesAfterParas(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.mode !== 'md') {
-      continue;
+      return;
     }
 
     if (!chunk.isTag) {
-      continue;
+      return;
     }
 
-    if ('/P' === chunk.tag) {
+    if (chunk.isTag === true && ['P', 'PRE'].includes(chunk.tag)) {
+      const prevChunk = chunk.children[chunk.children.length - 1] || null;
+      const nextChunk = chunk.parent.children[ctx.nodeIdx + 1] || null;
+
+      // if (chunk.children.length > 0) {
+      //
+      // }
+
       if (nextChunk && nextChunk.isTag && nextChunk.tag === 'EMPTY_LINE/') {
         // continue;
       }
 
       if (prevChunk && prevChunk.isTag && prevChunk.tag === 'EMPTY_LINE/') {
-        continue;
+        return;
       }
 
-      markdownChunks.chunks.splice(position + 1, 0, {
-        mode: 'md',
-        isTag: true,
-        tag: 'EOL/',
-        comment: 'addEmptyLinesAfterParas.ts: break after para',
-        payload: {}
+      chunk.children.splice(chunk.children.length, 0, {
+        ...markdownChunks.createNode('EOL/'),
+        comment: 'addEmptyLinesAfterParas.ts: break after ' + chunk.tag,
       });
-      position++;
     }
-  }
-
+  });
 }

@@ -1,4 +1,5 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 function isPreBeginMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}');
@@ -8,20 +9,25 @@ function isPreEndMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% /pre ') && innerTxt.endsWith(' %}}');
 }
 
-export function postProcessPreMacros(markdownChunks: MarkdownChunks) {
-  for (let position = 1; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
+export function postProcessPreMacros(markdownChunks: MarkdownNodes) {
 
-    if (chunk.isTag === false && chunk.mode === 'md') {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      if (prevChunk.isTag === false && prevChunk.mode === 'md') {
-        prevChunk.text = prevChunk.text + chunk.text;
-        markdownChunks.removeChunk(position);
-        position-=2;
-        continue;
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+    if (chunk && chunk.isTag && chunk.tag === 'PRE') {
+      const firstChild = chunk.children[0];
+      const lastChild = chunk.children[chunk.children.length - 1];
+
+      if (firstChild.isTag === false && isPreBeginMacro(firstChild.text) &&
+        lastChild.isTag === false && isPreEndMacro(lastChild.text)) {
+
+        chunk.children.splice(0, 1);
+        chunk.children.splice(chunk.children.length - 1, 1);
+
+        chunk.parent.children.splice(ctx.nodeIdx + 1, 0, lastChild);
+        chunk.parent.children.splice(ctx.nodeIdx, 0, firstChild);
       }
     }
 
+/*
     if (chunk.isTag === false && isPreBeginMacro(chunk.text)) {
       const prevChunk = markdownChunks.chunks[position - 1];
       if (prevChunk && prevChunk.isTag && prevChunk.tag === 'PRE') {
@@ -36,6 +42,10 @@ export function postProcessPreMacros(markdownChunks: MarkdownChunks) {
         continue;
       }
     }
+  });
+
+    for (let position = 1; position < markdownChunks.length; position++) {
+    const chunk = markdownChunks.chunks[position];
 
     if (chunk.isTag === false && isPreEndMacro(chunk.text)) {
       const postChunk = markdownChunks.chunks[position + 1];
@@ -49,5 +59,6 @@ export function postProcessPreMacros(markdownChunks: MarkdownChunks) {
         });
       }
     }
-  }
+   */
+  });
 }

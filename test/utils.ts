@@ -43,7 +43,7 @@ export function compareTexts(input, output, ignoreWhitespace = true, fileName = 
     output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
   }
 
-  const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: true, newlineIsToken: true });
+  const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: true, newlineIsToken: false });
   if (patch.indexOf('@@') > -1) {
     consoleColorPatch(patch);
     return false;

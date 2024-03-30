@@ -1,6 +1,34 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
-export function fixListParagraphs(markdownChunks: MarkdownChunks) {
+export function fixListParagraphs(markdownChunks: MarkdownNodes) {
+
+  // Inside list item tags like <strong> needs to be html tags
+  let inHtml = false;
+
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { level: number }) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = true;
+      return;
+    }
+
+    if (inHtml) {
+      return;
+    }
+
+    if (chunk.isTag && ['LI'].includes(chunk.tag)) {
+      if (chunk.children.length === 0) {
+        return;
+      }
+    }
+  }, {}, (chunk) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = false;
+      return;
+    }
+  });
+
+  /* TODO: WTF?
   let nextPara = null;
   for (let position = markdownChunks.length - 1; position >= 0; position--) {
     const chunk = markdownChunks.chunks[position];
@@ -16,4 +44,5 @@ export function fixListParagraphs(markdownChunks: MarkdownChunks) {
       nextPara = chunk;
     }
   }
+  */
 }

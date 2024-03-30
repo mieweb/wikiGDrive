@@ -1,37 +1,27 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function postProcessHeaders(markdownChunks: MarkdownChunks) {
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
+export function postProcessHeaders(markdownChunks: MarkdownNodes) {
 
-    if (chunk.isTag && ['/H1', '/H2', '/H3', '/H4'].indexOf(chunk.tag) > -1) {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      const tagOpening = chunk.tag.substring(1);
-      if (prevChunk.isTag && prevChunk.tag === tagOpening) {
-        markdownChunks.removeChunk(position);
-        markdownChunks.removeChunk(position - 1);
-        position -= 2;
-        continue;
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4'].indexOf(chunk.tag) > -1) {
+      if (chunk.children.length === 0) {
+        chunk.parent.children.splice(ctx.nodeIdx, 1);
       }
+      return;
     }
 
+    if (chunk.isTag && chunk.tag === 'P') {
+      if (chunk.children.length === 1) {
+        const preChunk = chunk.children[0];
 
-    if (chunk.isTag && chunk.tag === 'PRE') {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      if (prevChunk.isTag && prevChunk.tag === 'P') {
-        markdownChunks.removeChunk(position - 1);
-        position--;
-        continue;
+        if (preChunk.isTag && preChunk.tag === 'PRE') {
+          preChunk.parent = chunk.parent;
+          chunk.parent.children.splice(ctx.nodeIdx, 1, preChunk);
+        }
       }
+      return;
     }
 
-    if (chunk.isTag && chunk.tag === '/PRE') {
-      const prevChunk = markdownChunks.chunks[position + 1];
-      if (prevChunk?.isTag && prevChunk.tag === '/P') {
-        markdownChunks.removeChunk(position + 1);
-        position--;
-        continue;
-      }
-    }
-  }
+  });
 }

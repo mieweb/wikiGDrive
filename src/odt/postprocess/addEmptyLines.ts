@@ -1,4 +1,5 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNode, MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 /*
 
@@ -15,7 +16,7 @@ BR/
 
 */
 
-function isPreviousChunkEmptyLine(markdownChunks: MarkdownChunks, position: number) {
+function isPreviousChunkEmptyLine(markdownChunks: MarkdownNodes, position: number) {
   const chunk = markdownChunks.chunks[position - 1];
   if (!chunk) {
     return false;
@@ -28,7 +29,7 @@ function isPreviousChunkEmptyLine(markdownChunks: MarkdownChunks, position: numb
   return false;
 }
 
-function isNextChunkEmptyLine(markdownChunks: MarkdownChunks, position: number) {
+function isNextChunkEmptyLine(markdownChunks: MarkdownNodes, position: number) {
   const chunk = markdownChunks.chunks[position + 1];
   if (!chunk) {
     return false;
@@ -44,85 +45,85 @@ function isNextChunkEmptyLine(markdownChunks: MarkdownChunks, position: number) 
   return false;
 }
 
-export function addEmptyLines(markdownChunks: MarkdownChunks) {
+function isChunkEmptyLine(chunk: MarkdownNode) {
+  if (!chunk) {
+    return false;
+  }
 
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
+  if (chunk.isTag && 'EMPTY_LINE/' === chunk.tag) {
+    return true;
+  }
+  if (chunk.isTag && 'EOL/' === chunk.tag) {
+    return true;
+  }
 
-    if (position + 1 < markdownChunks.chunks.length && chunk.isTag && ['IMG/', 'SVG/'].indexOf(chunk.tag) > -1) {
-      const nextTag = markdownChunks.chunks[position + 1];
+  return false;
+}
+
+export function addEmptyLines(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+    if (!chunk.parent) {
+      return;
+    }
+
+    const prevTag = chunk.parent?.children[ctx.nodeIdx - 1] || null;
+    const nextTag = chunk.parent?.children[ctx.nodeIdx + 1] || null;
+    if (chunk.isTag && ['IMG/', 'SVG/'].indexOf(chunk.tag) > -1 && nextTag) {
       if (nextTag.isTag && nextTag.tag === 'IMG/') {
-        markdownChunks.chunks.splice(position + 1, 0, {
-          isTag: true,
-          mode: 'md',
-          tag: 'EOL/',
-          payload: {},
+        chunk.parent.children.splice(ctx.nodeIdx + 1, 0, {
+          ...markdownChunks.createNode('EOL/'),
           comment: 'addEmptyLines.ts: EOL/ after IMG/'
         }, {
-          isTag: true,
-          mode: 'md',
-          tag: 'EMPTY_LINE/',
-          payload: {},
+          ...markdownChunks.createNode('EMPTY_LINE/'),
           comment: 'addEmptyLines.ts: Between images'
         });
       }
-      // position--;
-      continue;
+      return;
     }
 
-    if (position + 1 < markdownChunks.chunks.length && chunk.isTag && ['/H1', '/H2', '/H3', '/H4', '/UL'].indexOf(chunk.tag) > -1) {
-      const nextTag = markdownChunks.chunks[position + 1];
-
-      if (chunk.tag === '/UL' && chunk.payload.listLevel !== 1) {
-        continue;
+    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'UL'].indexOf(chunk.tag) > -1 && nextTag) {
+      if (chunk.tag === 'UL' && chunk.payload.listLevel !== 1) {
+        return;
       }
-      if (chunk.tag === '/UL' && nextTag.isTag && nextTag.tag === 'UL') {
-        continue;
+      if (chunk.tag === 'UL' && nextTag.isTag && nextTag.tag === 'UL') {
+        return;
       }
-      if (chunk.tag === '/UL' && nextTag.isTag && nextTag.tag === 'P') {
-        // continue;
+      if (chunk.tag === 'UL' && nextTag.isTag && nextTag.tag === 'P') {
+        // return;
       }
-
-      if (!isNextChunkEmptyLine(markdownChunks, position) && !isPreviousChunkEmptyLine(markdownChunks, position)) {
-        markdownChunks.chunks.splice(position + 1, 0, {
-          isTag: true,
-          mode: 'md',
-          tag: 'EMPTY_LINE/',
-          payload: {},
-          comment: 'addEmptyLines.ts: Add empty line after: ' + chunk.tag
-        });
-        position--;
-        continue;
-      }
-      // if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD') && !(nextTag.isTag && nextTag.tag === 'EMPTY_LINE/')) {
-      // }
     }
+
+    // if (!isChunkEmptyLine(nextTag) && !isChunkEmptyLine(prevTag)) {
+    //   chunk.parent.children.splice(ctx.nodeIdx + 1, 0, {
+    //     ...markdownChunks.createNode('EMPTY_LINE/'),
+    //     comment: 'addEmptyLines.ts: Add empty line after: ' + (chunk.tag || chunk.text)
+    //   });
+    //   return;
+    // }
+    // if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD') && !(nextTag.isTag && nextTag.tag === 'EMPTY_LINE/')) {
+    // }
 
     // listLevel
 
-    if (position > 1 && chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/', 'UL'].indexOf(chunk.tag) > -1) {
-      const prevTag = markdownChunks.chunks[position - 1];
+    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/', 'UL'].indexOf(chunk.tag) > -1 && nextTag) {
+      const prevTag = chunk.parent.children[ctx.nodeIdx - 1];
 
       if (chunk.tag === 'UL' && chunk.payload.listLevel !== 1) {
-        continue;
+        return;
       }
-      if (chunk.tag === 'UL' && prevTag.isTag && prevTag.tag === '/UL') {
-        continue;
+      if (chunk.tag === 'UL' && prevTag && prevTag.isTag && prevTag.tag === 'UL') {
+        return;
       }
-      if (chunk.tag === 'UL' && prevTag.isTag && prevTag.tag === '/P') {
-        // continue;
+      if (chunk.tag === 'UL' && prevTag && prevTag.isTag && prevTag.tag === 'P') {
+        // return;
       }
 
-      if (!isNextChunkEmptyLine(markdownChunks, position) && !isPreviousChunkEmptyLine(markdownChunks, position)) {
-        markdownChunks.chunks.splice(position, 0, {
-          isTag: true,
-          mode: 'md',
-          tag: 'EMPTY_LINE/',
-          // payload: {},
-          comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag + JSON.stringify(prevTag),
-          payload: {}
+      if (!isChunkEmptyLine(nextTag) && !isChunkEmptyLine(prevTag)) {
+        chunk.parent.children.splice(ctx.nodeIdx, 0, {
+          ...markdownChunks.createNode('EMPTY_LINE/'),
+          comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag + JSON.stringify({ ...prevTag, children: undefined, parent: undefined })
         });
-        position++;
+        return;
       }
 
       if (!(prevTag.isTag && prevTag.tag === 'BR/') && !(prevTag.isTag && prevTag.tag === 'TD') && !(prevTag.isTag && prevTag.tag === 'EMPTY_LINE/')) {
@@ -135,32 +136,26 @@ export function addEmptyLines(markdownChunks: MarkdownChunks) {
         // });
       }
     }
-  }
+  });
 
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
+
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (!(chunk.isTag && chunk.tag === 'IMG/' && chunk.mode === 'md')) {
-      continue;
+      return;
     }
 
-    const nextTag = markdownChunks.chunks[position + 1];
+    const nextTag = chunk.parent.children[ctx.nodeIdx + 1] || null;
     if (!(nextTag.isTag && nextTag.tag === 'BR/' && nextTag.mode === 'md')) {
-      continue;
+      return;
     }
 
-    markdownChunks.chunks.splice(position + 1, 1, {
-      isTag: true,
-      mode: 'md',
-      tag: 'EOL/',
-      payload: {},
+    chunk.parent.children.splice(ctx.nodeIdx + 1, 1, {
+      ...markdownChunks.createNode('EOL/'),
       comment: 'addEmptyLines.ts: Between images /P'
     }, {
-      isTag: true,
-      mode: 'md',
-      tag: 'EMPTY_LINE/',
-      payload: {},
+      ...markdownChunks.createNode('EMPTY_LINE/'),
       comment: 'addEmptyLines.ts: Between images /P'
     });
-  }
 
+  });
 }

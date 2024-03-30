@@ -1,15 +1,10 @@
-import {addComment, MarkdownChunks} from '../MarkdownChunks.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
+import {isBeginMacro, isEndMacro} from '../macroUtils.ts';
+import {addComment, extractText} from '../markdownNodesUtils.js';
 
-export function isBeginMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
-}
 
-export function isEndMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
-}
-
-export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: RewriteRule[]) {
+export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   let previousParaOpening = 0;
   const macros = [];
 
@@ -54,7 +49,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         const nextParaClosing = markdownChunks.findNext('/P', position);
 
         if (nextParaOpening > 0 && nextParaOpening < nextParaClosing) {
-          const innerText = markdownChunks.extractText(nextParaOpening, nextParaClosing, rewriteRules);
+          const innerText = extractText(markdownChunks.body, nextParaOpening, nextParaClosing, rewriteRules);
           if (innerText.length === 0) {
             // markdownChunks.chunks.splice(nextParaOpening, nextParaClosing - nextParaOpening + 1, {
             //   isTag: true,
@@ -69,7 +64,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
         }
 
         if (previousParaOpening > 0) {
-          const innerText = markdownChunks.extractText(previousParaOpening, position, rewriteRules);
+          const innerText = extractText(markdownChunks.body, previousParaOpening, position, rewriteRules);
           if (innerText.length === 0) {
             //addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
             markdownChunks.chunks.splice(previousParaOpening, position - previousParaOpening + 1, {
@@ -118,7 +113,7 @@ export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: Re
 
       } else {
         if (previousParaOpening > 0) {
-          const innerText = markdownChunks.extractText(previousParaOpening, position, rewriteRules);
+          const innerText = extractText(markdownChunks.body, previousParaOpening, position, rewriteRules);
           if (innerText.length === 0) {
             //addComment(chunk, 'mergeParagraphs.ts: innerText.length === 0');
             markdownChunks.chunks.splice(previousParaOpening, position - previousParaOpening + 1, {

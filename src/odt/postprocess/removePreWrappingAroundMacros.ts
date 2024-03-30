@@ -1,29 +1,27 @@
-import {MarkdownChunks} from '../MarkdownChunks.ts';
-import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../StateMachine.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../macroUtils.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function removePreWrappingAroundMacros(markdownChunks: MarkdownChunks) {
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-    if (chunk.isTag === false && isMarkdownBeginMacro(chunk.text)) {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      const postChunk = markdownChunks.chunks[position + 1];
-      if (prevChunk.isTag && prevChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-        markdownChunks.removeChunk(position - 1);
-        postChunk.tag = 'PRE';
-        position--;
-        continue;
+export function removePreWrappingAroundMacros(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (preChunk, ctx: { nodeIdx: number }) => {
+    if (preChunk.isTag === true && preChunk.tag === 'PRE') {
+      if (preChunk.children.length > 0) {
+        const lastChild = preChunk.children[preChunk.children.length - 1];
+        if (lastChild.isTag === false && isMarkdownEndMacro(lastChild.text)) {
+          lastChild.parent = preChunk.parent;
+          preChunk.children.splice(preChunk.children.length - 1, 1);
+          preChunk.parent.children.splice(ctx.nodeIdx + 1, 0, lastChild);
+        }
+      }
+
+      if (preChunk.children.length > 0) {
+        const firstChild = preChunk.children[0];
+        if (firstChild.isTag === false && isMarkdownBeginMacro(firstChild.text)) {
+          firstChild.parent = preChunk.parent;
+          preChunk.children.splice(0, 1);
+          preChunk.parent.children.splice(ctx.nodeIdx, 0, firstChild);
+        }
       }
     }
-
-    if (chunk.isTag === false && isMarkdownEndMacro(chunk.text)) {
-      const preChunk = markdownChunks.chunks[position - 1];
-      const postChunk = markdownChunks.chunks[position + 1];
-      if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-        preChunk.tag = '/PRE';
-        markdownChunks.removeChunk(position + 1);
-        position--;
-        continue;
-      }
-    }
-  }
+  });
 }

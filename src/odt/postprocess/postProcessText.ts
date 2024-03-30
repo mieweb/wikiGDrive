@@ -1,4 +1,4 @@
-import {isBeginMacro, isEndMacro} from './mergeParagraphs.ts';
+import {isBeginMacro, isEndMacro} from '../macroUtils.ts';
 
 export function emptyString(str: string) {
   return str.trim().length === 0;

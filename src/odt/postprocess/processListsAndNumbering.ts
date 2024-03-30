@@ -1,6 +1,9 @@
-import {MarkdownChunks, TagPayload} from '../MarkdownChunks.ts';
+import {MarkdownNodes, TagPayload} from '../MarkdownNodes.ts';
+import {spaces} from '../utils.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
+export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
+  const body = markdownChunks.body;
 
   const counters: { [id: string]: number } = {};
   let preserveMinLevel = 999;
@@ -71,30 +74,16 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
   const margins = {};
 
   let lastItem = null;
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
+  walkRecursiveSync(body, (chunk, ctx: { level: number }) => {
     if (!chunk.isTag) {
-      continue;
+      return;
     }
 
     if (chunk.mode !== 'md') {
-      continue;
+      return ;
     }
 
     const tag = chunk.tag;
-
-    if (['/TOC', '/UL', '/LI', '/P'].includes(tag)) {
-      const currentLevel = topElement(stack);
-      chunk.payload.listLevel = currentLevel.payload.listLevel;
-      stack.pop();
-
-      if (tag === '/UL') {
-        // this.listLevel--;
-        preserveMinLevel = 999;
-      }
-
-      continue;
-    }
 
     const parentLevel = topElement(stack);
 
@@ -109,7 +98,7 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
         payload: chunk.payload
       });
     } else {
-      continue;
+      return ;
     }
 
     if ('LI' === tag) {
@@ -161,7 +150,6 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
               level = margins[currentElement.payload.marginLeft];
             }
 
-
             const listStyle = parentLevel.payload.listStyle || currentElement.payload.listStyle;
             const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
 
@@ -176,6 +164,32 @@ export function processListsAndNumbering(markdownChunks: MarkdownChunks) {
           break;
       }
     }
-  }
+
+    return { ...ctx, level: ctx.level + 1 };
+  }, { level: 0 }, (chunk, ctx: { level: number }) => {
+    if (!chunk.isTag) {
+      return;
+    }
+
+    if (chunk.mode !== 'md') {
+      return ;
+    }
+
+    const tag = chunk.tag;
+
+    if (['TOC', 'UL', 'LI', 'P'].includes(tag)) {
+      const currentLevel = topElement(stack);
+      chunk.payload.listLevel = currentLevel.payload.listLevel;
+      stack.pop();
+
+      if (tag === 'UL') {
+        // this.listLevel--;
+        preserveMinLevel = 999;
+      }
+
+      return ;
+    }
+  });
+
 
 }
