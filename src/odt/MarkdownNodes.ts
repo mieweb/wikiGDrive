@@ -50,7 +50,6 @@ export interface TagPayload {
 
 export interface MarkdownTextNode {
   isTag: false;
-  mode: OutputMode;
   text: string;
   comment?: string;
   parent?: MarkdownTagNode;
@@ -58,7 +57,6 @@ export interface MarkdownTextNode {
 
 export interface MarkdownTagNode {
   isTag: true;
-  mode: OutputMode;
   tag: TAG;
   payload: TagPayload;
   comment?: string;
@@ -80,18 +78,17 @@ export class MarkdownNodes {
     this.body = this.createNode('BODY', {});
   }
 
-  createNode(tag: TAG, payload: TagPayload = {}, mode: OutputMode = 'md'): MarkdownTagNode {
+  createNode(tag: TAG, payload: TagPayload = {}): MarkdownTagNode {
     const node: MarkdownTagNode = {
       isTag: true,
       tag,
-      mode,
       payload,
       children: []
     };
 
     const oldSplice = node.children.splice;
     node.children.splice = function (start, deleteCount, ...items) {
-      const retVal = oldSplice.apply(node.children, [start, deleteCount, ...items])
+      const retVal = oldSplice.apply(node.children, [start, deleteCount, ...items]);
       // const retVal = oldSplice(start, deleteCount, ...items);
 
       for (let idx = 0; idx < items.length; idx++) {
@@ -114,7 +111,7 @@ export class MarkdownNodes {
 
   toString(rules: RewriteRule[] = []) {
     // console.log(this.chunks.map(c => debugChunkToText(c)).join('\n'));
-    return chunksToText(this.body.children, { rules, mode: 'md' })
+    return chunksToText(this.body.children, { rules, mode: 'md', addLiIndents: true })
       .split('\n')
       .map(line => line.trim().length > 0 ? line : '')
       .join('\n');
@@ -171,7 +168,6 @@ export class MarkdownNodes {
     txt = fixCharacters(txt);
     parent.children.push({
       isTag: false,
-      mode: 'md', // this.currentMode,
       text: txt,
       parent,
       comment: 'MarkdownNodes.ts: appendText'

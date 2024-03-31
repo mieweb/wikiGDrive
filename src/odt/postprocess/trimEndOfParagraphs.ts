@@ -11,11 +11,5 @@ export function trimEndOfParagraphs(markdownChunks: MarkdownNodes) {
         }
       }
     }
-    // if (chunk.isTag === true && chunk.tag === '/P') {
-    //   const prevChunk = markdownChunks.chunks[position - 1];
-    //   if (prevChunk.isTag === false) {
-    //     prevChunk.text = prevChunk.text.replace(/ +$/, '');
-    //   }
-    // }
   });
 }

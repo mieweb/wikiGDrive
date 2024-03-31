@@ -36,7 +36,7 @@ export async function postProcess(chunks: MarkdownNodes) {
 
   addEmptyLinesAfterParas(chunks);
   addEmptyLines(chunks);
-  // addIndentsAndBullets(chunks);
+  addIndentsAndBullets(chunks);
   mergeTexts(chunks);
   // postProcessPreMacros(chunks);
   await rewriteHeaders(chunks);

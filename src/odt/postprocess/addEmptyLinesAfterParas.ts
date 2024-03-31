@@ -3,9 +3,9 @@ import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function addEmptyLinesAfterParas(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
-    if (chunk.mode !== 'md') {
-      return;
-    }
+    // if (chunk.mode !== 'md') {
+    //   return;
+    // }
 
     if (!chunk.isTag) {
       return;

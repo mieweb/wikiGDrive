@@ -87,6 +87,93 @@ interface ToTextContext {
   inListItem?: boolean;
 }
 
+function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean}, innerText: string) {
+  if (!ctx.addLiIndents) {
+    return innerText;
+  }
+  if (!chunk.isTag) {
+    return innerText;
+  }
+  if (chunk.tag !== 'LI') {
+    return innerText;
+  }
+
+  let noPara = false;
+  if (chunk.children.length > 0 && chunk.children[0].isTag && chunk.children[0].tag === 'UL') { // No para, no symbol
+    noPara = true;
+    // return innerText;
+  }
+
+  if (!chunk.payload.listLevel) {
+    // return innerText;
+  }
+
+  // const level = (chunk.payload.listLevel || 1) - 1;
+  const level = 0;
+
+  if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
+    // return innerText;
+  }
+
+  // let indent = spaces(level * 4); GDocs not fully compatible
+  // if (chunk.payload.style?.paragraphProperties?.marginLeft) {
+  //   indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
+  // }
+  // const indent = spaces(level * 3);
+  const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
+  // const firstStr = indent + listStr;
+  // const otherStr = indent + spaces(listStr.length);
+
+  const firstStr = listStr;
+  const otherStr = spaces(listStr.length || 3);
+
+  return innerText
+    .split('\n')
+    .map((line, idx) => {
+      if (noPara) {
+        return otherStr + '' + line;
+      }
+      if (idx === 0) {
+        return firstStr + '' + line;
+      }
+      return otherStr + '' + line;
+    })
+    .join('\n') + '\n';
+
+/*  let prevEmptyLine = 1;
+  for (let position2 = ctx.nodeIdx + 1; position2 < chunk.parent.children.length; position2++) {
+    const chunk2 = chunk.parent.children[position2];
+    if (chunk2.isTag === true && chunk2.tag === '/P' && chunk.mode === 'md') {
+      position += position2 - position - 1;
+      break;
+    }
+
+    if (chunk2.isTag === true && ['BR/'].indexOf(chunk2.tag) > -1) {
+      prevEmptyLine = 2;
+      continue;
+    }
+
+    if (chunk2.isTag === false && chunk2.text.startsWith('{{% ') && chunk2.text.endsWith(' %}}')) {
+      const innerText = chunk2.text.substring(3, chunk2.text.length - 3);
+      if (innerText.indexOf(' %}}') === -1) {
+        continue;
+      }
+    }
+
+    if (prevEmptyLine > 0) {
+      chunk.parent.children.splice(position2, 0, {
+        isTag: false,
+        text: prevEmptyLine === 1 ? firstStr : otherStr,
+        comment: `addIndentsAndBullets.ts: Indent (${chunk.payload.bullet ? 'bullet' : 'number ' + chunk.payload.number}), level: ` + level + ', prevEmptyLine: ' + (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0)
+      });
+      prevEmptyLine = 0;
+      position2++;
+      return innerText;
+    }
+  }
+ */
+}
+
 function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
   ctx = Object.assign({ rules: [], mode: 'md' }, ctx);
 
@@ -169,7 +256,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'HTML_MODE/': // TODO
           return chunksToText(chunk.children, { ...ctx, mode: 'html' }) + '\n';
         case 'LI': // TODO
-          return chunksToText(chunk.children, { ...ctx, inListItem: true });
+          return addLiNumbers(chunk, ctx, chunksToText(chunk.children, { ...ctx, inListItem: true }));
         default:
           return chunksToText(chunk.children, ctx);
       }
@@ -269,6 +356,7 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
       for (const rule of ctx.rules) {
         const { shouldBreak, text } = applyRewriteRule(rule, {
           ...chunk,
+          mode: 'TODO', // TODO
           href: 'payload' in chunk ? chunk.payload?.href : undefined,
           alt: 'payload' in chunk ? chunk.payload?.alt : undefined
         });
@@ -302,6 +390,7 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
         for (const rule of ctx.rules) {
           const { shouldBreak, text } = applyRewriteRule(rule, {
             ...chunk,
+            mode: 'TODO', // TODO
             href: 'payload' in chunk ? chunk.payload?.href : undefined,
             alt
           });
@@ -418,6 +507,10 @@ export function dump(body: MarkdownTagNode, logger = console) {
       if (chunk.tag === 'UL') {
         line += ` (Level: ${chunk.payload.listLevel})`;
       }
+      if (chunk.tag === 'LI') {
+        line += ` (${chunk.payload?.bullet || chunk.payload?.number}, Level: ${chunk.payload.listLevel})`;
+      }
+
     }
     if (chunk.isTag === false) {
       line += chunk.text

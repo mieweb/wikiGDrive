@@ -73,24 +73,26 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
 
   const margins = {};
 
-  let lastItem = null;
+  // let lastItem = null;
   walkRecursiveSync(body, (chunk, ctx: { level: number }) => {
     if (!chunk.isTag) {
       return;
     }
 
-    if (chunk.mode !== 'md') {
-      return ;
-    }
+    // refact
+    // if (chunk.mode !== 'md') {
+    //   return ;
+    // }
 
     const tag = chunk.tag;
 
     const parentLevel = topElement(stack);
 
-    if ('IMG/' === tag) {
-      const level = lastItem?.payload?.listLevel;
-      chunk.payload.listLevel = level;
-    }
+    // TODO: Why?
+    // if ('IMG/' === tag) {
+    //   const level = lastItem?.payload?.listLevel;
+    //   chunk.payload.listLevel = level;
+    // }
 
     if (['TOC', 'UL', 'LI', 'P'].includes(tag)) {
       stack.push({
@@ -101,15 +103,15 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       return ;
     }
 
-    if ('LI' === tag) {
-      lastItem = chunk;
-    }
+    // if ('LI' === tag) {
+    //   lastItem = chunk;
+    // }
 
     const listLevel = stack.filter(item => item.tag === 'UL').length;
 
     const currentElement = topElement(stack);
 
-    if (currentElement.tag === 'UL') {
+    if ('UL' === currentElement.tag) {
       currentElement.payload.listLevel = listLevel;
 
       if (currentElement.payload.continueNumbering || currentElement.payload.continueList) {
@@ -121,7 +123,7 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       }
     }
 
-    if (tag === 'LI') {
+    if ('LI' === currentElement.tag) {
       if (parentLevel?.tag === 'UL') {
         currentElement.payload.listLevel = parentLevel.payload.listLevel;
         const listStyleName = (currentElement.payload.listStyle?.name || getTopListStyleName()) + '_' + currentElement.payload.listLevel;
@@ -131,10 +133,10 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       }
     }
 
-    if (tag === 'P') {
-      const currentMode = chunk.mode;
-      switch (currentMode) {
-        case 'md':
+    if ('P' === currentElement.tag) {
+      // const currentMode = chunk.mode;
+      // switch (currentMode) {
+      //   case 'md':
           if (parentLevel?.tag === 'TOC') {
             currentElement.payload.bullet = true;
           }
@@ -159,10 +161,11 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
               currentElement.payload.number = parentLevel.payload.number;
             } else {
               currentElement.payload.bullet = true;
+              parentLevel.payload.bullet = true;
             }
           }
-          break;
-      }
+          // break;
+      // }
     }
 
     return { ...ctx, level: ctx.level + 1 };
@@ -171,9 +174,9 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       return;
     }
 
-    if (chunk.mode !== 'md') {
-      return ;
-    }
+    // if (chunk.mode !== 'md') {
+    //   return ;
+    // }
 
     const tag = chunk.tag;
 

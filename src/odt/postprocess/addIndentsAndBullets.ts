@@ -5,11 +5,12 @@ import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
-      const level = (chunk.payload.listLevel || 1) - 1;
-
       if (!chunk.payload.listLevel) {
         return;
       }
+
+      // const level = (chunk.payload.listLevel || 1) - 1;
+      const level = 0;
 
       if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
         return;
@@ -46,7 +47,6 @@ export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
 
         if (prevEmptyLine > 0) {
           chunk.parent.children.splice(position2, 0, {
-            mode: 'md',
             isTag: false,
             text: prevEmptyLine === 1 ? firstStr : otherStr,
             comment: `addIndentsAndBullets.ts: Indent (${chunk.payload.bullet ? 'bullet' : 'number ' + chunk.payload.number}), level: ` + level + ', prevEmptyLine: ' + (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0)
@@ -59,6 +59,7 @@ export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
     }
   });
 
+/*
   let lastItem = null;
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag === true && chunk.tag === 'LI' && chunk.mode === 'md') {
@@ -88,5 +89,6 @@ export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
       return;
     }
   });
+*/
 
 }
