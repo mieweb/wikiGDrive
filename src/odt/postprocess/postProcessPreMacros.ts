@@ -25,13 +25,10 @@ function getMatching(startText: string) {
 function cleanupLines(chunk: MarkdownTagNode) {
   while (chunk.children.length > 0) {
     const child = chunk.children[0];
-
     if (child.isTag && child.tag === 'EMPTY_LINE/') {
       chunk.children.splice(0, 1);
-      // child.comment = 'removeExcessiveLines.ts: moved EMPTY_LINE/ to parent';
-      // chunk.parent.children.splice(ctx.nodeIdx, 0, child);
+      continue;
     }
-
     break;
   }
 }
@@ -86,8 +83,6 @@ export function postProcessPreMacros(markdownChunks: MarkdownNodes) {
           firstChildIdx = -1;
 
           cleanupLines(rawMode);
-
-          continue;
         }
       }
     }

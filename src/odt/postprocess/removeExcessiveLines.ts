@@ -3,14 +3,14 @@ import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
 export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
 
-  let inHtml = false;
-  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+  let inHtml = 0;
+  walkRecursiveSync(markdownChunks.body, (chunk) => {
     if (chunk.parent && chunk.parent.tag !== 'BODY') {
       return;
     }
 
     if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
-      inHtml = true;
+      inHtml++;
       return;
     }
 
@@ -21,11 +21,29 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
 
   }, {}, (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
-      inHtml = false;
+      inHtml--;
       return;
     }
 
     if (chunk.isTag && ['P', 'BODY'].includes(chunk.tag)) {
+
+      for (let idx = 0; idx < chunk.children.length; idx++) {
+        const child = chunk.children[idx];
+        if (child.isTag && child.tag === 'BR/') {
+          const prevChild = chunk.children[idx - 1];
+          const nextChild = chunk.children[idx + 1];
+
+          if (nextChild && nextChild.isTag && ['EOL/', 'BR/', 'EMPTY_LINE/'].includes(nextChild.tag)) {
+            child.comment = 'removeExcessiveLines.ts: converted BR/ to EOL/';
+            child.tag = 'EOL/';
+          } else
+          if (prevChild && prevChild.isTag && ['EOL/', 'BR/', 'EMPTY_LINE/'].includes(prevChild.tag)) {
+            child.comment = 'removeExcessiveLines.ts: converted BR/ to EOL/';
+            child.tag = 'EOL/';
+          }
+        }
+      }
+
       for (let idx = chunk.children.length - 1; idx > 0; idx--) {
         const child = chunk.children[idx];
         const prevChild = chunk.children[idx - 1];
@@ -48,7 +66,6 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
           const emptyLine = markdownChunks.createNode('EMPTY_LINE/');
           emptyLine.comment = 'removeExcessiveLines.ts: Converted BR/ to EOL/ + EMPTY_LINE/';
           chunk.children.splice(idx, 1, eol, emptyLine);
-          continue;
         }
       }
 
@@ -72,7 +89,6 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
             child.tag = 'EMPTY_LINE/';
             child.comment = 'removeExcessiveLines.ts: converted EOL/ to EMPTY_LINE/';
             idx++;
-            continue;
           }
         }
       }
@@ -96,7 +112,6 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
         if (child.isTag && child.tag === 'EMPTY_LINE/') {
           if (prevChild.isTag && prevChild.tag === 'EMPTY_LINE/') {
             chunk.children.splice(idx, 1);
-            continue;
           }
         }
       }
@@ -106,9 +121,11 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
 
         if (child.isTag && child.tag === 'EMPTY_LINE/') {
           chunk.children.splice(idx, 1);
-          child.comment = 'removeExcessiveLines.ts: moved EMPTY_LINE/ to parent';
 
-          chunk.parent.children.splice(ctx.nodeIdx + 1, 0, child);
+          if (chunk.tag === 'P') {
+            child.comment = 'removeExcessiveLines.ts: moved EMPTY_LINE/ to parent';
+            chunk.parent.children.splice(ctx.nodeIdx + 1, 0, child);
+          }
         } else {
           break;
         }
@@ -142,13 +159,12 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
     if (child.isTag && child.tag === 'EMPTY_LINE/') {
       if (prevChild.isTag && prevChild.tag === 'EMPTY_LINE/') {
         markdownChunks.body.children.splice(idx, 1);
-        continue;
       }
     }
   }
 
   while (markdownChunks.body.children.length > 0) {
-    const firstChild = markdownChunks.body.children[0]
+    const firstChild = markdownChunks.body.children[0];
     if (firstChild.isTag && firstChild.tag === 'EMPTY_LINE/') {
       markdownChunks.body.children.splice(0, 1);
       continue;
@@ -157,7 +173,7 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
   }
 
   while (markdownChunks.body.children.length > 0) {
-    const firstChild = markdownChunks.body.children[markdownChunks.body.children.length - 1]
+    const firstChild = markdownChunks.body.children[markdownChunks.body.children.length - 1];
     if (firstChild.isTag && firstChild.tag === 'EMPTY_LINE/') {
       markdownChunks.body.children.splice(markdownChunks.body.children.length - 1, 1);
       continue;
