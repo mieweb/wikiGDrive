@@ -22,8 +22,10 @@ import {mergeParagraphs} from './mergeParagraphs.ts';
 import {convertToc} from './convertToc.js';
 import {removeEmptyTags} from './removeEmptyTags.js';
 import {removeExcessiveLines} from './removeExcessiveLines.js';
+import {applyRewriteRules} from './applyRewriteRules.js';
+import {RewriteRule} from '../applyRewriteRule.js';
 
-export async function postProcess(chunks: MarkdownNodes) {
+export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
   processListsAndNumbering(chunks);
   postProcessHeaders(chunks);
@@ -51,6 +53,8 @@ export async function postProcess(chunks: MarkdownNodes) {
   addEmptyLines(chunks);
 
   removeExcessiveLines(chunks);
+
+  applyRewriteRules(chunks, rewriteRules);
 
   if (process.env.DEBUG_COLORS) {
     dump(chunks.body);

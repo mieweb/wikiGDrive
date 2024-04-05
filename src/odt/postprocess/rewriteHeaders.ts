@@ -8,7 +8,7 @@ export async function rewriteHeaders(markdownChunks: MarkdownNodes) {
   await walkRecursiveAsync(markdownChunks.body, async (chunk) => {
     if (chunk.isTag === true && ['H1', 'H2', 'H3', 'H4'].includes(chunk.tag)) { // && 'md' === this.currentMode) {
       if (chunk.payload.bookmarkName) {
-        const innerTxt = await extractText(chunk);
+        const innerTxt = extractText(chunk);
         const slug = slugify(innerTxt.trim(), { replacement: '-', lower: true, remove: /[#*+~.()'"!:@]/g });
         if (slug) {
           headersMap['#' + chunk.payload.bookmarkName] = '#' + slug;

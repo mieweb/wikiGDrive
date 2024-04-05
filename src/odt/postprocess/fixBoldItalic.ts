@@ -27,12 +27,10 @@ export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
     }
 
     if (chunk.isTag === true && ['I'].includes(chunk.tag)) {
-      const innerTxt = await extractText(chunk);
+      const innerTxt = extractText(chunk);
       if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
         chunk.parent.children.splice(ctx.nodeIdx, 1, ...chunk.children);
         return { nodeIdx: ctx.nodeIdx - 1 };
-        // this.markdownChunks.removeChunk(payload.position);
-        // this.markdownChunks.removeChunk(this.currentLevel.payload.position);
       }
     }
   });

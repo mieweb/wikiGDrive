@@ -1,6 +1,5 @@
 import {ListStyle, Style} from './LibreOffice.ts';
 import {fixCharacters} from './utils.ts';
-import {RewriteRule} from './applyRewriteRule.ts';
 import {chunksToText} from './markdownNodesUtils.ts';
 
 export type OutputMode = 'md' | 'html' | 'raw';
@@ -17,10 +16,6 @@ export type TAG = 'BODY' | 'HR/' | 'B' | 'I' | 'BI' | 'BLANK/' | // | '/B' | '/I
   'EMB_SVG' | 'EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | // | '/EMB_SVG' | '/EMB_SVG_G' | '/EMB_SVG_TEXT'
   'EMB_SVG_TSPAN' | // | '/EMB_SVG_TSPAN'
   'CHANGE_START' | 'CHANGE_END' | 'RAW_MODE/' | 'HTML_MODE/' | 'MD_MODE/' | 'COMMENT';
-
-export const isSelfClosing = (tag: TAG) => tag.endsWith('/');
-// export const isOpening = (tag: TAG) => !tag.startsWith('/') && !tag.endsWith('/');
-// export const isClosing = (tag: TAG) => tag.startsWith('/');
 
 export interface TagPayload {
   lang?: string;
@@ -101,17 +96,8 @@ export class MarkdownNodes {
     return node;
   }
 
-  // get length() {
-  //   return this.chunks.length;
-  // }
-
-  // push(s: MarkdownChunk) {
-  //   this.chunks.push(s);
-  // }
-
-  toString(rules: RewriteRule[] = []) {
-    // console.log(this.chunks.map(c => debugChunkToText(c)).join('\n'));
-    return chunksToText(this.body.children, { rules, mode: 'md', addLiIndents: true })
+  toString() {
+    return chunksToText(this.body.children, { mode: 'md', addLiIndents: true })
       .split('\n')
       .map(line => line.trim().length > 0 ? line : '')
       .join('\n');
@@ -128,37 +114,6 @@ export class MarkdownNodes {
     }
   }
 
-  removeChunk(start: number, deleteCount = 1, comment = '') {
-    throw new Error('TODO remove');
-    this.body.children.splice(start, deleteCount);
-    /*, {
-      mode: 'raw',
-      isTag: true,
-      tag: 'BLANK/',
-      payload: {},
-      children: []
-      comment
-    }
-    */
-    for (let i = start; i < this.body.children.length; i++) {
-      const chunk = this.body.children[i];
-      if (chunk.isTag) {
-        chunk.payload.position -= deleteCount;
-      }
-    }
-  }
-
-  // findNext(tag: TAG, start: number) {
-  //   let nextTagPosition = -1;
-  //   for (let idx = start + 1; idx < this.chunks.length; idx++) {
-  //     const chunk = this.chunks[idx];
-  //     if (chunk.isTag && chunk.mode === 'md' && chunk.tag === tag) {
-  //       nextTagPosition = idx;
-  //       break;
-  //     }
-  //   }
-  //   return nextTagPosition;
-  // }
   append(parent: MarkdownTagNode, child: MarkdownTagNode) {
     parent.children.push(child);
     child.parent = parent;

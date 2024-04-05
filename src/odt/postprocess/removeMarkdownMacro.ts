@@ -15,7 +15,7 @@ export async function removeMarkdownMacro(markdownChunks: MarkdownNodes) {
     }
 
     if (chunk.isTag && chunk.tag === 'CODE') {
-      const innerTxt = await extractText(chunk);
+      const innerTxt = extractText(chunk);
       if (isMarkdownMacro(innerTxt)) {
         chunk.parent.children.splice(ctx.nodeIdx, 1, {
           isTag: false,

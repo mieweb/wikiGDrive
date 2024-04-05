@@ -61,7 +61,6 @@ function getInnerText(span: TextSpan) {
 export class OdtToMarkdown {
 
   public errors: string[] = [];
-  // private readonly stateMachine: StateMachine;
   private readonly styles: { [p: string]: Style } = {};
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownNodes = new MarkdownNodes();
@@ -69,8 +68,6 @@ export class OdtToMarkdown {
   private rewriteRules: RewriteRule[] = [];
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
-
-    // this.stateMachine = new StateMachine(this.chunks);
   }
 
   getStyle(styleName: string): Style {
@@ -122,8 +119,6 @@ export class OdtToMarkdown {
     const listLevels = Object.keys(listLevelsObj);
     listLevels.sort((a, b) => inchesToPixels(a) - inchesToPixels(b));
 
-    // this.stateMachine.setListLevels(listLevels); // TODO
-
     for (const tableOfContent of this.document.body.text.list) {
       if (tableOfContent.type === 'toc') {
         await this.tocToText(this.chunks.body, <TableOfContent>tableOfContent);
@@ -134,9 +129,9 @@ export class OdtToMarkdown {
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
 
-    await postProcess(this.chunks);
+    await postProcess(this.chunks, this.rewriteRules);
 
-    const markdown = this.chunks.toString(this.rewriteRules);
+    const markdown = this.chunks.toString();
     const trimmed = this.trimBreaks(markdown);
     return postProcessText(trimmed);
   }
@@ -177,11 +172,9 @@ export class OdtToMarkdown {
     const tocNode = this.chunks.createNode('TOC', {});
     this.chunks.append(currentTagNode, tocNode);
 
-    // this.stateMachine.pushTag('TOC');
     for (const paragraph of tableOfContent.indexBody.list) {
       await this.paragraphToText(tocNode, paragraph);
     }
-    // this.stateMachine.pushTag('/TOC');
   }
 
   async spanToText(currentTagNode: MarkdownTagNode, span: TextSpan): Promise<void> {
@@ -226,20 +219,6 @@ export class OdtToMarkdown {
           break;
       }
     }
-
-    // if (style.textProperties?.fontStyle === 'italic' && style.textProperties?.fontWeight === 'bold') {
-    //   this.stateMachine.pushTag('/BI');
-    // } else
-    // if (style.textProperties?.fontStyle === 'italic') {
-    //   this.stateMachine.pushTag('/I');
-    // } else
-    // if (style.textProperties?.fontWeight === 'bold') {
-    //   this.stateMachine.pushTag('/B');
-    // }
-    //
-    // if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
-    //   this.stateMachine.pushTag('/CODE');
-    // }
   }
 
   addLink(href: string) {
@@ -257,7 +236,6 @@ export class OdtToMarkdown {
 
     this.addLink(href);
 
-    // this.stateMachine.pushTag('A', { href: href });
     const block = this.chunks.createNode('A', { href: href });
     this.chunks.append(currentTagNode, block);
     currentTagNode = block;
@@ -275,8 +253,6 @@ export class OdtToMarkdown {
           break;
       }
     }
-
-    // this.stateMachine.pushTag('/A', { href: href });
   }
 
   async drawCustomShape(currentTagNode: MarkdownTagNode, drawCustomShape: DrawCustomShape) {
@@ -316,7 +292,6 @@ export class OdtToMarkdown {
         const blockSvgText = this.chunks.createNode('EMB_SVG_TEXT');
         this.chunks.append(blockSvg, blockSvgText);
 
-        // this.stateMachine.pushTag('EMB_SVG_TEXT');
         for (const child of paragraph.list) {
           if (typeof child === 'string') {
             this.chunks.appendText(currentTagNode, child);
@@ -352,16 +327,11 @@ export class OdtToMarkdown {
                 }
               }
             }
-
-            // this.stateMachine.pushTag('/EMB_SVG_TSPAN');
             break;
           }
         }
-        // this.stateMachine.pushTag('/EMB_SVG_TEXT');
       }
     }
-
-    // this.stateMachine.pushTag('/EMB_SVG');
   }
 
   async drawGToText(currentTagNode: MarkdownTagNode, drawG: DrawG) {
@@ -428,11 +398,9 @@ export class OdtToMarkdown {
       if (imageLink.endsWith('.svg')) {
         const node = this.chunks.createNode('SVG/', { href: imageLink, alt: altText });
         this.chunks.append(currentTagNode, node);
-        // this.stateMachine.pushTag(`<object type="image/svg+xml" data="${imageLink}"><img src="${imageLink}" /></object>`);
       } else {
         const node = this.chunks.createNode('IMG/', { href: imageLink, alt: altText });
         this.chunks.append(currentTagNode, node);
-        // this.stateMachine.pushTag(`![${altText}](${imageLink})`);
       }
     }
   }
@@ -538,22 +506,8 @@ export class OdtToMarkdown {
       currentTagNode.tag = 'PRE';
     }
 
-/*    switch (this.top.mode) {
-      case 'html':
-        this.stateMachine.pushTag('P');
-        break;
-      case 'md':
-        if (paragraph.styleName) {
-          const spaces = inchesToSpaces(style.paragraphProperties?.marginLeft);
-          if (spaces) {
-            this.stateMachine.pushTag(spaces);
-          }
-        }
-    }*/
-
     if (!this.isCourier(paragraph.styleName)) {
       if (style.textProperties?.fontWeight === 'bold') {
-        // this.stateMachine.pushTag('B');
         const block = this.chunks.createNode('B', {});
         this.chunks.append(currentTagNode, block);
         currentTagNode = block;
@@ -589,7 +543,6 @@ export class OdtToMarkdown {
               const span2 = Object.assign({}, span);
               span2.styleName = '';
               await this.spanToText(codeBlock, span2);
-              // this.stateMachine.pushTag('/CODE');
             } else {
               await this.spanToText(currentTagNode, span);
             }
@@ -631,38 +584,9 @@ export class OdtToMarkdown {
           break;
       }
     }
-
-    // if (!this.isCourier(paragraph.styleName)) {
-    //   if (style.textProperties?.fontWeight === 'bold') {
-    //     this.stateMachine.pushTag('/B');
-    //   }
-    // }
-    //
-    // if (onlyCodeChildren) {
-    //   this.stateMachine.pushTag('/PRE');
-    // }
-    //
-    // if (this.hasStyle(paragraph, 'Heading_20_1')) {
-    //   this.stateMachine.pushTag('/H1');
-    // } else
-    // if (this.hasStyle(paragraph, 'Heading_20_2')) {
-    //   this.stateMachine.pushTag('/H2');
-    // } else
-    // if (this.hasStyle(paragraph, 'Heading_20_3')) {
-    //   this.stateMachine.pushTag('/H3');
-    // } else
-    // if (this.hasStyle(paragraph, 'Heading_20_4')) {
-    //   this.stateMachine.pushTag('/H4');
-    // } else
-    // if (this.isCourier(paragraph.styleName)) {
-    //   this.stateMachine.pushTag('/PRE');
-    // } else {
-    //   this.stateMachine.pushTag('/P');
-    // }
   }
 
   async tableCellToText(currentTagNode: MarkdownTagNode, tableCell: TableCell): Promise<void> {
-    // this.stateMachine.pushTag('TD'); // colspan
     const block = this.chunks.createNode('TD');
     this.chunks.append(currentTagNode, block);
     currentTagNode = block;
@@ -680,32 +604,27 @@ export class OdtToMarkdown {
           break;
       }
     }
-    // this.stateMachine.pushTag('/TD');
   }
 
   async tableRowToText(currentTagNode: MarkdownTagNode, tableRow: TableRow): Promise<void> {
-    // this.stateMachine.pushTag('TR');
     const block = this.chunks.createNode('TR');
     this.chunks.append(currentTagNode, block);
     currentTagNode = block;
     for (const tableCell of tableRow.cells) {
       await this.tableCellToText(currentTagNode, tableCell);
     }
-    // this.stateMachine.pushTag('/TR');
   }
 
   async tableToText(currentTagNode: MarkdownTagNode, table: TableTable): Promise<void> {
     const blockHtml = this.chunks.createNode('HTML_MODE/');
     this.chunks.append(currentTagNode, blockHtml);
 
-    // this.stateMachine.pushTag('TABLE');
     const block = this.chunks.createNode('TABLE');
     this.chunks.append(blockHtml, block);
     currentTagNode = block;
     for (const tableRow of table.rows) {
       await this.tableRowToText(currentTagNode, tableRow);
     }
-    // this.stateMachine.pushTag('/TABLE');
   }
 
   async listToText(currentTagNode: MarkdownTagNode, list: TextList): Promise<void> {
@@ -756,7 +675,6 @@ export class OdtToMarkdown {
 
   setRewriteRules(rewriteRules: RewriteRule[]) {
     this.rewriteRules = rewriteRules;
-    // this.stateMachine.setRewriteRules(rewriteRules);
   }
 
   pushError(error: string) {

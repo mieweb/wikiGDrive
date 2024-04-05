@@ -1,6 +1,5 @@
 import {Style, TextProperty} from './LibreOffice.ts';
 import {inchesToPixels, spaces} from './utils.ts';
-import {applyRewriteRule, RewriteRule} from './applyRewriteRule.ts';
 import {type MarkdownNode, MarkdownTagNode, OutputMode, TagPayload} from './MarkdownNodes.ts';
 
 export function debugChunkToText(chunk: MarkdownNode) {
@@ -82,7 +81,6 @@ function buildSvgStart(payload: TagPayload) {
 
 interface ToTextContext {
   mode: OutputMode;
-  rules: RewriteRule[];
   onlyNotTag?: boolean;
   inListItem?: boolean;
   addLiIndents?: boolean;
@@ -180,7 +178,7 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, pare
 }
 
 function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
-  ctx = Object.assign({ rules: [], mode: 'md' }, ctx);
+  ctx = Object.assign({ mode: 'md' }, ctx);
 
   if (chunk.isTag === false) {
     return chunk.text;
@@ -358,14 +356,15 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
 export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string {
   const retVal = [];
 
-  ctx = Object.assign({ rules: [], mode: 'md' }, ctx);
+  ctx = Object.assign({ rewriteRule: [], mode: 'md' }, ctx);
 
   for (let chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
     const chunk = chunks[chunkNo];
 
+    /*
     if ('tag' in chunk && ['SVG/', 'IMG/'].includes(chunk.tag)) {
       let broke = false;
-      for (const rule of ctx.rules) {
+      for (const rule of ctx.rewriteRule) {
         const { shouldBreak, text } = applyRewriteRule(rule, {
           ...chunk,
           mode: 'TODO', // TODO
@@ -381,7 +380,7 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
       }
 
       if (broke) {
-        return retVal.join('');;
+        return retVal.join('');
       }
     }
 
@@ -399,7 +398,7 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
       // if (matchingNo !== -1) {
         const alt = chunksToText(chunk.children, { ...ctx, onlyNotTag: true }); // .filter(i => !i.isTag)
         let broke = false;
-        for (const rule of ctx.rules) {
+        for (const rule of ctx.rewriteRule) {
           const { shouldBreak, text } = applyRewriteRule(rule, {
             ...chunk,
             mode: 'TODO', // TODO
@@ -414,12 +413,15 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
           }
         }
 
-        // if (broke) {
-        //   chunks.splice(chunkNo, matchingNo - chunkNo);
+      // console.log('XXXXXXXXXXXXXXXXx', alt, broke, retVal);
+        if (broke) {
+          return retVal.join('');
+          // retVal.splice(chunkNo, matchingNo - chunkNo);
         //   return retVal;
-        // }
+        }
       // }
     }
+*/
 
     retVal.push(chunkToText(chunk, ctx));
   }
@@ -470,45 +472,45 @@ export function walkRecursiveSync(node: MarkdownNode, callback: (node: MarkdownN
   }
 }
 
-export async function extractText(node: MarkdownNode) {
+export function extractText(node: MarkdownNode) {
   let retVal = '';
-  await walkRecursiveAsync(node, async (child) => {
+  walkRecursiveSync(node, (child) => {
     if (child.isTag === false) {
       retVal += child.text;
       return;
     }
     if (child.isTag === true) {
       if (['BR/', 'EOL/', 'EMPTY_LINE/'].includes(child.tag)) {
-
+        retVal += '\n';
       }
       return;
     }
-
   });
   return retVal;
 }
 
-/*
-export function extractText(node: MarkdownTagNode, start: number, end: number, rules: RewriteRule[] = []) {
-  const slice = chunksToText(node.children.slice(start, end).filter(i => !i.isTag || ['BR/', 'EOL/', 'EMPTY_LINE/'].includes(i.tag)), rules);
-  return slice;
-}
-*/
-
 export function dump(body: MarkdownTagNode, logger = console) {
   let position = 0;
+
+  const stack = [];
 
   walkRecursiveSync(body, (chunk, ctx: { level: number }) => {
     let line = position + '\t';
 
-    switch (chunk.mode) {
-      case 'md':
+    if (chunk.isTag && ['HTML_MODE/', 'RAW_MODE/'].includes(chunk.tag)) {
+      stack.push(chunk.tag);
+    }
+
+    const mode = stack[stack.length - 1] || 'MARK_DOWN/';
+
+    switch (mode) {
+      case 'MARK_DOWN/':
         line += 'M ';
         break;
-      case 'html':
+      case 'HTML_MODE/':
         line += 'H ';
         break;
-      case 'raw':
+      case 'RAW_MODE/':
         line += 'R ';
         break;
     }
@@ -553,5 +555,9 @@ export function dump(body: MarkdownTagNode, logger = console) {
     position++;
 
     return { ...ctx, level: ctx.level + 1 };
-  }, { level: 0 });
+  }, { level: 0 }, (chunk) => {
+    if (chunk.isTag && ['HTML_MODE/', 'RAW_MODE/'].includes(chunk.tag)) {
+      stack.pop();
+    }
+  });
 }

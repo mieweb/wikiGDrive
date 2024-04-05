@@ -77,7 +77,7 @@ export function postProcessPreMacros(markdownChunks: MarkdownNodes) {
 
           const rawMode = markdownChunks.createNode('RAW_MODE/');
           rawMode.comment = 'postProcessPreMacros.ts: enter raw mode after: ' + startText;
-          const children = chunk.children.splice(firstChildIdx + 2, lastChildIdx - firstChildIdx - 2, rawMode);
+          const children = chunk.children.splice(firstChildIdx + 1, lastChildIdx - firstChildIdx - 1, rawMode);
 
           rawMode.children.splice(0, 0, ...children);
 
@@ -135,40 +135,6 @@ export function postProcessPreMacros(markdownChunks: MarkdownNodes) {
         chunk.parent.children.splice(ctx.nodeIdx, 0, ...before);
       }
     }
-
-/*
-    if (chunk.isTag === false && isPreBeginMacro(chunk.text)) {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      if (prevChunk && prevChunk.isTag && prevChunk.tag === 'PRE') {
-        markdownChunks.chunks.splice(position + 1, 0, {
-          isTag: true,
-          tag: 'PRE',
-          mode: 'md',
-          payload: {}
-        });
-        markdownChunks.removeChunk(position - 1);
-        position--;
-        continue;
-      }
-    }
-  });
-
-    for (let position = 1; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-
-    if (chunk.isTag === false && isPreEndMacro(chunk.text)) {
-      const postChunk = markdownChunks.chunks[position + 1];
-      if (postChunk && postChunk.isTag && postChunk.tag === '/PRE') {
-        markdownChunks.removeChunk(position + 1);
-        markdownChunks.chunks.splice(position, 0, {
-          isTag: true,
-          tag: '/PRE',
-          mode: 'md',
-          payload: {}
-        });
-      }
-    }
-   */
   }, {}, (chunk) => {
     if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
       inHtml = false;
