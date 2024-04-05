@@ -1,10 +1,46 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
-import {isBeginMacro, isEndMacro} from '../macroUtils.ts';
-import {addComment, extractText} from '../markdownNodesUtils.js';
+// import {isBeginMacro, isEndMacro, isMarkdownMacro, stripMarkdownMacro} from '../macroUtils.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
 
-export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
+export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules?: RewriteRule[]) {
+
+  let inHtml = false;
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = true;
+      return;
+    }
+
+    if (inHtml) {
+      return;
+    }
+
+    if (chunk.isTag && ['P', 'PRE'].includes(chunk.tag)) {
+      const nextChunk = chunk.parent.children[ctx.nodeIdx + 1];
+      if (nextChunk?.isTag && nextChunk.tag === chunk.tag) {
+        const children = nextChunk.children.splice(0, nextChunk.children.length);
+
+        if (chunk.tag === 'P') {
+          children.unshift(markdownChunks.createNode('EMPTY_LINE/'));
+        }
+
+        chunk.children.splice(chunk.children.length, 0, ...children);
+
+        chunk.parent.children.splice(ctx.nodeIdx + 1, 1);
+        return { nodeIdx: ctx.nodeIdx - 1 };
+      }
+    }
+  }, {}, (chunk) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = false;
+      return;
+    }
+  });
+
+
+/*
   let previousParaOpening = 0;
   const macros = [];
 
@@ -131,4 +167,5 @@ export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules: Rew
       }
     }
   }
+ */
 }

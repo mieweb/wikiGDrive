@@ -2,10 +2,17 @@ import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function addEmptyLinesAfterParas(markdownChunks: MarkdownNodes) {
+
+  let inHtml = false;
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
-    // if (chunk.mode !== 'md') {
-    //   return;
-    // }
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = true;
+      return;
+    }
+
+    if (inHtml) {
+      return;
+    }
 
     if (!chunk.isTag) {
       return;
@@ -24,13 +31,18 @@ export function addEmptyLinesAfterParas(markdownChunks: MarkdownNodes) {
       }
 
       if (prevChunk && prevChunk.isTag && prevChunk.tag === 'EMPTY_LINE/') {
-        return;
+        // return;
       }
 
       chunk.children.splice(chunk.children.length, 0, {
         ...markdownChunks.createNode('EOL/'),
         comment: 'addEmptyLinesAfterParas.ts: break after ' + chunk.tag,
       });
+    }
+  }, {}, (chunk) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = false;
+      return;
     }
   });
 }

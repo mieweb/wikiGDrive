@@ -2,6 +2,7 @@ import {MarkdownNodes} from '../MarkdownNodes.js';
 import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
 export function removeTdParas(markdownChunks: MarkdownNodes) {
+  // Run after addEmptyLinesAfterParas
   let inHtml = false;
 
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { level: number }) => {
@@ -14,13 +15,13 @@ export function removeTdParas(markdownChunks: MarkdownNodes) {
       for (let pos = 0; pos < chunk.children.length; pos++) {
         const child = chunk.children[pos];
         if (child.isTag && child.tag === 'P') {
-          chunk.children.splice(pos, 1, ...child.children);
+          chunk.children.splice(pos, 1, ...child.children, markdownChunks.createNode('BR/'));
         }
       }
 
       while (chunk.children.length > 0) {
         const lastChild = chunk.children[chunk.children.length - 1];
-        if (lastChild.isTag && lastChild.tag === 'EOL/') {
+        if (lastChild.isTag && ['EOL/', 'BR/'].includes(lastChild.tag)) {
           chunk.children.splice(chunk.children.length - 1, 1);
           continue;
         }

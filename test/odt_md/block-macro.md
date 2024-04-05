@@ -34,4 +34,3 @@ For more information on filtering tables and using the DataVis grids, see the [U
 {{% info %}}
 The logged-in user will now be able to track the enrolled measures from the Quality Reporting portlet on the Quick View.
 {{% /info %}}
-

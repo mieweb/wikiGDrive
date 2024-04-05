@@ -85,9 +85,11 @@ interface ToTextContext {
   rules: RewriteRule[];
   onlyNotTag?: boolean;
   inListItem?: boolean;
+  addLiIndents?: boolean;
+  parentLevel?: number;
 }
 
-function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean}, innerText: string) {
+function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, parentLevel?: number}, innerText: string) {
   if (!ctx.addLiIndents) {
     return innerText;
   }
@@ -108,8 +110,8 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean}, inn
     // return innerText;
   }
 
-  // const level = (chunk.payload.listLevel || 1) - 1;
-  const level = 0;
+  const level = !ctx.parentLevel ? (chunk.payload.listLevel || 1) - 1 : 0;
+  // const level = 0;
 
   if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
     // return innerText;
@@ -119,17 +121,20 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean}, inn
   // if (chunk.payload.style?.paragraphProperties?.marginLeft) {
   //   indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
   // }
-  // const indent = spaces(level * 3);
+  const indent = spaces(level * 4);
   const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
-  // const firstStr = indent + listStr;
-  // const otherStr = indent + spaces(listStr.length);
+  const firstStr = indent + listStr;
+  const otherStr = indent + spaces(4);
 
-  const firstStr = listStr;
-  const otherStr = spaces(listStr.length || 3);
+  // const firstStr = listStr;
+  // const otherStr = spaces(listStr.length < 3 ? listStr.length : 3 || 3);
 
   return innerText
     .split('\n')
-    .map((line, idx) => {
+    .map((line, idx, lines) => {
+      if (idx === lines.length - 1 && line === '') { // Last line should be EOL, don't put spaces after it
+        return line;
+      }
       if (noPara) {
         return otherStr + '' + line;
       }
@@ -138,7 +143,7 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean}, inn
       }
       return otherStr + '' + line;
     })
-    .join('\n') + '\n';
+    .join('\n');
 
 /*  let prevEmptyLine = 1;
   for (let position2 = ctx.nodeIdx + 1; position2 < chunk.parent.children.length; position2++) {
@@ -198,9 +203,9 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'BODY':
           return chunksToText(chunk.children, ctx);
         case 'P':
-          return chunksToText(chunk.children, ctx) + '\n';
+          return chunksToText(chunk.children, ctx);
         case 'PRE':
-          return chunksToText(chunk.children, ctx) + '\n';
+          return chunksToText(chunk.children, ctx);
         case 'BR/':
           return '\n';
         case 'EOL/':
@@ -226,7 +231,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'EMPTY_LINE/':
           return '\n';
         case 'PRE':
-          return '\n```'+ (chunk.payload?.lang || '') +'\n' + chunksToText(chunk.children, ctx) + '\n```\n';
+          return '```'+ (chunk.payload?.lang || '') +'\n' + chunksToText(chunk.children, ctx) + '```\n';
         case 'CODE':
           return '`' + chunksToText(chunk.children, ctx) + '`';
         case 'I':
@@ -238,13 +243,16 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'H1':
           return '# ' + chunksToText(chunk.children, ctx) + '\n';
         case 'H2':
+          // if (chunk.children.length === 0) { // TODO
+          //   return '\n';
+          // }
           return '## ' + chunksToText(chunk.children, ctx) + '\n';
         case 'H3':
           return '### ' + chunksToText(chunk.children, ctx) + '\n';
         case 'H4':
           return '#### ' + chunksToText(chunk.children, ctx) + '\n';
         case 'HR/':
-          return '\n___\n';
+          return '___';
         case 'A':
           return '[' + chunksToText(chunk.children, ctx) + `](${chunk.payload.href})`;
         case 'SVG/':
@@ -254,9 +262,13 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'EMB_SVG':
           return buildSvgStart(chunk.payload);
         case 'HTML_MODE/': // TODO
-          return chunksToText(chunk.children, { ...ctx, mode: 'html' }) + '\n';
+          return chunksToText(chunk.children, { ...ctx, mode: 'html' });
+        case 'RAW_MODE/':
+          return chunksToText(chunk.children, { ...ctx, mode: 'raw' });
         case 'LI': // TODO
-          return addLiNumbers(chunk, ctx, chunksToText(chunk.children, { ...ctx, inListItem: true }));
+          return addLiNumbers(chunk, ctx, chunksToText(chunk.children, { ...ctx, inListItem: true, parentLevel: chunk.payload.listLevel }));
+        case 'TOC':
+          return chunksToText(chunk.children, ctx); // TODO
         default:
           return chunksToText(chunk.children, ctx);
       }
@@ -266,7 +278,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'BODY':
           return chunksToText(chunk.children, ctx);
         case 'BR/':
-          return '\n';
+          return '<br />\n';
         case 'EOL/':
           return '\n';
         case 'EMPTY_LINE/':
@@ -304,7 +316,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'A':
           return `<a href="${chunk.payload.href}">` + chunksToText(chunk.children, ctx) + '</a>';
         case 'TABLE':
-          return '\n<table>\n' + chunksToText(chunk.children, ctx) + '\n</table>\n';
+          return '<table>\n' + chunksToText(chunk.children, ctx) + '</table>\n';
         case 'TR':
           return '<tr>\n' + chunksToText(chunk.children, ctx) + '</tr>\n';
         case 'TD':
@@ -419,7 +431,7 @@ export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string
   return retVal.join('');
 }
 
-export async function walkRecursiveAsync(node: MarkdownNode, callback: (node: MarkdownNode, ctx?: object) => Promise<object | void>, ctx?: object) {
+export async function walkRecursiveAsync(node: MarkdownNode, callback: (node: MarkdownNode, ctx?: object) => Promise<object | void>, ctx?: object, callbackEnd?: (node: MarkdownNode, ctx?: object) => object | void) {
   if (node.isTag) {
     const subCtx = await callback(node, ctx) || Object.assign({}, ctx);
     for (let nodeIdx = 0; nodeIdx < node.children.length; nodeIdx++) {
@@ -428,6 +440,9 @@ export async function walkRecursiveAsync(node: MarkdownNode, callback: (node: Ma
       if (retVal && 'nodeIdx' in retVal && typeof retVal.nodeIdx === 'number') {
         nodeIdx = retVal.nodeIdx;
       }
+    }
+    if (callbackEnd) {
+      callbackEnd(node, ctx);
     }
     return subCtx;
   } else {
@@ -480,7 +495,6 @@ export function extractText(node: MarkdownTagNode, start: number, end: number, r
 }
 */
 
-
 export function dump(body: MarkdownTagNode, logger = console) {
   let position = 0;
 
@@ -505,7 +519,7 @@ export function dump(body: MarkdownTagNode, logger = console) {
       line += chunk.tag;
 
       if (chunk.tag === 'UL') {
-        line += ` (Level: ${chunk.payload.listLevel})`;
+        line += ` (Level: ${chunk.payload.listLevel}, #${chunk.payload?.number || ''})`;
       }
       if (chunk.tag === 'LI') {
         line += ` (${chunk.payload?.bullet || chunk.payload?.number}, Level: ${chunk.payload.listLevel})`;

@@ -118,8 +118,20 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
         preserveMinLevel = listLevel;
       }
 
+      const listStyleName = (currentElement.payload.listStyle?.name || getTopListStyleName()) + '_' + listLevel;
       if (!(preserveMinLevel <= listLevel)) {
         clearListsNo((currentElement.payload.listStyle?.name || getTopListStyleName()) + '_', listLevel);
+      } else {
+        currentElement.payload.number = fetchListNo(listStyleName) + 1;
+        currentElement.payload.continueNumbering = true;
+      }
+
+      const firstChild = chunk.children[0];
+      if (firstChild && firstChild.isTag && firstChild.tag === 'LI') {
+        const firstGrandChild = firstChild.children[0];
+        if (firstGrandChild && firstGrandChild.isTag && firstGrandChild.tag !== 'P') {
+          currentElement.payload.continueNumbering = true;
+        }
       }
     }
 
@@ -127,9 +139,12 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       if (parentLevel?.tag === 'UL') {
         currentElement.payload.listLevel = parentLevel.payload.listLevel;
         const listStyleName = (currentElement.payload.listStyle?.name || getTopListStyleName()) + '_' + currentElement.payload.listLevel;
-        currentElement.payload.number = currentElement.payload.number || fetchListNo(listStyleName);
-        currentElement.payload.number++;
-        storeListNo(listStyleName, currentElement.payload.number);
+
+        if (!(chunk.children.length > 0 && chunk.children[0].isTag && chunk.children[0].tag === 'UL')) { // Has para, increase number
+          currentElement.payload.number = currentElement.payload.number || fetchListNo(listStyleName);
+          currentElement.payload.number++;
+          storeListNo(listStyleName, currentElement.payload.number);
+        }
       }
     }
 
@@ -137,9 +152,9 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       // const currentMode = chunk.mode;
       // switch (currentMode) {
       //   case 'md':
-          if (parentLevel?.tag === 'TOC') {
-            currentElement.payload.bullet = true;
-          }
+      //     if (parentLevel?.tag === 'TOC') {
+      //       currentElement.payload.bullet = true;
+      //     }
 
           if (parentLevel?.tag === 'LI') {
 
@@ -156,6 +171,7 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
             const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
 
             currentElement.payload.listLevel = level;
+            parentLevel.payload.listLevel = level;
 
             if (isNumeric) {
               currentElement.payload.number = parentLevel.payload.number;
@@ -179,6 +195,13 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     // }
 
     const tag = chunk.tag;
+
+    if ('LI' === tag) {
+      const parentElement = chunk.parent;
+      if (parentElement?.tag === 'UL') {
+        // parentElement.payload.listLevel = chunk.payload.listLevel;
+      }
+    }
 
     if (['TOC', 'UL', 'LI', 'P'].includes(tag)) {
       const currentLevel = topElement(stack);

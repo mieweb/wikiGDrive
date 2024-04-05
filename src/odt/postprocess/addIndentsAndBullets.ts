@@ -3,8 +3,18 @@ import {spaces} from '../utils.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
+  let inHtml = false;
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
-    if (chunk.isTag === true && chunk.tag === 'P' && chunk.mode === 'md') {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = true;
+      return;
+    }
+
+    if (inHtml) {
+      return;
+    }
+
+    if (chunk.isTag === true && chunk.tag === 'P') {
       if (!chunk.payload.listLevel) {
         return;
       }
@@ -28,7 +38,7 @@ export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
       let prevEmptyLine = 1;
       for (let position2 = ctx.nodeIdx + 1; position2 < chunk.parent.children.length; position2++) {
         const chunk2 = chunk.parent.children[position2];
-        if (chunk2.isTag === true && chunk2.tag === '/P' && chunk.mode === 'md') {
+        if (chunk2.isTag === true && chunk2.tag === '/P') {
           position += position2 - position - 1;
           break;
         }
@@ -56,6 +66,11 @@ export function addIndentsAndBullets(markdownChunks: MarkdownNodes) {
           return;
         }
       }
+    }
+  }, {}, (chunk) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = false;
+      return;
     }
   });
 

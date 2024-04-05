@@ -2,10 +2,8 @@
 
 **This** is line two
 
-
 * This is a bulleted test
 * Second line
-
 
 hi
 

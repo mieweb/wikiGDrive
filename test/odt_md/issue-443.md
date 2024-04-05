@@ -9,16 +9,16 @@ Review the standard  {{% system-name %}} workflows and gather information neede
 ### Agenda - 2 Hours
 
 * Demonstrate Faxing
-   * System Configuration
-      * Load Fax Coversheet(s)
-      * Inbound Fax Queue
-      * Outbound Faxing
-      * Configure Fax Queue Permissions, User Preferences, and Security Settings
+    * System Configuration
+        * Load Fax Coversheet(s)
+        * Inbound Fax Queue
+        * Outbound Faxing
+        * Configure Fax Queue Permissions, User Preferences, and Security Settings
 * Demonstrate Reports
-   * System Configuration
-      * Configure Reports
-      * Pivot Report Access
-      * Report Restrictions
+    * System Configuration
+        * Configure Reports
+        * Pivot Report Access
+        * Report Restrictions
 
 ## Afterward
 

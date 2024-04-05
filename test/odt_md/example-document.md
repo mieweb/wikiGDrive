@@ -44,10 +44,10 @@ After subtable</td>
 </tr>
 </table>
 
-
 ### Heading 3 - a diagram with links
 
-[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8) 
+[Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
+
 [Diagram](gdoc:1Du-DYDST4liLykJl0fHSCvuQYIYhtOfwco-ntn38Dy8)
 
 ### Heading 3 - with a Table of contents
@@ -68,7 +68,6 @@ After subtable</td>
 ![](1000000000000200000001804F9AAE46CD6D0DF2.gif)
 
 ## Preformatted Text
-
 
 ```
 This is monospaced text. This should line up  |
@@ -110,28 +109,24 @@ From Youtube:
 
 [Google Drive, Docs, and Project Management with GSuite](https://www.youtube.com/watch?v=v6QAIWLCz8I&t=1743s)
 
-
 ## Horizontal Lines
 
 This is some text separated by a horizontal line
 
-
 ___
 
-
 This is after the horizontal line.
-
 
 ## Lists
 
 * Bullet 1
 * Bullet 2
-   * SubBullet 1
-   * SubBullet 2
+    * SubBullet 1
+    * SubBullet 2
 * Bullet 3
-   1. SubNumeric 1
-   2. SubNumeric 2
-   3. SubNumeric 3
+    1. SubNumeric 1
+    2. SubNumeric 2
+    3. SubNumeric 3
 1. Alpha 1
 2. Alpha 2
 3. Alpha 3
@@ -142,8 +137,7 @@ Some **bold** **_boldanditalic_*** italic*  text
 
 ## Equations
 
-### 	Using the actual equation object
-
+### Using the actual equation object
 
 ### Text equivalent
 
