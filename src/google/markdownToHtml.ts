@@ -31,8 +31,8 @@ export async function markdownToHtml(buffer: Buffer): Promise<string> {
   const html = marked.parse(md, { pedantic: false, hooks: {
       preprocess: (markdown: string) => markdown,
       postprocess(html: string) {
-        const style = '<style>\n.code { font-family: Courier; }\n</style>\n';
-        return `<html>\n<head>\n<meta content="text/html; charset=UTF-8" http-equiv="content-type" />\n${style}</head>\n<body>\n${html}\n</body>\n</html>\n`;
+        const style = '<style>\n.code { font-family: Courier, serif; }\n</style>\n';
+        return `<html>\n<head>\n<meta content="text/html; charset=UTF-8" http-equiv="content-type" />\n${style}</head>\n<body>\n${html.trim()}\n</body>\n</html>\n`;
       }
     }
   });

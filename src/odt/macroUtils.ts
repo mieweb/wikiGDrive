@@ -48,6 +48,14 @@ export function isBeginMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }
 
+export function getEndMacro(innerTxt: string) {
+  const txt= innerTxt.replace('{{% ', '').replace(' %}}', '')
+    .split(' ')
+    .shift();
+
+  return '{{% /' + txt + ' %}}';
+}
+
 export function isEndMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
 }

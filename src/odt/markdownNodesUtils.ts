@@ -84,6 +84,7 @@ interface ToTextContext {
   onlyNotTag?: boolean;
   inListItem?: boolean;
   addLiIndents?: boolean;
+  isMacro?: boolean;
   parentLevel?: number;
 }
 
@@ -101,31 +102,14 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, pare
   let noPara = false;
   if (chunk.children.length > 0 && chunk.children[0].isTag && chunk.children[0].tag === 'UL') { // No para, no symbol
     noPara = true;
-    // return innerText;
-  }
-
-  if (!chunk.payload.listLevel) {
-    // return innerText;
   }
 
   const level = !ctx.parentLevel ? (chunk.payload.listLevel || 1) - 1 : 0;
-  // const level = 0;
 
-  if (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0) {
-    // return innerText;
-  }
-
-  // let indent = spaces(level * 4); GDocs not fully compatible
-  // if (chunk.payload.style?.paragraphProperties?.marginLeft) {
-  //   indent = spaces(inchesToSpaces(chunk.payload.style?.paragraphProperties?.marginLeft) - 4);
-  // }
   const indent = spaces(level * 4);
   const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
   const firstStr = indent + listStr;
   const otherStr = indent + spaces(4);
-
-  // const firstStr = listStr;
-  // const otherStr = spaces(listStr.length < 3 ? listStr.length : 3 || 3);
 
   return innerText
     .split('\n')
@@ -142,39 +126,6 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, pare
       return otherStr + '' + line;
     })
     .join('\n');
-
-/*  let prevEmptyLine = 1;
-  for (let position2 = ctx.nodeIdx + 1; position2 < chunk.parent.children.length; position2++) {
-    const chunk2 = chunk.parent.children[position2];
-    if (chunk2.isTag === true && chunk2.tag === '/P' && chunk.mode === 'md') {
-      position += position2 - position - 1;
-      break;
-    }
-
-    if (chunk2.isTag === true && ['BR/'].indexOf(chunk2.tag) > -1) {
-      prevEmptyLine = 2;
-      continue;
-    }
-
-    if (chunk2.isTag === false && chunk2.text.startsWith('{{% ') && chunk2.text.endsWith(' %}}')) {
-      const innerText = chunk2.text.substring(3, chunk2.text.length - 3);
-      if (innerText.indexOf(' %}}') === -1) {
-        continue;
-      }
-    }
-
-    if (prevEmptyLine > 0) {
-      chunk.parent.children.splice(position2, 0, {
-        isTag: false,
-        text: prevEmptyLine === 1 ? firstStr : otherStr,
-        comment: `addIndentsAndBullets.ts: Indent (${chunk.payload.bullet ? 'bullet' : 'number ' + chunk.payload.number}), level: ` + level + ', prevEmptyLine: ' + (!chunk.payload.bullet && !(chunk.payload.number > 0) && level === 0)
-      });
-      prevEmptyLine = 0;
-      position2++;
-      return innerText;
-    }
-  }
- */
 }
 
 function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
@@ -212,10 +163,8 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
           return '\n';
         case 'BLANK/':
           return '';
-        default:
-          return chunksToText(chunk.children, ctx);
       }
-      break;
+      return chunksToText(chunk.children, ctx);
     case 'md':
       switch (chunk.tag) {
         case 'BODY':
@@ -223,6 +172,9 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'P':
           return chunksToText(chunk.children, ctx);
         case 'BR/':
+          if (ctx.isMacro) {
+            return '\n';
+          }
           return '  \n';
         case 'EOL/':
           return '\n';
@@ -263,14 +215,14 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
           return chunksToText(chunk.children, { ...ctx, mode: 'html' });
         case 'RAW_MODE/':
           return chunksToText(chunk.children, { ...ctx, mode: 'raw' });
+        case 'MACRO_MODE/':
+          return chunksToText(chunk.children, { ...ctx, mode: 'md', isMacro: true });
         case 'LI': // TODO
           return addLiNumbers(chunk, ctx, chunksToText(chunk.children, { ...ctx, inListItem: true, parentLevel: chunk.payload.listLevel }));
         case 'TOC':
           return chunksToText(chunk.children, ctx); // TODO
-        default:
-          return chunksToText(chunk.children, ctx);
       }
-      break;
+      return chunksToText(chunk.children, ctx);
     case 'html':
       switch (chunk.tag) {
         case 'BODY':
@@ -344,91 +296,21 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
             const fontSize = inchesToPixels(chunk.payload.style?.textProperties.fontSize);
             return `<tspan style="${textStyleToString(chunk.payload.style?.textProperties)}" font-size="${fontSize}">` + chunksToText(chunk.children, ctx) + '</tspan>\n';
           }
-        default:
-          return chunksToText(chunk.children, ctx);
       }
-      break;
+      return chunksToText(chunk.children, ctx);
+    default:
+      return '';
   }
-
-  return '';
 }
 
 export function chunksToText(chunks: MarkdownNode[], ctx: ToTextContext): string {
   const retVal = [];
-
-  ctx = Object.assign({ rewriteRule: [], mode: 'md' }, ctx);
+  ctx = Object.assign({ mode: 'md' }, ctx);
 
   for (let chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
     const chunk = chunks[chunkNo];
-
-    /*
-    if ('tag' in chunk && ['SVG/', 'IMG/'].includes(chunk.tag)) {
-      let broke = false;
-      for (const rule of ctx.rewriteRule) {
-        const { shouldBreak, text } = applyRewriteRule(rule, {
-          ...chunk,
-          mode: 'TODO', // TODO
-          href: 'payload' in chunk ? chunk.payload?.href : undefined,
-          alt: 'payload' in chunk ? chunk.payload?.alt : undefined
-        });
-
-        if (shouldBreak) {
-          retVal.push(text);
-          broke = true;
-          break;
-        }
-      }
-
-      if (broke) {
-        return retVal.join('');
-      }
-    }
-
-    if ('tag' in chunk && 'A' === chunk.tag) {
-      // let matchingNo = -1;
-      //
-      // for (let idx = chunkNo + 1; idx < chunks.length; idx++) {
-      //   const chunkEnd = chunks[idx];
-      //   if ('tag' in chunkEnd && chunkEnd.tag === '/A') {
-      //     matchingNo = idx;
-      //     break;
-      //   }
-      // }
-
-      // if (matchingNo !== -1) {
-        const alt = chunksToText(chunk.children, { ...ctx, onlyNotTag: true }); // .filter(i => !i.isTag)
-        let broke = false;
-        for (const rule of ctx.rewriteRule) {
-          const { shouldBreak, text } = applyRewriteRule(rule, {
-            ...chunk,
-            mode: 'TODO', // TODO
-            href: 'payload' in chunk ? chunk.payload?.href : undefined,
-            alt
-          });
-
-          if (shouldBreak) {
-            retVal.push(text);
-            broke = true;
-            break;
-          }
-        }
-
-      // console.log('XXXXXXXXXXXXXXXXx', alt, broke, retVal);
-        if (broke) {
-          return retVal.join('');
-          // retVal.splice(chunkNo, matchingNo - chunkNo);
-        //   return retVal;
-        }
-      // }
-    }
-*/
-
     retVal.push(chunkToText(chunk, ctx));
   }
-
-  // chunks.map(c => chunkToText(c));
-  /*
-  */
 
   return retVal.join('');
 }

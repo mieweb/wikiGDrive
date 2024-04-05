@@ -1,5 +1,4 @@
 {{% warning title="Remember" %}}
-
 Action items that are configured with a Trigger Date of **Prior Action (Completed)** will require an order item be specified, in order for there to be an available record in the chart history with a Last Completed Date. This is necessary, so that any additional triggered actions dependent upon the Last Completed Date of the specified order item will be triggered.
 {{% /warning %}}
 

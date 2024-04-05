@@ -22,7 +22,6 @@ import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {postProcessText} from './postprocess/postProcessText.ts';
 import {isMarkdownMacro} from './macroUtils.ts';
 import {postProcess} from './postprocess/postProcess.ts';
 
@@ -132,8 +131,7 @@ export class OdtToMarkdown {
     await postProcess(this.chunks, this.rewriteRules);
 
     const markdown = this.chunks.toString();
-    const trimmed = this.trimBreaks(markdown);
-    return postProcessText(trimmed);
+    return this.trimBreaks(markdown);
   }
 
   trimBreaks(markdown: string) {
@@ -157,7 +155,6 @@ export class OdtToMarkdown {
 
       if (rows[i] === '  ') {
         rows[i] = '';
-        continue;
       }
     }
 
