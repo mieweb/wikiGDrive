@@ -51,20 +51,6 @@ export function compareTexts(input, output, ignoreWhitespace = true, fileName = 
   return true;
 }
 
-export function compareTextsWithLines(input, output) {
-  const diff = diffLines(input, output, {
-    ignoreWhitespace: true
-  }).filter(row => (row.added || row.removed));
-
-  diff.forEach(function(part) {
-    // process.stdout.write(Math.floor(idx / 2 + 2) + ':\t');
-    const color = part.added ? 'green' : part.removed ? 'red' : 'grey';
-    process.stdout.write(part.value[color]);
-  });
-
-  return diff.length === 0;
-}
-
 export function compareObjects(obj1, obj2, prefix = '') {
   const set = new Set<string>();
   Object.keys(obj1).forEach(k => set.add(k));

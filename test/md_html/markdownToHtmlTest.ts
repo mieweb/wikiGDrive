@@ -4,10 +4,10 @@ import * as domutils from 'domutils';
 import render from 'dom-serializer';
 import {Element} from 'domhandler';
 
-import {markdownToHtml} from '../../src/google/markdownToHtml';
-import {convertToAbsolutePath} from '../../src/LinkTranslator';
+import {markdownToHtml} from '../../src/google/markdownToHtml.ts';
+import {convertToAbsolutePath} from '../../src/LinkTranslator.ts';
 import fs from 'fs';
-import {compareTexts} from '../utils';
+import {compareTexts} from '../utils.ts';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
