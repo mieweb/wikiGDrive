@@ -11,18 +11,18 @@ import {hideSuggestedChanges} from './hideSuggestedChanges.ts';
 import {trimParagraphs} from './trimParagraphs.ts';
 import {addEmptyLinesAfterParas} from './addEmptyLinesAfterParas.ts';
 import {addEmptyLines} from './addEmptyLines.ts';
-import {removeTdParas} from './removeTdParas.js';
+import {removeTdParas} from './removeTdParas.ts';
 import {mergeTexts} from './mergeTexts.ts';
-import {rewriteHeaders} from './rewriteHeaders.js';
-import {removeMarkdownMacro} from './removeMarkdownMacro.js';
+import {rewriteHeaders} from './rewriteHeaders.ts';
+import {removeMarkdownMacro} from './removeMarkdownMacro.ts';
 
 import {postProcessPreMacros} from './postProcessPreMacros.ts';
 import {mergeParagraphs} from './mergeParagraphs.ts';
-import {convertToc} from './convertToc.js';
-import {removeEmptyTags} from './removeEmptyTags.js';
-import {removeExcessiveLines} from './removeExcessiveLines.js';
-import {applyRewriteRules} from './applyRewriteRules.js';
-import {RewriteRule} from '../applyRewriteRule.js';
+import {convertToc} from './convertToc.ts';
+import {removeEmptyTags} from './removeEmptyTags.ts';
+import {removeExcessiveLines} from './removeExcessiveLines.ts';
+import {applyRewriteRules} from './applyRewriteRules.ts';
+import {RewriteRule} from '../applyRewriteRule.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);

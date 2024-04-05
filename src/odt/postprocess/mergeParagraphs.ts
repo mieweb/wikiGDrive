@@ -1,5 +1,5 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
-import {extractText, walkRecursiveSync} from '../markdownNodesUtils.js';
+import {extractText, walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function mergeParagraphs(markdownChunks: MarkdownNodes) {
 

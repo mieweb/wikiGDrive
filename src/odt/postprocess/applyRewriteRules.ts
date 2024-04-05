@@ -1,6 +1,6 @@
-import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.js';
-import {chunksToText, walkRecursiveSync} from '../markdownNodesUtils.js';
-import {applyRewriteRule, RewriteRule} from '../applyRewriteRule.js';
+import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.ts';
+import {chunksToText, walkRecursiveSync} from '../markdownNodesUtils.ts';
+import {applyRewriteRule, RewriteRule} from '../applyRewriteRule.ts';
 
 export function applyRewriteRules(markdownChunks: MarkdownNodes, rewriteRule: RewriteRule[] = []) {
   let inHtml = 0;

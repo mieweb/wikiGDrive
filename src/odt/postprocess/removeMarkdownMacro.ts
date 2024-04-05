@@ -1,6 +1,6 @@
-import {MarkdownNodes} from '../MarkdownNodes.js';
-import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.js';
-import {isMarkdownMacro, stripMarkdownMacro} from '../macroUtils.js';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.ts';
+import {isMarkdownMacro, stripMarkdownMacro} from '../macroUtils.ts';
 
 export async function removeMarkdownMacro(markdownChunks: MarkdownNodes) {
   let inHtml = false;

@@ -1,5 +1,5 @@
-import {walkRecursiveSync} from '../markdownNodesUtils.js';
-import {MarkdownNodes} from '../MarkdownNodes.js';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
 
 export function convertToc(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {

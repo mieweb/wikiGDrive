@@ -1,6 +1,6 @@
 import {MarkdownNodes, MarkdownTagNode} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
-import {getEndMacro, getMarkdownEndMacro, isBeginMacro, isMarkdownBeginMacro} from '../macroUtils.js';
+import {getEndMacro, getMarkdownEndMacro, isBeginMacro, isMarkdownBeginMacro} from '../macroUtils.ts';
 
 function isPreBeginMacro(innerTxt: string) {
   return innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}');

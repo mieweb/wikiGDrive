@@ -1,5 +1,5 @@
-import {MarkdownNodes} from '../MarkdownNodes.js';
-import {walkRecursiveSync} from '../markdownNodesUtils.js';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
 

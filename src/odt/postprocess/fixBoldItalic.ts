@@ -1,5 +1,5 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
-import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.js';
+import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.ts';
 
 export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
   // Remove empty Bold and empty Italic
