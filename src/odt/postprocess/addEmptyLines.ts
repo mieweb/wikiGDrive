@@ -16,35 +16,6 @@ BR/
 
 */
 
-function isPreviousChunkEmptyLine(markdownChunks: MarkdownNodes, position: number) {
-  const chunk = markdownChunks.chunks[position - 1];
-  if (!chunk) {
-    return false;
-  }
-
-  if (chunk.isTag && 'EMPTY_LINE/' === chunk.tag) {
-    return true;
-  }
-
-  return false;
-}
-
-function isNextChunkEmptyLine(markdownChunks: MarkdownNodes, position: number) {
-  const chunk = markdownChunks.chunks[position + 1];
-  if (!chunk) {
-    return false;
-  }
-
-  if (chunk.isTag && 'EMPTY_LINE/' === chunk.tag) {
-    return true;
-  }
-  if (chunk.isTag && 'EOL/' === chunk.tag) {
-    return true;
-  }
-
-  return false;
-}
-
 function isChunkEmptyLine(chunk: MarkdownNode) {
   if (!chunk) {
     return false;
@@ -62,8 +33,6 @@ function isChunkEmptyLine(chunk: MarkdownNode) {
 
   return false;
 }
-
-
 
 export function addEmptyLines(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
@@ -158,86 +127,6 @@ export function addEmptyLines(markdownChunks: MarkdownNodes) {
       return;
     }
   });
-
-  return;
-
-  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
-    if (!chunk.parent) {
-      return;
-    }
-
-    const prevTag = chunk.parent?.children[ctx.nodeIdx - 1] || null;
-    const nextTag = chunk.parent?.children[ctx.nodeIdx + 1] || null;
-    if (chunk.isTag && ['IMG/', 'SVG/'].indexOf(chunk.tag) > -1 && nextTag) {
-      if (nextTag.isTag && nextTag.tag === 'IMG/') {
-        chunk.parent.children.splice(ctx.nodeIdx + 1, 0, {
-          ...markdownChunks.createNode('EOL/'),
-          comment: 'addEmptyLines.ts: EOL/ after IMG/'
-        }, {
-          ...markdownChunks.createNode('EMPTY_LINE/'),
-          comment: 'addEmptyLines.ts: Between images'
-        });
-      }
-      return;
-    }
-
-    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'UL'].indexOf(chunk.tag) > -1 && nextTag) {
-      if (chunk.tag === 'UL' && chunk.payload.listLevel !== 1) {
-        return;
-      }
-      if (chunk.tag === 'UL' && nextTag.isTag && nextTag.tag === 'UL') {
-        return;
-      }
-      if (chunk.tag === 'UL' && nextTag.isTag && nextTag.tag === 'P') {
-        // return;
-      }
-    }
-
-    // if (!isChunkEmptyLine(nextTag) && !isChunkEmptyLine(prevTag)) {
-    //   chunk.parent.children.splice(ctx.nodeIdx + 1, 0, {
-    //     ...markdownChunks.createNode('EMPTY_LINE/'),
-    //     comment: 'addEmptyLines.ts: Add empty line after: ' + (chunk.tag || chunk.text)
-    //   });
-    //   return;
-    // }
-    // if (!(nextTag.isTag && nextTag.tag === 'BR/') && !(nextTag.isTag && nextTag.tag === '/TD') && !(nextTag.isTag && nextTag.tag === 'EMPTY_LINE/')) {
-    // }
-
-    // listLevel
-
-    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'IMG/', 'SVG/', 'UL'].indexOf(chunk.tag) > -1 && nextTag) {
-      const prevTag = chunk.parent.children[ctx.nodeIdx - 1];
-
-      if (chunk.tag === 'UL' && chunk.payload.listLevel !== 1) {
-        return;
-      }
-      if (chunk.tag === 'UL' && prevTag && prevTag.isTag && prevTag.tag === 'UL') {
-        return;
-      }
-      if (chunk.tag === 'UL' && prevTag && prevTag.isTag && prevTag.tag === 'P') {
-        // return;
-      }
-
-      if (!isChunkEmptyLine(nextTag) && !isChunkEmptyLine(prevTag)) {
-        chunk.parent.children.splice(ctx.nodeIdx, 0, {
-          ...markdownChunks.createNode('EMPTY_LINE/'),
-          comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag + JSON.stringify({ ...prevTag, children: undefined, parent: undefined })
-        });
-        return;
-      }
-
-      if (!(prevTag.isTag && prevTag.tag === 'BR/') && !(prevTag.isTag && prevTag.tag === 'TD') && !(prevTag.isTag && prevTag.tag === 'EMPTY_LINE/')) {
-        // markdownChunks.chunks.splice(position, 0, {
-        //   isTag: false,
-        //   mode: 'md',
-        //   text: '\n',
-        //   // payload: {},
-        //   comment: 'addEmptyLines.ts: Add empty line before: ' + chunk.tag
-        // });
-      }
-    }
-  });
-
 
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (!(chunk.isTag && chunk.tag === 'IMG/' && chunk.mode === 'md')) {
