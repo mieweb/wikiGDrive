@@ -36,9 +36,7 @@ export function compareTexts(input, output, ignoreWhitespace = true, fileName = 
       return false;
     }
     return true;
-  }
-
-  if (ignoreWhitespace) {
+  } else {
     input = input.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
     output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
   }
