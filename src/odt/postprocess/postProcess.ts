@@ -7,7 +7,6 @@ import {removePreWrappingAroundMacros} from './removePreWrappingAroundMacros.ts'
 import {removeInsideDoubleCodeBegin} from './removeInsideDoubleCodeBegin.ts';
 import {fixSpacesInsideInlineFormatting} from './fixSpacesInsideInlineFormatting.ts';
 import {fixBoldItalic} from './fixBoldItalic.ts';
-import {fixListParagraphs} from './fixListParagraphs.ts';
 import {hideSuggestedChanges} from './hideSuggestedChanges.ts';
 import {trimParagraphs} from './trimParagraphs.ts';
 import {addEmptyLinesAfterParas} from './addEmptyLinesAfterParas.ts';
@@ -31,18 +30,15 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   postProcessHeaders(chunks);
   fixSpacesInsideInlineFormatting(chunks);
   await fixBoldItalic(chunks);
-  fixListParagraphs(chunks);
   hideSuggestedChanges(chunks);
 
   trimParagraphs(chunks);
   addEmptyLinesAfterParas(chunks);
   removeTdParas(chunks); // Requires: addEmptyLinesAfterParas
 
-  // addIndentsAndBullets(chunks);
   mergeTexts(chunks);
   await rewriteHeaders(chunks);
 
-  // TODO macros
   mergeParagraphs(chunks);
   removePreWrappingAroundMacros(chunks);
   await removeMarkdownMacro(chunks);

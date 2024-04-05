@@ -33,11 +33,7 @@ export function removePreWrappingAroundMacros(markdownChunks: MarkdownNodes) {
             firstChildIdx++;
           }
 
-          // console.log('CCCC', preChunk.children.map(c => ({...c, parent: undefined, children: undefined})));
-
-          // firstChild.parent = preChunk.parent;
           const before = preChunk.children.splice(0, firstChildIdx + 1);
-          // console.log('BBB', before);
           preChunk.parent.children.splice(ctx.nodeIdx, 0, ...before);
         }
       }

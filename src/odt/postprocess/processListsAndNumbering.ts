@@ -1,5 +1,4 @@
 import {MarkdownNodes, TagPayload} from '../MarkdownNodes.ts';
-import {spaces} from '../utils.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
 export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
@@ -38,15 +37,6 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     }
   }
 
-  function getTopList() {
-    for (let i = stack.length - 1; i >=0; i--) {
-      if (stack[i].tag === 'LI') {
-        return stack[i];
-      }
-    }
-    return null;
-  }
-
   function getTopListStyleName(): string {
     for (let i = stack.length - 1; i >=0; i--) {
       const leaf = stack[i];
@@ -79,20 +69,9 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       return;
     }
 
-    // refact
-    // if (chunk.mode !== 'md') {
-    //   return ;
-    // }
-
     const tag = chunk.tag;
 
     const parentLevel = topElement(stack);
-
-    // TODO: Why?
-    // if ('IMG/' === tag) {
-    //   const level = lastItem?.payload?.listLevel;
-    //   chunk.payload.listLevel = level;
-    // }
 
     if (['TOC', 'UL', 'LI', 'P'].includes(tag)) {
       stack.push({
@@ -102,10 +81,6 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     } else {
       return ;
     }
-
-    // if ('LI' === tag) {
-    //   lastItem = chunk;
-    // }
 
     const listLevel = stack.filter(item => item.tag === 'UL').length;
 
@@ -149,39 +124,30 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     }
 
     if ('P' === currentElement.tag) {
-      // const currentMode = chunk.mode;
-      // switch (currentMode) {
-      //   case 'md':
-      //     if (parentLevel?.tag === 'TOC') {
-      //       currentElement.payload.bullet = true;
-      //     }
+      if (parentLevel?.tag === 'LI') {
 
-          if (parentLevel?.tag === 'LI') {
+        if (!margins[currentElement.payload.marginLeft]) {
+          margins[currentElement.payload.marginLeft] = listLevel;
+        }
 
-            if (!margins[currentElement.payload.marginLeft]) {
-              margins[currentElement.payload.marginLeft] = listLevel;
-            }
+        let level = parentLevel.payload.listLevel;
+        if (margins[currentElement.payload.marginLeft]) {
+          level = margins[currentElement.payload.marginLeft];
+        }
 
-            let level = parentLevel.payload.listLevel;
-            if (margins[currentElement.payload.marginLeft]) {
-              level = margins[currentElement.payload.marginLeft];
-            }
+        const listStyle = parentLevel.payload.listStyle || currentElement.payload.listStyle;
+        const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
 
-            const listStyle = parentLevel.payload.listStyle || currentElement.payload.listStyle;
-            const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
+        currentElement.payload.listLevel = level;
+        parentLevel.payload.listLevel = level;
 
-            currentElement.payload.listLevel = level;
-            parentLevel.payload.listLevel = level;
-
-            if (isNumeric) {
-              currentElement.payload.number = parentLevel.payload.number;
-            } else {
-              currentElement.payload.bullet = true;
-              parentLevel.payload.bullet = true;
-            }
-          }
-          // break;
-      // }
+        if (isNumeric) {
+          currentElement.payload.number = parentLevel.payload.number;
+        } else {
+          currentElement.payload.bullet = true;
+          parentLevel.payload.bullet = true;
+        }
+      }
     }
 
     return { ...ctx, level: ctx.level + 1 };
@@ -189,10 +155,6 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     if (!chunk.isTag) {
       return;
     }
-
-    // if (chunk.mode !== 'md') {
-    //   return ;
-    // }
 
     const tag = chunk.tag;
 
@@ -216,6 +178,5 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
       return ;
     }
   });
-
 
 }

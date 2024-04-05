@@ -103,7 +103,6 @@ describe('MarkDownTransformTest', () => {
   it('test ./block-macro.md', async () => {
     const testMarkdown = fs.readFileSync(__dirname + '/block-macro.md').toString();
     const markdown = await transformOdt('block-macro');
-    // console.log(markdown);
     assert.ok(compareTexts(testMarkdown, markdown));
   });
 
