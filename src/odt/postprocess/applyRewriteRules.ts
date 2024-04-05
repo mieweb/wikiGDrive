@@ -11,7 +11,6 @@ export function applyRewriteRules(markdownChunks: MarkdownNodes, rewriteRule: Re
     }
 
     if ('tag' in chunk && ['SVG/', 'IMG/'].includes(chunk.tag)) {
-      let broke = false;
       for (const rule of rewriteRule) {
         const { shouldBreak, text } = applyRewriteRule(rule, {
           ...chunk,
@@ -20,29 +19,21 @@ export function applyRewriteRules(markdownChunks: MarkdownNodes, rewriteRule: Re
           alt: 'payload' in chunk ? chunk.payload?.alt : undefined
         });
 
-        const textNode: MarkdownTextNode = {
-          isTag: false,
-          text,
-          parent: undefined,
-          comment: 'MarkdownNodes.ts: appendText'
-        };
-        chunk.parent.children.splice(ctx.nodeIdx, 1, textNode);
-
         if (shouldBreak) {
-          // retVal.push(text);
-          broke = true;
+          const textNode: MarkdownTextNode = {
+            isTag: false,
+            text: text,
+            parent: undefined,
+            comment: 'MarkdownNodes.ts: appendText'
+          };
+          chunk.parent.children.splice(ctx.nodeIdx, 1, textNode);
           break;
         }
-      }
-
-      if (broke) {
-        // return retVal.join('');
       }
     }
 
     if ('tag' in chunk && 'A' === chunk.tag) {
       const alt = chunksToText(chunk.children, { ...ctx, mode: 'md', onlyNotTag: true });
-      let broke = false;
       for (const rule of rewriteRule) {
         const { shouldBreak, text } = applyRewriteRule(rule, {
           ...chunk,
@@ -51,25 +42,16 @@ export function applyRewriteRules(markdownChunks: MarkdownNodes, rewriteRule: Re
           alt
         });
 
-        const textNode: MarkdownTextNode = {
-          isTag: false,
-          text,
-          parent: undefined,
-          comment: 'MarkdownNodes.ts: appendText'
-        };
-        chunk.parent.children.splice(ctx.nodeIdx, 1, textNode);
-
         if (shouldBreak) {
-          // retVal.push(text);
-          broke = true;
+          const textNode: MarkdownTextNode = {
+            isTag: false,
+            text,
+            parent: undefined,
+            comment: 'MarkdownNodes.ts: appendText'
+          };
+          chunk.parent.children.splice(ctx.nodeIdx, 1, textNode);
           break;
         }
-      }
-
-      if (broke) {
-        // return retVal.join('');
-        // retVal.splice(chunkNo, matchingNo - chunkNo);
-        //   return retVal;
       }
     }
 
