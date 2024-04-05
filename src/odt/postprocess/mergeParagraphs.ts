@@ -1,10 +1,9 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
-import {RewriteRule} from '../applyRewriteRule.ts';
 // import {isBeginMacro, isEndMacro, isMarkdownMacro, stripMarkdownMacro} from '../macroUtils.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
 
-export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules?: RewriteRule[]) {
+export function mergeParagraphs(markdownChunks: MarkdownNodes) {
 
   let inHtml = false;
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
@@ -23,7 +22,13 @@ export function mergeParagraphs(markdownChunks: MarkdownNodes, rewriteRules?: Re
         const children = nextChunk.children.splice(0, nextChunk.children.length);
 
         if (chunk.tag === 'P') {
-          children.unshift(markdownChunks.createNode('EMPTY_LINE/'));
+          const emptyLine = markdownChunks.createNode('EMPTY_LINE/');
+          emptyLine.comment = 'mergeParagraphs.ts: empty line between two of: ' + chunk.tag;
+          children.unshift(emptyLine);
+        }
+
+        if (chunk.tag === 'PRE' && nextChunk.payload?.lang) {
+          chunk.payload.lang = nextChunk.payload?.lang;
         }
 
         chunk.children.splice(chunk.children.length, 0, ...children);

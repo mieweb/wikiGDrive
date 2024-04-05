@@ -9,6 +9,15 @@ export function isMarkdownBeginMacro(innerTxt: string) {
   return false;
 }
 
+export function getMarkdownEndMacro(innerTxt: string) {
+  if ('{{markdown}}' === innerTxt) return '{{/markdown}}';
+  if ('{{% markdown %}}' === innerTxt) return '{{% /markdown %}}';
+
+  if (innerTxt.startsWith('{{% pre ') && innerTxt.endsWith(' %}}')) {
+    // return innerTxt.replace('{{% pre ', '{{% /pre ');
+  }
+}
+
 export function isMarkdownEndMacro(innerTxt: string) {
   if ('{{/markdown}}' === innerTxt) return true;
   if ('{{% /markdown %}}' === innerTxt) return true;

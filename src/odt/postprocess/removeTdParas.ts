@@ -3,11 +3,11 @@ import {walkRecursiveSync} from '../markdownNodesUtils.js';
 
 export function removeTdParas(markdownChunks: MarkdownNodes) {
   // Run after addEmptyLinesAfterParas
-  let inHtml = false;
+  let inHtml = 0;
 
-  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { level: number }) => {
+  walkRecursiveSync(markdownChunks.body, (chunk) => {
     if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
-      inHtml = true;
+      inHtml++;
       return;
     }
 
@@ -15,7 +15,11 @@ export function removeTdParas(markdownChunks: MarkdownNodes) {
       for (let pos = 0; pos < chunk.children.length; pos++) {
         const child = chunk.children[pos];
         if (child.isTag && child.tag === 'P') {
-          chunk.children.splice(pos, 1, ...child.children, markdownChunks.createNode('BR/'));
+          const br = markdownChunks.createNode('BR/');
+          br.comment = 'removeTdParas.ts: Break after removed td paragraph';
+          chunk.children.splice(pos, 1, ...child.children, br);
+          pos--;
+          continue;
         }
       }
 
@@ -30,7 +34,7 @@ export function removeTdParas(markdownChunks: MarkdownNodes) {
     }
   }, {}, (chunk) => {
     if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
-      inHtml = false;
+      inHtml--;
       return;
     }
   });

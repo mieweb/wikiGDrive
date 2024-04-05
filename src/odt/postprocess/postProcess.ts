@@ -27,8 +27,6 @@ export async function postProcess(chunks: MarkdownNodes) {
   convertToc(chunks);
   processListsAndNumbering(chunks);
   postProcessHeaders(chunks);
-  removePreWrappingAroundMacros(chunks);
-  removeInsideDoubleCodeBegin(chunks);
   fixSpacesInsideInlineFormatting(chunks);
   await fixBoldItalic(chunks);
   fixListParagraphs(chunks);
@@ -41,11 +39,13 @@ export async function postProcess(chunks: MarkdownNodes) {
   // addIndentsAndBullets(chunks);
   mergeTexts(chunks);
   await rewriteHeaders(chunks);
-  await removeMarkdownMacro(chunks);
 
   // TODO macros
   mergeParagraphs(chunks);
+  removePreWrappingAroundMacros(chunks);
+  await removeMarkdownMacro(chunks);
   postProcessPreMacros(chunks);
+  removeInsideDoubleCodeBegin(chunks);
 
   removeEmptyTags(chunks);
   addEmptyLines(chunks);

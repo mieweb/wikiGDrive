@@ -29,11 +29,49 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
       for (let idx = chunk.children.length - 1; idx > 0; idx--) {
         const child = chunk.children[idx];
         const prevChild = chunk.children[idx - 1];
+        const nextChild = chunk.children[idx + 1];
+
+        if (prevChild && !(prevChild.isTag && prevChild.tag === 'BR/')) {
+          continue;
+        }
+
+        if (child.isTag && child.tag === 'BR/') {
+          if ((nextChild && nextChild.isTag && nextChild.tag === 'IMG/')) {
+            const eol = markdownChunks.createNode('EOL/');
+            eol.comment = 'removeExcessiveLines.ts: Converted BR/ to EOL/';
+            chunk.children.splice(idx, 1, eol);
+            continue;
+          }
+
+          const eol = markdownChunks.createNode('EOL/');
+          eol.comment = 'removeExcessiveLines.ts: Converted BR/ to EOL/ + EMPTY_LINE/';
+          const emptyLine = markdownChunks.createNode('EMPTY_LINE/');
+          emptyLine.comment = 'removeExcessiveLines.ts: Converted BR/ to EOL/ + EMPTY_LINE/';
+          chunk.children.splice(idx, 1, eol, emptyLine);
+          continue;
+        }
+      }
+
+      for (let idx = chunk.children.length - 1; idx > 0; idx--) {
+        const child = chunk.children[idx];
+        const prevChild = chunk.children[idx - 1];
+
+/*
+        if (child.isTag && child.tag === 'BR/') {
+          if (prevChild.isTag && ['BR/', 'EOL/', 'EMPTY_LINE/'].includes(prevChild.tag)) {
+            child.tag = 'EMPTY_LINE/';
+            child.comment = 'removeExcessiveLines.ts: converted BR/ to EMPTY_LINE/';
+            idx += 2;
+            continue;
+          }
+        }
+*/
 
         if (child.isTag && child.tag === 'EOL/') {
           if (prevChild.isTag && ['EOL/', 'EMPTY_LINE/'].includes(prevChild.tag)) {
             child.tag = 'EMPTY_LINE/';
             child.comment = 'removeExcessiveLines.ts: converted EOL/ to EMPTY_LINE/';
+            idx++;
             continue;
           }
         }
@@ -50,7 +88,7 @@ export function removeExcessiveLines(markdownChunks: MarkdownNodes) {
       }
     }
 
-    if (chunk.isTag && ['P'].includes(chunk.tag)) {
+    if (chunk.isTag && ['P', 'LI', 'UL'].includes(chunk.tag)) {
       for (let idx = chunk.children.length - 1; idx > 0; idx--) {
         const child = chunk.children[idx];
         const prevChild = chunk.children[idx - 1];

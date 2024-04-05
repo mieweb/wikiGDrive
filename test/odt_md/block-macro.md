@@ -17,7 +17,6 @@ Ensure all participating provider profiles are edited with the correct National 
 {{% /warning %}}
 
 3. After the page loads, use the <em>Opt In</em> section to begin enrolling users, accordingly. Begin typing into the <strong>User</strong> autocomplete each name of the user(s)/provider(s) being enrolled. Multiple users/providers may be enrolled at one time.
-
 4. If enrolling in a specific program, or one of the sponsored incentive programs, specify the <strong>Start/End Dates</strong> of the intended performance period. Otherwise, leave blank.
 5. Next, from the <strong>Available Measures</strong> table, select <strong>all measures needing to be tracked</strong>, specific to the relevant program(s) opted into by the enrolled provider(s). Filter the columns, as needed.
 

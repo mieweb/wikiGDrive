@@ -71,6 +71,17 @@ export function addEmptyLines(markdownChunks: MarkdownNodes) {
       return;
     }
 
+    if (chunk.isTag && ['H1', 'H2', 'H3', 'H4'].includes(chunk.tag)) {
+      const nextChunk = chunk.parent.children[ctx.nodeIdx + 1];
+
+      if (!isChunkEmptyLine(nextChunk)) {
+        const emptyLine = markdownChunks.createNode('EMPTY_LINE/');
+        emptyLine.comment = 'addEmptyLines.ts: after ' + chunk.tag;
+        chunk.parent.children.splice(ctx.nodeIdx + 1, 0, emptyLine);
+        return { nodeIdx: ctx.nodeIdx - 1 };
+      }
+    }
+
     if (chunk.isTag && ['H1', 'H2', 'H3', 'H4', 'P', 'UL', 'IMG/', 'SVG/'].includes(chunk.tag)) {
       const prevChunk = chunk.parent.children[ctx.nodeIdx - 1];
 
@@ -92,11 +103,7 @@ export function addEmptyLines(markdownChunks: MarkdownNodes) {
         chunk.parent.children.splice(ctx.nodeIdx, 0, emptyLine);
         return { nodeIdx: ctx.nodeIdx + 1 };
       }
-
-      // chunk.parent.children.splice(ctx.nodeIdx, 1);
-      // return { nodeIdx: ctx.nodeIdx - 1 };
     }
-
   });
 
   let inHtml = false;

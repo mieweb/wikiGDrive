@@ -1,7 +1,5 @@
 import {MarkdownNodes, OutputMode, TAG, TagPayload} from './MarkdownNodes.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {isMarkdownBeginMacro, isMarkdownEndMacro} from './macroUtils.ts';
-import {extractText} from './markdownNodesUtils.js';
 
 interface TagLeaf {
   mode: OutputMode;
@@ -164,28 +162,28 @@ export class StateMachine {
     // }
     // /REFACT
 
-    if (tag === '/P' || tag === '/PRE') {
-      const innerTxt = await extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
-      switch (this.currentMode) {
-        case 'raw':
-        {
-          if (innerTxt === '{{/rawhtml}}' || isMarkdownEndMacro(innerTxt)) {
-            // this.markdownChunks[payload.position].comment = 'Switching to md - isMarkdownEndMacro';
-            this.currentMode = 'md';
-          }
-        }
-          break;
-        case 'md':
-        {
-          if (innerTxt === '{{rawhtml}}' || isMarkdownBeginMacro(innerTxt)) {
-            // this.markdownChunks[payload.position].comment = 'Switching to raw - isMarkdownBeginMacro';
-            this.currentMode = 'raw';
-          }
-
-        }
-          break;
-      }
-    }
+    // if (tag === '/P' || tag === '/PRE') {
+    //   const innerTxt = await extractText(this.markdownChunks.body, this.currentLevel.payload.position, payload.position, this.rewriteRules);
+    //   switch (this.currentMode) {
+    //     case 'raw':
+    //     {
+    //       if (innerTxt === '{{/rawhtml}}' || isMarkdownEndMacro(innerTxt)) {
+    //         // this.markdownChunks[payload.position].comment = 'Switching to md - isMarkdownEndMacro';
+    //         this.currentMode = 'md';
+    //       }
+    //     }
+    //       break;
+    //     case 'md':
+    //     {
+    //       if (innerTxt === '{{rawhtml}}' || isMarkdownBeginMacro(innerTxt)) {
+    //         // this.markdownChunks[payload.position].comment = 'Switching to raw - isMarkdownBeginMacro';
+    //         this.currentMode = 'raw';
+    //       }
+    //
+    //     }
+    //       break;
+    //   }
+    // }
 
     // REFACT
     // if (tag === '/CODE') {

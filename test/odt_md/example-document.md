@@ -15,7 +15,6 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
 
 ### Heading level 3 - with a table
 
-
 <table>
 <tr>
 <td>Heading 1</td>
@@ -28,7 +27,7 @@ Some normal text with hyperlinks to a [website](https://www.enterprisehealth.com
 <td>Cell 1</td>
 <td>Cell 2</td>
 <td>Cell 3</td>
-<td>Cell 4
+<td>Cell 4<br />
 <table>
 <tr>
 <td>C1</td>
@@ -79,7 +78,6 @@ This is monospaced text. This should line up  |
 
 Code blocks are part of the Markdown spec, but syntax highlighting isn't. However, many renderers -- like Github's and *Markdown Here* -- support syntax highlighting. Which languages are supported and how those language names should be written will vary from renderer to renderer. *Markdown Here* supports highlighting for dozens of languages (and not-really-languages, like diffs and HTTP headers); to see the complete list, and how to write the language names, see the [highlight.js demo page](http://softwaremaniacs.org/media/soft/highlight/test.html).
 
-
 ### Typescript / Javascript
 
 {{% markdown %}}
@@ -101,7 +99,6 @@ declare magicNumber number;
 myArray.forEach(() => { }); // fat arrow syntax
 ```
 {{% /markdown %}}
-
 
 ## Video
 

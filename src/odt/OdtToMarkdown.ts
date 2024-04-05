@@ -400,6 +400,7 @@ export class OdtToMarkdown {
     }
 
     const emptyLine = this.chunks.createNode('EMPTY_LINE/');
+    emptyLine.comment = 'drawGToText: warning';
     this.chunks.append(currentTagNode, emptyLine);
 
     const blockWarning = this.chunks.createNode('B');
@@ -567,7 +568,6 @@ export class OdtToMarkdown {
       switch (child.type) {
         case 'line_break':
           this.chunks.append(currentTagNode, this.chunks.createNode('BR/', {}));
-          // this.stateMachine.pushTag('BR/');
           break;
         case 'tab':
           this.chunks.appendText(currentTagNode, '\t');

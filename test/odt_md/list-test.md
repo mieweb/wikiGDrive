@@ -13,8 +13,8 @@ Action items that are configured with a Trigger Date of **Prior Action (Complet
     3. level2_3
     4. level2_4
 
-{{% tip %}}  
-If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.  
+{{% tip %}}
+If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.
 {{% /tip %}}
 
     5. level2_5
@@ -35,8 +35,8 @@ If the panel action is for a type of exposure, users will not want to set any Le
     13. level2_13
     14. level2_14
 
-{{% note %}}  
-Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.  
+{{% note %}}
+Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.
 {{% /note %}}
 
     15. level2_15

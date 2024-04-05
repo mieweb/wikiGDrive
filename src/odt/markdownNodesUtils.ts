@@ -518,6 +518,9 @@ export function dump(body: MarkdownTagNode, logger = console) {
     if (chunk.isTag === true) {
       line += chunk.tag;
 
+      if (chunk.tag === 'PRE') {
+        line += ` (Lang: ${chunk.payload.lang || ''})`;
+      }
       if (chunk.tag === 'UL') {
         line += ` (Level: ${chunk.payload.listLevel}, #${chunk.payload?.number || ''})`;
       }

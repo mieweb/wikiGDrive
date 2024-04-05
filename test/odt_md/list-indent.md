@@ -7,8 +7,8 @@
     1. <strong>Action Name</strong>: Required field. The Action Name is usually the name of a test/procedure that is the component/action of the panel. The name will be displayed listings and dialogues throughout the system.
     2. <strong>Lead Time</strong>: The Lead Time translates to the number of days prior to the Trigger Date the panel action becomes visible and is created within the system. This defines how many days before the Trigger Date that the panel/orders will populate on the Due List. Keep Lead Times consistent when setting multiple action items in a panel; otherwise, each component of the panel will have different Due Dates if there are different Lead Times on each. Emails can be configured to send email notifications, as needed, with a list of associated charts/employees that will be due. The recipient has the time between receiving the email and the panel action Trigger Date to notify Health Services of any issues or mistakes with the list. Emails to the member/chart will not be sent until the actual Trigger Date. (Email reminders are separately configured on a per client basis. Email notification may not apply to all clients).
 
-{{% tip %}}  
-If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.  
+{{% tip %}}
+If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.
 ![](1000020100000311000001824A182983854F26CB.png)
 {{% /tip %}}
 
@@ -32,9 +32,8 @@ If the panel action is for a type of exposure, users will not want to set any Le
         1. <strong>Current Panel Only</strong>: This is a checkbox that is associated with the Valid For field. If checked, this panel action will be triggered, regardless of whether the same encounter or procedure was completed for a different panel. For example, if a panel member is included in both the Asbestos panel and Benzene panel, and both require a Chest Xray, then {{% system-name %}} would (by default) only populate Chest Xray once on the Due List. With the Current Panel Only option selected, in this example, the Chest Xray will display twice, once for each panel.
     11. <strong>Grace Period</strong>: Day, Weeks, Months, Years. Use the drop-down to define how much time the panel member is allotted to complete the panel action, from the time it is visible till the time it is considered overdue. Periodic email notifications can be set up with scheduled jobs, if preferred. The Grace Period is <strong>before</strong> the Due Date, meaning the Grace Period is the amount of time before the Due Date that the invitations, emails, and questionnaire become available. The panel member gets notified at the point of the Grace Period plus Lead Time.
 
-{{% note %}}  
-Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.  
+{{% note %}}
+Health Questionnaires (if being done electronically and via portal) would be an Encounter event type and the specific electronic encounter order item would need selected (the order item that points to the electronic health questionnaire layout). For every questionnaire that users want documented electronically, via an encounter, two (2) order items and panel actions are needed; that's one (1) for the Health Questionnaire electronic encounter and the other (1) for the Due List item, in order to mark Complete.
 {{% /note %}}
 
     12. <strong>Instructions</strong>: Free text instructions for a provider to perform this action item, if necessary. Could be instructions or pass/fail criteria, etc.
-
