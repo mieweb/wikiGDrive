@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { diffLines, createPatch } from 'diff';
+import {createPatch} from 'diff';
 import {ansi_colors} from '../src/utils/logger/colors.ts';
 
 export function createTmpDir() {
