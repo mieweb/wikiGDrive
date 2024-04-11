@@ -94,7 +94,11 @@ The [Actions Runner](https://github.com/mieweb/wikiGDrive/settings/actions/runne
 
 ## wikiGDrive Server
 
-https://docs.google.com/document/d/1bocGgqktgEydxYDdP4ewdC-XOQ7lzawB_WgPqA2BILA/edit
+```
+ssh 184.175.182.25
+```
+
+[Google Doc Setup Documentation](https://docs.google.com/document/d/1bocGgqktgEydxYDdP4ewdC-XOQ7lzawB_WgPqA2BILA/edit)
 
 ## Developer Test
 
