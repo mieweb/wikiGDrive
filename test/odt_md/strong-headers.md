@@ -1,8 +1,11 @@
 ## Data Migration Workflow Considerations
+
 As we may recall, the Health Surveillance module allows users to easily track and manage overall health for risk groups and patient populations. Following that is information on how to utilize the import/export tools available with every {{% system-name %}} system.
 
 ### Strategies for Migrating Legacy Health Surveillance Data
+
 Health Surveillance (HS) Data is typically broken down into 4 parts during the data migration process:
+
 1. Active HS Memberships and Next Due Dates
 2. Historical HS Memberships
 
@@ -22,7 +25,9 @@ Some clients require the migration of historical, or non-active HS memberships. 
 In some cases, open or pending orders are required for migration for employees with overdue but active panel memberships. This use case is discussed further in the section on [How to determine the Next Due Date on a HS Panel](#3rdcrjn).
 
 #### Historical Orders
+
 In some cases, migration of completed orders are required to show that tests or tasks were completed on a particular date. Like any other data migration, discrete migration of historical orders involves more mapping and more effort than creating a summary document of historical orders. The following use cases are most common where the migration of historical orders are needed:
 
 ### UL/OHM-Specific Overview for Migrating Legacy Health Surveillance Data
+
 Over the years {{% system-name %}} has completed many data migrations from OHM. Through this process our team has built a series of tools to allow us to convert this data quickly and easily. The following outlines the types of data, modules, and storage we consider for the migration. Consider the storage type needed for the data being migrated, as well as the mapping that may be required when pursuing efforts of discrete data, specifically. Note the table names in parentheses utilized for each module.

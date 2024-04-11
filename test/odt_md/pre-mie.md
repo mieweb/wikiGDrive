@@ -2,14 +2,13 @@
 
 {{% pre language="html" theme="RDark" %}}
 ```
+
 https://webchartnow.com/fhirr4sandbox/webchart.cgi/fhir/CarePlan/11
 
 ```
 {{% /pre %}}
 
-
 ## Response
-
 
 {{% pre language="json" theme="RDark" %}}
 ```
@@ -40,5 +39,6 @@ https://webchartnow.com/fhirr4sandbox/webchart.cgi/fhir/CarePlan/11
 	},
 	"status": "completed"
 }
+
 ```
 {{% /pre %}}

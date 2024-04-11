@@ -8,7 +8,7 @@ import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
 import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
 import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
-import {RewriteRule} from '../../src/odt/applyRewriteRule.js';
+import {RewriteRule} from '../../src/odt/applyRewriteRule.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

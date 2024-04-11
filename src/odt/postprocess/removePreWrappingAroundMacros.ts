@@ -1,29 +1,42 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
-import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../StateMachine.js';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../macroUtils.ts';
+import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function removePreWrappingAroundMacros(markdownChunks: MarkdownChunks) {
-  for (let position = 0; position < markdownChunks.length; position++) {
-    const chunk = markdownChunks.chunks[position];
-    if (chunk.isTag === false && isMarkdownBeginMacro(chunk.text)) {
-      const prevChunk = markdownChunks.chunks[position - 1];
-      const postChunk = markdownChunks.chunks[position + 1];
-      if (prevChunk.isTag && prevChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-        markdownChunks.removeChunk(position - 1);
-        postChunk.tag = 'PRE';
-        position--;
-        continue;
+export function removePreWrappingAroundMacros(markdownChunks: MarkdownNodes) {
+  walkRecursiveSync(markdownChunks.body, (preChunk, ctx: { nodeIdx: number }) => {
+    if (preChunk.isTag === true && preChunk.tag === 'PRE') {
+      if (preChunk.children.length > 0) {
+        let lastChildIdx = -1;
+        for (let idx = preChunk.children.length - 1; idx >= 0; idx--) {
+          const child = preChunk.children[idx];
+          if (child && child.isTag && ['EOL/', 'BR/', 'EMPTY_LINE/'].includes(child.tag)) {
+            continue;
+          }
+          lastChildIdx = idx;
+          break;
+        }
+
+        const lastChild = preChunk.children[lastChildIdx];
+        if (lastChild && lastChild.isTag === false && isMarkdownEndMacro(lastChild.text)) {
+          lastChild.parent = preChunk.parent;
+          const after = preChunk.children.splice(lastChildIdx, preChunk.children.length - lastChildIdx);
+          preChunk.parent.children.splice(ctx.nodeIdx + 1, 0, ...after);
+        }
+      }
+
+      if (preChunk.children.length > 0) {
+        let firstChildIdx = 0;
+        const firstChild = preChunk.children[firstChildIdx];
+        if (firstChild && firstChild.isTag === false && isMarkdownBeginMacro(firstChild.text)) {
+          const afterFirst = preChunk.children[firstChildIdx + 1];
+          if (afterFirst && afterFirst.isTag && afterFirst.tag === 'EOL/') {
+            firstChildIdx++;
+          }
+
+          const before = preChunk.children.splice(0, firstChildIdx + 1);
+          preChunk.parent.children.splice(ctx.nodeIdx, 0, ...before);
+        }
       }
     }
-
-    if (chunk.isTag === false && isMarkdownEndMacro(chunk.text)) {
-      const preChunk = markdownChunks.chunks[position - 1];
-      const postChunk = markdownChunks.chunks[position + 1];
-      if (preChunk.isTag && preChunk.tag === 'PRE' && postChunk.isTag && postChunk.tag === '/PRE') {
-        preChunk.tag = '/PRE';
-        markdownChunks.removeChunk(position + 1);
-        position--;
-        continue;
-      }
-    }
-  }
+  });
 }

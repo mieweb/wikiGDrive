@@ -17,13 +17,13 @@ import {
   TextSpan
 } from './LibreOffice.ts';
 import {urlToFolderId} from '../utils/idParsers.ts';
-import {MarkdownChunks} from './MarkdownChunks.ts';
-import {isMarkdownMacro, StateMachine} from './StateMachine.ts';
+import {MarkdownNodes, MarkdownTagNode} from './MarkdownNodes.ts';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
 import {RewriteRule} from './applyRewriteRule.ts';
-import {postProcessText} from './postprocess/postProcessText.js';
+import {isMarkdownMacro} from './macroUtils.ts';
+import {postProcess} from './postprocess/postProcess.ts';
 
 function getBaseFileName(fileName) {
   return fileName.replace(/.*\//, '');
@@ -59,16 +59,14 @@ function getInnerText(span: TextSpan) {
 
 export class OdtToMarkdown {
 
-  private readonly stateMachine: StateMachine;
+  public errors: string[] = [];
   private readonly styles: { [p: string]: Style } = {};
   public readonly links: Set<string> = new Set<string>();
-  private readonly chunks: MarkdownChunks = new MarkdownChunks();
+  private readonly chunks: MarkdownNodes = new MarkdownNodes();
   private picturesDir = '';
   private rewriteRules: RewriteRule[] = [];
-  private counters: { [key: string]: number } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
-    this.stateMachine = new StateMachine(this.chunks);
   }
 
   getStyle(styleName: string): Style {
@@ -101,28 +99,39 @@ export class OdtToMarkdown {
   }
 
   async convert(): Promise<string> {
+    const listLevelsObj = {};
+    const listMargins = {};
+
     if (this.document.automaticStyles) {
       for (const namedStyle of this.document.automaticStyles.styles) {
         this.styles[namedStyle.name] = namedStyle;
       }
+
+      for (const namedStyle of this.document.automaticStyles.styles) {
+        if (namedStyle.listStyleName) {
+          listLevelsObj[namedStyle.paragraphProperties?.marginLeft] = true;
+          listMargins[namedStyle.listStyleName] = namedStyle.paragraphProperties?.marginLeft;
+        }
+      }
     }
+
+    const listLevels = Object.keys(listLevelsObj);
+    listLevels.sort((a, b) => inchesToPixels(a) - inchesToPixels(b));
 
     for (const tableOfContent of this.document.body.text.list) {
       if (tableOfContent.type === 'toc') {
-        await this.tocToText(<TableOfContent>tableOfContent);
+        await this.tocToText(this.chunks.body, <TableOfContent>tableOfContent);
       }
     }
-    await this.officeTextToText(this.document.body.text);
+    await this.officeTextToText(this.chunks.body, this.document.body.text);
 
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
 
-    this.stateMachine.postProcess();
+    await postProcess(this.chunks, this.rewriteRules);
 
-    const markdown = this.chunks.toString(this.rewriteRules);
-    const trimmed = this.trimBreaks(markdown);
-    const rewrittenHeaders = await this.rewriteHeaders(trimmed);
-    return postProcessText(rewrittenHeaders);
+    const markdown = this.chunks.toString();
+    return this.trimBreaks(markdown);
   }
 
   trimBreaks(markdown: string) {
@@ -146,7 +155,6 @@ export class OdtToMarkdown {
 
       if (rows[i] === '  ') {
         rows[i] = '';
-        continue;
       }
     }
 
@@ -154,65 +162,59 @@ export class OdtToMarkdown {
   }
 
   getErrors() {
-    return this.stateMachine.errors;
+    return this.errors;
   }
 
-  async tocToText(tableOfContent: TableOfContent): Promise<void> {
-    this.stateMachine.pushTag('TOC');
+  async tocToText(currentTagNode: MarkdownTagNode, tableOfContent: TableOfContent): Promise<void> {
+    const tocNode = this.chunks.createNode('TOC', {});
+    this.chunks.append(currentTagNode, tocNode);
+
     for (const paragraph of tableOfContent.indexBody.list) {
-      await this.paragraphToText(paragraph);
+      await this.paragraphToText(tocNode, paragraph);
     }
-    this.stateMachine.pushTag('/TOC');
   }
 
-  async spanToText(span: TextSpan): Promise<void> {
+  async spanToText(currentTagNode: MarkdownTagNode, span: TextSpan): Promise<void> {
     const style = this.getStyle(span.styleName);
 
     if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
-      this.stateMachine.pushTag('CODE');
+      const block = this.chunks.createNode('CODE');
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     }
 
-
     if (style.textProperties?.fontStyle === 'italic' && style.textProperties?.fontWeight === 'bold') {
-      this.stateMachine.pushTag('BI');
+      const block = this.chunks.createNode('BI');
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     } else
     if (style.textProperties?.fontStyle === 'italic') {
-      this.stateMachine.pushTag('I');
+      const block = this.chunks.createNode('I');
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     } else
     if (style.textProperties?.fontWeight === 'bold') {
-      this.stateMachine.pushTag('B');
+      const block = this.chunks.createNode('B');
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     }
 
     for (const child of span.list) {
       if (typeof child === 'string') {
-        this.stateMachine.pushText(child);
+        this.chunks.appendText(currentTagNode, child);
         continue;
       }
       switch (child.type) {
         case 'line_break':
-          this.stateMachine.pushTag('BR/');
+          this.chunks.append(currentTagNode, this.chunks.createNode('BR/'));
           break;
         case 'tab':
-          this.stateMachine.pushText('\t');
+          this.chunks.appendText(currentTagNode, '\t');
           break;
         case 'space':
-          this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
+          this.chunks.appendText(currentTagNode, spaces((<TextSpace>child).chars || 1));
           break;
       }
-    }
-
-    if (style.textProperties?.fontStyle === 'italic' && style.textProperties?.fontWeight === 'bold') {
-      this.stateMachine.pushTag('/BI');
-    } else
-    if (style.textProperties?.fontStyle === 'italic') {
-      this.stateMachine.pushTag('/I');
-    } else
-    if (style.textProperties?.fontWeight === 'bold') {
-      this.stateMachine.pushTag('/B');
-    }
-
-    if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
-      this.stateMachine.pushTag('/CODE');
     }
   }
 
@@ -222,7 +224,7 @@ export class OdtToMarkdown {
     }
   }
 
-  async linkToText(link: TextLink): Promise<void> {
+  async linkToText(currentTagNode: MarkdownTagNode, link: TextLink): Promise<void> {
     let href = link.href;
     const id = urlToFolderId(href);
     if (id) {
@@ -231,26 +233,26 @@ export class OdtToMarkdown {
 
     this.addLink(href);
 
-    this.stateMachine.pushTag('A', { href: href });
+    const block = this.chunks.createNode('A', { href: href });
+    this.chunks.append(currentTagNode, block);
+    currentTagNode = block;
 
     for (const child of link.list) {
       if (typeof child === 'string') {
-        this.stateMachine.pushText(child);
+        this.chunks.appendText(currentTagNode, child);
         continue;
       }
       switch (child.type) {
         case 'span':
           {
-            await this.spanToText(<TextSpan>child);
+            await this.spanToText(currentTagNode, <TextSpan>child);
           }
           break;
       }
     }
-
-    this.stateMachine.pushTag('/A', { href: href });
   }
 
-  async drawCustomShape(drawCustomShape: DrawCustomShape) {
+  async drawCustomShape(currentTagNode: MarkdownTagNode, drawCustomShape: DrawCustomShape) {
     // https://documentation.libreoffice.org/assets/Uploads/Documentation/en/Tutorials/CustomShapes7/Custom-Shape-Tutorial.odt
     // https://code.woboq.org/libreoffice/libreoffice/svx/source/customshapes/EnhancedCustomShape2d.cxx.html#1808
     // https://code.woboq.org/libreoffice/libreoffice/xmloff/source/draw/ximpcustomshape.cxx.html
@@ -259,19 +261,21 @@ export class OdtToMarkdown {
     const logwidth = inchesToPixels(drawCustomShape.width);
     const logheight = inchesToPixels(drawCustomShape.height);
 
-    this.stateMachine.pushTag('EMB_SVG', {
+    const blockSvg = this.chunks.createNode('EMB_SVG', {
       width: logwidth,
       height: logheight
     });
+    this.chunks.append(currentTagNode, blockSvg);
 
     for (const item of drawCustomShape.list) {
       if (item.type === 'draw_enhanced_geometry') {
         const enhancedGeometry = <DrawEnhancedGeometry>item;
 
-        this.stateMachine.pushTag('EMB_SVG_P/', {
+        const blockSvgP = this.chunks.createNode('EMB_SVG_P/', {
           pathD: extractPath(enhancedGeometry, logwidth, logheight),
           style
         });
+        this.chunks.append(blockSvg, blockSvgP);
       }
     }
     for (const item of drawCustomShape.list) {
@@ -282,10 +286,12 @@ export class OdtToMarkdown {
           continue;
         }
 
-        this.stateMachine.pushTag('EMB_SVG_TEXT');
+        const blockSvgText = this.chunks.createNode('EMB_SVG_TEXT');
+        this.chunks.append(blockSvg, blockSvgText);
+
         for (const child of paragraph.list) {
           if (typeof child === 'string') {
-            this.stateMachine.pushText(child);
+            this.chunks.appendText(currentTagNode, child);
             continue;
           }
           switch (child.type) {
@@ -294,42 +300,40 @@ export class OdtToMarkdown {
               const span = <TextSpan>child;
 
               const style = this.getStyle(span.styleName);
-              this.stateMachine.pushTag('EMB_SVG_TSPAN', {
+
+              const blockSvgTextSpan = this.chunks.createNode('EMB_SVG_TSPAN', {
                 style
               });
+              this.chunks.append(blockSvgText, blockSvgTextSpan);
 
               for (const child of span.list) {
                 if (typeof child === 'string') {
-                  this.stateMachine.pushText(child);
+                  this.chunks.appendText(blockSvgTextSpan, child);
                   continue;
                 }
                 switch (child.type) {
                   case 'line_break':
-                    this.stateMachine.pushTag('BR/');
+                    this.chunks.append(blockSvgTextSpan, this.chunks.createNode('BR/'));
                     break;
                   case 'tab':
-                    this.stateMachine.pushText('\t');
+                    this.chunks.appendText(blockSvgTextSpan, '\t');
                     break;
                   case 'space':
-                    this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
+                    this.chunks.appendText(blockSvgTextSpan, spaces((<TextSpace>child).chars || 1));
                     break;
                 }
               }
             }
-
-            this.stateMachine.pushTag('/EMB_SVG_TSPAN');
             break;
           }
         }
-        this.stateMachine.pushTag('/EMB_SVG_TEXT');
       }
     }
-
-    this.stateMachine.pushTag('/EMB_SVG');
   }
 
-  async drawGToText(drawG: DrawG) {
-    this.stateMachine.pushTag('HTML_MODE/');
+  async drawGToText(currentTagNode: MarkdownTagNode, drawG: DrawG) {
+    const blockHtml = this.chunks.createNode('HTML_MODE/');
+    this.chunks.append(currentTagNode, blockHtml);
 
     this.getStyle(drawG.styleName);
 
@@ -346,32 +350,34 @@ export class OdtToMarkdown {
       }
     }
 
-    this.stateMachine.pushTag('EMB_SVG', {
+    const blockSvg = this.chunks.createNode('EMB_SVG', {
       width: maxx,
       height: maxy,
       styleTxt: `width: ${maxx / 100}mm; height: ${maxy / 100}mm;`
     });
+    this.chunks.append(blockHtml, blockSvg);
+    // currentTagNode = blockSvg;
 
     for (const drawCustomShape of drawG.list) {
-      this.stateMachine.pushTag('EMB_SVG_G', {
+      const blockSvgGroup = this.chunks.createNode('EMB_SVG_G', {
         x: inchesToPixels(drawCustomShape.x), y: inchesToPixels(drawCustomShape.y)
       });
-      await this.drawCustomShape(drawCustomShape);
-      this.stateMachine.pushTag('/EMB_SVG_G');
+      this.chunks.append(blockSvg, blockSvgGroup);
+      await this.drawCustomShape(blockSvgGroup, drawCustomShape);
     }
 
-    this.stateMachine.pushTag('/EMB_SVG');
-    this.stateMachine.pushTag('MD_MODE/');
+    const emptyLine = this.chunks.createNode('EMPTY_LINE/');
+    emptyLine.comment = 'drawGToText: warning';
+    this.chunks.append(currentTagNode, emptyLine);
 
-    this.stateMachine.pushTag('BR/');
-    this.stateMachine.pushTag('B');
-    this.stateMachine.pushText('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
-    this.stateMachine.pushError('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
-    this.stateMachine.pushTag('/B');
-    this.stateMachine.pushTag('BR/');
+    const blockWarning = this.chunks.createNode('B');
+    this.chunks.append(currentTagNode, blockWarning);
+
+    this.chunks.appendText(blockWarning, 'INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
+    this.pushError('INSTEAD OF EMBEDDED DIAGRAM ABOVE USE EMBEDDED DIAGRAM FROM DRIVE AND PUT LINK TO IT IN THE DESCRIPTION. See: https://github.com/mieweb/wikiGDrive/issues/353');
   }
 
-  async drawFrameToText(drawFrame: DrawFrame) {
+  async drawFrameToText(currentTagNode: MarkdownTagNode, drawFrame: DrawFrame) {
     if (drawFrame.object) { // TODO: MathML
       return;
     }
@@ -383,14 +389,15 @@ export class OdtToMarkdown {
       const svgId = urlToFolderId(altText);
 
       if (svgId) {
-        this.stateMachine.pushTag('SVG/', { href: 'gdoc:' + svgId });
+        const node = this.chunks.createNode('SVG/', { href: 'gdoc:' + svgId });
+        this.chunks.append(currentTagNode, node);
       } else
       if (imageLink.endsWith('.svg')) {
-        this.stateMachine.pushTag('SVG/', { href: imageLink, alt: altText });
-        // this.stateMachine.pushTag(`<object type="image/svg+xml" data="${imageLink}"><img src="${imageLink}" /></object>`);
+        const node = this.chunks.createNode('SVG/', { href: imageLink, alt: altText });
+        this.chunks.append(currentTagNode, node);
       } else {
-        this.stateMachine.pushTag('IMG/', { href: imageLink, alt: altText });
-        // this.stateMachine.pushTag(`![${altText}](${imageLink})`);
+        const node = this.chunks.createNode('IMG/', { href: imageLink, alt: altText });
+        this.chunks.append(currentTagNode, node);
       }
     }
   }
@@ -435,15 +442,39 @@ export class OdtToMarkdown {
   }
 
 
-  async paragraphToText(paragraph: TextParagraph): Promise<void> {
+  async paragraphToText(currentTagNode: MarkdownTagNode, paragraph: TextParagraph): Promise<void> {
     const style = this.getStyle(paragraph.styleName);
     const listStyle = this.getListStyle(style.listStyleName);
     const bookmarkName = paragraph.bookmark?.name || null;
 
+    if (this.hasStyle(paragraph, 'Heading_20_1')) {
+      const header = this.chunks.createNode('H1', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, header);
+      currentTagNode = header;
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_2')) {
+      const header = this.chunks.createNode('H2', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, header);
+      currentTagNode = header;
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_3')) {
+      const header = this.chunks.createNode('H3', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, header);
+      currentTagNode = header;
+    } else
+    if (this.hasStyle(paragraph, 'Heading_20_4')) {
+      const header = this.chunks.createNode('H4', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, header);
+      currentTagNode = header;
+    } else
     if (this.isCourier(paragraph.styleName)) {
-      this.stateMachine.pushTag('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const block = this.chunks.createNode('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     } else {
-      this.stateMachine.pushTag('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const block = this.chunks.createNode('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      this.chunks.append(currentTagNode, block);
+      currentTagNode = block;
     }
 
     let codeElementsCount = 0;
@@ -469,55 +500,31 @@ export class OdtToMarkdown {
 
     const onlyCodeChildren = codeElementsCount > 0 && codeElementsCount + textElementsCount === paragraph.list.length;
     if (onlyCodeChildren) {
-      this.stateMachine.pushTag('PRE');
-    }
-
-/*    switch (this.top.mode) {
-      case 'html':
-        this.stateMachine.pushTag('P');
-        break;
-      case 'md':
-        if (paragraph.styleName) {
-          const spaces = inchesToSpaces(style.paragraphProperties?.marginLeft);
-          if (spaces) {
-            this.stateMachine.pushTag(spaces);
-          }
-        }
-    }*/
-
-    if (this.hasStyle(paragraph, 'Heading_20_1')) {
-      this.stateMachine.pushTag('H1');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_2')) {
-      this.stateMachine.pushTag('H2');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_3')) {
-      this.stateMachine.pushTag('H3');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_4')) {
-      this.stateMachine.pushTag('H4');
+      currentTagNode.tag = 'PRE';
     }
 
     if (!this.isCourier(paragraph.styleName)) {
       if (style.textProperties?.fontWeight === 'bold') {
-        this.stateMachine.pushTag('B');
+        const block = this.chunks.createNode('B', {});
+        this.chunks.append(currentTagNode, block);
+        currentTagNode = block;
       }
     }
 
     for (const child of paragraph.list) {
       if (typeof child === 'string') {
-        this.stateMachine.pushText(child);
+        this.chunks.appendText(currentTagNode, child);
         continue;
       }
       switch (child.type) {
         case 'line_break':
-          this.stateMachine.pushTag('BR/');
+          this.chunks.append(currentTagNode, this.chunks.createNode('BR/', {}));
           break;
         case 'tab':
-          this.stateMachine.pushText('\t');
+          this.chunks.appendText(currentTagNode, '\t');
           break;
         case 'space':
-          this.stateMachine.pushText(spaces((<TextSpace>child).chars || 1));
+          this.chunks.appendText(currentTagNode, spaces((<TextSpace>child).chars || 1));
           break;
         case 'span':
           {
@@ -526,162 +533,137 @@ export class OdtToMarkdown {
             if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && onlyCodeChildren) {
               const span2 = Object.assign({}, span);
               span2.styleName = '';
-              await this.spanToText(span2);
+              await this.spanToText(currentTagNode, span2);
             } else if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
-              this.stateMachine.pushTag('CODE');
+              const codeBlock = this.chunks.createNode('CODE');
+              this.chunks.append(currentTagNode, codeBlock);
               const span2 = Object.assign({}, span);
               span2.styleName = '';
-              await this.spanToText(span2);
-              this.stateMachine.pushTag('/CODE');
+              await this.spanToText(codeBlock, span2);
             } else {
-              await this.spanToText(span);
+              await this.spanToText(currentTagNode, span);
             }
           }
           break;
         case 'link':
           {
             const link = <TextLink>child;
-            await this.linkToText(link);
+            await this.linkToText(currentTagNode, link);
           }
           break;
         case 'rect':
           {
             const rect = <DrawRect>child;
             if (rect.width === '100%') {
-              this.stateMachine.pushTag('HR/');
+              const node = this.chunks.createNode('HR/');
+              this.chunks.append(currentTagNode, node);
             }
           }
           break;
         case 'draw_frame':
-          await this.drawFrameToText(<DrawFrame>child);
+          await this.drawFrameToText(currentTagNode, <DrawFrame>child);
           break;
         case 'draw_custom_shape':
-          this.stateMachine.pushTag('HTML_MODE/');
-          await this.drawCustomShape(<DrawCustomShape>child);
-          this.stateMachine.pushTag('MD_MODE/');
+          {
+            const htmlBlock = this.chunks.createNode('HTML_MODE/');
+            this.chunks.append(currentTagNode, htmlBlock);
+            await this.drawCustomShape(htmlBlock, <DrawCustomShape>child);
+          }
           break;
         case 'draw_g':
-          await this.drawGToText(<DrawG>child);
+          await this.drawGToText(currentTagNode, <DrawG>child);
           break;
         case 'change_start':
-          this.stateMachine.pushTag('CHANGE');
+          this.chunks.append(currentTagNode, this.chunks.createNode('CHANGE_START'));
           break;
         case 'change_end':
-          this.stateMachine.pushTag('/CHANGE');
+          this.chunks.append(currentTagNode, this.chunks.createNode('CHANGE_END'));
           break;
       }
-    }
-
-    if (!this.isCourier(paragraph.styleName)) {
-      if (style.textProperties?.fontWeight === 'bold') {
-        this.stateMachine.pushTag('/B');
-      }
-    }
-
-    if (this.hasStyle(paragraph, 'Heading_20_1')) {
-      this.stateMachine.pushTag('/H1');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_2')) {
-      this.stateMachine.pushTag('/H2');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_3')) {
-      this.stateMachine.pushTag('/H3');
-    }
-    if (this.hasStyle(paragraph, 'Heading_20_4')) {
-      this.stateMachine.pushTag('/H4');
-    }
-
-    if (onlyCodeChildren) {
-      this.stateMachine.pushTag('/PRE');
-    }
-
-    if (this.isCourier(paragraph.styleName)) {
-      this.stateMachine.pushTag('/PRE');
-    } else {
-      this.stateMachine.pushTag('/P');
     }
   }
 
-  async tableCellToText(tableCell: TableCell): Promise<void> {
-    this.stateMachine.pushTag('TD'); // colspan
+  async tableCellToText(currentTagNode: MarkdownTagNode, tableCell: TableCell): Promise<void> {
+    const block = this.chunks.createNode('TD');
+    this.chunks.append(currentTagNode, block);
+    currentTagNode = block;
+
     for (const child of tableCell.list) {
       switch (child.type) {
         case 'paragraph':
-          await this.paragraphToText(<TextParagraph>child);
+          await this.paragraphToText(currentTagNode, <TextParagraph>child);
           break;
         case 'list':
-          await this.listToText(<TextList>child);
+          await this.listToText(currentTagNode, <TextList>child);
           break;
         case 'table':
-          await this.tableToText(<TableTable>child);
+          await this.tableToText(currentTagNode, <TableTable>child);
           break;
       }
     }
-    this.stateMachine.pushTag('/TD');
   }
 
-  async tableRowToText(tableRow: TableRow): Promise<void> {
-    this.stateMachine.pushTag('TR');
+  async tableRowToText(currentTagNode: MarkdownTagNode, tableRow: TableRow): Promise<void> {
+    const block = this.chunks.createNode('TR');
+    this.chunks.append(currentTagNode, block);
+    currentTagNode = block;
     for (const tableCell of tableRow.cells) {
-      await this.tableCellToText(tableCell);
+      await this.tableCellToText(currentTagNode, tableCell);
     }
-    this.stateMachine.pushTag('/TR');
   }
 
-  async tableToText(table: TableTable): Promise<void> {
-    this.stateMachine.pushTag('TABLE');
+  async tableToText(currentTagNode: MarkdownTagNode, table: TableTable): Promise<void> {
+    const blockHtml = this.chunks.createNode('HTML_MODE/');
+    this.chunks.append(currentTagNode, blockHtml);
+
+    const block = this.chunks.createNode('TABLE');
+    this.chunks.append(blockHtml, block);
+    currentTagNode = block;
     for (const tableRow of table.rows) {
-      await this.tableRowToText(tableRow);
+      await this.tableRowToText(currentTagNode, tableRow);
     }
-    this.stateMachine.pushTag('/TABLE');
   }
 
-  async listToText(list: TextList): Promise<void> {
+  async listToText(currentTagNode: MarkdownTagNode, list: TextList): Promise<void> {
     const listStyle = this.getListStyle(list.styleName);
 
     const continueNumbering = list.continueNumbering === 'true';
 
-    this.stateMachine.pushTag('UL', { listId: list.id, continueList: list.continueList, listStyle, continueNumbering });
+    const ulBlock = this.chunks.createNode('UL', { listId: list.id, continueList: list.continueList, listStyle, continueNumbering });
+    this.chunks.append(currentTagNode, ulBlock);
+
     for (const listItem of list.list) {
-      this.stateMachine.pushTag('LI', { listId: list.id });
+      const liBlock = this.chunks.createNode('LI', { listId: list.id });
+      this.chunks.append(ulBlock, liBlock);
+
       for (const item of listItem.list) {
         if (item.type === 'paragraph') {
-          await this.paragraphToText(<TextParagraph>item);
+          await this.paragraphToText(liBlock, <TextParagraph>item);
         }
         if (item.type === 'list') {
-          await this.listToText(<TextList>item);
+          await this.listToText(liBlock, <TextList>item);
         }
       }
-      this.stateMachine.pushTag('/LI');
     }
-    this.stateMachine.pushTag('/UL', { listId: list.id, listStyle });
   }
 
-  async officeTextToText(content: OfficeText): Promise<void> {
+  async officeTextToText(currentTagNode: MarkdownTagNode, content: OfficeText): Promise<void> {
     for (const child of content.list) {
       switch (child.type) {
         case 'paragraph':
-          await this.paragraphToText(<TextParagraph>child);
+          await this.paragraphToText(currentTagNode, <TextParagraph>child);
           break;
         case 'table':
-          await this.tableToText(<TableTable>child);
+          await this.tableToText(currentTagNode, <TableTable>child);
           break;
         case 'list':
-          await this.listToText(<TextList>child);
+          await this.listToText(currentTagNode, <TextList>child);
           break;
         case 'toc':
-          await this.tocToText(<TableOfContent>child);
+          await this.tocToText(currentTagNode, <TableOfContent>child);
           break;
       }
     }
-  }
-
-  private async rewriteHeaders(txt: string) {
-    for (const id in this.stateMachine.headersMap) {
-      const slug = this.stateMachine.headersMap[id];
-      txt = txt.replace(new RegExp(id, 'g'), slug);
-    }
-    return txt;
   }
 
   setPicturesDir(picturesDir: string) {
@@ -690,6 +672,10 @@ export class OdtToMarkdown {
 
   setRewriteRules(rewriteRules: RewriteRule[]) {
     this.rewriteRules = rewriteRules;
-    this.stateMachine.setRewriteRules(rewriteRules);
   }
+
+  pushError(error: string) {
+    this.errors.push(error);
+  }
+
 }

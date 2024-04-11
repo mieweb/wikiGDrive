@@ -50,8 +50,8 @@ Image from file:
 
 done
 
-
 Inserted as unlinked:
+
 ![](100002010000025C000001488DD4BFD479C0CF61.png)
 
 done

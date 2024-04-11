@@ -1,102 +1,49 @@
-import {MarkdownChunks} from '../MarkdownChunks.js';
-import {RewriteRule} from '../applyRewriteRule.js';
+import {MarkdownNodes} from '../MarkdownNodes.ts';
+import {extractText, walkRecursiveSync} from '../markdownNodesUtils.ts';
 
-export function isBeginMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% ') && !innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
-}
+export function mergeParagraphs(markdownChunks: MarkdownNodes) {
 
-export function isEndMacro(innerTxt: string) {
-  return innerTxt.startsWith('{{% /') && innerTxt.endsWith(' %}}');
-}
-
-export function mergeParagraphs(markdownChunks: MarkdownChunks, rewriteRules: RewriteRule[]) {
-  let previousParaPosition = 0;
-  const macros = [];
-  for (let position = 0; position < markdownChunks.length - 1; position++) {
-    const chunk = markdownChunks.chunks[position];
-
-    if (chunk.isTag && chunk.mode === 'md' && chunk.tag === 'P') {
-      previousParaPosition = position;
-      continue;
+  let inHtml = false;
+  walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = true;
+      return;
     }
 
-    if (chunk.isTag === false && chunk.mode === 'md' && isBeginMacro(chunk.text)) {
-      macros.push(chunk.text);
-      continue;
+    if (inHtml) {
+      return;
     }
 
-    if (chunk.isTag === false && chunk.mode === 'md' && isEndMacro(chunk.text)) {
-      continue;
-    }
+    if (chunk.isTag && ['P', 'PRE'].includes(chunk.tag)) {
+      const nextChunk = chunk.parent.children[ctx.nodeIdx + 1];
+      if (nextChunk?.isTag && nextChunk.tag === chunk.tag) {
+        const children = nextChunk.children.splice(0, nextChunk.children.length);
 
-    if (chunk.isTag && chunk.mode === 'md' && chunk.tag === '/P') {
-      const nextChunk = markdownChunks.chunks[position + 1];
-
-      if (macros.length > 0) {
-        continue;
-      }
-
-      if (nextChunk.isTag && nextChunk.mode === 'md' && nextChunk.tag === 'P') {
-
-        let nextParaClosing = 0;
-        for (let position2 = position + 1; position2 < markdownChunks.length; position2++) {
-          const chunk2 = markdownChunks.chunks[position2];
-          if (chunk2.isTag && chunk2.mode === 'md' && chunk2.tag === '/P') {
-            nextParaClosing = position2;
-            break;
+        if (chunk.tag === 'P') {
+          const temp = markdownChunks.createNode('P');
+          temp.children.splice(0, 0, ...children);
+          const innerTxt = extractText(temp);
+          if (!innerTxt.startsWith('{{/rawhtml}}')) {
+            const emptyLine = markdownChunks.createNode('EMPTY_LINE/');
+            emptyLine.comment = 'mergeParagraphs.ts: empty line between two of: ' + chunk.tag;
+            children.unshift(emptyLine);
           }
         }
 
-        if (nextParaClosing > 0) {
-          const innerText = markdownChunks.extractText(position, nextParaClosing, rewriteRules);
-          if (innerText.length === 0) {
-            continue;
-          }
+        if (chunk.tag === 'PRE' && nextChunk.payload?.lang) {
+          chunk.payload.lang = nextChunk.payload?.lang;
         }
 
-        if (previousParaPosition > 0) {
-          const innerText = markdownChunks.extractText(previousParaPosition, position, rewriteRules);
-          if (innerText.length === 0) {
-            continue;
-          }
-          if (innerText.endsWith(' %}}')) {
-            continue;
-          }
-        }
+        chunk.children.splice(chunk.children.length, 0, ...children);
 
-        const findFirstTextAfterPos = (start: number): string | null => {
-          for (let pos = start + 1; pos < markdownChunks.chunks.length; pos++) {
-            const currentChunk = markdownChunks.chunks[pos];
-            if ('text' in currentChunk && currentChunk.text.trim() !== '') {
-              return currentChunk.text;
-            }
-          }
-          return null;
-        };
-
-        const nextText = findFirstTextAfterPos(position);
-        if (nextText === '* ' || nextText?.trim().length === 0) {
-          markdownChunks.chunks.splice(position, 2, {
-            isTag: false,
-            text: '\n',
-            mode: 'md',
-            comment: 'End of line, but next line is list'
-          });
-          position--;
-          previousParaPosition = 0;
-        } else {
-          markdownChunks.chunks.splice(position, 2, {
-            isTag: true,
-            tag: 'BR/',
-            mode: 'md',
-            payload: {},
-            comment: 'End of line, two paras merge together'
-          });
-          position--;
-          previousParaPosition = 0;
-        }
-
+        chunk.parent.children.splice(ctx.nodeIdx + 1, 1);
+        return { nodeIdx: ctx.nodeIdx - 1 };
       }
     }
-  }
+  }, {}, (chunk) => {
+    if (chunk.isTag && chunk.tag === 'HTML_MODE/') {
+      inHtml = false;
+      return;
+    }
+  });
 }

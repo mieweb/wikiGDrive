@@ -11,4 +11,3 @@
    * Another Test Indent
 6. Check if there are any conflicts (same desireLocalPath)
 7. Check if any conflicts can be removed
-    

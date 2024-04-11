@@ -1,54 +1,52 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { diffLines } from 'diff';
-import {ansi_colors} from '../src/utils/logger/colors';
+import {createPatch} from 'diff';
+import {ansi_colors} from '../src/utils/logger/colors.ts';
 
 export function createTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function trailSpacesReplacer(x) {
   x = x.replace(/\n/g, '');
   return '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'.substring(0, x.length);
 }
 
-export function compareTexts(input, output, ignoreWhitespace = true) {
-  if (ignoreWhitespace) {
+function consoleColorPatch(patch: string) {
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('-')) {
+      console.log(ansi_colors.red(line));
+      continue;
+    }
+    if (line.startsWith('+')) {
+      console.log(ansi_colors.green(line));
+      continue;
+    }
+    console.log(line);
+  }
+}
+
+export function compareTexts(input, output, ignoreWhitespace = true, fileName = 'file.txt') {
+  if (!ignoreWhitespace) {
+    const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: false, newlineIsToken: true });
+    if (patch.indexOf('@@') > -1) {
+      consoleColorPatch(patch);
+      return false;
+    }
+    return true;
+  } else {
     input = input.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
     output = output.split('\n').map(line => line.replace(/[\s]+$/, '')).join('\n');
   }
-  const diff = diffLines(input, output, {
-    ignoreWhitespace
-  }).filter(row => (row.added || row.removed) && row.value.replace(/\n/g, '').length > 0);
 
-  for (const part of diff) {
-    if (part.added) {
-      console.log(ansi_colors.green(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
-      continue;
-    }
-    if (part.removed) {
-      console.log(ansi_colors.red(part.value.replace(/[\s]+$/, trailSpacesReplacer)));
-      continue;
-    }
-    console.log(part.value);
+  const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: true, newlineIsToken: false });
+  if (patch.indexOf('@@') > -1) {
+    consoleColorPatch(patch);
+    return false;
   }
-
-  return diff.length === 0;
-}
-
-export function compareTextsWithLines(input, output) {
-  const diff = diffLines(input, output, {
-    ignoreWhitespace: true,
-  }).filter(row => (row.added || row.removed));
-
-  diff.forEach(function(part) {
-    // process.stdout.write(Math.floor(idx / 2 + 2) + ':\t');
-    const color = part.added ? 'green' : part.removed ? 'red' : 'grey';
-    process.stdout.write(part.value[color]);
-  });
-
-  return diff.length === 0;
+  return true;
 }
 
 export function compareObjects(obj1, obj2, prefix = '') {

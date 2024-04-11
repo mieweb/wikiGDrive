@@ -1,7 +1,5 @@
 The following page addresses the basic navigation and functionality of {{% system-name %}} . If you're a current user, you'll notice some things might look a little different. We've improved the user experience — making {{% system-name %}} even more intuitive and efficient.
 
-
-
 ## User Interface
 
 The linked text on the left side of the system features a number of tabs that link to different areas of the system. This menu can be hidden to provide more real estate, or pinned open with the pin icon. The first tab on the left side menu is the to the Quick View.
@@ -18,8 +16,6 @@ To the right:
 * The link icon indicates whether or not the signed in user is connected to the database. This area also displays messages to notify a user if another user is working in a document that is currently open.
 * The question mark icon links to available help documentation — if help is available the icon is orange.
 
-
-
 ### Quick View
 
 Most users see this page when they sign in to the system. It is a customizable dashboard featuring information from throughout the system pertinent to the user's daily job functions. This information is organized into areas called Portlets. Portlets can be collapsed and expanded — or moved by dragging and dropping, so what's important to a specific user can be placed at the top. You can also remove Portlets entirely.
@@ -30,16 +26,9 @@ Searching for a patient's chart still begins at the E-Chart tab. The overall loo
 
 E-chart navigation includes a number of toolbars, including:
 
-* The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower
-
-right corner.
-
+* The Tab toolbar, which navigates through the chart. The active tab is a solid color — some tabs have drop down navigation indicated by a mark in the lower right corner.
 * The Patient Info toolbar displays the patient's name and medical record number.
-
-    * Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past
-
-encounters, notes and comments.
-
+    * Also available in the Patient Info toolbar is the side chart icon, which displays patient historical information such as medical records, past encounters, notes and comments.
 * The Patient Extended Toolbar displays demographic, encounter, and other related information.
 * The Alerts toolbar displays available alert information — such as allergies or do not release requests.
 * The Encounter toolbar displays information and links to the open patient encounter.
