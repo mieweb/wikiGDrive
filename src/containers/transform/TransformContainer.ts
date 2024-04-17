@@ -1,31 +1,28 @@
-import winston from 'winston';
-import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
-import {FileContentService} from '../../utils/FileContentService';
-import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner';
-import {GoogleFilesScanner} from './GoogleFilesScanner';
-import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator';
-import {LocalFilesGenerator} from './LocalFilesGenerator';
-import {QueueTransformer} from './QueueTransformer';
-import {generateNavigationHierarchy, NavigationHierarchy} from './generateNavigationHierarchy';
-import {ConflictFile, LocalFile, LocalFileMap, RedirFile} from '../../model/LocalFile';
-import {TaskLocalFileTransform} from './TaskLocalFileTransform';
-import {GoogleFile, MimeTypes} from '../../model/GoogleFile';
-import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml';
-import {getContentFileService, removeMarkDownsAndImages} from './utils';
-import {LocalLog} from './LocalLog';
-import {LocalLinks} from './LocalLinks';
-import {OdtProcessor} from '../../odt/OdtProcessor';
-import {UnMarshaller} from '../../odt/UnMarshaller';
-import {DocumentContent, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice';
-import {TaskRedirFileTransform} from './TaskRedirFileTransform';
-import {TocGenerator} from './frontmatters/TocGenerator';
-import {FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
-import {MarkdownTreeProcessor} from './MarkdownTreeProcessor';
-import {LunrIndexer} from '../search/LunrIndexer';
-import {JobManagerContainer} from '../job/JobManagerContainer';
-import {UserConfigService} from '../google_folder/UserConfigService';
+import winston from 'winston';
 import Transport from 'winston-transport';
+
+import {FileId} from '../../model/model.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
+import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile.ts';
+import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator.ts';
+import {JobManagerContainer} from '../job/JobManagerContainer.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {LunrIndexer} from '../search/LunrIndexer.ts';
+import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner.ts';
+import {GoogleFilesScanner} from './GoogleFilesScanner.ts';
+import {LocalFilesGenerator} from './LocalFilesGenerator.ts';
+import {QueueTransformer} from './QueueTransformer.ts';
+import {TaskLocalFileTransform} from './TaskLocalFileTransform.ts';
+import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml.ts';
+import {getContentFileService, removeMarkDownsAndImages} from './utils.ts';
+import {LocalLog} from './LocalLog.ts';
+import {LocalLinks} from './LocalLinks.ts';
+import {TaskRedirFileTransform} from './TaskRedirFileTransform.ts';
+import {TocGenerator} from './frontmatters/TocGenerator.ts';
+import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -177,7 +174,7 @@ export class TransformLog extends Transport {
     super(options);
   }
 
-  log(info, callback) {
+  log(info: { level: string, errorMdFile: string, errorMdMsg: string }, next: () => void) {
     switch (info.level) {
       case 'error':
       case 'warn':
@@ -191,8 +188,8 @@ export class TransformLog extends Transport {
         }
     }
 
-    if (callback) {
-      callback(null, true);
+    if (next) {
+      next();
     }
   }
 }
@@ -200,7 +197,6 @@ export class TransformLog extends Transport {
 export class TransformContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
-  private hierarchy: NavigationHierarchy = {};
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
@@ -286,7 +282,7 @@ export class TransformContainer extends Container {
         continue;
       }
 
-      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
+      const jobManagerContainer = <JobManagerContainer><unknown>this.engine.getContainer('job_manager');
 
       const task = new TaskLocalFileTransform(
         this.logger,
@@ -404,16 +400,6 @@ export class TransformContainer extends Container {
     await markdownTreeProcessor.regenerateTree(rootFolderId);
     await markdownTreeProcessor.save();
 
-    this.hierarchy = await this.loadNavigationHierarchy();
-    for (const k in this.hierarchy) {
-      const item = this.hierarchy[k];
-      if (item.identifier) {
-        const [, path] = await markdownTreeProcessor.findById(item.identifier);
-        item.pageRef = path;
-      }
-    }
-    await this.writeHugoMenu(this.hierarchy);
-
     const indexer = new LunrIndexer();
     await markdownTreeProcessor.walkTree((page) => {
       indexer.addPage(page);
@@ -524,35 +510,6 @@ export class TransformContainer extends Container {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async destroy(): Promise<void> {
-  }
-
-  async writeHugoMenu(hierarchy: NavigationHierarchy) {
-    const menus = {
-      main: Object.values(hierarchy)
-    };
-
-    await this.generatedFileService.mkdir('config/_default');
-    await this.generatedFileService.writeJson('config/_default/menu.en.json', menus);
-  }
-
-  async loadNavigationHierarchy(): Promise<NavigationHierarchy> {
-    const googleFiles: GoogleFile[] = await this.filesService.readJson('.folder-files.json') || [];
-
-    const navigationFile = googleFiles.find(googleFile => googleFile.name === '.navigation' || googleFile.name === 'navigation');
-    if (navigationFile) {
-      const odtPath = this.filesService.getRealPath() + '/' + navigationFile.id + '.odt';
-      const processor = new OdtProcessor(odtPath);
-      await processor.load();
-      const content = processor.getContentXml();
-      const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-      const navDoc: DocumentContent = parser.unmarshal(content);
-
-      if (navDoc) {
-        return await generateNavigationHierarchy(navDoc, this.logger);
-      }
-    }
-
-    return {};
   }
 
   onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
