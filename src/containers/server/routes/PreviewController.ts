@@ -1,13 +1,13 @@
+import {Logger} from 'winston';
+
 import {
   Controller,
   RouteErrorHandler,
-  RouteParamPath,
   RouteResponse,
   RouteUse
-} from './Controller';
-import {Logger, QueryOptions} from 'winston';
-import {extToMime, ShareErrorHandler} from './FolderController';
-import {FileContentService} from '../../../utils/FileContentService';
+} from './Controller.ts';
+import {extToMime, ShareErrorHandler} from './FolderController.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
 
 export class PreviewController extends Controller {
   private fileSystem: FileContentService;
@@ -21,10 +21,10 @@ export class PreviewController extends Controller {
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder(@RouteParamPath('driveId') driveId: string) {
-    let filePath = this.req.originalUrl.replace('/preview', '') || '/';
+  async getFolder() {
+    const relativeUrl = this.req.originalUrl || '/';
 
-    filePath = filePath.replace(/\?.*$/, '');
+    let filePath = relativeUrl.replace('/preview', '').replace(/\?.*$/, '');
 
     if (!await this.fileSystem.exists(filePath)) {
       this.queryLogger.warn(`Not found: ${filePath}`);
@@ -33,6 +33,14 @@ export class PreviewController extends Controller {
     }
 
     if (await this.fileSystem.isDirectory(filePath)) {
+      if (!relativeUrl.endsWith('/')) {
+        this.res
+          .status(301)
+          .setHeader('location', relativeUrl + '/')
+          .send();
+        return;
+      }
+
       filePath = filePath + '/index.html';
     }
 
