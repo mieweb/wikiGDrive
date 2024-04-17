@@ -1,8 +1,10 @@
 'use strict';
 
-import {urlToFolderId} from '../../utils/idParsers';
-import {FileId} from '../../model/model';
-import {DocumentContent, TextLink, TextList, TextParagraph, TextSpace, TextSpan, TextTab} from '../../odt/LibreOffice';
+// Legacy menu generator, use: navigation2menu.mjs
+
+import {urlToFolderId} from '../../utils/idParsers.ts';
+import {FileId} from '../../model/model.ts';
+import {DocumentContent, TextLink, TextList, TextParagraph, TextSpace, TextSpan, TextTab} from '../../odt/LibreOffice.ts';
 
 export interface NavigationHierarchyNode {
   name: string;
@@ -107,17 +109,15 @@ function processPara(para: TextParagraph, ctx: NavigationProcessContext, level: 
 function processList(textList: TextList, ctx: NavigationProcessContext, level = 0) {
   for (const textListItem of textList.list) {
     for (const paraOrList of textListItem.list) {
-      if (paraOrList.type === 'list') {
-        processList(<TextList>paraOrList, ctx, level + 1);
-        continue;
-      }
-
-      if (paraOrList.type === 'paragraph') {
-        processPara(<TextParagraph>paraOrList, ctx, level);
-        continue;
+      switch (paraOrList.type) {
+        case 'list':
+          processList(<TextList>paraOrList, ctx, level + 1);
+          break;
+        case 'paragraph':
+          processPara(<TextParagraph>paraOrList, ctx, level);
+          break;
       }
     }
-
   }
 }
 
