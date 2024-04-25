@@ -1,4 +1,4 @@
-import {DateISO, FileId} from './model';
+import {DateISO, FileId} from './model.ts';
 
 export interface CommonFileData {
   title: string;

@@ -2,27 +2,28 @@ import {fileURLToPath} from 'url';
 import winston from 'winston';
 import Transport from 'winston-transport';
 
-import {FileId} from '../../model/model.ts';
-import {MimeTypes} from '../../model/GoogleFile.ts';
-import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile.ts';
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
-import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator.ts';
-import {JobManagerContainer} from '../job/JobManagerContainer.ts';
-import {UserConfigService} from '../google_folder/UserConfigService.ts';
-import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {appendConflict, DirectoryScanner, stripConflict} from './DirectoryScanner.ts';
 import {GoogleFilesScanner} from './GoogleFilesScanner.ts';
+import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator.ts';
 import {LocalFilesGenerator} from './LocalFilesGenerator.ts';
 import {QueueTransformer} from './QueueTransformer.ts';
+import {NavigationHierarchy} from './generateNavigationHierarchy.ts';
+import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile.ts';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
 import {generateDirectoryYaml, parseDirectoryYaml} from './frontmatters/generateDirectoryYaml.ts';
 import {getContentFileService, removeMarkDownsAndImages} from './utils.ts';
 import {LocalLog} from './LocalLog.ts';
 import {LocalLinks} from './LocalLinks.ts';
 import {TaskRedirFileTransform} from './TaskRedirFileTransform.ts';
 import {TocGenerator} from './frontmatters/TocGenerator.ts';
+import {FileId} from '../../model/model.ts';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
+import {LunrIndexer} from '../search/LunrIndexer.ts';
+import {JobManagerContainer} from '../job/JobManagerContainer.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -197,6 +198,7 @@ export class TransformLog extends Transport {
 export class TransformContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
+  private hierarchy: NavigationHierarchy = {};
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
@@ -282,7 +284,7 @@ export class TransformContainer extends Container {
         continue;
       }
 
-      const jobManagerContainer = <JobManagerContainer><unknown>this.engine.getContainer('job_manager');
+      const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
 
       const task = new TaskLocalFileTransform(
         this.logger,

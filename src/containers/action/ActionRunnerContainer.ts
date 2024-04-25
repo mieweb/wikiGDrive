@@ -1,14 +1,15 @@
-import {Container, ContainerEngine} from '../../ContainerEngine';
-import {FileId} from '../../model/model';
+import * as path from 'path';
+import {fileURLToPath} from 'url';
 import winston from 'winston';
 import Docker from 'dockerode';
-import {fileURLToPath} from 'url';
-import {BufferWritable} from '../../utils/BufferWritable';
-import {UserConfigService} from '../google_folder/UserConfigService';
 import yaml from 'js-yaml';
-import {GitScanner} from '../../git/GitScanner';
-import {FileContentService} from '../../utils/FileContentService';
-import * as path from 'path';
+
+import {Container, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileId} from '../../model/model.ts';
+import {BufferWritable} from '../../utils/BufferWritable.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {GitScanner} from '../../git/GitScanner.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -20,12 +21,14 @@ export interface ActionStep {
 
 export interface ActionDefinition {
   on: string;
+  'run-name'?: string;
   steps: Array<ActionStep>;
 }
 
 export const DEFAULT_ACTIONS: ActionDefinition[] = [
   {
     on: 'transform',
+    'run-name': 'AutoCommit and Render',
     steps: [
       {
         name: 'auto_commit',
@@ -39,6 +42,7 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
   },
   {
     on: 'branch',
+    'run-name': 'Commit and Push branch',
     steps: [
       {
         uses: 'commit_branch'
@@ -50,6 +54,7 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
   },
   {
     on: 'git_reset',
+    'run-name': 'Render',
     steps: [
       {
         name: 'render_hugo',
@@ -59,6 +64,7 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
   },
   {
     on: 'git_pull',
+    'run-name': 'Render',
     steps: [
       {
         name: 'render_hugo',
@@ -67,6 +73,12 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
     ]
   }
 ];
+
+export async function convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {
+  const actionDefs: ActionDefinition[] = actionYaml ? yaml.load(actionYaml) : DEFAULT_ACTIONS;
+  return actionDefs;
+}
+
 
 export class ActionRunnerContainer extends Container {
   private logger: winston.Logger;
@@ -78,11 +90,6 @@ export class ActionRunnerContainer extends Container {
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
-  }
-
-  async convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {
-    const actionDefs: ActionDefinition[] = actionYaml ? yaml.load(actionYaml) : DEFAULT_ACTIONS;
-    return actionDefs;
   }
 
   async mount3(fileService: FileContentService, destFileService: FileContentService, tempFileService: FileContentService): Promise<void> {
@@ -148,6 +155,8 @@ export class ActionRunnerContainer extends Container {
 
       let result;
 
+      await this.generatedFileService.remove('resources');
+
       if (themeId) {
         const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
           CONFIG_TOML: '/site/tmp_dir/config.toml',
@@ -167,19 +176,44 @@ export class ActionRunnerContainer extends Container {
         -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
         -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
         -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources" \\
+        --mount type=tmpfs,destination=/site/resources" \
         ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
         ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
 
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
-            Binds: [
-              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
-              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
-              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
+            Mounts: [
+              {
+                Source: `${process.env.VOLUME_DATA}/${driveId}_transform`,
+                Target: '/repo',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_DATA}${contentDir}`,
+                Target: '/site/content',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}`,
+                Target: '/site/public',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_DATA}/${driveId}/tmp_dir`,
+                Target: '/site/tmp_dir',
+                Type: 'bind'
+              },
+              {
+                Source: '',
+                Target: '/site/resources',
+                Type: 'tmpfs',
+                ReadOnly: false,
+                TmpfsOptions: {
+                  SizeBytes: undefined,
+                  Mode: 0o777
+                }
+              }
             ]
           },
           Env: Object.keys(env).map(key => `${key}=${env[key]}`),
@@ -202,20 +236,49 @@ export class ActionRunnerContainer extends Container {
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
           -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
           -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-          -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources" \\
+          --mount type=tmpfs,destination=/site/resources" \\
           ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
           ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
         `);
 
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
-            Binds: [
-              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo`,
-              `${process.env.VOLUME_DATA}/${driveIdTransform}:/site`,
-              `${process.env.VOLUME_DATA}${contentDir}:/site/content`,
-              `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/resources`
+            Mounts: [
+              {
+                Source: `${process.env.VOLUME_DATA}/${driveId}_transform`,
+                Target: '/repo',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_DATA}/${driveIdTransform}`,
+                Target: '/site',
+                Type: 'bind',
+              },
+              {
+                Source: `${process.env.VOLUME_DATA}${contentDir}`,
+                Target: '/site/content',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`,
+                Target: '/site/public',
+                Type: 'bind'
+              },
+              {
+                Source: `${process.env.VOLUME_DATA}/${driveId}/tmp_dir`,
+                Target: '/site/tmp_dir',
+                Type: 'bind'
+              },
+              {
+                Source: '',
+                Target: '/site/resources',
+                Type: 'tmpfs',
+                ReadOnly: false,
+                TmpfsOptions: {
+                  SizeBytes: undefined,
+                  Mode: 0o777
+                }
+              }
             ]
           },
           Env: Object.keys(env).map(key => `${key}=${env[key]}`),
@@ -246,7 +309,7 @@ export class ActionRunnerContainer extends Container {
 
     this.isErr = false;
 
-    const actionDefs = await this.convertActionYaml(config.actions_yaml);
+    const actionDefs = await convertActionYaml(config.actions_yaml);
     for (const actionDef of actionDefs) {
       if (actionDef.on !== this.params['trigger']) {
         continue;

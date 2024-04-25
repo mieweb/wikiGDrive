@@ -1,23 +1,23 @@
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
-import {FileId} from '../../model/model';
-import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer';
-import {TransformContainer} from '../transform/TransformContainer';
-
-import {fileURLToPath} from 'url';
-import {UserConfigService} from '../google_folder/UserConfigService';
-import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
-import {WorkerPool} from './WorkerPool';
 import os from 'os';
-import {GitScanner} from '../../git/GitScanner';
-import {FileContentService} from '../../utils/FileContentService';
-import {CACHE_PATH} from '../server/routes/FolderController';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {ActionRunnerContainer} from '../action/ActionRunnerContainer';
+import {fileURLToPath} from 'url';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import {getContentFileService} from '../transform/utils';
-import {UploadContainer} from '../google_folder/UploadContainer';
+
+import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
+import {FileId} from '../../model/model.ts';
+import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer.ts';
+import {TransformContainer} from '../transform/TransformContainer.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor.ts';
+import {WorkerPool} from './WorkerPool.ts';
+import {GitScanner} from '../../git/GitScanner.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {CACHE_PATH} from '../server/routes/FolderController.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {ActionRunnerContainer, convertActionYaml} from '../action/ActionRunnerContainer.ts';
+import {getContentFileService} from '../transform/utils.ts';
+import {UploadContainer} from '../google_folder/UploadContainer.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -34,7 +34,7 @@ export function initJob(): { id: string, state: JobState } {
 export interface Job {
   id: string;
   state: JobState;
-  progress?: { total: number; completed: number; warnings: number };
+  progress?: { total: number; completed: number; warnings: number; failed?: number };
   type: JobType;
   title: string;
   trigger?: string;
@@ -186,6 +186,17 @@ export class JobManagerContainer extends Container {
       case 'run_action':
         if (driveJobs.jobs.find(subJob => subJob.type === 'run_action' && notCompletedJob(subJob))) {
           return;
+        }
+        {
+          const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
+          const userConfigService = new UserConfigService(googleFileSystem);
+          await userConfigService.load();
+          const config = userConfigService.config;
+          const actionDefs = await convertActionYaml(config.actions_yaml);
+          const action = actionDefs.find(action => action.on === job.trigger);
+          if (action && action['run-name']) {
+            job.title = action['run-name'];
+          }
         }
         driveJobs.jobs.push(job);
         break;

@@ -1,15 +1,16 @@
-import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {QueueDownloader} from './QueueDownloader';
-import {TaskFetchFolder} from './TaskFetchFolder';
-import {MimeTypes} from '../../model/GoogleFile';
-import {DateISO, FileId} from '../../model/model';
 import {fileURLToPath} from 'url';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {GoogleTreeProcessor} from './GoogleTreeProcessor';
-import {HasAccessToken} from '../../google/AuthClient';
+
+import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
+import {QueueDownloader} from './QueueDownloader.ts';
+import {TaskFetchFolder} from './TaskFetchFolder.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
+import {DateISO, FileId} from '../../model/model.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {GoogleTreeProcessor} from './GoogleTreeProcessor.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
