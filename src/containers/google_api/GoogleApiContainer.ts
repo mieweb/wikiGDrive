@@ -1,14 +1,15 @@
-import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine';
 import winston from 'winston';
-import {QuotaLimiter} from '../../google/QuotaLimiter';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {AuthConfig} from '../../model/AccountJson';
-import {Drive, Permission} from '../folder_registry/FolderRegistryContainer';
-import {FileId} from '../../model/model';
-import {GoogleFile} from '../../model/GoogleFile';
+
+import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
+import {QuotaLimiter} from '../../google/QuotaLimiter.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {AuthConfig} from '../../model/AccountJson.ts';
+import {Drive, Permission} from '../folder_registry/FolderRegistryContainer.ts';
+import {FileId} from '../../model/model.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
+import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient, getCliCode} from '../../google/AuthClient.ts';
 
 import {fileURLToPath} from 'url';
-import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient, getCliCode} from '../../google/AuthClient';
 
 const __filename = fileURLToPath(import.meta.url);
 

@@ -1,9 +1,5 @@
-import {LinkMode} from './model';
-
 export interface CliParams {
-  // link_mode: LinkMode; // TODO: remove ???
   workdir: string;
-  // drive: string; // TODO: remove ???
   args: string[];
   debug: string[];
 

@@ -1,5 +1,5 @@
-import {CommonFileData, ConflictData} from './LocalFile';
-import {FileId} from './model';
+import {CommonFileData, ConflictData} from './LocalFile.ts';
+import {FileId} from './model.ts';
 
 export interface TreeItem extends CommonFileData {
   parentId: FileId;
