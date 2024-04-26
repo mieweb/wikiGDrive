@@ -136,6 +136,8 @@ export class TaskLocalFileTransform extends QueueTask {
 
     const rewriteRules = this.userConfig.rewrite_rules || [];
 
+    const picturesDirAbsolute = destinationPath + '/' + this.realFileName.replace(/.md$/, '.assets/');
+
     if (SINGLE_THREADED_TRANSFORM) {
       const processor = new OdtProcessor(odtPath, true);
       await processor.load();
@@ -156,9 +158,9 @@ export class TaskLocalFileTransform extends QueueTask {
       const converter = new OdtToMarkdown(document, styles, fileNameMap);
       converter.setRewriteRules(rewriteRules);
       if (this.realFileName === '_index.md') {
-        converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'));
+        converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
       } else {
-        converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'));
+        converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
       }
       markdown = await converter.convert();
       links = Array.from(converter.links);
@@ -173,9 +175,10 @@ export class TaskLocalFileTransform extends QueueTask {
         errors: Array<string>;
       }
 
-      const workerResult: WorkerResult = await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
+      const workerResult: WorkerResult = <WorkerResult>await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
         localFile,
         realFileName: this.realFileName,
+        picturesDirAbsolute,
         odtPath,
         destinationPath,
         rewriteRules,

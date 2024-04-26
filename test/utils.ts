@@ -4,8 +4,8 @@ import path from 'path';
 import {createPatch} from 'diff';
 import {ansi_colors} from '../src/utils/logger/colors.ts';
 
-export function createTmpDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'wg-'));
+export function createTmpDir(prefix = 'wg-') {
+  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

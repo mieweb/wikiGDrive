@@ -15,6 +15,7 @@ export type TAG = 'BODY' | 'HR/' | 'B' | 'I' | 'BI' | 'BLANK/' | // | '/B' | '/I
   'TOC' | 'SVG/' | 'IMG/' | // | '/TOC'
   'EMB_SVG' | 'EMB_SVG_G' | 'EMB_SVG_P/' | 'EMB_SVG_TEXT' | // | '/EMB_SVG' | '/EMB_SVG_G' | '/EMB_SVG_TEXT'
   'EMB_SVG_TSPAN' | // | '/EMB_SVG_TSPAN'
+  'MATHML' |
   'CHANGE_START' | 'CHANGE_END' | 'RAW_MODE/' | 'HTML_MODE/' | 'MD_MODE/' | 'MACRO_MODE/' | 'COMMENT';
 
 export interface TagPayload {

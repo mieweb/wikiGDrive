@@ -71,6 +71,25 @@ export class OdtProcessor {
       fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
     }
 
+    for (const relativePath in this.files) {
+      if (!relativePath.endsWith('/content.xml')) {
+        continue;
+      }
+
+      const fileName = relativePath.replace('/content.xml', '.xml').replace(/\s/g, '_');
+      if (fileName.indexOf('/') === -1) {
+        const entry = this.files[relativePath];
+        const buffer = await entry.async('nodebuffer');
+
+        this.fileNameMap[fileName] = fileName;
+        written.push(this.fileNameMap[fileName]);
+        if (!fs.existsSync(assetsDirectory)) {
+          fs.mkdirSync(assetsDirectory, { recursive: true });
+        }
+        fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
+      }
+    }
+
     if (fs.existsSync(assetsDirectory)) {
       const files = fs.readdirSync(assetsDirectory);
       for (const file of files) {
