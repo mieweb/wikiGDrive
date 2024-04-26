@@ -1,5 +1,6 @@
 import { parentPort } from 'worker_threads';
-import {executeOdtToMarkdown} from '../../odt/executeOdtToMarkdown';
+
+import {executeOdtToMarkdown} from '../../odt/executeOdtToMarkdown.ts';
 
 parentPort.on('message', async (msg) => {
   try {

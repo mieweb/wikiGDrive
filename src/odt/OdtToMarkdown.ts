@@ -1,3 +1,7 @@
+import path from 'path';
+import fs from 'fs';
+import { MathMLToLaTeX } from 'mathml-to-latex';
+
 import {
   DocumentContent, DocumentStyles, DrawCustomShape, DrawEnhancedGeometry,
   DrawFrame, DrawG,
@@ -17,7 +21,7 @@ import {
   TextSpan
 } from './LibreOffice.ts';
 import {urlToFolderId} from '../utils/idParsers.ts';
-import {MarkdownNodes, MarkdownTagNode} from './MarkdownNodes.ts';
+import {MarkdownNodes, MarkdownTagNode, MarkdownTextNode} from './MarkdownNodes.ts';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
@@ -64,6 +68,7 @@ export class OdtToMarkdown {
   public readonly links: Set<string> = new Set<string>();
   private readonly chunks: MarkdownNodes = new MarkdownNodes();
   private picturesDir = '';
+  private picturesDirAbsolute = '';
   private rewriteRules: RewriteRule[] = [];
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
@@ -378,7 +383,24 @@ export class OdtToMarkdown {
   }
 
   async drawFrameToText(currentTagNode: MarkdownTagNode, drawFrame: DrawFrame) {
-    if (drawFrame.object) { // TODO: MathML
+    if (drawFrame.object) {
+      if (!this.picturesDir) {
+        return;
+      }
+      if (drawFrame.object.href) {
+        const filePath = path.join(this.picturesDirAbsolute, drawFrame.object.href.replace(/\s/g, '_') + '.xml');
+        try {
+          const mathMl = new TextDecoder().decode(fs.readFileSync(filePath));
+          if (mathMl.indexOf('<math ') > -1) {
+            const node = this.chunks.createNode('MATHML');
+            const latex = MathMLToLaTeX.convert(mathMl);
+            this.chunks.appendText(node, latex);
+            this.chunks.append(currentTagNode, node);
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      }
       return;
     }
     if (drawFrame.image) {
@@ -666,8 +688,9 @@ export class OdtToMarkdown {
     }
   }
 
-  setPicturesDir(picturesDir: string) {
+  setPicturesDir(picturesDir: string, picturesDirAbsolute?: string) {
     this.picturesDir = picturesDir;
+    this.picturesDirAbsolute = picturesDirAbsolute || picturesDir;
   }
 
   setRewriteRules(rewriteRules: RewriteRule[]) {

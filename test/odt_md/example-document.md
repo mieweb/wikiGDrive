@@ -64,7 +64,9 @@ After subtable</td>
 
 ## Image
 
-![](1000000000000200000001804F9AAE46CD6D0DF2.gif)
+![](1000000000000640000001CF60FB0243CA95EC14.jpg)
+
+![](10000000000003F0000003F092F85671239C65F9.jpg)
 
 ## Preformatted Text
 
@@ -80,7 +82,7 @@ Code blocks are part of the Markdown spec, but syntax highlighting isn't. Howeve
 
 ### Typescript / Javascript
 
-{{% markdown %}}
+{{markdown}}
 ```javascript
 
 class MyClass {
@@ -98,7 +100,7 @@ module MyModule {
 declare magicNumber number;
 myArray.forEach(() => { }); // fat arrow syntax
 ```
-{{% /markdown %}}
+{{/markdown}}
 
 ## Video
 
@@ -136,9 +138,19 @@ Some **bold** **_boldanditalic_*** italic*  text
 
 ### Using the actual equation object
 
+```math
+E = m c^{2}
+```
+
+```math
+e^{i \pi} - 1 = 0
+```
+
 ### Text equivalent
 
 *E=mc**2*
+
+Inline $$E = m c^{2}$$ math
 
 ## Footnotes
 

@@ -1,10 +1,11 @@
-import {OdtToMarkdown} from './OdtToMarkdown';
-import {UnMarshaller} from './UnMarshaller';
-import {DocumentStyles, LIBREOFFICE_CLASSES} from './LibreOffice';
-import {generateDocumentFrontMatter} from '../containers/transform/frontmatters/generateDocumentFrontMatter';
-import {OdtProcessor} from './OdtProcessor';
 import fs from 'fs';
 import path from 'path';
+
+import {OdtToMarkdown} from './OdtToMarkdown.ts';
+import {UnMarshaller} from './UnMarshaller.ts';
+import {DocumentStyles, LIBREOFFICE_CLASSES} from './LibreOffice.ts';
+import {generateDocumentFrontMatter} from '../containers/transform/frontmatters/generateDocumentFrontMatter.ts';
+import {OdtProcessor} from './OdtProcessor.ts';
 
 export async function executeOdtToMarkdown(workerData) {
   const processor = new OdtProcessor(workerData.odtPath, true);
@@ -26,9 +27,9 @@ export async function executeOdtToMarkdown(workerData) {
   const converter = new OdtToMarkdown(document, styles, fileNameMap);
   converter.setRewriteRules(workerData.rewriteRules);
   if (workerData.realFileName === '_index.md') {
-    converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'));
+    converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);
   } else {
-    converter.setPicturesDir('../' + workerData.realFileName.replace(/.md$/, '.assets/'));
+    converter.setPicturesDir('../' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);
   }
   const markdown = await converter.convert();
   const links = Array.from(converter.links);

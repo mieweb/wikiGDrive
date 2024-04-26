@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import fs from 'fs';
 
-import {compareTexts} from '../utils.ts';
+import {compareTexts, createTmpDir} from '../utils.ts';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
 import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
 import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
@@ -137,13 +137,20 @@ async function transformOdt(id: string) {
   const odtPath = folder.getRealPath() + '/' + id + '.odt';
   const processor = new OdtProcessor(odtPath);
   await processor.load();
+  const tmpDir: string = createTmpDir();
+  await processor.unzipAssets(tmpDir, id + '.md');
   if (!processor.getContentXml()) {
     throw Error('No odt processed');
   }
-  return transform(processor.getContentXml(), processor.getStylesXml());
+  try {
+    const markdown = await transform(processor.getContentXml(), processor.getStylesXml(), tmpDir + `/${id}.assets`);
+    return markdown.replaceAll(tmpDir + `/${id}.assets`, '');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true });
+  }
 }
 
-async function transform(contentXml: string, stylesXml: string) {
+async function transform(contentXml: string, stylesXml: string, assetsDir: string) {
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
   const document: DocumentContent = parser.unmarshal(contentXml);
   if (!document) {
@@ -155,5 +162,6 @@ async function transform(contentXml: string, stylesXml: string) {
     throw Error('No styles unmarshalled');
   }
   const converter = new OdtToMarkdown(document, styles);
+  converter.setPicturesDir(assetsDir);
   return await converter.convert();
 }

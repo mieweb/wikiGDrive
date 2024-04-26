@@ -23,6 +23,7 @@ import {removeEmptyTags} from './removeEmptyTags.ts';
 import {removeExcessiveLines} from './removeExcessiveLines.ts';
 import {applyRewriteRules} from './applyRewriteRules.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
+import {convertMathMl} from './convertMathMl.js';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
@@ -31,6 +32,7 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   fixSpacesInsideInlineFormatting(chunks);
   await fixBoldItalic(chunks);
   hideSuggestedChanges(chunks);
+  convertMathMl(chunks);
 
   trimParagraphs(chunks);
   addEmptyLinesAfterParas(chunks);

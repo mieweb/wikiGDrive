@@ -15,6 +15,10 @@ export function mergeParagraphs(markdownChunks: MarkdownNodes) {
     }
 
     if (chunk.isTag && ['P', 'PRE'].includes(chunk.tag)) {
+      if (chunk.tag === 'PRE' && chunk.payload?.lang === 'math') {
+        return;
+      }
+
       const nextChunk = chunk.parent.children[ctx.nodeIdx + 1];
       if (nextChunk?.isTag && nextChunk.tag === chunk.tag) {
         const children = nextChunk.children.splice(0, nextChunk.children.length);
