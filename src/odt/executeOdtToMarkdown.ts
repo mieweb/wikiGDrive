@@ -8,8 +8,8 @@ import {generateDocumentFrontMatter} from '../containers/transform/frontmatters/
 import {OdtProcessor} from './OdtProcessor.ts';
 
 export async function executeOdtToMarkdown(workerData) {
-  const processor = new OdtProcessor(workerData.odtPath, true);
-  await processor.load();
+  const processor = new OdtProcessor(true);
+  await processor.load(workerData.odtPath);
   await processor.unzipAssets(workerData.destinationPath, workerData.realFileName);
   const content = processor.getContentXml();
   const stylesXml = processor.getStylesXml();

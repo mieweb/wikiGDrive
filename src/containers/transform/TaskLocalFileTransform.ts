@@ -139,8 +139,8 @@ export class TaskLocalFileTransform extends QueueTask {
     const picturesDirAbsolute = destinationPath + '/' + this.realFileName.replace(/.md$/, '.assets/');
 
     if (SINGLE_THREADED_TRANSFORM) {
-      const processor = new OdtProcessor(odtPath, true);
-      await processor.load();
+      const processor = new OdtProcessor(true);
+      await processor.load(odtPath);
       await processor.unzipAssets(destinationPath, this.realFileName);
       const content = processor.getContentXml();
       const stylesXml = processor.getStylesXml();

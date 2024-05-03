@@ -64,8 +64,8 @@ describe('MarkDownTransformTest', () => {
 async function transformOdt(id: string) {
   const folder = new FileContentService(__dirname);
   const odtPath = folder.getRealPath() + '/' + id + '.odt';
-  const processor = new OdtProcessor(odtPath);
-  await processor.load();
+  const processor = new OdtProcessor();
+  await processor.load(odtPath);
   if (!processor.getContentXml()) {
     throw Error('No odt processed');
   }

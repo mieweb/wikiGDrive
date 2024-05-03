@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import fs from 'fs';
 
-import {compareTexts, createTmpDir} from '../utils.ts';
+import {compareTexts} from '../utils.ts';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
 import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
 import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
@@ -135,8 +135,8 @@ describe('MarkDownTransformTest', () => {
 async function transformOdt(id: string) {
   const folder = new FileContentService(__dirname);
   const odtPath = folder.getRealPath() + '/' + id + '.odt';
-  const processor = new OdtProcessor(odtPath);
-  await processor.load();
+  const processor = new OdtProcessor();
+  await processor.load(odtPath);
   if (!processor.getContentXml()) {
     throw Error('No odt processed');
   }
