@@ -14,6 +14,7 @@ export async function executeOdtToMarkdown(workerData) {
   const content = processor.getContentXml();
   const stylesXml = processor.getStylesXml();
   const fileNameMap = processor.getFileNameMap();
+  const xmlMap = processor.getXmlMap();
 
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
   const document = parser.unmarshal(content);
@@ -24,7 +25,7 @@ export async function executeOdtToMarkdown(workerData) {
     throw Error('No styles unmarshalled');
   }
 
-  const converter = new OdtToMarkdown(document, styles, fileNameMap);
+  const converter = new OdtToMarkdown(document, styles, fileNameMap, xmlMap);
   converter.setRewriteRules(workerData.rewriteRules);
   if (workerData.realFileName === '_index.md') {
     converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);

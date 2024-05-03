@@ -16,9 +16,11 @@ export class OdtProcessor {
   private stylesXml: string;
   private files: { [p: string]: JSZip.JSZipObject };
   private fileNameMap: { [name: string]: string };
+  private xmlMap: { [name: string]: string };
 
   constructor(private odtPath: string, private contentAddressable = false) {
     this.fileNameMap = {};
+    this.xmlMap = {};
   }
 
   async load() {
@@ -36,6 +38,27 @@ export class OdtProcessor {
     }
     if (this.files['styles.xml']) {
       this.stylesXml = await this.files['styles.xml'].async('string');
+    }
+
+    await this.processMathMl();
+  }
+
+  async processMathMl() {
+    for (const relativePath in this.files) {
+      if (!relativePath.endsWith('/content.xml')) {
+        continue;
+      }
+
+      const fileName = relativePath.replace('/content.xml', '.xml').replace(/\s/g, '_');
+      if (fileName.indexOf('/') === -1) {
+        const entry = this.files[relativePath];
+        const buffer = await entry.async('nodebuffer');
+
+        const mathMl = new TextDecoder().decode(buffer);
+        if (mathMl.indexOf('<math ') > -1) {
+          this.xmlMap[fileName] = mathMl;
+        }
+      }
     }
   }
 
@@ -71,25 +94,6 @@ export class OdtProcessor {
       fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
     }
 
-    for (const relativePath in this.files) {
-      if (!relativePath.endsWith('/content.xml')) {
-        continue;
-      }
-
-      const fileName = relativePath.replace('/content.xml', '.xml').replace(/\s/g, '_');
-      if (fileName.indexOf('/') === -1) {
-        const entry = this.files[relativePath];
-        const buffer = await entry.async('nodebuffer');
-
-        this.fileNameMap[fileName] = fileName;
-        written.push(this.fileNameMap[fileName]);
-        if (!fs.existsSync(assetsDirectory)) {
-          fs.mkdirSync(assetsDirectory, { recursive: true });
-        }
-        fs.writeFileSync(path.join(assetsDirectory, this.fileNameMap[fileName]), buffer);
-      }
-    }
-
     if (fs.existsSync(assetsDirectory)) {
       const files = fs.readdirSync(assetsDirectory);
       for (const file of files) {
@@ -116,6 +120,10 @@ export class OdtProcessor {
 
   getFileNameMap() {
     return this.fileNameMap;
+  }
+
+  getXmlMap() {
+    return this.xmlMap;
   }
 
 }

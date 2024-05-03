@@ -137,20 +137,13 @@ async function transformOdt(id: string) {
   const odtPath = folder.getRealPath() + '/' + id + '.odt';
   const processor = new OdtProcessor(odtPath);
   await processor.load();
-  const tmpDir: string = createTmpDir();
-  await processor.unzipAssets(tmpDir, id + '.md');
   if (!processor.getContentXml()) {
     throw Error('No odt processed');
   }
-  try {
-    const markdown = await transform(processor.getContentXml(), processor.getStylesXml(), tmpDir + `/${id}.assets`);
-    return markdown.replaceAll(tmpDir + `/${id}.assets`, '');
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true });
-  }
+  return await transform(processor.getContentXml(), processor.getStylesXml(), processor);
 }
 
-async function transform(contentXml: string, stylesXml: string, assetsDir: string) {
+async function transform(contentXml: string, stylesXml: string, processor: OdtProcessor) {
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
   const document: DocumentContent = parser.unmarshal(contentXml);
   if (!document) {
@@ -161,7 +154,6 @@ async function transform(contentXml: string, stylesXml: string, assetsDir: strin
   if (!styles) {
     throw Error('No styles unmarshalled');
   }
-  const converter = new OdtToMarkdown(document, styles);
-  converter.setPicturesDir(assetsDir);
+  const converter = new OdtToMarkdown(document, styles, processor.getFileNameMap(), processor.getXmlMap());
   return await converter.convert();
 }

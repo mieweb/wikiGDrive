@@ -145,6 +145,7 @@ export class TaskLocalFileTransform extends QueueTask {
       const content = processor.getContentXml();
       const stylesXml = processor.getStylesXml();
       const fileNameMap = processor.getFileNameMap();
+      const xmlMap = processor.getXmlMap();
 
       const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
       const document = parser.unmarshal(content);
@@ -155,7 +156,7 @@ export class TaskLocalFileTransform extends QueueTask {
         throw Error('No styles unmarshalled');
       }
 
-      const converter = new OdtToMarkdown(document, styles, fileNameMap);
+      const converter = new OdtToMarkdown(document, styles, fileNameMap, xmlMap);
       converter.setRewriteRules(rewriteRules);
       if (this.realFileName === '_index.md') {
         converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
