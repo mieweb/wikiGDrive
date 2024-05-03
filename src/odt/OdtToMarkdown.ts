@@ -35,7 +35,7 @@ function getBaseFileName(fileName) {
 
 const COURIER_FONTS = ['Courier New', 'Courier'];
 
-interface FileNameMap {
+interface StringToStringMap {
   [name: string]: string
 }
 
@@ -71,7 +71,7 @@ export class OdtToMarkdown {
   private picturesDirAbsolute = '';
   private rewriteRules: RewriteRule[] = [];
 
-  constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: FileNameMap = {}) {
+  constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: StringToStringMap = {}, private xmlMap: StringToStringMap = {}) {
   }
 
   getStyle(styleName: string): Style {
@@ -384,14 +384,11 @@ export class OdtToMarkdown {
 
   async drawFrameToText(currentTagNode: MarkdownTagNode, drawFrame: DrawFrame) {
     if (drawFrame.object) {
-      if (!this.picturesDir) {
-        return;
-      }
       if (drawFrame.object.href) {
-        const filePath = path.join(this.picturesDirAbsolute, drawFrame.object.href.replace(/\s/g, '_') + '.xml');
+        const fileName= drawFrame.object.href.replace(/\s/g, '_').replace(/^\.\//, '') + '.xml';
         try {
-          const mathMl = new TextDecoder().decode(fs.readFileSync(filePath));
-          if (mathMl.indexOf('<math ') > -1) {
+          const mathMl = this.xmlMap[fileName];
+          if (mathMl && mathMl.indexOf('<math ') > -1) {
             const node = this.chunks.createNode('MATHML');
             const latex = MathMLToLaTeX.convert(mathMl);
             this.chunks.appendText(node, latex);
