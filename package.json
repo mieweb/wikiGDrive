@@ -17,7 +17,8 @@
   "bin": {
     "wgd": "src/wikigdrive.sh",
     "wikigdrive": "src/wikigdrive.sh",
-    "wikigdrivectl": "src/wikigdrivectl.sh"
+    "wikigdrivectl": "src/wikigdrivectl.sh",
+    "odt2md": "src/odt2md.sh"
   },
   "main": "src/cli/wikigdrive.ts",
   "scripts": {

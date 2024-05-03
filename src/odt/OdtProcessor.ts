@@ -18,17 +18,33 @@ export class OdtProcessor {
   private fileNameMap: { [name: string]: string };
   private xmlMap: { [name: string]: string };
 
-  constructor(private odtPath: string, private contentAddressable = false) {
+  constructor(private contentAddressable = false) {
     this.fileNameMap = {};
     this.xmlMap = {};
   }
 
-  async load() {
-    if (!fs.existsSync(this.odtPath)) {
+  async load(odtPath: string) {
+    if (!fs.existsSync(odtPath)) {
       return;
     }
     const jsZip = new JSZip();
-    const input: Buffer = fs.readFileSync(this.odtPath);
+    const input: Buffer = fs.readFileSync(odtPath);
+    const zip = await jsZip.loadAsync(input);
+
+    this.files = zip.folder('').files;
+
+    if (this.files['content.xml']) {
+      this.contentXml = await this.files['content.xml'].async('string');
+    }
+    if (this.files['styles.xml']) {
+      this.stylesXml = await this.files['styles.xml'].async('string');
+    }
+
+    await this.processMathMl();
+  }
+
+  async loadFromBuffer(input: Buffer): Promise<void> {
+    const jsZip = new JSZip();
     const zip = await jsZip.loadAsync(input);
 
     this.files = zip.folder('').files;
