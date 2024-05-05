@@ -1,11 +1,13 @@
 import {assert} from 'chai';
 import winston from 'winston';
-import {instrumentLogger} from '../../src/utils/logger/logger';
-import {GitScanner} from '../../src/git/GitScanner';
-import {createTmpDir} from '../utils';
 import fs from 'fs';
+import {rmSync, unlinkSync} from 'node:fs';
 import path from 'path';
 import {execSync} from 'child_process';
+
+import {instrumentLogger} from '../../src/utils/logger/logger.ts';
+import {GitScanner} from '../../src/git/GitScanner.ts';
+import {createTmpDir} from '../utils.ts';
 
 const COMMITER1 = {
   name: 'John', email: 'john@example.tld'
@@ -604,6 +606,80 @@ describe('GitTest', function () {
           assert.equal(change.state.isModified, true);
         }
       }
+    } finally {
+      fs.rmSync(localRepoDir, { recursive: true, force: true });
+    }
+  });
+
+  it('test remove assets', async () => {
+    const localRepoDir: string = createTmpDir();
+
+    try {
+      const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+      await scannerLocal.initialize();
+
+      const commit = async (filePaths = [], removeFilePaths = []) => {
+        const fileAssetsPaths = [];
+        for (const filePath of filePaths.filter(path => path.endsWith('.md'))) {
+          const assetsPath = filePath.substring(0, filePath.length - 3) + '.assets';
+          if (fs.existsSync(path.join(scannerLocal.rootPath, assetsPath))) {
+            fileAssetsPaths.push(assetsPath);
+          }
+        }
+        const removeFileAssetsPaths = [];
+        for (const fileToRemove of removeFilePaths
+          .filter(filePath => filePath.endsWith('.md'))
+          .map(filePath => filePath.substring(0, filePath.length - 3) + '.assets')) {
+
+          removeFileAssetsPaths.push(fileToRemove);
+        }
+
+        filePaths.push(...fileAssetsPaths);
+        removeFilePaths.push(...removeFileAssetsPaths);
+
+        await scannerLocal.commit('initial commit', filePaths, removeFilePaths, COMMITER1);
+      };
+
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.md'), 'test');
+      fs.mkdirSync(path.join(scannerLocal.rootPath, 'test.assets'));
+
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.assets', '1.png'), '1');
+      fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.assets', '2.png'), '2');
+
+      {
+        const changes = await scannerLocal.changes({ includeAssets: true });
+        assert.equal(changes.length, 4);
+        assert.ok(!!changes.find(item => item.path === '.gitignore'));
+        assert.ok(!!changes.find(item => item.path === 'test.md'));
+        assert.ok(!!changes.find(item => item.path === 'test.assets/1.png'));
+        assert.ok(!!changes.find(item => item.path === 'test.assets/2.png'));
+      }
+
+      await commit(['.gitignore', 'test.md'], []);
+
+      {
+        const changes = await scannerLocal.changes({ includeAssets: true });
+        assert.equal(changes.length, 0);
+      }
+
+      unlinkSync(path.join(scannerLocal.rootPath, 'test.md'));
+      rmSync(path.join(scannerLocal.rootPath, 'test.assets'), { recursive: true, force: true });
+
+      {
+        const changes = await scannerLocal.changes({ includeAssets: true });
+        assert.equal(changes.length, 3);
+        assert.ok(!!changes.find(item => item.path === 'test.md'));
+        assert.ok(!!changes.find(item => item.path === 'test.assets/1.png'));
+        assert.ok(!!changes.find(item => item.path === 'test.assets/2.png'));
+      }
+
+      await commit([], ['test.md']);
+
+      {
+        const changes = await scannerLocal.changes({ includeAssets: true });
+        assert.equal(changes.length, 0);
+      }
+
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
     }
