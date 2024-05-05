@@ -711,11 +711,7 @@ export class JobManagerContainer extends Container {
     for (const fileToRemove of removeFilePaths
         .filter(path => path.endsWith('.md'))
         .map(path => path.substring(0, path.length - 3) + '.assets')) {
-
-      if (!await transformedFileSystem.exists(fileToRemove)) {
-        continue;
-      }
-      removeFileAssetsPaths.push(fileToRemove + '/' + fileToRemove);
+      removeFileAssetsPaths.push(fileToRemove);
     }
 
     filePaths.push(...fileAssetsPaths);

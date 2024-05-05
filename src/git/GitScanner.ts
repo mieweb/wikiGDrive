@@ -87,7 +87,7 @@ export class GitScanner {
     return fs.existsSync(path.join(this.rootPath, '.git'));
   }
 
-  async changes(): Promise<GitChange[]> {
+  async changes(opts: { includeAssets: boolean } = { includeAssets: false }): Promise<GitChange[]> {
     const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
     const skipOthers = false;
@@ -114,7 +114,11 @@ export class GitScanner {
     }
 
     try {
-      const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
+      const cmd = !opts.includeAssets ?
+        'git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'' :
+        'git --no-pager diff HEAD --name-status --';
+
+      const result = await this.exec(cmd, { skipLogger: true });
       for (const line of result.stdout.split('\n')) {
         const parts = line.split(/\s/);
         const path = parts[parts.length - 1];
@@ -149,7 +153,7 @@ export class GitScanner {
         .replace(/^"/, '')
         .replace(/"$/, '');
 
-      if (path.indexOf('.assets/') > -1) {
+      if (path.indexOf('.assets/') > -1 && !opts.includeAssets) {
         const idx = path.indexOf('.assets/');
         const mdPath = path.substring(0, idx) + '.md';
         addEntry(mdPath, { isModified: true }, 1);
@@ -184,7 +188,7 @@ export class GitScanner {
       const chunk = removedFiles.splice(0, 400);
       const rmParam = chunk.map(fileName => `"${sanitize(fileName)}"`).join(' ');
       if (rmParam) {
-        await this.exec(`git rm ${rmParam}`);
+        await this.exec(`git rm -r ${rmParam}`);
       }
     }
 
