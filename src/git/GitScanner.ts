@@ -211,7 +211,7 @@ export class GitScanner {
       remoteBranch = 'master';
     }
 
-    await this.exec(`git pull --rebase origin ${remoteBranch}:master`, {
+    await this.exec(`git pull --autostash --rebase origin ${remoteBranch}:master`, {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
