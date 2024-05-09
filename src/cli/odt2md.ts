@@ -6,10 +6,10 @@ import {fileURLToPath} from 'url';
 import {Buffer} from 'buffer';
 import fs from 'fs';
 
-import {OdtProcessor} from '../odt/OdtProcessor.js';
-import {UnMarshaller} from '../odt/UnMarshaller.js';
-import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../odt/LibreOffice.js';
-import {OdtToMarkdown} from '../odt/OdtToMarkdown.js';
+import {OdtProcessor} from '../odt/OdtProcessor.ts';
+import {UnMarshaller} from '../odt/UnMarshaller.ts';
+import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../odt/LibreOffice.ts';
+import {OdtToMarkdown} from '../odt/OdtToMarkdown.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
