@@ -5,15 +5,17 @@ import minimist from 'minimist';
 import dotenv from 'dotenv';
 import {fileURLToPath} from 'url';
 
-import {addTelemetry} from '../telemetry';
-import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer';
-import {getAuthConfig} from './getAuthConfig';
-import {urlToFolderId} from '../utils/idParsers';
-import {GoogleFolderContainer} from '../containers/google_folder/GoogleFolderContainer';
-import {TransformContainer} from '../containers/transform/TransformContainer';
-import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer';
-import {usage} from './usage';
-import {initEngine} from './initEngine';
+import {addTelemetry} from '../telemetry.ts';
+import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer.ts';
+import {getAuthConfig} from './getAuthConfig.ts';
+import {urlToFolderId} from '../utils/idParsers.ts';
+import {GoogleFolderContainer} from '../containers/google_folder/GoogleFolderContainer.ts';
+import {TransformContainer} from '../containers/transform/TransformContainer.ts';
+import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer.ts';
+import {usage, UsageError} from './usage.ts';
+import {initEngine} from './initEngine.ts';
+import {JobManagerContainer} from '../containers/job/JobManagerContainer.ts';
+import {UserConfigService} from '../containers/google_folder/UserConfigService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,7 +54,6 @@ async function main() {
     service_account: argv['service_account'] || null,
   };
   const authConfig = await getAuthConfig(params, mainFileService);
-
   const apiContainer = new GoogleApiContainer({ name: 'google_api' }, authConfig);
   await apiContainer.mount(await mainFileService);
   await containerEngine.registerContainer(apiContainer);
@@ -63,8 +64,25 @@ async function main() {
   await containerEngine.registerContainer(folderRegistryContainer);
   await folderRegistryContainer.run();
 
+  const jobManagerContainer = new JobManagerContainer({ name: 'job_manager' });
+  await jobManagerContainer.mount(await mainFileService);
+  await containerEngine.registerContainer(jobManagerContainer);
+  await jobManagerContainer.run();
+
   const googleFileSystem = await mainFileService.getSubFileService(folderId, '/');
   const transformFileSystem = await mainFileService.getSubFileService(folderId + '_transform', '/');
+
+  const userConfigService = new UserConfigService(googleFileSystem);
+  await userConfigService.load();
+
+  if (argv['transform_subdir']) {
+    userConfigService.config.transform_subdir = argv['transform_subdir'];
+    await userConfigService.save();
+  }
+
+  if (!userConfigService.config?.transform_subdir || !userConfigService.config?.transform_subdir.startsWith('/')) {
+    throw new UsageError('No markdown destination dir specified use --transform_subdir, must start with /');
+  }
 
   logger.info('Downloading');
   const downloadContainer = new GoogleFolderContainer({
