@@ -5,10 +5,10 @@ import minimist from 'minimist';
 import dotenv from 'dotenv';
 import {fileURLToPath} from 'url';
 
-import {addTelemetry} from '../telemetry';
-import {FileContentService} from '../utils/FileContentService';
-import {getAuthConfig} from './getAuthConfig';
-import {usage} from './usage';
+import {addTelemetry} from '../telemetry.ts';
+import {FileContentService} from '../utils/FileContentService.ts';
+import {getAuthConfig} from './getAuthConfig.ts';
+import {usage} from './usage.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

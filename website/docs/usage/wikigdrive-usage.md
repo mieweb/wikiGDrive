@@ -16,6 +16,7 @@ wikigdrive config
     --client_id
     --client_secret
     --service_account=./private_key.json
+    --transform_subdir=/content
 
 wikigdrive server
     --link_mode [mdURLs|dirURLs|uglyURLs]
@@ -60,6 +61,7 @@ Options:
 --client_id GOOGLE_DRIVE_API CLIENT_ID
 --client_secret GOOGLE_DRIVE_API CLIENT_SECRET
 --service_account GOOGLE_DRIVE_API SERVICE_ACCOUNT_JSON file location
+--transform_subdir markdown destination subdirectory
 ```
 
 ## wikigdrive drives usage
