@@ -15,6 +15,12 @@ function stripUrlSuffix(id) {
   return null;
 }
 
+export function replaceUrlsWithIds(text: string): string {
+  text = text.replaceAll('https://drive.google.com/open?id%3D', 'https://drive.google.com/open?id=');
+  text = text.replaceAll('https://drive.google.com/open?id=', 'gdoc:');
+  return text;
+}
+
 export function urlToFolderId(url: string): string | null {
   if (!url) {
     return null;

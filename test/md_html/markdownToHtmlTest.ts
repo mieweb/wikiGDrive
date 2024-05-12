@@ -48,7 +48,7 @@ describe('markdownToHtml', () => {
     assert.equal(map['../subdir/diagram.svg'], '/aaa/subdir/diagram.svg');
 
     const serilzd = render(dom);
-    console.log(serilzd);
+    assert.ok(!!serilzd);
   });
 
   it('test markdownToHtml pre', async () => {
@@ -59,10 +59,8 @@ describe('markdownToHtml', () => {
 
     const dom = htmlparser2.parseDocument(html);
 
-    console.log(markdown);
-
     const serilzd = render(dom);
-    console.log(serilzd);
+    assert.ok(!!serilzd);
   });
 
   it('test markdownToHtml link_to_image', async () => {
@@ -73,8 +71,6 @@ describe('markdownToHtml', () => {
 
     const dom = htmlparser2.parseDocument(html);
 
-    console.log(markdown);
-
     const serilzd = render(dom);
     console.log(serilzd);
   });
@@ -82,6 +78,12 @@ describe('markdownToHtml', () => {
   it('test ./paras', async () => {
     const testHtml = fs.readFileSync(__dirname + '/paras.html').toString();
     const markdown = await transformMd('paras');
+    assert.ok(compareTexts(testHtml, markdown));
+  });
+
+  it('test ./header_links', async () => {
+    const testHtml = fs.readFileSync(__dirname + '/header_links.html').toString();
+    const markdown = await transformMd('header_links');
     assert.ok(compareTexts(testHtml, markdown));
   });
 

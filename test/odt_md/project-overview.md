@@ -6,9 +6,9 @@
   * [Collisions with Filenames](#collisions-with-filenames)
   * [Table of Contents and Index](#table-of-contents-and-index)
     * [Table of Contents](#table-of-contents)
-    * [Index](#_25nwvh7c83vs)
+    * [Index](#index)
   * [Markdown Cleanup](#markdown-cleanup)
-  * [Macros to Hugo Shortcodes (issue)](#_m5135xwpqj94)
+  * [Macros to Hugo Shortcodes (issue)](#macros-to-hugo-shortcodes-issue)
   * [Images](#images)
   * [FAQ](#faq)
 
@@ -22,9 +22,9 @@
   * [Collisions with Filenames](#collisions-with-filenames)
   * [Table of Contents and Index](#table-of-contents-and-index)
     * [Table of Contents](#table-of-contents) 
-    * [Index](#_25nwvh7c83vs)
+    * [Index](#index)
   * [Markdown Cleanup](#markdown-cleanup)
-  * [Macros to Hugo Shortcodes (issue)](#_m5135xwpqj94)
+  * [Macros to Hugo Shortcodes (issue)](#macros-to-hugo-shortcodes-issue)
   * [Images](#images)
   * [FAQ](#faq)
 
@@ -66,16 +66,16 @@ The app must:
 
 1. be able to be run once or run as a daemon (looking for changes in near real-time)
 2. Take changes from gdrive and propagate them down to the local file system (likely a git repo)
-3. Detect file [moves and renames](#renames-and-redirecting) from prior runs and leave redirects in the local file system to the new file or directory. 
+3. Detect file [moves and renames](#moves-and-renames) from prior runs and leave redirects in the local file system to the new file or directory. 
 4. Convert google docs to markdown while preserving as much of the meaning of the document. (Headings, images, drawings, tables, etc). 
     1. Each generated file should have parsable comments embedded in the original source google doc is known. 
     2. Embedded images (not originally stored on the shared folder will have to be extracted to the filesystem with a hashing system to prevent duplicate copies files in cases where images are pasted into multiple documents.
 5. Convert google drawings to svg and fix up urls as well. 
 6. Download images and place them in the proper folder. Embed metadata in the image pointing to the source on the google drive. It could be a .md file with the same name as the image. 
 7. Translate hyperlinks to the filesystem relative paths if they exist in the shared drive (both within Docs and Drawings). Must support both document urls and heading URLs. 
-8. Construct a [table of contents and an index](#table-of-contents-and-index) from all of the documents in the shared drive.
+8. Construct a [table of contents and an index](#table-of-contents-and-an-index) from all of the documents in the shared drive.
     1. It should be parsable so Javascript on the client could search and build navigation 
-    2. There should be generated markdown file ([toc.md](#table-of-contents) and [index.md](#_25nwvh7c83vs))
+    2. There should be generated markdown file ([toc.md](#toc-md) and [index.md](#index-md))
 
 Later phase:
 

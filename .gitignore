@@ -9,3 +9,7 @@ content
 hugo/resources
 hugo_stats.json
 
+.wgd-directory.yaml
+.tree.json
+.wgd-local-links.csv
+.wgd-local-log.csv
