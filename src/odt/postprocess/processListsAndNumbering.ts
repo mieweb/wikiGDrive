@@ -143,6 +143,10 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
 
         if (isNumeric) {
           currentElement.payload.number = parentLevel.payload.number;
+          if (listStyle?.listLevelStyleNumber?.length > 0 && listStyle?.listLevelStyleNumber[0].startValue) {
+            currentElement.payload.number = +listStyle?.listLevelStyleNumber[0].startValue;
+            parentLevel.payload.number = +listStyle?.listLevelStyleNumber[0].startValue;
+          }
         } else {
           currentElement.payload.bullet = true;
           parentLevel.payload.bullet = true;

@@ -34,6 +34,13 @@ export function addEmptyLinesAfterParas(markdownChunks: MarkdownNodes) {
         // return;
       }
 
+      if (chunk.children.length > 0) {
+        const lastChild = chunk.children[chunk.children.length - 1];
+        if (lastChild.isTag && lastChild.tag === 'BR/') {
+          chunk.children.splice(chunk.children.length - 1, 1);
+        }
+      }
+
       chunk.children.splice(chunk.children.length, 0, {
         ...markdownChunks.createNode('EOL/'),
         comment: 'addEmptyLinesAfterParas.ts: break after ' + chunk.tag,

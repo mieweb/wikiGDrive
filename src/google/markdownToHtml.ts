@@ -1,4 +1,5 @@
 import {marked} from 'marked';
+import {frontmatter} from '../containers/transform/frontmatters/frontmatter.ts';
 
 export async function markdownToHtml(buffer: Buffer): Promise<string> {
   const renderer = {
@@ -28,7 +29,8 @@ export async function markdownToHtml(buffer: Buffer): Promise<string> {
   marked.use({ renderer });
 
   const md = new TextDecoder().decode(buffer);
-  const html = marked.parse(md, { pedantic: false, hooks: {
+  const parsed = frontmatter(md);
+  const html = marked.parse(parsed.content, { pedantic: false, hooks: {
       preprocess: (markdown: string) => markdown,
       postprocess(html: string) {
         const style = '<style>\n.code { font-family: Courier, serif; }\n</style>\n';
