@@ -6,7 +6,7 @@ Google Drive to MarkDown synchronization
 
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
-![Diagram](https://drive.google.com/open?id=1TjB_v1gcBy23MtBQKvh5FZ3fFUp520QZ)
+![Diagram](gdoc:1TjB_v1gcBy23MtBQKvh5FZ3fFUp520QZ)
 
 [Google Drive Notes](gdoc:1H6vwfQXIexdg4ldfaoPUjhOZPnSkNn6h29WD6Fi-SBY) | [Github Project](https://github.com/mieweb/wikiGDrive/projects) | [Github Developer Notes](gdoc:1NJUxTnJHgkMO3JV1v_DFPsVsl8nDhweyDvNW0y98TGs)
 

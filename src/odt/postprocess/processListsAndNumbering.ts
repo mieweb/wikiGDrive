@@ -155,7 +155,7 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
     }
 
     return { ...ctx, level: ctx.level + 1 };
-  }, { level: 0 }, (chunk, ctx: { level: number }) => {
+  }, { level: 0 }, (chunk) => {
     if (!chunk.isTag) {
       return;
     }

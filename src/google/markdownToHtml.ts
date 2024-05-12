@@ -5,7 +5,7 @@ export async function markdownToHtml(buffer: Buffer): Promise<string> {
   const renderer = {
     paragraph(text: string) {
       return `<p>${text}</p><br />\n`;
-    }
+    },
     // code(code: string, infostring: string | undefined, escaped: boolean) {
     //   if (code.endsWith('\n')) {
     //     code = code + '\n';
@@ -18,12 +18,13 @@ export async function markdownToHtml(buffer: Buffer): Promise<string> {
     // image(href: string, title: string, text: string) {
     //   return `<img alt="${title}" src="${href}" />`;
     // },
-    // heading(text, level) {
-    //   const escapedText = text.toLowerCase().replace(/[^\w]+/g, '-');
-    //   return `
-    //         <h${level}><a id="${escapedText}" class="anchor" href="#${escapedText}"><span class="header-link"></span></a>${text}
-    //         </h${level}>`;
-    // }
+    heading(text, level) {
+      const escapedText = text.toLowerCase().replace(/[^\w]+/g, ' ').trim().replaceAll(' ', '-');
+      return `<h${level} id="${escapedText}">${text}</h${level}>\n`;
+      // return `
+      //        <h${level}><a id="${escapedText}" class="anchor" href="#${escapedText}"><span class="header-link"></span></a>${text}
+      //        </h${level}>`;
+    }
   };
 
   marked.use({ renderer });

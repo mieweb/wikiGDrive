@@ -25,6 +25,8 @@ import {applyRewriteRules} from './applyRewriteRules.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
 import {convertMathMl} from './convertMathMl.ts';
 import {unwrapEmptyPre} from './unwrapEmptyPre.ts';
+import {convertGoogleUrls} from './convertGoogleUrls.ts';
+import {fixIdLinks} from './fixIdLinks.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
@@ -52,7 +54,10 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   removeEmptyTags(chunks);
   addEmptyLines(chunks);
 
+  fixIdLinks(chunks);
   removeExcessiveLines(chunks);
+
+  convertGoogleUrls(chunks);
 
   applyRewriteRules(chunks, rewriteRules);
 

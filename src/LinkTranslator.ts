@@ -2,7 +2,7 @@
 
 import RelateUrl from 'relateurl';
 
-import {LinkMode} from './model/model';
+import {LinkMode} from './model/model.ts';
 
 export function convertExtension(localPath: string, mode?: LinkMode) {
   const lastSlash = localPath.lastIndexOf('/');

@@ -22,7 +22,7 @@ Some clients require the migration of historical, or non-active HS memberships. 
 
 #### Open Orders
 
-In some cases, open or pending orders are required for migration for employees with overdue but active panel memberships. This use case is discussed further in the section on [How to determine the Next Due Date on a HS Panel](#3rdcrjn).
+In some cases, open or pending orders are required for migration for employees with overdue but active panel memberships. This use case is discussed further in the section on [How to determine the Next Due Date on a HS Panel](#how-to-determine-the-next-due-date-on-a-hs-panel).
 
 #### Historical Orders
 
