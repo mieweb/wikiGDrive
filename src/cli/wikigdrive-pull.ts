@@ -15,7 +15,7 @@ import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegis
 import {usage, UsageError} from './usage.ts';
 import {initEngine} from './initEngine.ts';
 import {JobManagerContainer} from '../containers/job/JobManagerContainer.ts';
-import {UserConfigService} from '../containers/google_folder/UserConfigService.js';
+import {UserConfigService} from '../containers/google_folder/UserConfigService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
