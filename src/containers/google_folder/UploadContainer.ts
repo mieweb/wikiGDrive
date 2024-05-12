@@ -197,6 +197,10 @@ export class UploadContainer extends Container {
     for (const file of Object.values(files)) {
       const fullPath = parentPath + '/' + file.fileName;
 
+      if (fullPath === '/toc.md') {
+        continue;
+      }
+
       if (!file.title) {
         this.logger.warn(`Skipping upload: ${fullPath}. No title, check frontmatter.`);
         continue;
