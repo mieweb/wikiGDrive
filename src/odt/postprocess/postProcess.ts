@@ -24,6 +24,7 @@ import {removeExcessiveLines} from './removeExcessiveLines.ts';
 import {applyRewriteRules} from './applyRewriteRules.ts';
 import {RewriteRule} from '../applyRewriteRule.ts';
 import {convertMathMl} from './convertMathMl.ts';
+import {unwrapEmptyPre} from './unwrapEmptyPre.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
@@ -42,6 +43,7 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   await rewriteHeaders(chunks);
 
   mergeParagraphs(chunks);
+  unwrapEmptyPre(chunks);
   removePreWrappingAroundMacros(chunks);
   await removeMarkdownMacro(chunks);
   postProcessPreMacros(chunks);

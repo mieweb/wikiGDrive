@@ -1,4 +1,4 @@
-import {XmlAttribute, XmlElement, XmlElementChild, XmlRootElement, XmlText} from './UnMarshaller';
+import {XmlAttribute, XmlElement, XmlElementChild, XmlRootElement, XmlText} from './UnMarshaller.ts';
 
 // TODO https://git.libreoffice.org/core/+/refs/heads/master/schema/libreoffice/OpenDocument-v1.3+libreoffice-schema.rng
 
@@ -357,8 +357,10 @@ export class ListLevelStyleBullet {
 
 @XmlElement()
 @XmlAttribute('text:level', 'level')
+@XmlAttribute('text:start-value', 'startValue')
 export class  ListLevelStyleNumber {
   level = 0;
+  startValue = 0;
 }
 
 @XmlElement()

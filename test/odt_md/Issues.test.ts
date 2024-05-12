@@ -59,6 +59,13 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-443.md'));
   });
 
+  it('test ./our-docs', async () => {
+    // https://github.com/mieweb/wikiGDrive/issues/443
+    const testMarkdown = fs.readFileSync(__dirname + '/our-docs.md').toString();
+    const markdown = await transformOdt('our-docs');
+    assert.ok(compareTexts(testMarkdown, markdown, false, 'our-docs.md'));
+  });
+
 });
 
 async function transformOdt(id: string) {
