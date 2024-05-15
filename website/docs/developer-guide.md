@@ -24,6 +24,11 @@ sudo npm install -g n
 sudo n 16.15.0
 ```
 
+## Version Strategy
+* We use labels to set the version number based on https://github.com/marketplace/actions/create-tag-release
+* See background info: https://github.com/mieweb/wikiGDrive/issues/297
+  
+
 ## Install locally
 
 Copy and adjust .env.example .env
