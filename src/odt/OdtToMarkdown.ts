@@ -19,7 +19,7 @@ import {
   TextSpan
 } from './LibreOffice.ts';
 import {urlToFolderId} from '../utils/idParsers.ts';
-import {MarkdownNodes, MarkdownTagNode, MarkdownTextNode} from './MarkdownNodes.ts';
+import {MarkdownNodes, MarkdownTagNode} from './MarkdownNodes.ts';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
 import {mergeDeep} from './mergeDeep.ts';
