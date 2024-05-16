@@ -130,6 +130,12 @@ describe('MarkDownTransformTest', () => {
     assert.ok(compareTexts(testMarkdown, markdown, false));
   });
 
+  it('test ./code-blocks.md', async () => {
+    const testMarkdown = fs.readFileSync(__dirname + '/code-blocks.md').toString();
+    const markdown = await transformOdt('code-blocks');
+    assert.ok(compareTexts(testMarkdown, markdown, false));
+  });
+
 });
 
 async function transformOdt(id: string) {

@@ -27,6 +27,7 @@ import {convertMathMl} from './convertMathMl.ts';
 import {unwrapEmptyPre} from './unwrapEmptyPre.ts';
 import {convertGoogleUrls} from './convertGoogleUrls.ts';
 import {fixIdLinks} from './fixIdLinks.ts';
+import {convertCodeBlockParagraphs} from './convertCodeBlockParagraphs.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
@@ -35,6 +36,7 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   fixSpacesInsideInlineFormatting(chunks);
   await fixBoldItalic(chunks);
   hideSuggestedChanges(chunks);
+  convertCodeBlockParagraphs(chunks);
   convertMathMl(chunks);
 
   trimParagraphs(chunks);
