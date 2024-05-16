@@ -18,6 +18,10 @@ export function mergeParagraphs(markdownChunks: MarkdownNodes) {
       if (chunk.tag === 'PRE' && chunk.payload?.lang === 'math') {
         return;
       }
+      if (chunk.tag === 'PRE' && chunk.payload?.lang === 'codeblockend') {
+        chunk.payload.lang = '';
+        return;
+      }
 
       const nextChunk = chunk.parent.children[ctx.nodeIdx + 1];
       if (nextChunk?.isTag && nextChunk.tag === chunk.tag) {
