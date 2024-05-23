@@ -1,5 +1,4 @@
 import {FileContentService} from '../../utils/FileContentService.ts';
-import {FileId} from '../../model/model.ts';
 
 interface Link {
   fileId: string;
