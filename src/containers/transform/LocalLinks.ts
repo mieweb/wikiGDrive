@@ -1,4 +1,5 @@
 import {FileContentService} from '../../utils/FileContentService.ts';
+import {FileId} from '../../model/model.js';
 
 interface Link {
   fileId: string;
@@ -10,11 +11,13 @@ export const LINKS_NAME = '.wgd-local-links.csv';
 
 export class LocalLinks {
   private links: Link[];
+  private notGenerated = true;
   constructor(private transformFileService: FileContentService) {
   }
 
   async load() {
     if (!await this.transformFileService.exists(LINKS_NAME)) {
+      this.notGenerated = true;
       this.links = [];
       return;
     }
@@ -33,10 +36,11 @@ export class LocalLinks {
       }
       groups[cells[0]].links.push(cells[2]);
     }
+    this.notGenerated = false;
     this.links = Object.values(groups);
   }
 
-  append(fileId: string, fileName: string, links: string[]) {
+  append(fileId: FileId, fileName: string, links: string[]) {
     const link = this.links.find(l => l.fileId === fileId);
     if (link) {
       link.fileName = fileName;
@@ -48,7 +52,7 @@ export class LocalLinks {
     }
   }
 
-  getBackLinks(fileId) {
+  getBackLinks(fileId: FileId) {
     const retVal = new Set<string>();
     for (const link of this.links) {
       for (const targetLink of link.links) {
@@ -57,17 +61,29 @@ export class LocalLinks {
         }
       }
     }
-    return Array.from(retVal);
+
+    return Array.from(retVal)
+      .map(fileId => ({
+        fileId,
+        linksCount: this.links.find(link => link.fileId === fileId)?.links.length || 0
+      }));
   }
 
-  getLinks(fileId) {
+  getLinks(fileId: FileId) {
+    if (this.notGenerated) {
+      return false;
+    }
+
     for (const link of this.links) {
       if (link.fileId === fileId) {
         const links = link.links
           .filter(link => link.startsWith('gdoc:'))
           .map(link => link.substring('gdoc:'.length));
 
-        return links;
+        return links.map(fileId => ({
+          fileId,
+          linksCount: this.links.find(link => link.fileId === fileId)?.links.length || 0
+        }));
       }
     }
     return [];

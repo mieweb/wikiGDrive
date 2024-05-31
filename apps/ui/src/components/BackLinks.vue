@@ -1,5 +1,9 @@
 <template>
-  <div class="x-container">
+  <div v-if="loading">Loading...</div>
+  <div v-else-if="notGenerated">
+    Links not generated. Run Transform.
+  </div>
+  <div v-else class="x-container">
     <slot name="header">
       <h5>Back Links</h5>
     </slot>
@@ -34,7 +38,7 @@
       No Links
     </div>
 
-    <svg ref="graph" width="830" height="300" viewBox="0 0 830 300" style="max-width: 100%; height: auto;">
+    <svg ref="graph" width="830" height="800" viewBox="0 0 830 800" style="max-width: 100%; height: auto;">
       <defs>
         <marker id="arrow" viewBox="0 -10 20 20" refX="100" refY="0" markerWidth="8" markerHeight="8" orient="auto">
           <path class="cool arrowHead" d="M0,-10L20,0L0,10" style="fill: teal; stroke: teal;"></path>
@@ -50,6 +54,39 @@
 import {UtilsMixin} from './UtilsMixin.ts';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
+function smartSlice(limit, arr) {
+  arr = Array.from(arr).map(subArr => {
+    subArr = Array.from(subArr);
+    subArr.sort((a, b) => b?.linksCount - a?.linksCount);
+    return subArr;
+  });
+
+  const ranges = new Set();
+  for (const subArr of arr) {
+    for (let i = 0; i < subArr.length; i++) {
+      ranges.add(subArr[i].linksCount);
+    }
+  }
+
+  const retVal = arr.map(() => []);
+  let total = 0;
+
+  for (const linksCount of ranges) {
+    if (total > limit) {
+      break;
+    }
+
+    for (let i = 0; i < arr.length; i++) {
+      const subArr = arr[i];
+      const filtered = subArr.filter(obj => obj.linksCount === linksCount);
+      retVal[i].push(...filtered);
+      total += filtered.length;
+    }
+  }
+
+  return retVal;
+}
+
 export default {
   mixins: [UtilsMixin],
   props: {
@@ -58,6 +95,7 @@ export default {
   },
   data() {
     return {
+      loading: true,
       backlinks: [],
       links: [],
       graphData: {
@@ -78,15 +116,24 @@ export default {
   },
   methods: {
     async fetch() {
-      if (this.selectedFile.id) {
-        const { backlinks, links } = await this.FileClientService.getBacklinks(this.driveId, this.selectedFile.id);
-        this.backlinks = backlinks;
-        this.links = links;
-      } else {
-        this.backlinks = [];
-        this.links = [];
+      this.loading = true;
+      try {
+        if (this.selectedFile.id) {
+          const { backlinks, links, notGenerated } = await this.FileClientService.getBacklinks(this.driveId, this.selectedFile.id);
+          this.backlinks = backlinks;
+          this.links = links;
+          this.notGenerated = !!notGenerated;
+        } else {
+          this.backlinks = [];
+          this.links = [];
+          this.notGenerated = true;
+        }
+      } finally {
+        this.loading = false;
       }
-      this.updateGraph();
+      this.$nextTick( () => {
+        this.updateGraph();
+      });
     },
     selectFile(path) {
       if (this.isAddon) {
@@ -112,11 +159,15 @@ export default {
           }
         };
 
-        for (const row of this.links) {
+        const [ links, backlinks ] = smartSlice(20, [ this.links, this.backlinks ]);
+
+        for (const row of links) {
           nodes[row.fileId] = {
             id: row.fileId,
             title: row.name,
             path: row.path,
+            x: Math.random() * 1000 - 500,
+            y: Math.random() * 1000 - 500,
             group: 1
           };
           data.edges.push({
@@ -125,11 +176,13 @@ export default {
             value: 1
           });
         }
-        for (const row of this.backlinks) {
+        for (const row of backlinks) {
           nodes[row.fileId] = {
             id: row.fileId,
             title: row.name,
             path: row.path,
+            x: Math.random() * 1000 - 500,
+            y: Math.random() * 1000 - 500,
             group: 2
           };
           data.edges.push({
@@ -150,7 +203,7 @@ export default {
       this.graphData.nodes = data.nodes.map(d => ({...d}));
 
       const width = 830;
-      const height = 300;
+      const height = 800;
 
       // Specify the color scale.
       const color = d3.scaleOrdinal(d3.schemeCategory10);
