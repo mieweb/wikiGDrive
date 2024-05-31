@@ -9,8 +9,8 @@
       <span class="badge" v-if="gitStats.headAhead > 0">
         {{ gitStats.headAhead }} commits ahead remote
       </span>
-      <span class="badge" v-if="gitStats.headAhead < 0">
-        {{ -gitStats.headAhead }} commits behind remote
+      <span class="badge" v-if="gitStats.headBehind > 0">
+        {{ gitStats.headBehind }} commits behind remote
       </span>
     </ToolButton>
 
