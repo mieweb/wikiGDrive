@@ -76,7 +76,8 @@ export class TextLink implements ParagraphSection {
 
 @XmlElement()
 @XmlAttribute('text:name', 'name')
-export class TextBookmark {
+export class TextBookmark implements ParagraphSection {
+  type = 'bookmark';
   name: string;
 }
 
@@ -200,7 +201,7 @@ export class TextChangeEnd {
 @XmlElement()
 @XmlText('list', {isArray: true})
 @XmlAttribute('text:style-name', 'styleName')
-@XmlElementChild('text:bookmark', 'bookmark', 'TextBookmark')
+@XmlElementChild('text:bookmark', 'list', 'TextBookmark', {isArray: true})
 @XmlElementChild('text:a', 'list', 'TextLink', {isArray: true})
 @XmlElementChild('text:span', 'list', 'TextSpan', {isArray: true})
 @XmlElementChild('draw:rect', 'list', 'DrawRect', {isArray: true})
@@ -215,8 +216,7 @@ export class TextChangeEnd {
 @XmlElementChild('text:change-end', 'list', 'TextChangeEnd', {isArray: true})
 export class TextParagraph implements TextSection {
   type = 'paragraph';
-  bookmark: TextBookmark;
-  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace | DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape> = [];
+  list: Array<string | TextLink | TextSpan | DrawRect | DrawFrame | TextTab | TextLineBreak | TextSpace | DrawG | TextChangeStart | TextChangeEnd | DrawCustomShape | TextBookmark> = [];
   annotations: OfficeAnnotation[] = [];
   styleName: string;
 }

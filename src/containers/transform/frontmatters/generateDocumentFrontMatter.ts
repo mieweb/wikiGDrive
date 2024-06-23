@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 
-import {MdFile} from '../../../model/LocalFile';
-import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
+import {MdFile} from '../../../model/LocalFile.ts';
+import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
 
 export function generateDocumentFrontMatter(localFile: MdFile, links: string[],
                                             fm_without_version = false) {
