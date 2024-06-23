@@ -24,6 +24,7 @@ import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
 import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {getUrlHash} from '../../utils/idParsers.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -342,10 +343,10 @@ export class TransformContainer extends Container {
           processed.add(fileId);
           const backLinks = this.localLinks.getBackLinks(fileId);
           for (const backLink of backLinks) {
-            if (processed.has(backLink)) {
+            if (processed.has(backLink.fileId)) {
               continue;
             }
-            filterFilesIds.add(backLink);
+            filterFilesIds.add(backLink.fileId);
           }
         }
         if (filterFilesIds.size > 0) {
@@ -426,7 +427,8 @@ export class TransformContainer extends Container {
       if (fileName.endsWith('.md') || fileName.endsWith('.svg')) {
         const content = await destinationDirectory.readFile(fileName);
         const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)/ig, (str: string) => {
-          const fileId = str.substring('gdoc:'.length);
+          const fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
+          const hash = getUrlHash(str);
           const lastLog = this.localLog.findLastFile(fileId);
           if (lastLog && lastLog.event !== 'removed') {
             if (fileName.endsWith('.svg')) {
@@ -435,7 +437,7 @@ export class TransformContainer extends Container {
               return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
             }
           } else {
-            return 'https://drive.google.com/open?id=' + fileId;
+            return 'https://drive.google.com/open?id=' + fileId + hash.replace('#_', '#heading=h.');
           }
         });
         if (content !== newContent) {
