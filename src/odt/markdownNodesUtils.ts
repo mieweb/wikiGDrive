@@ -221,6 +221,8 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
           return addLiNumbers(chunk, ctx, chunksToText(chunk.children, { ...ctx, inListItem: true, parentLevel: chunk.payload.listLevel }));
         case 'TOC':
           return chunksToText(chunk.children, ctx); // TODO
+        case 'BOOKMARK/':
+          return `<a id="${chunk.payload.id}"></a>`;
       }
       return chunksToText(chunk.children, ctx);
     case 'html':
@@ -296,6 +298,8 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
             const fontSize = inchesToPixels(chunk.payload.style?.textProperties.fontSize);
             return `<tspan style="${textStyleToString(chunk.payload.style?.textProperties)}" font-size="${fontSize}">` + chunksToText(chunk.children, ctx) + '</tspan>\n';
           }
+        case 'BOOKMARK/':
+          return `<a id="${chunk.payload.id}"></a>`;
       }
       return chunksToText(chunk.children, ctx);
     default:
@@ -320,7 +324,7 @@ export async function walkRecursiveAsync(node: MarkdownNode, callback: (node: Ma
     const subCtx = await callback(node, ctx) || Object.assign({}, ctx);
     for (let nodeIdx = 0; nodeIdx < node.children.length; nodeIdx++) {
       const child = node.children[nodeIdx];
-      const retVal = await walkRecursiveAsync(child, callback, { ...subCtx, nodeIdx });
+      const retVal = await walkRecursiveAsync(child, callback, { ...subCtx, nodeIdx }, callbackEnd);
       if (retVal && 'nodeIdx' in retVal && typeof retVal.nodeIdx === 'number') {
         nodeIdx = retVal.nodeIdx;
       }
