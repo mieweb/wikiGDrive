@@ -27,7 +27,6 @@ export function convertCodeBlockParagraphs(markdownChunks: MarkdownNodes) {
       for (let nodeIdx2 = ctx.nodeIdx + 1; nodeIdx2 < node.parent.children.length; nodeIdx2++) {
         const node2 = node.parent.children[nodeIdx2];
         if (isCodeBlockPara(node2, CODEBLOCK_END)) {
-          console.log('hhh', ctx.nodeIdx, nodeIdx2);
           const inner = node.parent.children.splice(ctx.nodeIdx + 1, nodeIdx2 - (ctx.nodeIdx + 1));
 
           const toInsert = inner.map((part, idx) => {
