@@ -10,7 +10,7 @@ import {
   TableCell,
   TableOfContent,
   TableRow,
-  TableTable,
+  TableTable, TextBookmark,
   TextLink,
   TextList,
   TextParagraph,
@@ -18,7 +18,7 @@ import {
   TextSpace,
   TextSpan
 } from './LibreOffice.ts';
-import {urlToFolderId} from '../utils/idParsers.ts';
+import {getUrlHash, urlToFolderId} from '../utils/idParsers.ts';
 import {MarkdownNodes, MarkdownTagNode} from './MarkdownNodes.ts';
 import {inchesToPixels, inchesToSpaces, spaces} from './utils.ts';
 import {extractPath} from './extractPath.ts';
@@ -230,13 +230,14 @@ export class OdtToMarkdown {
   async linkToText(currentTagNode: MarkdownTagNode, link: TextLink): Promise<void> {
     let href = link.href;
     const id = urlToFolderId(href);
+    const hash = getUrlHash(link.href);
     if (id) {
       href = 'gdoc:' + id;
     }
 
-    this.addLink(href);
+    this.addLink(href + hash);
 
-    const block = this.chunks.createNode('A', { href: href });
+    const block = this.chunks.createNode('A', { href: href + hash });
     this.chunks.append(currentTagNode, block);
     currentTagNode = block;
 
@@ -458,38 +459,36 @@ export class OdtToMarkdown {
     return false;
   }
 
-
   async paragraphToText(currentTagNode: MarkdownTagNode, paragraph: TextParagraph): Promise<void> {
     const style = this.getStyle(paragraph.styleName);
     const listStyle = this.getListStyle(style.listStyleName);
-    const bookmarkName = paragraph.bookmark?.name || null;
 
     if (this.hasStyle(paragraph, 'Heading_20_1')) {
-      const header = this.chunks.createNode('H1', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const header = this.chunks.createNode('H1', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, header);
       currentTagNode = header;
     } else
     if (this.hasStyle(paragraph, 'Heading_20_2')) {
-      const header = this.chunks.createNode('H2', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const header = this.chunks.createNode('H2', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, header);
       currentTagNode = header;
     } else
     if (this.hasStyle(paragraph, 'Heading_20_3')) {
-      const header = this.chunks.createNode('H3', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const header = this.chunks.createNode('H3', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, header);
       currentTagNode = header;
     } else
     if (this.hasStyle(paragraph, 'Heading_20_4')) {
-      const header = this.chunks.createNode('H4', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const header = this.chunks.createNode('H4', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, header);
       currentTagNode = header;
     } else
     if (this.isCourier(paragraph.styleName)) {
-      const block = this.chunks.createNode('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const block = this.chunks.createNode('PRE', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, block);
       currentTagNode = block;
     } else {
-      const block = this.chunks.createNode('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle, bookmarkName });
+      const block = this.chunks.createNode('P', { marginLeft: inchesToSpaces(style.paragraphProperties?.marginLeft), style, listStyle });
       this.chunks.append(currentTagNode, block);
       currentTagNode = block;
     }
@@ -595,6 +594,12 @@ export class OdtToMarkdown {
           break;
         case 'change_end':
           this.chunks.append(currentTagNode, this.chunks.createNode('CHANGE_END'));
+          break;
+        case 'bookmark':
+          {
+            const bookmark = <TextBookmark>child;
+            this.chunks.append(currentTagNode, this.chunks.createNode('BOOKMARK/', { id: bookmark.name }));
+          }
           break;
       }
     }

@@ -71,3 +71,11 @@ export function urlToFolderId(url: string): string | null {
 
   return null;
 }
+
+export function getUrlHash(url: string): string {
+  const idx = url.indexOf('#');
+  if (idx >= 0) {
+    return url.substring(idx).replace('#heading=h.', '#_');
+  }
+  return '';
+}
