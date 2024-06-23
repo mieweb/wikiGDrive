@@ -1,4 +1,4 @@
-#### Test Methodology
+#### Test Methodology <a id="_pngyfe6dbezk"></a>
 
 MIE will report a count of messages for each supported message type:
 
