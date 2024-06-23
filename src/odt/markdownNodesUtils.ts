@@ -324,7 +324,7 @@ export async function walkRecursiveAsync(node: MarkdownNode, callback: (node: Ma
     const subCtx = await callback(node, ctx) || Object.assign({}, ctx);
     for (let nodeIdx = 0; nodeIdx < node.children.length; nodeIdx++) {
       const child = node.children[nodeIdx];
-      const retVal = await walkRecursiveAsync(child, callback, { ...subCtx, nodeIdx });
+      const retVal = await walkRecursiveAsync(child, callback, { ...subCtx, nodeIdx }, callbackEnd);
       if (retVal && 'nodeIdx' in retVal && typeof retVal.nodeIdx === 'number') {
         nodeIdx = retVal.nodeIdx;
       }

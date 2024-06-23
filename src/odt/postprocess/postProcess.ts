@@ -40,11 +40,12 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   convertMathMl(chunks);
 
   trimParagraphs(chunks);
+  await rewriteHeaders(chunks);
+  trimParagraphs(chunks);
   addEmptyLinesAfterParas(chunks);
   removeTdParas(chunks); // Requires: addEmptyLinesAfterParas
 
   mergeTexts(chunks);
-  await rewriteHeaders(chunks);
 
   mergeParagraphs(chunks);
   unwrapEmptyPre(chunks);

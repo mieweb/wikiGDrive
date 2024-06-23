@@ -26,7 +26,7 @@ export function trimParagraphs(markdownChunks: MarkdownNodes) {
       while (chunk.children.length > 0) {
         const firstChunk = chunk.children[0];
         if (firstChunk.isTag === false) {
-          let origText = firstChunk.text;
+          const origText = firstChunk.text;
           firstChunk.text = firstChunk.text.replace(/^\s+/, '');
 
           if (firstChunk.text === '') {

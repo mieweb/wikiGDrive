@@ -1,14 +1,14 @@
-# Confluence to Google Docs Conversion Notes
+# Confluence to Google Docs Conversion Notes <a id="_77510dqpcwl"></a>
 
-## Goal
+## Goal <a id="_10c0ntqm6mev"></a>
 
 Convert Confluence Documents in to Google Documents for the purpose of using WikiGDrive to publish them.
 
-## Delivery
+## Delivery <a id="_i96xic41327t"></a>
 
 A new github repo with a node.js script specific to this conversion.
 
-## High level Process
+## High level Process <a id="_wrw8sf3g3pc3"></a>
 
 * Scan all of the documents in a Confluence Space
 * Make google documents in a shared drive (two passes will be required so links between documents can be known as content is added).
@@ -18,7 +18,7 @@ A new github repo with a node.js script specific to this conversion.
     * Import content from Confluence Page into Google Documents
     * Heading should be headings
     * Paragraphs should be paragraphs
-    * Images (which are attachments in Confluence) should be embedded in google docs
+    * Images (which are attachments in Confluence) should be embedded in google docs <a id="cukuroni2k4r"></a>
     * Macros can be wrapped in {{% curlies %}} and dumped as text
         * <strong>Example Block Macro:</strong>
           {{% macroname propertyname='value' propertyname='value' %}}
@@ -30,13 +30,13 @@ A new github repo with a node.js script specific to this conversion.
     * Embedded Video should be converted to an image with a hyperlink
     * Formatting is not required to be converted.
 
-## Proposed Instructions
+## Proposed Instructions <a id="_m98292szff3y"></a>
 
 ```
 confluence2google <path to space> <path to google shared drive>
 ```
 
-## Links and Possible Approaches
+## Links and Possible Approaches <a id="_sdx7522zhby"></a>
 
 1. Use REST API
     1. [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
@@ -50,7 +50,9 @@ confluence2google <path to space> <path to google shared drive>
 3. Use HTML
     1. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
 
-## Examples
+<a id="ggsym7lvzx37"></a>
+
+## Examples <a id="_rsmqmchgeq17"></a>
 
 Simple - [https://confluence.example.com/display/DOCS/Sample](https://confluence.example.com/display/DOCS/Sample)
 

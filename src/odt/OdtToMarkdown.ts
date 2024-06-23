@@ -232,12 +232,12 @@ export class OdtToMarkdown {
     const id = urlToFolderId(href);
     const hash = getUrlHash(link.href);
     if (id) {
-      href = 'gdoc:' + id;
+      href = 'gdoc:' + id + hash;
     }
 
-    this.addLink(href + hash);
+    this.addLink(href);
 
-    const block = this.chunks.createNode('A', { href: href + hash });
+    const block = this.chunks.createNode('A', { href: href });
     this.chunks.append(currentTagNode, block);
     currentTagNode = block;
 
