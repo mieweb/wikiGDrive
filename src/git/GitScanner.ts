@@ -776,27 +776,27 @@ export class GitScanner {
     }
   }
 
-  async countAhead(remoteBranch: string) {
-    let retVal = 0;
-
+  async countAheadBehind(remoteBranch: string) {
     try {
-      const result = await this.exec(`git log origin/${remoteBranch}..HEAD`, {
+      const result = await this.exec(`git rev-list --left-right --count HEAD...origin/${remoteBranch}`, {
         skipLogger: true
       });
-      for (const line of result.stdout.split('\n')) {
-          if (line.startsWith('commit ')) {
-            retVal++;
-          }
-      }
+      const firstLine = result.stdout.split('\n')[0];
+
+      const [ ahead, behind ] = firstLine.split(/\s+/).map(val => parseInt(val));
+
+      return {
+        ahead, behind
+      };
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
 
-    return retVal;
+    return { ahead: 0, behind: 0 };
   }
 
   async getStats(userConfig: UserConfig) {
     let initialized = true;
-    const headAhead = userConfig.remote_branch ? await this.countAhead(userConfig.remote_branch) : 0;
+    const { ahead: headAhead, behind: headBehind } = userConfig.remote_branch ? await this.countAheadBehind(userConfig.remote_branch) : { ahead: 0, behind: 0 };
     let unstaged = 0;
 
     try {
@@ -834,6 +834,7 @@ export class GitScanner {
     return {
       initialized,
       headAhead,
+      headBehind,
       unstaged,
       remote_branch: userConfig.remote_branch,
       remote_url: initialized ? await this.getRemoteUrl() : null
