@@ -12,7 +12,7 @@
   * [Images](#images)
   * [FAQ](#faq)
 
-# Wiki G Drive Project Overview
+# Wiki G Drive Project Overview <a id="_rv5b8ogzvg6h"></a>
 
 * [Wiki G Drive Project Overview](#wiki-g-drive-project-overview)
   * [Overview](#overview)
@@ -28,7 +28,7 @@
   * [Images](#images)
   * [FAQ](#faq)
 
-## Overview
+## Overview <a id="_d92q25gd8wdx"></a>
 
 WikiGDrive is a node app that uses the [Google Drive API](https://developers.google.com/drive/api/v3/quickstart/nodejs) to transform Google Docs and Drawings into markdown.
 
@@ -60,7 +60,7 @@ WikiGDrive GitHub
 
 
 
-## Requirements
+## Requirements <a id="_vttky12ic725"></a>
 
 The app must:
 
@@ -84,7 +84,7 @@ Later phase:
 * Google sheets to CSV with MIE's datavis
 * Markdown -> Google Docs converter
 
-## Instructions (proposed)
+## Instructions (proposed) <a id="_xcz3eudi65fe"></a>
 
 npm install wikigdrive
 
@@ -106,7 +106,7 @@ Options:
 
 wikigdrive keeps a local JSON config file in the dest directory with state from prior runs. The config contains a map of URL driveIds to the local filenames along with metadata about each file. 
 
-## Renames and Redirecting 
+## Renames and Redirecting <a id="_mqk2e0362t9z"></a>
 
 When a Document is renamed or moved in the shared drive the driveId says the same, but its place in the filesystem changes. For example a document named "Carbon" would be created as Carbon.md. Sometime later its renamed to "Carbon Fiber" then a new file "Carbon Fiber.md" would be made with the content and the old "Carbon.md" is changed to:
 
@@ -141,7 +141,7 @@ Then sometime later, "Example 1" is renamed to "Sample 1" the folder layout shou
     * Example-1.md -> /Container/<strong>Sample</strong>-1.md
     * Example-2.md -> /Container/Example-2.md
 
-## Collisions with Filenames
+## Collisions with Filenames <a id="_qyy6tn72wtk7"></a>
 
 Google Drive allows filenames with the same name to be created on shared drives.  When transforming them into the local filesystem, each file will be renamed to a new file and a disambiguation page will be placed in their place.  Eg:
 
@@ -161,11 +161,13 @@ The contents of Carbon.md would show each of the conflicting references:
 
     * [Carbon](Carbon-2.md) 
 
-## Table of Contents and Index
+<a id="an52jifjcfq0"></a>
+
+## Table of Contents and Index <a id="_iqx1hufojtom"></a>
 
 In the root of the local filesystem two files will be created: the toc.md and index.md
 
-### Table of Contents
+### Table of Contents <a id="_h3vpqh726qwp"></a>
 
 The table of contents is a layout of the documents and their position in the drive as an unordered list. It should not contain redirected files, images, etc. 
 
@@ -173,7 +175,7 @@ The table of contents is a layout of the documents and their position in the dri
 
 The index is a listing of all of the defined terms and their references in the documents.  The processing may be passed to another tool to construct the index. Examples: [kramdown](https://meta.stackexchange.com/questions/72395/is-it-possible-to-have-definition-lists-in-markdown), [Asciidoctor](https://asciidoctor.org/docs/user-manual/)
 
-## Markdown Cleanup
+## Markdown Cleanup <a id="_z6yplt2dzk5"></a>
 
 * Bold headings: ([issue](https://github.com/mieweb/wikiGDrive/issues/17)) Remove the ** bold markdown from all headings.
     ![](10000201000001A5000000492C856905A808045C.png)
@@ -181,14 +183,15 @@ The index is a listing of all of the defined terms and their references in the d
     ![](10000201000005480000004BB83F3F8B5F0C77BD.png)
 * Italics/bold in an unordered list: ([issue](https://github.com/mieweb/wikiGDrive/issues/16)) Italics are not being rendered if in a list item.  We may need to find these and replace the */** with em/strong tags. Example is rendered in browser next to [Google Doc](gdoc:108WScoxxGKKKOsGWF7UNZ4rLRanGXu6BPdJ-axjVn5s).
     ![](1000020100000243000000F28AB7617254FDBB3A.png)
-
-## Images
+<a id="c00wob6zjk55"></a>
+<a id="_dqy5042w3u8q"></a>
+## Images <a id="_3odca1pbhdma"></a>
 
 Two kinds of images exist within Google Docs:  1) Embedded images stored within the document and 2) images that are referenced to another "Drawing" on the google drive.  WikiGDrive processes images by placing them in a folder named with a similar name to the page.  (eg:  index.md would result in a folder index.images with each embedded image in that folder).
 
 If you make a drawing somewhere in the google drive folder and link it in the google document (WITH A HYPERLINK b/c Google does not expose the internal link via the api) then WikiGDrive will process the drawing as a SVG and place a proper reference to the SVG in the markdown.
 
-## FAQ
+## FAQ <a id="_sw3cmb5wsvr"></a>
 
 * What is the purpose of this tool?
     * To enable collaborative editing of documentation and the ability to publish that documentation as well as linking it to revision control system branches (like in git)
