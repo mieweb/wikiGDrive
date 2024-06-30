@@ -1,0 +1,45 @@
+name: Feat Branch Deploy
+
+on:
+  push:
+    branches:
+      - feat/*
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libkrb5-dev
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install node_modules
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+  build:
+    needs: test
+    runs-on: wgd-dev
+
+    steps:
+      - name: Create pull request
+        id: open-pr
+        uses: repo-sync/pull-request@v2
+        with:
+          destination_branch: "master"
+          pr_title: "${BRANCH_NAME}"
+          pr_template: ".github/pull_request.md"
+          pr_draft: true
