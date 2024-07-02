@@ -1,20 +1,20 @@
+import {Logger} from 'winston';
 import {
   Controller,
   RouteErrorHandler,
   RouteGet,
   RouteParamQuery,
   RouteResponse
-} from './Controller';
-import {FileContentService} from '../../../utils/FileContentService';
-import {Logger} from 'winston';
-import {ShareErrorHandler} from './FolderController';
-import {filterParams} from '../../../google/driveFetch';
-import {GoogleDriveService} from '../../../google/GoogleDriveService';
-import {GoogleApiContainer} from '../../google_api/GoogleApiContainer';
-import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {UserAuthClient} from '../../../google/AuthClient';
-import {getContentFileService} from '../../transform/utils';
+} from './Controller.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {ShareErrorHandler} from './FolderController.ts';
+import {filterParams} from '../../../google/driveFetch.ts';
+import {GoogleDriveService} from '../../../google/GoogleDriveService.ts';
+import {GoogleApiContainer} from '../../google_api/GoogleApiContainer.ts';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {UserAuthClient} from '../../../google/AuthClient.ts';
+import {getContentFileService} from '../../transform/utils.ts';
 
 export class DriveUiController extends Controller {
 
@@ -31,7 +31,6 @@ export class DriveUiController extends Controller {
       throw new Error('No state query parameter');
     }
     const obj = JSON.parse(state);
-    const userId = obj.userId;
     const action = obj.action;
     const ids = obj.ids;
 
@@ -44,8 +43,7 @@ export class DriveUiController extends Controller {
       const drives = await this.googleApiContainer.listDrives();
       const driveIds = drives.map(drive => drive.id);
 
-      const googleFile = await googleDriveService.getFile(auth, fileId);
-      let dir = googleFile;
+      let dir = await googleDriveService.getFile(auth, fileId);
       while (dir.parentId) {
         dir = await googleDriveService.getFile(auth, dir.parentId);
       }
@@ -94,10 +92,11 @@ export class DriveUiController extends Controller {
   @RouteErrorHandler(new ShareErrorHandler())
   @RouteResponse('stream')
   async getInstall() {
-    const serverUrl = process.env.DOMAIN;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
       driveui: 1,
+      instance: process.env.AUTH_INSTANCE
       // driveId: driveId !== 'none' ? (driveId || '') : '',
       // redirectTo
     })).toString();

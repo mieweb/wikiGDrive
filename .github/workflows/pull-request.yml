@@ -3,7 +3,7 @@ name: Pull request created
 on:
   pull_request:
     branches: [ master ]
-    types: [submitted, edited, synchronize]
+    types: [edited, synchronize]
 
 jobs:
   test:
@@ -47,7 +47,7 @@ jobs:
           cache: npm
 
       - name: Build action runner
-        run: docker build -t "wgd-action-runner:pr-${{ github.event.number }}" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+        run: docker build -t "wgd-action-runner:pr-${{ github.event.number }}" --build-arg "GIT_SHA=${{ github.sha }}" apps/wgd-action-runner
 
       - name: Build hugo docs
         run: |
@@ -86,11 +86,14 @@ jobs:
             -v /home/wikigdrive/env.develop:/usr/src/app/.env \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/dist/hugo" \
-            -e "GIT_SHA=${GITHUB_SHA}" \
+            -e "GIT_SHA=${{ github.sha }}" \
             -e "ZIPKIN_URL=https://pr-${{ github.event.number }}.wikigdrive.com/zipkin" \
             -e "ZIPKIN_SERVICE=pr-${{ github.event.number }}" \
+            -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \
+            -e "AUTH_INSTANCE=pr-${{ github.event.number }}" \
+            -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
             --link=zipkin:zipkin \
-            "wikigdrive-feature:${GITHUB_SHA}" wikigdrive \
+            "wikigdrive-feature:${{ github.sha }}" wikigdrive \
             --service_account /service_account.json \
             --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
             --workdir /data \

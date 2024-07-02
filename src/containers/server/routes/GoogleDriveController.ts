@@ -5,17 +5,17 @@ import {
   RouteParamPath,
   RouteParamUser,
   RouteResponse
-} from './Controller';
-import {FileContentService} from '../../../utils/FileContentService';
-import {addPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
-import {getContentFileService} from '../../transform/utils';
-import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
-import {UserAuthClient} from '../../../google/AuthClient';
-import {filterParams} from '../../../google/driveFetch';
-import {GoogleDriveService} from '../../../google/GoogleDriveService';
-import {redirError} from '../auth';
+} from './Controller.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {addPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
+import {getContentFileService} from '../../transform/utils.ts';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor.ts';
+import {UserAuthClient} from '../../../google/AuthClient.ts';
+import {filterParams} from '../../../google/driveFetch.ts';
+import {GoogleDriveService} from '../../../google/GoogleDriveService.ts';
+import {redirError} from '../auth.ts';
 
 export class GoogleDriveController extends Controller {
 
@@ -25,11 +25,12 @@ export class GoogleDriveController extends Controller {
 
   @RouteGet('/:driveId/share')
   async getShare(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
-    const serverUrl = process.env.DOMAIN;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
       shareDrive: 1,
-      driveId: driveId !== 'none' ? (driveId || '') : ''
+      driveId: driveId !== 'none' ? (driveId || '') : '',
+      instance: process.env.AUTH_INSTANCE
     })).toString();
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
@@ -43,11 +44,12 @@ export class GoogleDriveController extends Controller {
 
   @RouteGet('/:driveId/upload')
   async getUpload(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
-    const serverUrl = process.env.DOMAIN;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
       uploadDrive: 1,
-      driveId: driveId !== 'none' ? (driveId || '') : ''
+      driveId: driveId !== 'none' ? (driveId || '') : '',
+      instance: process.env.AUTH_INSTANCE
     })).toString();
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
@@ -104,7 +106,6 @@ export class GoogleDriveController extends Controller {
       } catch (err) {
         if (err.status === 401) {
           throw redirError(this.req, err.message);
-          return;
         }
       }
 
