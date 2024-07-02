@@ -1,12 +1,12 @@
 'use strict';
 
-import {convertResponseToError, GoogleDriveServiceError} from './driveFetch';
-import {ServiceAccountJson} from '../model/AccountJson';
 import jsonwebtoken from 'jsonwebtoken';
-import {AuthError, GoogleUser} from '../containers/server/auth';
 import open from 'open';
 import readline from 'readline';
 import {promisify} from 'util';
+import {convertResponseToError} from './driveFetch.ts';
+import {ServiceAccountJson} from '../model/AccountJson.ts';
+import {AuthError, GoogleUser} from '../containers/server/auth.ts';
 
 export const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
@@ -58,8 +58,6 @@ async function refreshToken(client_id: string, client_secret: string, refresh_to
 export async function getCliCode(client_id: string): Promise<string> {
   const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
     client_id,
-    // redirect_uri: ,
-    // response_type: 'code',
     access_type: 'offline',
     include_granted_scopes: 'true',
     scope: SCOPES.join(' '),

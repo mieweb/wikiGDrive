@@ -1,12 +1,12 @@
 import jsonwebtoken from 'jsonwebtoken';
-import {decrypt, encrypt} from '../../google/GoogleAuthService';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {Logger} from 'winston';
 import type {Request, Response} from 'express';
-import {UserAuthClient} from '../../google/AuthClient';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {urlToFolderId} from '../../utils/idParsers';
-import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
+import {Logger} from 'winston';
+import {decrypt, encrypt} from '../../google/GoogleAuthService.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {UserAuthClient} from '../../google/AuthClient.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {urlToFolderId} from '../../utils/idParsers.ts';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
 
 export class AuthError extends Error {
   public status: number;
@@ -21,7 +21,7 @@ export class AuthError extends Error {
 
 export function redirError(req: Request, msg: string) {
   const err = new AuthError(msg + ' for: ' + req.originalUrl, 401);
-  const [empty, driveId] = req.path.split('/');
+  const [, driveId] = req.path.split('/');
 
   const redirectTo: string = req.headers['redirect-to'] ? req.headers['redirect-to'].toString() : '';
   if (redirectTo && redirectTo.startsWith('/') && redirectTo.indexOf('//') === -1) {
@@ -177,13 +177,21 @@ function sanitizeRedirect(redirectTo: string) {
   return `/drive/${folderId}`;
 }
 
-export async function getAuth(req, res: Response, next) {
+export async function getAuth(req: Request, res: Response, next) {
   try {
     const hostname = req.header('host');
     const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
     const serverUrl = protocol + hostname;
 
     const state = new URLSearchParams(req.query.state.toString());
+
+    if (!process.env.AUTH_INSTANCE) { // main auth host
+      const instance = state.get('instance');
+      if (instance && instance.match(/^pr-\d+$/)) {
+        res.redirect(`https://${instance}.wikigdrive.com${req.originalUrl}`);
+        return;
+      }
+    }
 
     const driveId = urlToFolderId(state.get('driveId'));
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
@@ -192,7 +200,7 @@ export async function getAuth(req, res: Response, next) {
     if (driveId && shareDrive) {
       const googleDriveService = new GoogleDriveService(this.logger, null);
       const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+      await authClient.authorizeResponseCode(req.query.code.toString(), `${serverUrl}/auth`);
 
       await googleDriveService.shareDrive(await authClient.getAccessToken(), driveId, this.params.share_email);
 
@@ -204,7 +212,7 @@ export async function getAuth(req, res: Response, next) {
     const uploadDrive = !!state.get('uploadDrive');
     if (driveId && uploadDrive) {
       const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-      await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+      await authClient.authorizeResponseCode(req.query.code.toString(), `${serverUrl}/auth`);
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
       await jobManagerContainer.schedule(driveId, {
@@ -226,7 +234,7 @@ export async function getAuth(req, res: Response, next) {
     const redirectTo = sanitizeRedirect(state.get('redirectTo'));
 
     const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
-    await authClient.authorizeResponseCode(req.query.code, `${serverUrl}/auth`);
+    await authClient.authorizeResponseCode(req.query.code.toString(), `${serverUrl}/auth`);
     const googleDriveService = new GoogleDriveService(this.logger, null);
     const googleUser: GoogleUser = await authClient.getUser(await authClient.getAccessToken());
 
@@ -257,7 +265,7 @@ export async function getAuth(req, res: Response, next) {
   } catch (err) {
     if (err.message.indexOf('invalid_grant') > -1) {
       if (req.query.state) {
-        const state = new URLSearchParams(req.query.state);
+        const state = new URLSearchParams(req.query.state.toString());
         const redirectTo = state.get('redirectTo');
         res.redirect(redirectTo || '/');
       } else {

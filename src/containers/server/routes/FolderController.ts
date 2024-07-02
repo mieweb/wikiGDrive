@@ -1,27 +1,27 @@
+import type * as express from 'express';
+import {Logger} from 'winston';
 import {
   Controller, ErrorHandler,
   RouteErrorHandler,
   RouteParamPath, RouteParamMethod,
   RouteResponse,
   RouteUse, RouteParamBody
-} from './Controller';
-import {MimeTypes} from '../../../model/GoogleFile';
-import {AuthConfig} from '../../../model/AccountJson';
-import {FileContentService} from '../../../utils/FileContentService';
-import type * as express from 'express';
-import {TreeItem} from '../../../model/TreeItem';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {DirectoryScanner, isTextFileName} from '../../transform/DirectoryScanner';
-import {GitChange, GitScanner} from '../../../git/GitScanner';
-import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
-import {Logger} from 'winston';
-import {clearCachedChanges} from '../../job/JobManagerContainer';
-import {getContentFileService} from '../../transform/utils';
-import {LocalLog} from '../../transform/LocalLog';
-import {ContainerEngine} from '../../../ContainerEngine';
-import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
-import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
-import {FileId} from '../../../model/model';
+} from './Controller.ts';
+import {MimeTypes} from '../../../model/GoogleFile.ts';
+import {AuthConfig} from '../../../model/AccountJson.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {TreeItem} from '../../../model/TreeItem.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {DirectoryScanner, isTextFileName} from '../../transform/DirectoryScanner.ts';
+import {GitChange, GitScanner} from '../../../git/GitScanner.ts';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
+import {clearCachedChanges} from '../../job/JobManagerContainer.ts';
+import {getContentFileService} from '../../transform/utils.ts';
+import {LocalLog} from '../../transform/LocalLog.ts';
+import {ContainerEngine} from '../../../ContainerEngine.ts';
+import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer.ts';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor.ts';
+import {FileId} from '../../../model/model.ts';
 
 export const extToMime = {
   'js': 'application/javascript',

@@ -10,7 +10,6 @@ import rateLimit from 'express-rate-limit';
 import compress from 'compression';
 
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
-import {FileId} from '../../model/model.ts';
 import {saveRunningInstance} from './loadRunningInstance.ts';
 import {urlToFolderId} from '../../utils/idParsers.ts';
 import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
@@ -50,15 +49,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
-
-interface TreeItem {
-  id: FileId;
-  name: string;
-  mimeType: string;
-  children?: TreeItem[];
-}
-
-export const isHtml = req => req.headers.accept.indexOf('text/html') > -1;
 
 function getDurationInMilliseconds(start) {
   const NS_PER_SEC = 1e9;
@@ -153,7 +143,7 @@ export class ServerContainer extends Container {
 
   async initAuth(app) {
     app.use('/auth/logout', authenticateOptionally(this.logger));
-    app.post('/auth/logout', async (req, res, next) => {
+    app.post('/auth/logout', async (req, res) => {
       if (req.user?.google_access_token) {
         const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);
         await authClient.revokeToken(req.user.google_access_token);
@@ -165,9 +155,7 @@ export class ServerContainer extends Container {
 
     app.get('/auth/:driveId', async (req, res, next) => {
       try {
-        const hostname = req.header('host');
-        const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-        const serverUrl = protocol + hostname;
+        const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
         const driveId = urlToFolderId(req.params.driveId);
         const redirectTo = req.query.redirectTo;
         const popupWindow = req.query.popupWindow;
@@ -175,7 +163,8 @@ export class ServerContainer extends Container {
         const state = new URLSearchParams(filterParams({
           driveId: driveId !== 'none' ? (driveId || '') : '',
           redirectTo,
-          popupWindow: popupWindow === 'true' ? 'true' : ''
+          popupWindow: popupWindow === 'true' ? 'true' : '',
+          instance: process.env.AUTH_INSTANCE
         })).toString();
 
         const authClient = new UserAuthClient(process.env.GOOGLE_AUTH_CLIENT_ID, process.env.GOOGLE_AUTH_CLIENT_SECRET);

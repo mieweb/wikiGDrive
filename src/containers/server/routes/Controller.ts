@@ -1,8 +1,7 @@
-import type { Router } from 'express';
 import type * as express from 'express';
-import SwaggerDocService from './SwaggerDocService';
 import winston from 'winston';
-import {instrumentAndWrap} from '../../../telemetry';
+import SwaggerDocService from './SwaggerDocService.ts';
+import {instrumentAndWrap} from '../../../telemetry.ts';
 // import SwaggerDocService from '../api-docs.api/SwaggerDocService';
 
 export const HttpStatus = {
@@ -104,8 +103,8 @@ export class ErrorHandler implements ControllerCallContext {
 
 export interface ControllerRoute {
   errorHandlers: ErrorHandler[];
-  inputFilters: RouteFilter<any>[];
-  outputFilters: RouteFilter<any>[];
+  inputFilters: RouteFilter<unknown>[];
+  outputFilters: RouteFilter<unknown>[];
   roles: string[];
   method?: string;
   routePath?: string;
