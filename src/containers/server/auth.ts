@@ -150,6 +150,14 @@ export async function handleShare(req: Request, res: Response, next) {
 export async function handlePopupClose(req: Request, res: Response, next) {
   try {
     const state = new URLSearchParams(req.query.state.toString());
+    if (!process.env.AUTH_INSTANCE) { // main auth host
+      const instance = state.get('instance');
+      if (instance && instance.match(/^pr-\d+$/)) {
+        next();
+        return;
+      }
+    }
+
     if (state.get('popupWindow') === 'true') {
       openerRedirect(res, req.url.replace('popupWindow', ''));
       return;
