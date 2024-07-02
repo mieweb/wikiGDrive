@@ -109,9 +109,7 @@ export function validateGetAuthState(req: Request, res: Response, next) {
 
 export async function handleDriveUiInstall(req: Request, res: Response, next) {
   try {
-    const hostname = req.header('host');
-    const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-    const serverUrl = protocol + hostname;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(req.query.state.toString());
     const driveui = urlToFolderId(state.get('driveui'));
@@ -129,9 +127,7 @@ export async function handleDriveUiInstall(req: Request, res: Response, next) {
 
 export async function handleShare(req: Request, res: Response, next) {
   try {
-    const hostname = req.header('host');
-    const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-    const serverUrl = protocol + hostname;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(req.query.state.toString());
     const shareId = urlToFolderId(state.get('shareId'));
@@ -187,9 +183,7 @@ function sanitizeRedirect(redirectTo: string) {
 
 export async function getAuth(req: Request, res: Response, next) {
   try {
-    const hostname = req.header('host');
-    const protocol = hostname.indexOf('localhost') > -1 ? 'http://' : 'https://';
-    const serverUrl = protocol + hostname;
+    const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(req.query.state.toString());
 
