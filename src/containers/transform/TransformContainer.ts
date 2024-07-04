@@ -9,7 +9,6 @@ import {GoogleFilesScanner} from './GoogleFilesScanner.ts';
 import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator.ts';
 import {LocalFilesGenerator} from './LocalFilesGenerator.ts';
 import {QueueTransformer} from './QueueTransformer.ts';
-import {NavigationHierarchy} from './generateNavigationHierarchy.ts';
 import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile.ts';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform.ts';
 import {MimeTypes} from '../../model/GoogleFile.ts';
@@ -200,7 +199,6 @@ export class TransformLog extends Transport {
 export class TransformContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
-  private hierarchy: NavigationHierarchy = {};
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
@@ -210,6 +208,7 @@ export class TransformContainer extends Container {
   private transformLog: TransformLog;
   private isFailed = false;
   private useGoogleMarkdowns = false;
+  private globalHeadersMap: {[key: string]: string} = {};
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -299,7 +298,8 @@ export class TransformContainer extends Container {
           destinationDirectory,
           localFile,
           this.localLinks,
-          this.userConfigService.config
+          this.userConfigService.config,
+          this.globalHeadersMap
         );
         queueTransformer.addTask(task);
       } else {
@@ -443,15 +443,22 @@ export class TransformContainer extends Container {
 
       if (fileName.endsWith('.md') || fileName.endsWith('.svg')) {
         const content = await destinationDirectory.readFile(fileName);
-        const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)/ig, (str: string) => {
-          const fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
-          const hash = getUrlHash(str);
+        const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
+          let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
+          let hash = getUrlHash(str) || '';
+          if (hash && this.globalHeadersMap[str]) {
+            const idx = this.globalHeadersMap[str].indexOf('#');
+            if (idx >= 0) {
+              fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
+              hash = this.globalHeadersMap[str].substring(idx);
+            }
+          }
           const lastLog = this.localLog.findLastFile(fileId);
           if (lastLog && lastLog.event !== 'removed') {
             if (fileName.endsWith('.svg')) {
               return convertToRelativeSvgPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
             } else {
-              return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
+              return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName) + hash;
             }
           } else {
             return 'https://drive.google.com/open?id=' + fileId + hash.replace('#_', '#heading=h.');

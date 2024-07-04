@@ -382,8 +382,6 @@ describe('RebaseTest', function () {
       {
         const history = await scannerLocal.history('');
 
-        console.log('historyhistory', history);
-
         assert.equal(2, history.length);
         assert.equal('Change on second repo', history[0].message);
 

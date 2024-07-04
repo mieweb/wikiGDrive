@@ -12,7 +12,7 @@ import {SvgTransform} from '../../SvgTransform.ts';
 import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter.ts';
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown.ts';
 import {googleMimeToExt} from './TaskLocalFileTransform.ts';
-import {getUrlHash, urlToFolderId} from '../../utils/idParsers.js';
+import {getUrlHash, urlToFolderId} from '../../utils/idParsers.ts';
 
 export class TaskGoogleMarkdownTransform extends QueueTask {
   constructor(protected logger: winston.Logger,

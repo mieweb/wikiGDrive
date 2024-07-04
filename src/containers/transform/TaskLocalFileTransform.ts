@@ -49,7 +49,8 @@ export class TaskLocalFileTransform extends QueueTask {
               private destinationDirectory: FileContentService,
               private localFile: LocalFile,
               private localLinks: LocalLinks,
-              private userConfig: UserConfig
+              private userConfig: UserConfig,
+              private globalHeadersMap: {[key: string]: string},
               ) {
     super(logger);
     this.retries = 0;
@@ -128,6 +129,7 @@ export class TaskLocalFileTransform extends QueueTask {
   async generateDocument(localFile: MdFile) {
     let frontMatter;
     let markdown;
+    let headersMap = {};
     let links = [];
     let errors = [];
 
@@ -163,6 +165,7 @@ export class TaskLocalFileTransform extends QueueTask {
       } else {
         converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
       }
+      headersMap = converter.getHeadersMap();
       markdown = await converter.convert();
       links = Array.from(converter.links);
       frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
@@ -174,6 +177,7 @@ export class TaskLocalFileTransform extends QueueTask {
         frontMatter: string;
         markdown: string;
         errors: Array<string>;
+        headersMap: {[key: string]: string};
       }
 
       const workerResult: WorkerResult = <WorkerResult>await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
@@ -190,6 +194,7 @@ export class TaskLocalFileTransform extends QueueTask {
       frontMatter = workerResult.frontMatter;
       markdown = workerResult.markdown;
       errors = workerResult.errors;
+      headersMap = workerResult.headersMap;
       this.warnings = errors.length;
     }
 
@@ -202,6 +207,9 @@ export class TaskLocalFileTransform extends QueueTask {
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
     this.localLinks.append(localFile.id, localFile.fileName, links);
+    for (const k in headersMap) {
+      this.globalHeadersMap['gdoc:' + localFile.id + k] = 'gdoc:' + localFile.id + headersMap[k];
+    }
   }
 
   async generate(localFile: LocalFile): Promise<void> {

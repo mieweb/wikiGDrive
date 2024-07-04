@@ -1,14 +1,14 @@
-# Confluence to Google Docs Conversion Notes <a id="_77510dqpcwl"></a>
+# Confluence to Google Docs Conversion Notes
 
-## Goal <a id="_10c0ntqm6mev"></a>
+## Goal
 
 Convert Confluence Documents in to Google Documents for the purpose of using WikiGDrive to publish them.
 
-## Delivery <a id="_i96xic41327t"></a>
+## Delivery
 
 A new github repo with a node.js script specific to this conversion.
 
-## High level Process <a id="_wrw8sf3g3pc3"></a>
+## High level Process
 
 * Scan all of the documents in a Confluence Space
 * Make google documents in a shared drive (two passes will be required so links between documents can be known as content is added).
@@ -30,13 +30,13 @@ A new github repo with a node.js script specific to this conversion.
     * Embedded Video should be converted to an image with a hyperlink
     * Formatting is not required to be converted.
 
-## Proposed Instructions <a id="_m98292szff3y"></a>
+## Proposed Instructions
 
 ```
 confluence2google <path to space> <path to google shared drive>
 ```
 
-## Links and Possible Approaches <a id="_sdx7522zhby"></a>
+## Links and Possible Approaches
 
 1. Use REST API
     1. [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
@@ -52,7 +52,7 @@ confluence2google <path to space> <path to google shared drive>
 
 <a id="ggsym7lvzx37"></a>
 
-## Examples <a id="_rsmqmchgeq17"></a>
+## Examples
 
 Simple - [https://confluence.example.com/display/DOCS/Sample](https://confluence.example.com/display/DOCS/Sample)
 
