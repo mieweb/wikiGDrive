@@ -1,4 +1,4 @@
-## Data Migration Workflow Considerations <a id="_ijrry6m0ogyn"></a>
+## Data Migration Workflow Considerations
 
 As we may recall, the Health Surveillance module allows users to easily track and manage overall health for risk groups and patient populations. Following that is information on how to utilize the import/export tools available with every {{% system-name %}} system.
 
@@ -9,7 +9,7 @@ Health Surveillance (HS) Data is typically broken down into 4 parts during the d
 1. Active HS Memberships and Next Due Dates
 2. Historical HS Memberships
 
-#### Active HS Memberships and Next Due Dates <a id="_s7i4qlvtmo84"></a>
+#### Active HS Memberships and Next Due Dates
 
 Nearly every {{% sys-name %}} data migration involves the migration of active HS memberships and Next Due Dates. Membership inclusions and exclusions may be explicit or implicit depending on the configuration of each panel, and those decisions will all weigh into the scoping of the data migration.
 
@@ -20,11 +20,11 @@ Some clients require the migration of historical, or non-active HS memberships. 
 1. Discrete data migration of Historical HS Memberships involves migrating memberships with a Begin and End Date for each employee's expired panel. Discrete migrations such as these require mapping each legacy panel membership to {{% sys-name %}} panels, which will then allow for the reporting of historical panel memberships and dates, per employee.
 2. Non-Discrete summary documents of historical HS memberships provide a single document showing the legacy name of the panel for each chart with HS memberships, along with the start- and end-dates where that data is available. These documents are significantly less effort than discrete data migrations of historical HS memberships, and allow clinicians to reference the historical entry and exit data of an employee's memberships.
 
-#### Open Orders <a id="_8sdu26gx33vo"></a>
+#### Open Orders
 
 In some cases, open or pending orders are required for migration for employees with overdue but active panel memberships. This use case is discussed further in the section on [How to determine the Next Due Date on a HS Panel](#how-to-determine-the-next-due-date-on-a-hs-panel).
 
-#### Historical Orders <a id="_myh1j29r0obc"></a>
+#### Historical Orders
 
 In some cases, migration of completed orders are required to show that tests or tasks were completed on a particular date. Like any other data migration, discrete migration of historical orders involves more mapping and more effort than creating a summary document of historical orders. The following use cases are most common where the migration of historical orders are needed:
 

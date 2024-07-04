@@ -1,4 +1,4 @@
-## Request <a id="_muaembvwg7up"></a>
+## Request
 
 {{% pre language="html" theme="RDark" %}}
 ```
@@ -8,7 +8,7 @@ https://webchartnow.com/fhirr4sandbox/webchart.cgi/fhir/CarePlan/11
 ```
 {{% /pre %}}
 
-## Response <a id="_5e5g45ahhwrd"></a>
+## Response
 
 {{% pre language="json" theme="RDark" %}}
 ```
