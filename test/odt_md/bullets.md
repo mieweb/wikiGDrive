@@ -1,4 +1,4 @@
-## Bullet List <a id="_80qew9aprjq8"></a>
+## Bullet List
 
 * Capability to print standard leave forms from the patient portal
 * Pre-loaded standard email templates
@@ -6,7 +6,7 @@
 * Quick View Absence Management Worklist
 * Leave Types Report
 
-## Ordered List <a id="_k2lx86ardtkr"></a>
+## Ordered List
 
 1. Capability to print standard leave forms from the patient portal
 2. Pre-loaded standard email templates
@@ -14,7 +14,7 @@
 4. Quick View Absence Management Worklist
 5. Leave Types Report
 
-## Mixed Lists <a id="_xnxyy4ptrcvu"></a>
+## Mixed Lists
 
 Item before  list
 

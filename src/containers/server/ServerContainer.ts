@@ -44,7 +44,7 @@ import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
 import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
-import {WebHookController} from './routes/WebHookController.js';
+import {WebHookController} from './routes/WebHookController.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -68,6 +68,7 @@ export class OdtToMarkdown {
   private picturesDir = '';
   private picturesDirAbsolute = '';
   private rewriteRules: RewriteRule[] = [];
+  private headersMap: { [p: string]: string } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: StringToStringMap = {}, private xmlMap: StringToStringMap = {}) {
   }
@@ -131,7 +132,8 @@ export class OdtToMarkdown {
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
 
-    await postProcess(this.chunks, this.rewriteRules);
+    const { headersMap } = await postProcess(this.chunks, this.rewriteRules);
+    this.headersMap = headersMap;
 
     const markdown = this.chunks.toString();
     return this.trimBreaks(markdown);
@@ -223,7 +225,7 @@ export class OdtToMarkdown {
 
   addLink(href: string) {
     if (href && !href.startsWith('#') && href.indexOf(':') > -1) {
-      this.links.add(href);
+      this.links.add(href.replace(/#.*$/, ''));
     }
   }
 
@@ -699,6 +701,10 @@ export class OdtToMarkdown {
 
   pushError(error: string) {
     this.errors.push(error);
+  }
+
+  getHeadersMap() {
+    return this.headersMap;
   }
 
 }
