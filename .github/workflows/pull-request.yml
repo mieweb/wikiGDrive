@@ -79,7 +79,7 @@ jobs:
       - name: Start
         run: |
           docker run -d --name "pr-${{ github.event.number }}" \
-            --restart unless-stopped \
+            --restart unless-stopped --restart-delay 30s \
             --network nginx \
             -v "pr-${{ github.event.number }}":/data \
             -v /home/wikigdrive/service_account.json:/service_account.json \
