@@ -57,7 +57,7 @@ jobs:
     - name: Copy index for vite
       run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/dev.wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
 
-    - uses: whoan/docker-build-with-cache-action@v5
+    - uses: whoan/docker-build-with-cache-action@v8
       with:
         image_name: "wikigdrive-develop"
         image_tag: "${{ github.sha }},latest"
