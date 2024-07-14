@@ -79,7 +79,7 @@ jobs:
           -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
-          --restart unless-stopped \
+          --restart unless-stopped --restart-delay 30s \
           "wikigdrive-prod:${GITHUB_SHA}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
