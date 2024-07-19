@@ -58,12 +58,11 @@ jobs:
     - name: Copy index for vite
       run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
 
-    - uses: whoan/docker-build-with-cache-action@v8
+    - uses: docker/build-push-action@v6
       with:
-        image_name: "wikigdrive-prod"
-        image_tag: "${{ github.sha }},latest"
-        push_image_and_stages: false
-        build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
+        tags: "wikigdrive-prod:${{ github.sha }},wikigdrive-prod:latest"
+        push: false
+        build-args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
@@ -79,7 +78,7 @@ jobs:
           -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
-          --restart unless-stopped --restart-delay 30s \
+          --restart unless-stopped \
           "wikigdrive-prod:${GITHUB_SHA}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \

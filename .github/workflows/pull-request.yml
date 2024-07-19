@@ -35,66 +35,62 @@ jobs:
     runs-on: wgd-dev
 
     steps:
-      - name: Test
-        run: echo "${{ github.event.number }}"
+    - uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+        cache: npm
 
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: npm
+    - name: Build action runner
+      run: docker build -t "wgd-action-runner:pr-${{ github.event.number }}" --build-arg "GIT_SHA=${{ github.sha }}" apps/wgd-action-runner
 
-      - name: Build action runner
-        run: docker build -t "wgd-action-runner:pr-${{ github.event.number }}" --build-arg "GIT_SHA=${{ github.sha }}" apps/wgd-action-runner
+    - name: Build hugo docs
+      run: |
+        docker run \
+        -v "${GITHUB_WORKSPACE}/hugo:/site" \
+        -v "${GITHUB_WORKSPACE}/website:/website" \
+        -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/dist/hugo" \
+        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://pr-${{ github.event.number }}.wikigdrive.com" \
+        wgd-action-runner:pr-${{ github.event.number }} /steps/step_render_hugo
 
-      - name: Build hugo docs
-        run: |
-          docker run \
-          -v "${GITHUB_WORKSPACE}/hugo:/site" \
-          -v "${GITHUB_WORKSPACE}/website:/website" \
-          -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/dist/hugo" \
-          --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://pr-${{ github.event.number }}.wikigdrive.com" \
-          wgd-action-runner:pr-${{ github.event.number }} /steps/step_render_hugo
+    - name: Copy index for vite
+      run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/pr-${{ github.event.number }}.wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
 
-      - name: Copy index for vite
-        run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/pr-${{ github.event.number }}.wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
+    - name: build
+      uses: docker/build-push-action@v6
+      with:
+        tags: "wikigdrive-feature:${{ github.sha }}"
+        push: false
+        build-args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
 
-      - name: build
-        uses: whoan/docker-build-with-cache-action@v8
-        with:
-          image_name: "wikigdrive-feature"
-          image_tag: "${{ github.sha }}"
-          push_image_and_stages: false
-          build_extra_args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
+    - name: Stop and remove
+      run: docker stop "pr-${{ github.event.number }}" ; docker rm "pr-${{ github.event.number }}"
+      continue-on-error: true
 
-      - name: Stop and remove
-        run: docker stop "pr-${{ github.event.number }}" ; docker rm "pr-${{ github.event.number }}"
-        continue-on-error: true
+    - name: "Create empty volume"
+      run: docker volume rm -f "pr-${{ github.event.number }}" ; docker volume create "pr-${{ github.event.number }}"
 
-      - name: "Create empty volume"
-        run: docker volume rm -f "pr-${{ github.event.number }}" ; docker volume create "pr-${{ github.event.number }}"
-
-      - name: Start
-        run: |
-          docker run -d --name "pr-${{ github.event.number }}" \
-            --restart unless-stopped --restart-delay 30s \
-            --network nginx \
-            -v "pr-${{ github.event.number }}":/data \
-            -v /home/wikigdrive/service_account.json:/service_account.json \
-            -v /home/wikigdrive/env.develop:/usr/src/app/.env \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/dist/hugo" \
-            -e "GIT_SHA=${{ github.sha }}" \
-            -e "ZIPKIN_URL=https://pr-${{ github.event.number }}.wikigdrive.com/zipkin" \
-            -e "ZIPKIN_SERVICE=pr-${{ github.event.number }}" \
-            -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \
-            -e "AUTH_INSTANCE=pr-${{ github.event.number }}" \
-            -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
-            --link=zipkin:zipkin \
-            "wikigdrive-feature:${{ github.sha }}" wikigdrive \
-            --service_account /service_account.json \
-            --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
-            --workdir /data \
-            server 3000
+    - name: Start
+      run: |
+        docker run -d --name "pr-${{ github.event.number }}" \
+          --restart unless-stopped \
+          --network nginx \
+          -v "pr-${{ github.event.number }}":/data \
+          -v /home/wikigdrive/service_account.json:/service_account.json \
+          -v /home/wikigdrive/env.develop:/usr/src/app/.env \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/dist/hugo" \
+          -e "GIT_SHA=${{ github.sha }}" \
+          -e "ZIPKIN_URL=https://pr-${{ github.event.number }}.wikigdrive.com/zipkin" \
+          -e "ZIPKIN_SERVICE=pr-${{ github.event.number }}" \
+          -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \
+          -e "AUTH_INSTANCE=pr-${{ github.event.number }}" \
+          -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
+          --link=zipkin:zipkin \
+          "wikigdrive-feature:${{ github.sha }}" wikigdrive \
+          --service_account /service_account.json \
+          --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
+          --workdir /data \
+          server 3000
