@@ -1,14 +1,15 @@
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FileContentService} from '../../utils/FileContentService';
-import {INITIAL_RETRIES, QueueTask} from './QueueTask';
 import winston from 'winston';
-import {TaskFetchDiagram} from './TaskFetchDiagram';
-import {TaskFetchDocument} from './TaskFetchDocument';
-import {TaskFetchBinary} from './TaskFetchBinary';
-import {TaskFetchAsset} from './TaskFetchAsset';
-import {MimeTypes, SimpleFile} from '../../model/GoogleFile';
-import {FileId} from '../../model/model';
-import {HasAccessToken} from '../../google/AuthClient';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {INITIAL_RETRIES, QueueTask} from './QueueTask.ts';
+import {TaskFetchDiagram} from './TaskFetchDiagram.ts';
+import {TaskFetchDocument} from './TaskFetchDocument.ts';
+import {TaskFetchBinary} from './TaskFetchBinary.ts';
+import {TaskFetchAsset} from './TaskFetchAsset.ts';
+import {MimeTypes, SimpleFile} from '../../model/GoogleFile.ts';
+import {FileId} from '../../model/model.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
+import {StopWatch} from '../../utils/StopWatch.ts';
 
 interface Filters {
   filterFoldersIds: FileId[];
@@ -33,6 +34,8 @@ export class TaskFetchFolder extends QueueTask {
         return [];
       }
     }
+
+    const stopWatch = new StopWatch();
 
     if (this.retries < INITIAL_RETRIES) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -200,6 +203,11 @@ export class TaskFetchFolder extends QueueTask {
         }
       }
       await this.fileService.writeJson('.folder-files.json', filesToSave);
+    }
+
+    const timeString = stopWatch.toString(1000);
+    if (timeString) {
+      this.logger.info('Slow listening: ' + this.file.id + ' ' + timeString);
     }
 
     return tasks;

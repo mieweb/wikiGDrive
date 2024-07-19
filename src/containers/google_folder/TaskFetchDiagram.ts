@@ -1,9 +1,9 @@
-import {QueueTask} from './QueueTask';
 import winston from 'winston';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FileContentService} from '../../utils/FileContentService';
-import {SimpleFile} from '../../model/GoogleFile';
-import {HasAccessToken} from '../../google/AuthClient';
+import {QueueTask} from './QueueTask.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {SimpleFile} from '../../model/GoogleFile.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
 
 export class TaskFetchDiagram extends QueueTask {
 

@@ -88,7 +88,6 @@ jobs:
           -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \
           -e "AUTH_INSTANCE=pr-${{ github.event.number }}" \
           -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
-          --link=zipkin:zipkin \
           "wikigdrive-feature:${{ github.sha }}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \

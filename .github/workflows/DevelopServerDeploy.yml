@@ -80,7 +80,6 @@ jobs:
           -e "GIT_SHA=${GITHUB_SHA}" \
           -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=wikigdrive-develop" \
-          --link=zipkin:zipkin \
           --publish 127.0.0.1:4000:3000 \
           "wikigdrive-develop:${GITHUB_SHA}" wikigdrive \
           --service_account /service_account.json \

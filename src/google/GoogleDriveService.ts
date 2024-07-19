@@ -4,12 +4,14 @@
 
 import {Logger} from 'winston';
 import {Writable} from 'stream';
-import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile';
-import {Drive, Permission} from '../containers/folder_registry/FolderRegistryContainer';
-import {FileId} from '../model/model';
-import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch';
-import {QuotaLimiter} from './QuotaLimiter';
-import {HasAccessToken} from './AuthClient';
+
+import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile.ts';
+import {FileId} from '../model/model.ts';
+import {Drive, Permission} from '../containers/folder_registry/FolderRegistryContainer.ts';
+import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch.ts';
+import {QuotaLimiter} from './QuotaLimiter.ts';
+import {HasAccessToken} from './AuthClient.ts';
+import {StopWatch} from '../utils/StopWatch.ts';
 
 export interface Changes {
   token: string;
@@ -196,9 +198,10 @@ export class GoogleDriveService {
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
       };
+      const stopWatch = new StopWatch();
       const res = await driveFetchStream(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
       await res.pipeTo(Writable.toWeb(dest));
-      this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + ']');
+      this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + '] ' + stopWatch.toString());
     } catch (err) {
       if (!err.isQuotaError && err?.code != 404) {
         this.logger.error(err.stack ? err.stack : err.message);
