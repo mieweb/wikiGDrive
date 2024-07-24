@@ -18,6 +18,8 @@ interface Filters {
 
 export class TaskFetchFolder extends QueueTask {
 
+  private useGoogleMarkdowns = false;
+
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
               private auth: HasAccessToken,
@@ -26,6 +28,10 @@ export class TaskFetchFolder extends QueueTask {
               private forceDownloadFilters = false,
               private filters: Filters) {
     super(logger);
+  }
+
+  setUseGoogleMarkdowns(value: boolean) {
+    this.useGoogleMarkdowns = value;
   }
 
   async run(): Promise<QueueTask[]> {
@@ -88,15 +94,19 @@ export class TaskFetchFolder extends QueueTask {
 
         switch (file.mimeType) {
           case MimeTypes.FOLDER_MIME:
-            tasks.push(new TaskFetchFolder(
-              this.logger,
-              this.googleDriveService,
-              this.auth,
-              await this.fileService.getSubFileService(file.id),
-              file,
-              this.forceDownloadFilters,
-              this.filters
-            ));
+            {
+              const task = new TaskFetchFolder(
+                this.logger,
+                this.googleDriveService,
+                this.auth,
+                await this.fileService.getSubFileService(file.id),
+                file,
+                this.forceDownloadFilters,
+                this.filters
+              );
+              task.setUseGoogleMarkdowns(this.useGoogleMarkdowns);
+              tasks.push(task);
+            }
             break;
 
           case MimeTypes.DRAWING_MIME:
@@ -111,14 +121,26 @@ export class TaskFetchFolder extends QueueTask {
             break;
 
           case MimeTypes.DOCUMENT_MIME:
-            tasks.push(new TaskFetchDocument(
-              this.logger,
-              this.googleDriveService,
-              this.auth,
-              await this.fileService,
-              file,
-              forceDownload
-            ));
+            if (!this.useGoogleMarkdowns) {
+              tasks.push(new TaskFetchDocument(
+                this.logger,
+                this.googleDriveService,
+                this.auth,
+                await this.fileService,
+                file,
+                forceDownload
+              ));
+            } else {
+              tasks.push(new TaskFetchBinary(
+                this.logger,
+                this.googleDriveService,
+                this.auth,
+                await this.fileService,
+                file,
+                forceDownload,
+                MimeTypes.MARKDOWN, 'md'
+              ));
+            }
             break;
 
           case MimeTypes.SPREADSHEET_MIME:

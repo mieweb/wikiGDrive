@@ -11,6 +11,7 @@ import {DateISO, FileId} from '../../model/model.ts';
 import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
 import {GoogleTreeProcessor} from './GoogleTreeProcessor.ts';
 import {HasAccessToken} from '../../google/AuthClient.ts';
+import {UserConfigService} from './UserConfigService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -81,6 +82,13 @@ export class GoogleFolderContainer extends Container {
           this.forceDownloadFilters,
           {filterFilesIds: this.filterFilesIds, filterFoldersIds}
         );
+
+        const folderId = this.params.name;
+        const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
+        const userConfigService = new UserConfigService(googleFileSystem);
+        await userConfigService.load();
+
+        taskFetchFolder.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
         downloader.addTask(taskFetchFolder);
       }
     }

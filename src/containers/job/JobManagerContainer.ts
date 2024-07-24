@@ -468,6 +468,9 @@ export class JobManagerContainer extends Container {
 
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
+
+    transformContainer.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
+
     transformContainer.onProgressNotify(({ completed, total, warnings, failed }) => {
       if (!this.driveJobsMap[folderId]) {
         return;

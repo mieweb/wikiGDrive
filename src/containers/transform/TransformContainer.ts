@@ -25,6 +25,7 @@ import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
+import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -208,6 +209,7 @@ export class TransformContainer extends Container {
   private progressNotifyCallback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void;
   private transformLog: TransformLog;
   private isFailed = false;
+  private useGoogleMarkdowns = false;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -287,18 +289,33 @@ export class TransformContainer extends Container {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
 
-      const task = new TaskLocalFileTransform(
-        this.logger,
-        jobManagerContainer,
-        realFileName,
-        googleFolder,
-        googleFile,
-        destinationDirectory,
-        localFile,
-        this.localLinks,
-        this.userConfigService.config
-      );
-      queueTransformer.addTask(task);
+      if (!this.useGoogleMarkdowns) {
+        const task = new TaskLocalFileTransform(
+          this.logger,
+          jobManagerContainer,
+          realFileName,
+          googleFolder,
+          googleFile,
+          destinationDirectory,
+          localFile,
+          this.localLinks,
+          this.userConfigService.config
+        );
+        queueTransformer.addTask(task);
+      } else {
+        const task = new TaskGoogleMarkdownTransform(
+          this.logger,
+          jobManagerContainer,
+          realFileName,
+          googleFolder,
+          googleFile,
+          destinationDirectory,
+          localFile,
+          this.localLinks,
+          this.userConfigService.config
+        );
+        queueTransformer.addTask(task);
+      }
     }
 
     const dirNames = destinationDirectory.getVirtualPath().replace(/\/$/, '').split('/');
@@ -518,5 +535,9 @@ export class TransformContainer extends Container {
 
   onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
     this.progressNotifyCallback = callback;
+  }
+
+  setUseGoogleMarkdowns(value: boolean) {
+    this.useGoogleMarkdowns = value;
   }
 }
