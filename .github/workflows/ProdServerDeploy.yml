@@ -71,6 +71,7 @@ jobs:
     - name: Start
       run: |
         docker run -d --name wikigdrive-prod \
+          --tmpfs /tmp \
           -v wikiGDriveProd:/data \
           -v /home/wikigdrive/service_account.json:/service_account.json \
           -v /home/wikigdrive/env.prod:/usr/src/app/.env \
