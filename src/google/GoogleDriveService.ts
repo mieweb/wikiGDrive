@@ -105,7 +105,7 @@ export class GoogleDriveService {
         files: files
       };
     } catch (err) {
-      err.message = 'Error watching changes: ' + err.message;
+      err.message = `Error [${err.status}] watching changes: ${err.message} on drive ${driveId}`;
       throw err;
     }
   }
