@@ -72,6 +72,7 @@ jobs:
         docker run -d --name wikigdrive-develop \
           --restart unless-stopped \
           --network nginx \
+          --tmpfs /tmp \
           -v wikiGDriveDevelop:/data \
           -v /home/wikigdrive/service_account.json:/service_account.json \
           -v /home/wikigdrive/env.develop:/usr/src/app/.env \
