@@ -4,9 +4,12 @@ on:
   pull_request:
     branches: [ master ]
     types: [edited, synchronize]
+    paths-ignore:
+      - 'develop/**'
 
 jobs:
   test:
+    if: github.event.pull_request.head.ref != 'develop'
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +34,7 @@ jobs:
         run: npm run test
 
   build:
+    if: github.event.pull_request.head.ref != 'develop'
     needs: test
     runs-on: wgd-dev
 
