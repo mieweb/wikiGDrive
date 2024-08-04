@@ -2,14 +2,13 @@ name: Pull request created
 
 on:
   pull_request:
-    branches: [ master ]
     types: [edited, synchronize]
     paths-ignore:
       - 'develop/**'
 
 jobs:
   test:
-    if: github.event.pull_request.head.ref != 'develop'
+    if: github.event.pull_request.head.ref != 'develop' && contains( github.event.pull_request.labels.*.name, 'deploy-pr')
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +33,7 @@ jobs:
         run: npm run test
 
   build:
-    if: github.event.pull_request.head.ref != 'develop'
+    if: github.event.pull_request.head.ref != 'develop' && contains( github.event.pull_request.labels.*.name, 'deploy-pr')
     needs: test
     runs-on: wgd-dev
 
@@ -98,3 +97,12 @@ jobs:
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
           server 3000
+
+  remove:
+    if: github.event.pull_request.head.ref != 'develop' && !contains( github.event.pull_request.labels.*.name, 'deploy-pr')
+    runs-on: wgd-dev
+
+    steps:
+      - name: Stop and remove
+        run: docker stop "pr-${{ github.event.number }}" ; docker rm "pr-${{ github.event.number }}"
+        continue-on-error: true
