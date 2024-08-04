@@ -36,6 +36,14 @@
             </div>
 
             <div class="form-group">
+              <label>Use Google Markdowns</label>
+              <select class="form-control" @change="user_config.use_google_markdowns = !user_config.use_google_markdowns">
+                <option :selected="!user_config.use_google_markdowns" value="">Disabled</option>
+                <option :selected="user_config.use_google_markdowns" value="enabled">Enabled</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label>Autosync</label>
               <select class="form-control" @change="user_config.auto_sync = !user_config.auto_sync">
                 <option :selected="!user_config.auto_sync" value="">Disabled</option>

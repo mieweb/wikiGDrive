@@ -9,7 +9,6 @@ import {GoogleFilesScanner} from './GoogleFilesScanner.ts';
 import {convertToRelativeMarkDownPath, convertToRelativeSvgPath} from '../../LinkTranslator.ts';
 import {LocalFilesGenerator} from './LocalFilesGenerator.ts';
 import {QueueTransformer} from './QueueTransformer.ts';
-import {NavigationHierarchy} from './generateNavigationHierarchy.ts';
 import {ConflictFile, LocalFile, RedirFile} from '../../model/LocalFile.ts';
 import {TaskLocalFileTransform} from './TaskLocalFileTransform.ts';
 import {MimeTypes} from '../../model/GoogleFile.ts';
@@ -24,6 +23,8 @@ import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
 import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {getUrlHash} from '../../utils/idParsers.ts';
+import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -198,7 +199,6 @@ export class TransformLog extends Transport {
 export class TransformContainer extends Container {
   private logger: winston.Logger;
   private generatedFileService: FileContentService;
-  private hierarchy: NavigationHierarchy = {};
   private localLog: LocalLog;
   private localLinks: LocalLinks;
   private filterFilesIds: FileId[];
@@ -207,6 +207,8 @@ export class TransformContainer extends Container {
   private progressNotifyCallback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void;
   private transformLog: TransformLog;
   private isFailed = false;
+  private useGoogleMarkdowns = false;
+  private globalHeadersMap: {[key: string]: string} = {};
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -286,18 +288,34 @@ export class TransformContainer extends Container {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
 
-      const task = new TaskLocalFileTransform(
-        this.logger,
-        jobManagerContainer,
-        realFileName,
-        googleFolder,
-        googleFile,
-        destinationDirectory,
-        localFile,
-        this.localLinks,
-        this.userConfigService.config
-      );
-      queueTransformer.addTask(task);
+      if (!this.useGoogleMarkdowns) {
+        const task = new TaskLocalFileTransform(
+          this.logger,
+          jobManagerContainer,
+          realFileName,
+          googleFolder,
+          googleFile,
+          destinationDirectory,
+          localFile,
+          this.localLinks,
+          this.userConfigService.config,
+          this.globalHeadersMap
+        );
+        queueTransformer.addTask(task);
+      } else {
+        const task = new TaskGoogleMarkdownTransform(
+          this.logger,
+          jobManagerContainer,
+          realFileName,
+          googleFolder,
+          googleFile,
+          destinationDirectory,
+          localFile,
+          this.localLinks,
+          this.userConfigService.config
+        );
+        queueTransformer.addTask(task);
+      }
     }
 
     const dirNames = destinationDirectory.getVirtualPath().replace(/\/$/, '').split('/');
@@ -342,10 +360,10 @@ export class TransformContainer extends Container {
           processed.add(fileId);
           const backLinks = this.localLinks.getBackLinks(fileId);
           for (const backLink of backLinks) {
-            if (processed.has(backLink)) {
+            if (processed.has(backLink.fileId)) {
               continue;
             }
-            filterFilesIds.add(backLink);
+            filterFilesIds.add(backLink.fileId);
           }
         }
         if (filterFilesIds.size > 0) {
@@ -425,17 +443,25 @@ export class TransformContainer extends Container {
 
       if (fileName.endsWith('.md') || fileName.endsWith('.svg')) {
         const content = await destinationDirectory.readFile(fileName);
-        const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)/ig, (str: string) => {
-          const fileId = str.substring('gdoc:'.length);
+        const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
+          let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
+          let hash = getUrlHash(str) || '';
+          if (hash && this.globalHeadersMap[str]) {
+            const idx = this.globalHeadersMap[str].indexOf('#');
+            if (idx >= 0) {
+              fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
+              hash = this.globalHeadersMap[str].substring(idx);
+            }
+          }
           const lastLog = this.localLog.findLastFile(fileId);
           if (lastLog && lastLog.event !== 'removed') {
             if (fileName.endsWith('.svg')) {
               return convertToRelativeSvgPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
             } else {
-              return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName);
+              return convertToRelativeMarkDownPath(lastLog.filePath, destinationDirectory.getVirtualPath() + fileName) + hash;
             }
           } else {
-            return 'https://drive.google.com/open?id=' + fileId;
+            return 'https://drive.google.com/open?id=' + fileId + hash.replace('#_', '#heading=h.');
           }
         });
         if (content !== newContent) {
@@ -516,5 +542,9 @@ export class TransformContainer extends Container {
 
   onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number, warnings?: number, failed?: number }) => void) {
     this.progressNotifyCallback = callback;
+  }
+
+  setUseGoogleMarkdowns(value: boolean) {
+    this.useGoogleMarkdowns = value;
   }
 }

@@ -1,10 +1,10 @@
-import {QueueTask} from './QueueTask';
 import winston from 'winston';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FileContentService} from '../../utils/FileContentService';
-import {GoogleFile} from '../../model/GoogleFile';
-import {googleMimeToExt} from '../transform/TaskLocalFileTransform';
-import {HasAccessToken} from '../../google/AuthClient';
+import {QueueTask} from './QueueTask.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
+import {googleMimeToExt} from '../transform/TaskLocalFileTransform.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
 
 export class TaskFetchAsset extends QueueTask {
 

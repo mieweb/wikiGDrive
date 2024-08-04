@@ -1,9 +1,10 @@
 import casual from 'casual';
 import winston from 'winston';
-import {FileContentService} from './utils/FileContentService';
 import {QueueObject} from 'async';
-import {QueueTask} from './containers/google_folder/QueueTask';
-import {FileId} from './model/model';
+
+import {FileContentService} from './utils/FileContentService.ts';
+import {QueueTask} from './containers/google_folder/QueueTask.ts';
+import {FileId} from './model/model.ts';
 
 export interface ContainerConfig {
   name?: string;

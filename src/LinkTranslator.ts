@@ -40,7 +40,7 @@ export function convertExtension(localPath: string, mode?: LinkMode) {
   return dirName + parts.join('.');
 }
 
-export function convertToRelativeMarkDownPath(localPath, basePath) {
+export function convertToRelativeMarkDownPath(localPath: string, basePath: string) {
   if (localPath.startsWith('https://')) return localPath;
   if (localPath.startsWith('http://')) return localPath;
   if (basePath === localPath) return '.';
@@ -51,7 +51,7 @@ export function convertToRelativeMarkDownPath(localPath, basePath) {
   })));
 }
 
-export function convertToRelativeSvgPath(localPath, basePath) {
+export function convertToRelativeSvgPath(localPath: string, basePath: string) {
   if (localPath.startsWith('https://')) return localPath;
   if (localPath.startsWith('http://')) return localPath;
   if (basePath === localPath) return '.';

@@ -25,14 +25,20 @@ export class BackLinksController extends Controller {
     const localLinks = new LocalLinks(contentFileService);
     await localLinks.load();
 
-    const linkFileIds = localLinks.getLinks(fileId);
+    const linksArr = localLinks.getLinks(fileId);
+    if (linksArr === false) {
+      return { backlinks: [], links: [], notGenerated: true };
+    }
+
     const links = [];
-    for (const linkFileId of linkFileIds) {
-      const [file] = await markdownTreeProcessor.findById(linkFileId);
+    for (const linkObj of linksArr) {
+      const { fileId, linksCount } = linkObj;
+      const [file] = await markdownTreeProcessor.findById(fileId);
       if (file) {
         links.push({
           folderId: file.parentId,
-          fileId: linkFileId,
+          fileId: fileId,
+          linksCount,
           path: file.path,
           name: file.fileName
         });
@@ -41,12 +47,14 @@ export class BackLinksController extends Controller {
 
     const backLinkFileIds = localLinks.getBackLinks(fileId);
     const backlinks = [];
-    for (const backLinkFileId of backLinkFileIds) {
-      const [file] = await markdownTreeProcessor.findById(backLinkFileId);
+    for (const backLinkObj of backLinkFileIds) {
+      const { fileId, linksCount } = backLinkObj;
+      const [file] = await markdownTreeProcessor.findById(fileId);
       if (file) {
         backlinks.push({
           folderId: file.parentId,
-          fileId: backLinkFileId,
+          fileId: fileId,
+          linksCount,
           path: file.path,
           name: file.fileName
         });

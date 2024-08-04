@@ -1,10 +1,10 @@
-import {QueueTask} from './QueueTask';
 import winston from 'winston';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
-import {FileContentService} from '../../utils/FileContentService';
-import {BufferWritable} from '../../utils/BufferWritable';
-import {SimpleFile} from '../../model/GoogleFile';
-import {HasAccessToken} from '../../google/AuthClient';
+import {QueueTask} from './QueueTask.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {BufferWritable} from '../../utils/BufferWritable.ts';
+import {SimpleFile} from '../../model/GoogleFile.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
 
 export class TaskFetchDocument extends QueueTask {
   constructor(protected logger: winston.Logger,

@@ -106,7 +106,7 @@ Options:
 
 wikigdrive keeps a local JSON config file in the dest directory with state from prior runs. The config contains a map of URL driveIds to the local filenames along with metadata about each file. 
 
-## Renames and Redirecting 
+## Renames and Redirecting
 
 When a Document is renamed or moved in the shared drive the driveId says the same, but its place in the filesystem changes. For example a document named "Carbon" would be created as Carbon.md. Sometime later its renamed to "Carbon Fiber" then a new file "Carbon Fiber.md" would be made with the content and the old "Carbon.md" is changed to:
 
@@ -161,6 +161,8 @@ The contents of Carbon.md would show each of the conflicting references:
 
     * [Carbon](Carbon-2.md) 
 
+<a id="an52jifjcfq0"></a>
+
 ## Table of Contents and Index
 
 In the root of the local filesystem two files will be created: the toc.md and index.md
@@ -181,7 +183,8 @@ The index is a listing of all of the defined terms and their references in the d
     ![](10000201000005480000004BB83F3F8B5F0C77BD.png)
 * Italics/bold in an unordered list: ([issue](https://github.com/mieweb/wikiGDrive/issues/16)) Italics are not being rendered if in a list item.  We may need to find these and replace the */** with em/strong tags. Example is rendered in browser next to [Google Doc](gdoc:108WScoxxGKKKOsGWF7UNZ4rLRanGXu6BPdJ-axjVn5s).
     ![](1000020100000243000000F28AB7617254FDBB3A.png)
-
+<a id="c00wob6zjk55"></a>
+<a id="_dqy5042w3u8q"></a>
 ## Images
 
 Two kinds of images exist within Google Docs:  1) Embedded images stored within the document and 2) images that are referenced to another "Drawing" on the google drive.  WikiGDrive processes images by placing them in a folder named with a similar name to the page.  (eg:  index.md would result in a folder index.images with each embedded image in that folder).

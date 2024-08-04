@@ -1,11 +1,11 @@
 import yaml from 'js-yaml';
 
-import {Controller, RouteGet, RouteParamBody, RouteParamPath, RoutePost, RoutePut} from './Controller';
-import {FileContentService} from '../../../utils/FileContentService';
-import {GitScanner} from '../../../git/GitScanner';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
-import {ContainerEngine} from '../../../ContainerEngine';
+import {Controller, RouteGet, RouteParamBody, RouteParamPath, RoutePost, RoutePut} from './Controller.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {GitScanner} from '../../../git/GitScanner.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer.ts';
+import {ContainerEngine} from '../../../ContainerEngine.ts';
 
 export interface ConfigBody {
   config: {
@@ -15,6 +15,7 @@ export interface ConfigBody {
     rewrite_rules_yaml?: string;
     hugo_theme: HugoTheme;
     auto_sync: boolean;
+    use_google_markdowns: boolean;
     fm_without_version: boolean;
     actions_yaml?: string;
   };
@@ -111,6 +112,7 @@ export class ConfigController extends Controller {
       userConfigService.config.actions_yaml = body.config?.actions_yaml;
     }
     userConfigService.config.auto_sync = !!body.config?.auto_sync;
+    userConfigService.config.use_google_markdowns = !!body.config?.use_google_markdowns;
     userConfigService.config.fm_without_version = !!body.config?.fm_without_version;
 
     await userConfigService.save();

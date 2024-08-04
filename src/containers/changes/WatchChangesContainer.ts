@@ -1,16 +1,17 @@
 import winston from 'winston';
-import {Container, ContainerEngine} from '../../ContainerEngine';
-import {GoogleApiContainer} from '../google_api/GoogleApiContainer';
-import {GoogleDriveService} from '../../google/GoogleDriveService';
 import {fileURLToPath} from 'url';
-import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer';
-import {GoogleFile} from '../../model/GoogleFile';
-import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor';
-import {initJob, JobManagerContainer} from '../job/JobManagerContainer';
-import {UserConfigService} from '../google_folder/UserConfigService';
-import {type FileId} from '../../model/model';
-import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry';
-import {HasAccessToken} from '../../google/AuthClient';
+
+import {Container, ContainerEngine} from '../../ContainerEngine.ts';
+import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
+import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
+import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContainer.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
+import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
+import {initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {type FileId} from '../../model/model.ts';
+import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry.ts';
+import {HasAccessToken} from '../../google/AuthClient.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -20,7 +21,8 @@ export class WatchChangesContainer extends Container {
   private auth: HasAccessToken;
   private googleDriveService: GoogleDriveService;
   private lastToken: { [driveId: string]: string } = {};
-  private intervals: { [driveId: string]: NodeJS.Timer } = {};
+  private intervals: { [driveId: string]: NodeJS.Timeout } = {};
+  private working: { [driveId: string]: boolean } = {};
 
   @TelemetryMethodDisable()
   async init(engine: ContainerEngine): Promise<void> {
@@ -112,6 +114,10 @@ export class WatchChangesContainer extends Container {
       return;
     }
     this.intervals[driveId] = setInterval(async () => {
+      if (this.working[driveId]) {
+        return;
+      }
+      this.working[driveId] = true;
       try {
         if (!this.lastToken[driveId]) {
           this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
@@ -125,6 +131,8 @@ export class WatchChangesContainer extends Container {
           const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
           await folderRegistryContainer.refreshDrives();
         }
+      } finally {
+        delete this.working[driveId];
       }
     }, 3000);
   }

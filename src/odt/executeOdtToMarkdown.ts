@@ -42,5 +42,7 @@ export async function executeOdtToMarkdown(workerData) {
     fs.writeFileSync(path.join(workerData.destinationPath, workerData.realFileName.replace(/.md$/, '.debug.xml')), markdown);
   }
 
-  return { links, frontMatter, markdown, errors };
+  const headersMap = converter.getHeadersMap();
+
+  return { links, frontMatter, markdown, errors, headersMap };
 }

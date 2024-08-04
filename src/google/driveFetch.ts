@@ -1,20 +1,7 @@
-import {Readable} from 'stream';
-import {SimpleFile} from '../model/GoogleFile';
 import opentelemetry from '@opentelemetry/api';
-import {QuotaLimiter} from './QuotaLimiter';
-import {instrumentFunction} from '../telemetry';
-
-async function handleReadable(obj): Promise<string> {
-  if (obj instanceof Readable) {
-    const chunks = [];
-    for await (const chunk of obj) {
-      chunks.push(chunk);
-    }
-    return Buffer.concat(chunks).toString();
-  } else {
-    return obj;
-  }
-}
+import {SimpleFile} from '../model/GoogleFile.ts';
+import {QuotaLimiter} from './QuotaLimiter.ts';
+import {instrumentFunction} from '../telemetry.ts';
 
 interface GoogleDriveServiceErrorParams {
   isQuotaError: boolean;
@@ -30,7 +17,7 @@ export class GoogleDriveServiceError extends Error {
   private folderId: string;
   private isQuotaError: boolean;
 
-  constructor(msg, params?: GoogleDriveServiceErrorParams) {
+  constructor(msg: string, params?: GoogleDriveServiceErrorParams) {
     super(msg);
     if (params) {
       this.status = params.status;
@@ -85,7 +72,7 @@ function jsonToErrorMessage(json): string {
   }
 }
 
-export function filterParams(params) {
+export function filterParams(params: Record<string, string|number|boolean>): Record<string, string> {
   const retVal = {};
 
   for (const key of Object.keys(params)) {
@@ -129,9 +116,9 @@ export async function convertResponseToError(response) {
   });
 }
 
-async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method, requestUrl, params, body?): Promise<Response> {
-  params = filterParams(params);
-  const url = requestUrl + '?' + new URLSearchParams(params).toString();
+async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method: string, requestUrl: string, params: Record<string, string|number|boolean>, body?: unknown): Promise<Response> {
+  const filteredParams = filterParams(params);
+  const url = requestUrl + '?' + new URLSearchParams(filteredParams).toString();
 
   let traceparent;
   if (process.env.ZIPKIN_URL) {
@@ -147,6 +134,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
       method,
       headers: {
         Authorization: 'Bearer ' + accessToken,
+        'Accept-Encoding': 'gzip',
         'Content-type': body ? 'application/json' : undefined,
         traceparent
       },
@@ -196,7 +184,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
   });
 }
 
-export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params, bodyReq?) {
+export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string, method: string, url: string, params: Record<string, string|number|boolean>, bodyReq?: unknown) {
   const response = await driveRequest(quotaLimiter, accessToken, method, url, params, bodyReq);
   let bodyResp = '';
   try {
@@ -207,18 +195,18 @@ export async function driveFetch(quotaLimiter: QuotaLimiter, accessToken: string
   }
 }
 
-export async function driveFetchStream(quotaLimiter: QuotaLimiter, accessToken: string, method, url, params): Promise<ReadableStream<Uint8Array>> {
+export async function driveFetchStream(quotaLimiter: QuotaLimiter, accessToken: string, method: string, url: string, params: Record<string, string|number|boolean>): Promise<ReadableStream<Uint8Array>> {
   const response = await driveRequest(quotaLimiter, accessToken, method, url, params);
   return response.body;
 }
 
 const boundary = '-------314159265358979323846';
 
-export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToken: string, method, requestUrl, params, formData: FormData): Promise<any> {
-  params = filterParams(params);
-  const url = requestUrl + '?' + new URLSearchParams(params).toString();
+export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToken: string, method: string, requestUrl: string, params: Record<string, string|number|boolean>, formData: FormData): Promise<unknown> {
+  const filteredParams = filterParams(params);
+  const url = requestUrl + '?' + new URLSearchParams(filteredParams).toString();
 
-  let traceparent;
+  let traceparent: string;
   if (process.env.ZIPKIN_URL) {
     const span = opentelemetry.trace.getActiveSpan();
     if (span) {
@@ -227,7 +215,7 @@ export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToke
   }
 
   const after = `\n--${boundary}--`;
-  function generateMultipart(image: ArrayBuffer, mimetype) {
+  function generateMultipart(image: ArrayBuffer, mimetype: string) {
     const source = new Uint8Array(image); // Wrap in view to get data
 
     const before = [

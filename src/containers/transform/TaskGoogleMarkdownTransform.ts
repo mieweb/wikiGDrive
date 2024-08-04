@@ -1,46 +1,20 @@
+import fs from 'fs';
 import winston from 'winston';
 
 import {QueueTask} from '../google_folder/QueueTask.ts';
+import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
-import {GoogleFile, MimeTypes} from '../../model/GoogleFile.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
 import {BinaryFile, DrawingFile, LocalFile, MdFile} from '../../model/LocalFile.ts';
+import {LocalLinks} from './LocalLinks.ts';
+import {UserConfig} from '../google_folder/UserConfigService.ts';
 import {SvgTransform} from '../../SvgTransform.ts';
 import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontMatter.ts';
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown.ts';
-import {OdtProcessor} from '../../odt/OdtProcessor.ts';
-import {UnMarshaller} from '../../odt/UnMarshaller.ts';
-import {DocumentStyles, LIBREOFFICE_CLASSES} from '../../odt/LibreOffice.ts';
-import {OdtToMarkdown} from '../../odt/OdtToMarkdown.ts';
-import {LocalLinks} from './LocalLinks.ts';
-import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer.ts';
-import {JobManagerContainer} from '../job/JobManagerContainer.ts';
-import {UserConfig} from '../google_folder/UserConfigService.ts';
+import {googleMimeToExt} from './TaskLocalFileTransform.ts';
+import {getUrlHash, urlToFolderId} from '../../utils/idParsers.ts';
 
-export function googleMimeToExt(mimeType: string, fileName: string) {
-  switch (mimeType) {
-    case MimeTypes.APPS_SCRIPT:
-      return 'gs';
-    case 'image/jpeg':
-      return 'jpg';
-    case 'image/png':
-      return 'png';
-    case 'image/svg+xml':
-      return 'svg';
-    case 'application/vnd.google-apps.drawing':
-      return 'svg';
-    case 'application/vnd.google-apps.document':
-      return 'odt';
-    case 'text/csv':
-      return 'csv';
-  }
-
-  if (fileName.indexOf('.') > -1) {
-    return '';
-  }
-  return 'bin';
-}
-
-export class TaskLocalFileTransform extends QueueTask {
+export class TaskGoogleMarkdownTransform extends QueueTask {
   constructor(protected logger: winston.Logger,
               private jobManagerContainer: JobManagerContainer,
               private realFileName: string,
@@ -49,9 +23,8 @@ export class TaskLocalFileTransform extends QueueTask {
               private destinationDirectory: FileContentService,
               private localFile: LocalFile,
               private localLinks: LocalLinks,
-              private userConfig: UserConfig,
-              private globalHeadersMap: {[key: string]: string},
-              ) {
+              private userConfig: UserConfig
+  ) {
     super(logger);
     this.retries = 0;
 
@@ -127,76 +100,51 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   async generateDocument(localFile: MdFile) {
-    let frontMatter;
-    let markdown;
-    let headersMap = {};
-    let links = [];
-    let errors = [];
+    const links = new Set<string>();
 
-    const odtPath = this.googleFolder.getRealPath() + '/' + localFile.id + '.odt';
-    const destinationPath = this.destinationDirectory.getRealPath();
+    const mdPath = this.googleFolder.getRealPath() + '/' + localFile.id + '.md';
 
-    const rewriteRules = this.userConfig.rewrite_rules || [];
+    const input: Buffer = fs.readFileSync(mdPath);
 
-    const picturesDirAbsolute = destinationPath + '/' + this.realFileName.replace(/.md$/, '.assets/');
+    const originalMarkdown = new TextDecoder().decode(input);
 
-    if (SINGLE_THREADED_TRANSFORM) {
-      const processor = new OdtProcessor(true);
-      await processor.load(odtPath);
-      await processor.unzipAssets(destinationPath, this.realFileName);
-      const content = processor.getContentXml();
-      const stylesXml = processor.getStylesXml();
-      const fileNameMap = processor.getFileNameMap();
-      const xmlMap = processor.getXmlMap();
+    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+?)\)/g;
 
-      const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-      const document = parser.unmarshal(content);
-
-      const parserStyles = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentStyles');
-      const styles: DocumentStyles = parserStyles.unmarshal(stylesXml);
-      if (!styles) {
-        throw Error('No styles unmarshalled');
-      }
-
-      const converter = new OdtToMarkdown(document, styles, fileNameMap, xmlMap);
-      converter.setRewriteRules(rewriteRules);
-      if (this.realFileName === '_index.md') {
-        converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
-      } else {
-        converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
-      }
-      headersMap = converter.getHeadersMap();
-      markdown = await converter.convert();
-      links = Array.from(converter.links);
-      frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
-      errors = converter.getErrors();
-      this.warnings = errors.length;
-    } else {
-      interface WorkerResult {
-        links: Array<string>;
-        frontMatter: string;
-        markdown: string;
-        errors: Array<string>;
-        headersMap: {[key: string]: string};
-      }
-
-      const workerResult: WorkerResult = <WorkerResult>await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
-        localFile,
-        realFileName: this.realFileName,
-        picturesDirAbsolute,
-        odtPath,
-        destinationPath,
-        rewriteRules,
-        fm_without_version: this.userConfig.fm_without_version
+    function replaceMarkdownLinks(markdown, replacerFunction) {
+      return markdown.replace(markdownLinkRegex, (match, linkText, url) => {
+        // Call the replacer function with the link text, URL, and title
+        return replacerFunction(linkText, url);
       });
-
-      links = workerResult.links;
-      frontMatter = workerResult.frontMatter;
-      markdown = workerResult.markdown;
-      errors = workerResult.errors;
-      headersMap = workerResult.headersMap;
-      this.warnings = errors.length;
     }
+
+    function customReplacer(linkText, href) {
+      href = href.replaceAll('\\', '');
+
+      const id = urlToFolderId(href);
+      const hash = getUrlHash(href);
+      if (id) {
+        href = 'gdoc:' + id + hash;
+      }
+      if (href && !href.startsWith('#') && href.indexOf(':') > -1) {
+        links.add(href);
+      }
+
+      return `[${linkText}](${href})`;
+    }
+
+    const markdownRewrittenLinks = replaceMarkdownLinks(originalMarkdown, customReplacer);
+
+    const pattern = /\*\{\{%\s+.*?\s+%\}\}\*/g;
+
+    const markdown = markdownRewrittenLinks.replace(pattern, (match) => {
+      // Remove the surrounding asterisks
+      return match.slice(1, -1);
+    });
+
+    // links = Array.from(converter.links);
+    const frontMatter = generateDocumentFrontMatter(localFile, Array.from(links), this.userConfig.fm_without_version);
+    const errors = [];
+    this.warnings = errors.length;
 
     for (const errorMsg of errors) {
       this.logger.warn('Error in: ['+ this.localFile.fileName +'](' + this.localFile.fileName + ') ' + errorMsg, {
@@ -206,10 +154,7 @@ export class TaskLocalFileTransform extends QueueTask {
     }
 
     await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
-    this.localLinks.append(localFile.id, localFile.fileName, links);
-    for (const k in headersMap) {
-      this.globalHeadersMap['gdoc:' + localFile.id + k] = 'gdoc:' + localFile.id + headersMap[k];
-    }
+    this.localLinks.append(localFile.id, localFile.fileName, Array.from(links));
   }
 
   async generate(localFile: LocalFile): Promise<void> {
