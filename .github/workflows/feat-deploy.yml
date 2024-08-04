@@ -32,7 +32,7 @@ jobs:
 
   build:
     needs: test
-    runs-on: wgd-dev
+    runs-on: ubuntu-latest
 
     steps:
       - name: Create pull request
