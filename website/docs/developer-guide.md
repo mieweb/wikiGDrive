@@ -13,7 +13,7 @@ See [Node setup on the system](#node-setup-on-the-system) for prereq.
 ## using OS
 
 ```
-curl -sL https://deb.nodesource.com/setup_16.x | sudo bash -
+curl -sL https://deb.nodesource.com/setup_20.x | sudo bash -
 sudo apt install nodejs
 ```
 
@@ -21,7 +21,7 @@ sudo apt install nodejs
 
 ```
 sudo npm install -g n
-sudo n 16.15.0
+sudo n 20.10.0
 ```
 
 ## Version Strategy
@@ -44,14 +44,32 @@ wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdri
 ## Running locally with docker
 
 ```
+# Create some dir for wikigdrive data
+mkdir ~/wikigdrive
+# Create some dir for wikigdrive rendered html files
+mkdir ~/wikigdrive_html/docs -p
+
+# Running zipkin is an option
 docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
 
+# Build action runner
 docker build -t wgd-action-runner apps/wgd-action-runner
 
+# Build hugo docs
+docker run \
+        -v ~/workspaces/mieweb/wikiGDrive/hugo:/site \
+        -v ~/workspaces/mieweb/wikiGDrive/website:/website \
+        -v ~/wikigdrive_html/docs:/dist/hugo \
+        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://localhost:3000" \
+        wgd-action-runner /steps/step_render_hugo
+
+# Build wikigdrive
 docker build -t wikigdrive .
 
+# Run wikigdrive
 docker run --rm --user=$(id -u) -it \
-          -v /data/wikigdrive:/data \
+          -v ~/wikigdrive:/srv/wikigdrive \
+          -v ~/wikigdrive_html/docs:/usr/src/app/dist/hugo \
           -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
           -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
           -v /var/run/docker.sock:/var/run/docker.sock \
@@ -59,8 +77,9 @@ docker run --rm --user=$(id -u) -it \
           --publish 127.0.0.1:3000:3000 \
           --publish 127.0.0.1:24678:24678 \
           wikigdrive \
-          ./src/wikigdrived.sh --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /data server 3000
+          ./src/wikigdrive.sh --watch-path /usr/src/app/src --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /srv/wikigdrive server 3000
 
+# Stop wikigdrive
 docker rm -f wikigdrive
 
 # 24678 - vite hot reload port
@@ -148,7 +167,7 @@ ZIPKIN_URL=http://localhost:9411
 ## Debugging
 
 ```
-./src/wikigdrived.sh --inspect --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
+./src/wikigdrive.sh --inspect --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
 ```
 
 Chrome
