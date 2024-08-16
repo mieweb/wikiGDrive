@@ -51,6 +51,7 @@ export class TaskLocalFileTransform extends QueueTask {
               private localLinks: LocalLinks,
               private userConfig: UserConfig,
               private globalHeadersMap: {[key: string]: string},
+              private globalInvisibleBookmarks: {[key: number]: number},
               ) {
     super(logger);
     this.retries = 0;
@@ -130,6 +131,7 @@ export class TaskLocalFileTransform extends QueueTask {
     let frontMatter;
     let markdown;
     let headersMap = {};
+    let invisibleBookmarks = {};
     let links = [];
     let errors = [];
 
@@ -166,6 +168,7 @@ export class TaskLocalFileTransform extends QueueTask {
         converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
       }
       headersMap = converter.getHeadersMap();
+      invisibleBookmarks = converter.getInvisibleBookmarks();
       markdown = await converter.convert();
       links = Array.from(converter.links);
       frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
@@ -178,6 +181,7 @@ export class TaskLocalFileTransform extends QueueTask {
         markdown: string;
         errors: Array<string>;
         headersMap: {[key: string]: string};
+        invisibleBookmarks: {[key: string]: string};
       }
 
       const workerResult: WorkerResult = <WorkerResult>await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
@@ -195,6 +199,7 @@ export class TaskLocalFileTransform extends QueueTask {
       markdown = workerResult.markdown;
       errors = workerResult.errors;
       headersMap = workerResult.headersMap;
+      invisibleBookmarks = workerResult.invisibleBookmarks;
       this.warnings = errors.length;
     }
 
@@ -209,6 +214,9 @@ export class TaskLocalFileTransform extends QueueTask {
     this.localLinks.append(localFile.id, localFile.fileName, links);
     for (const k in headersMap) {
       this.globalHeadersMap['gdoc:' + localFile.id + k] = 'gdoc:' + localFile.id + headersMap[k];
+    }
+    for (const k in invisibleBookmarks) {
+      this.globalInvisibleBookmarks['gdoc:' + localFile.id + k] = invisibleBookmarks[k];
     }
   }
 

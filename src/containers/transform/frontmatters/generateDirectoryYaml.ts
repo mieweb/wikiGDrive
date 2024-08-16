@@ -1,8 +1,8 @@
 import yaml from 'js-yaml';
 
-import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
-import {GoogleFile, MimeTypes} from '../../../model/GoogleFile';
-import {LocalFile} from '../../../model/LocalFile';
+import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
+import {GoogleFile, MimeTypes} from '../../../model/GoogleFile.ts';
+import {LocalFile} from '../../../model/LocalFile.ts';
 
 export function generateDirectoryYaml(fileName: string, directory: GoogleFile, realFileNameToGenerated: { [realFileName: string]: LocalFile }) {
   return yaml.dump({

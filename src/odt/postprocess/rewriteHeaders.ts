@@ -2,8 +2,9 @@ import slugify from 'slugify';
 import {extractText, walkRecursiveAsync, walkRecursiveSync} from '../markdownNodesUtils.ts';
 import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.ts';
 
-export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ headersMap: {[key: string]: string} }> {
+export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ headersMap: {[key: string]: string}, invisibleBookmarks: {[key: string]: number} }> {
   const headersMap = {};
+  const invisibleBookmarks = {};
 
   let inPre = false;
   await walkRecursiveAsync(markdownChunks.body, async (chunk, ctx: { nodeIdx: number }) => {
@@ -55,6 +56,10 @@ export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ h
 
   await walkRecursiveAsync(markdownChunks.body, async (chunk, ctx: { nodeIdx: number }) => {
     if (chunk.isTag && 'BOOKMARK/' === chunk.tag) {
+      if (!headersMap['#' + chunk.payload.id]) {
+        invisibleBookmarks['#' + chunk.payload.id] = 1;
+      }
+
       if (chunk.parent.children.length < 2) {
         return;
       }
@@ -78,5 +83,5 @@ export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ h
     });
   }
 
-  return { headersMap };
+  return { headersMap, invisibleBookmarks };
 }

@@ -40,7 +40,7 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   convertMathMl(chunks);
 
   trimParagraphs(chunks);
-  const { headersMap} = await rewriteHeaders(chunks);
+  const { headersMap, invisibleBookmarks} = await rewriteHeaders(chunks);
   trimParagraphs(chunks);
   addEmptyLinesAfterParas(chunks);
   removeTdParas(chunks); // Requires: addEmptyLinesAfterParas
@@ -68,5 +68,5 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
     dump(chunks.body);
   }
 
-  return { headersMap };
+  return { headersMap, invisibleBookmarks };
 }
