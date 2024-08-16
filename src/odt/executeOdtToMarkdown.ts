@@ -43,6 +43,7 @@ export async function executeOdtToMarkdown(workerData) {
   }
 
   const headersMap = converter.getHeadersMap();
+  const invisibleBookmarks = converter.getInvisibleBookmarks();
 
-  return { links, frontMatter, markdown, errors, headersMap };
+  return { links, frontMatter, markdown, errors, headersMap, invisibleBookmarks };
 }

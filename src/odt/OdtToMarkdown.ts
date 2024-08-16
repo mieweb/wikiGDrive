@@ -69,6 +69,7 @@ export class OdtToMarkdown {
   private picturesDirAbsolute = '';
   private rewriteRules: RewriteRule[] = [];
   private headersMap: { [p: string]: string } = {};
+  private invisibleBookmarks: { [p: string]: number } = {};
 
   constructor(private document: DocumentContent, private documentStyles: DocumentStyles, private fileNameMap: StringToStringMap = {}, private xmlMap: StringToStringMap = {}) {
   }
@@ -132,8 +133,9 @@ export class OdtToMarkdown {
     // text = this.processMacros(text);
     // text = this.fixBlockMacros(text);
 
-    const { headersMap } = await postProcess(this.chunks, this.rewriteRules);
+    const { headersMap, invisibleBookmarks } = await postProcess(this.chunks, this.rewriteRules);
     this.headersMap = headersMap;
+    this.invisibleBookmarks = invisibleBookmarks;
 
     const markdown = this.chunks.toString();
     return this.trimBreaks(markdown);
@@ -705,6 +707,10 @@ export class OdtToMarkdown {
 
   getHeadersMap() {
     return this.headersMap;
+  }
+
+  getInvisibleBookmarks() {
+    return this.invisibleBookmarks;
   }
 
 }

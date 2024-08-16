@@ -25,6 +25,7 @@ import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
+import {frontmatter} from './frontmatters/frontmatter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -209,6 +210,7 @@ export class TransformContainer extends Container {
   private isFailed = false;
   private useGoogleMarkdowns = false;
   private globalHeadersMap: {[key: string]: string} = {};
+  private globalInvisibleBookmarks: {[key: string]: number} = {};
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -299,7 +301,8 @@ export class TransformContainer extends Container {
           localFile,
           this.localLinks,
           this.userConfigService.config,
-          this.globalHeadersMap
+          this.globalHeadersMap,
+          this.globalInvisibleBookmarks
         );
         queueTransformer.addTask(task);
       } else {
@@ -435,6 +438,7 @@ export class TransformContainer extends Container {
 
   async rewriteLinks(destinationDirectory: FileContentService) {
     const files = await destinationDirectory.list();
+
     for (const fileName of files) {
       if (await destinationDirectory.isDirectory(fileName)) {
         await this.rewriteLinks(await destinationDirectory.getSubFileService(fileName));
@@ -443,7 +447,26 @@ export class TransformContainer extends Container {
 
       if (fileName.endsWith('.md') || fileName.endsWith('.svg')) {
         const content = await destinationDirectory.readFile(fileName);
-        const newContent = content.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
+
+        const parsed = frontmatter(content);
+        const props = parsed.data;
+        let newContent = content;
+        if (props?.id) {
+          const unusedHashes = Object
+            .keys(this.globalInvisibleBookmarks)
+            .filter(hash => hash.startsWith('gdoc:' + props.id));
+
+          for (const hash of unusedHashes) {
+            if (!this.globalHeadersMap[hash]) {
+              const postHash = hash.substring(hash.indexOf('#') + 1);
+              newContent = newContent
+                .replaceAll(` <a id="${postHash}"></a>`, '')
+                .replaceAll(`<a id="${postHash}"></a>`, '');
+            }
+          }
+        }
+
+        newContent = newContent.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
           let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
           let hash = getUrlHash(str) || '';
           if (hash && this.globalHeadersMap[str]) {
