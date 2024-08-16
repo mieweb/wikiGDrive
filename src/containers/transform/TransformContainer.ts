@@ -452,18 +452,29 @@ export class TransformContainer extends Container {
         const props = parsed.data;
         let newContent = content;
         if (props?.id) {
-          const unusedHashes = Object
-            .keys(this.globalInvisibleBookmarks)
-            .filter(hash => hash.startsWith('gdoc:' + props.id));
-
-          for (const hash of unusedHashes) {
-            if (!this.globalHeadersMap[hash]) {
-              const postHash = hash.substring(hash.indexOf('#') + 1);
-              newContent = newContent
-                .replaceAll(` <a id="${postHash}"></a>`, '')
-                .replaceAll(`<a id="${postHash}"></a>`, '');
+          newContent = newContent.replace(/\n? ?<a id="([^"]*)"><\/a>\n?/igm, (str: string, hash: string) => {
+            const fullLink = 'gdoc:' + props.id + '#' + hash;
+            if (this.globalInvisibleBookmarks[fullLink]) {
+              const retVal = str.replace(`<a id="${hash}"></a>`, '');
+              if (retVal === '\n \n') {
+                return '\n';
+              }
+              if (retVal === '\n\n') {
+                return '\n';
+              }
+              if (retVal.endsWith(' \n')) {
+                return retVal.substring(0, retVal.length - 2) + '\n';
+              }
+              if (retVal.startsWith('\n ')) {
+                return '\n' + retVal.substring(1);
+              }
+              if (retVal === ' ') {
+                return '';
+              }
+              return retVal;
             }
-          }
+            return str;
+          });
         }
 
         newContent = newContent.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
