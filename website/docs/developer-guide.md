@@ -44,10 +44,13 @@ wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdri
 ## Running locally with docker
 
 ```
+export VOLUME_DATA=~/wikigdrive
+export VOLUME_PREVIEW=~/wikigdrive_html
+
 # Create some dir for wikigdrive data
-mkdir ~/wikigdrive
+mkdir -p $VOLUME_DATA
 # Create some dir for wikigdrive rendered html files
-mkdir ~/wikigdrive_html/docs -p
+mkdir -p $VOLUME_PREVIEW
 
 # Running zipkin is an option
 docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zipkin
@@ -59,7 +62,7 @@ docker build -t wgd-action-runner apps/wgd-action-runner
 docker run \
         -v ~/workspaces/mieweb/wikiGDrive/hugo:/site \
         -v ~/workspaces/mieweb/wikiGDrive/website:/website \
-        -v ~/wikigdrive_html/docs:/dist/hugo \
+        -v $VOLUME_PREVIEW/docs:/dist/hugo \
         --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://localhost:3000" \
         wgd-action-runner /steps/step_render_hugo
 
@@ -67,17 +70,21 @@ docker run \
 docker build -t wikigdrive .
 
 # Run wikigdrive
-docker run --rm --user=$(id -u) -it \
-          -v ~/wikigdrive:/srv/wikigdrive \
-          -v ~/wikigdrive_html/docs:/usr/src/app/dist/hugo \
-          -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
-          -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
-          -v /var/run/docker.sock:/var/run/docker.sock \
-          --link zipkin:zipkin \
-          --publish 127.0.0.1:3000:3000 \
-          --publish 127.0.0.1:24678:24678 \
-          wikigdrive \
-          ./src/wikigdrive.sh --watch-path /usr/src/app/src --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /srv/wikigdrive server 3000
+docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
+        -v $VOLUME_DATA:/srv/wikigdrive \
+        -v $VOLUME_PREVIEW:$VOLUME_PREVIEW \
+        -v $VOLUME_PREVIEW/docs:/usr/src/app/dist/hugo \
+        -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
+        -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -e VOLUME_DATA=$VOLUME_DATA \
+        -e VOLUME_PREVIEW=$VOLUME_PREVIEW \
+        --link zipkin:zipkin \
+        --publish 127.0.0.1:3000:3000 \
+        --publish 127.0.0.1:24678:24678 \
+        --name wikigdrive-develop \
+        wikigdrive \
+        ./src/wikigdrive.sh --watch-path /usr/src/app/src --service_account /service_account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com --workdir /srv/wikigdrive server 3000
 
 # Stop wikigdrive
 docker rm -f wikigdrive
