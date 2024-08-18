@@ -307,6 +307,7 @@ export default {
           this.checked[change.path] = true;
         }
       }
+      this.isSomethingChecked = Object.keys(this.checked).length > 0;
     },
     toggle(path) {
       if (this.checked[path]) {
@@ -329,17 +330,6 @@ export default {
         }
       }
       this.isSomethingChecked = Object.keys(this.checked).length > 0;
-    },
-    toggleCheckAll() {
-      if (this.isCheckedAll) {
-        this.checked = {};
-        this.isSomethingChecked = false;
-      } else {
-        for (const item of this.gitChanges) {
-          this.checked[item.path] = true;
-        }
-        this.isSomethingChecked = true;
-      }
     },
     async generateCommitMsg() {
       if (Object.keys(this.checked).length > 1) {
