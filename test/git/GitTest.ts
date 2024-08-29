@@ -295,9 +295,8 @@ describe('GitTest', function () {
       const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
       await scannerLocal.initialize();
 
-      fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
-
       {
+        fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
         const changes = await scannerLocal.changes();
         assert.equal(2, (await scannerLocal.changes()).length);
         await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
@@ -313,13 +312,71 @@ describe('GitTest', function () {
 
       const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
       await scannerSecond.initialize();
-      fs.unlinkSync(secondRepoDir + '/.gitignore');
       await scannerSecond.setRemoteUrl(githubRepoDir);
-      await scannerSecond.pullBranch('main');
+
+      // fs.mkdirSync(path.join(secondRepoDir, 'content'));
+      // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '---\ntype: \'page\'\n---\nChange local');
+
+      await scannerSecond.resetToRemote('main');
+      // await scannerSecond.pullBranch('main');
 
       const history = await scannerSecond.history('/');
       assert.equal(history.length, 1);
       assert.equal(history[0].author_name, 'John <john@example.tld>');
+
+      {
+        fs.writeFileSync(path.join(localRepoDir, 'file2.md'), 'Second change');
+        const changes = await scannerLocal.changes();
+        assert.equal(1, (await scannerLocal.changes()).length);
+        await scannerLocal.commit('Second commit', changes.map(change => change.path), [], COMMITER2);
+      }
+
+      await scannerLocal.pushBranch('main');
+
+      {
+        // fs.writeFileSync(path.join(localRepoDir, '_errors1.md'), 'Change local');
+        // const changes = await scannerLocal.changes();
+        // assert.equal(1, (await scannerLocal.changes()).length);
+        // await scannerLocal.commit('Local commit', changes.map(change => change.path), [], COMMITER1);
+      }
+
+      const fd = fs.openSync(path.join(secondRepoDir, '_errors.md'), 'w');
+      // fs.writeSync(fd, '');
+
+      // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '');
+      // await scannerSecond.cmd('add -N _errors.md');
+      // fs.chmodSync(path.join(secondRepoDir, '_errors.md'), 0o771);
+
+
+      await scannerSecond.autoCommit();
+
+      console.info(await scannerSecond.cmd('ls-files --stage'));
+
+      fs.writeSync(fd, 'test');
+      // fs.closeSync(fd);
+
+      console.info(await scannerSecond.cmd('ls-files --stage'));
+
+      // fs.unlinkSync(path.join(secondRepoDir, '_errors.md'));
+      // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '---\ntype: \'page\'\n---\nChange local');
+
+      // await scannerSecond.autoCommit();
+
+      // fs.writeFileSync(path.join(secondRepoDir, 'untracked.md'), 'untracked');
+
+      console.info(await scannerSecond.cmd('ls-files --stage'));
+
+      await scannerSecond.resetToLocal();
+      await scannerSecond.pullBranch('main');
+
+      console.info(await scannerSecond.cmd('status'));
+
+      {
+        const history = await scannerSecond.history('/');
+        assert.equal(history.length, 2);
+        assert.equal(history[0].author_name, 'Bob <bob@example.tld>');
+        assert.equal(history[1].author_name, 'John <john@example.tld>');
+      }
     } finally {
       fs.rmSync(localRepoDir, { recursive: true, force: true });
       fs.rmSync(githubRepoDir, { recursive: true, force: true });
@@ -484,7 +541,7 @@ describe('GitTest', function () {
       await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
-      const masterCommit = await scannerLocal.getBranchCommit('master');
+      const masterCommit = await scannerLocal.getBranchCommit('main');
       const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
       const remoteCommit2 = await scannerSecond.getBranchCommit('HEAD');
 

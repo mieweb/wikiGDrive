@@ -61,24 +61,24 @@ interface JwtDecryptedPayload extends GoogleUser {
   driveId: string;
 }
 
-export function signToken(payload: JwtDecryptedPayload): string {
-  const expiresIn = 365 * 24 * 3600; // process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME ||
+function signToken(payload: JwtDecryptedPayload, jwtSecret: string): string {
+  const expiresIn = 365 * 24 * 3600;
 
   const encrypted: JwtEncryptedPayload = {
     sub: payload.id,
     name: payload.name,
     email: payload.email,
-    gat: encrypt(payload.google_access_token, process.env.JWT_SECRET),
-    grt: payload.google_refresh_token ? encrypt(payload.google_refresh_token, process.env.JWT_SECRET) : undefined,
+    gat: encrypt(payload.google_access_token, jwtSecret),
+    grt: payload.google_refresh_token ? encrypt(payload.google_refresh_token, jwtSecret) : undefined,
     ged: payload.google_expiry_date,
     driveId: payload.driveId
   };
 
-  return jsonwebtoken.sign(encrypted, process.env.JWT_SECRET, { expiresIn });
+  return jsonwebtoken.sign(encrypted, jwtSecret, { expiresIn });
 }
 
-export function verifyToken(accessCookie: string): JwtDecryptedPayload {
-  const encrypted: JwtEncryptedPayload = <JwtEncryptedPayload>jsonwebtoken.verify(accessCookie, process.env.JWT_SECRET);
+function verifyToken(accessCookie: string, jwtSecret: string): JwtDecryptedPayload {
+  const encrypted: JwtEncryptedPayload = <JwtEncryptedPayload>jsonwebtoken.verify(accessCookie, jwtSecret);
 
   return {
     id: encrypted.sub,
@@ -240,6 +240,8 @@ export async function getAuth(req: Request, res: Response, next) {
     const googleDriveService = new GoogleDriveService(this.logger, null);
     const googleUser: GoogleUser = await authClient.getUser(await authClient.getAccessToken());
 
+    const jwtSecret = process.env.JWT_SECRET;
+
     if (driveId) {
       const drive = await googleDriveService.getDrive(await authClient.getAccessToken(), driveId);
       if (drive.id) {
@@ -247,7 +249,7 @@ export async function getAuth(req: Request, res: Response, next) {
           ...googleUser,
           ...await authClient.getAuthData(),
           driveId: driveId
-        });
+        }, jwtSecret);
         setAccessCookie(res, accessToken);
         res.redirect(redirectTo || '/');
         return;
@@ -257,7 +259,7 @@ export async function getAuth(req: Request, res: Response, next) {
         ...googleUser,
         ...await authClient.getAuthData(),
         driveId: driveId
-      });
+      }, jwtSecret);
       setAccessCookie(res, accessToken);
       res.redirect(redirectTo || '/drive');
       return;
@@ -289,8 +291,10 @@ async function decodeAuthenticateInfo(req, res, next) {
     return;
   }
 
+  const jwtSecret = process.env.JWT_SECRET;
+
   try {
-    const decoded = verifyToken(req.cookies.accessToken);
+    const decoded = verifyToken(req.cookies.accessToken, jwtSecret);
     if (!decoded.id) {
       return next(redirError(req, 'No jwt.sub'));
     }
@@ -319,7 +323,7 @@ async function decodeAuthenticateInfo(req, res, next) {
         ...decoded,
         ...await authClient.getAuthData(),
         driveId: driveId
-      });
+      }, jwtSecret);
       setAccessCookie(res, accessToken);
     }
 

@@ -114,6 +114,9 @@ export class WatchChangesContainer extends Container {
       return;
     }
     this.intervals[driveId] = setInterval(async () => {
+      if (!this.auth) {
+        return;
+      }
       if (this.working[driveId]) {
         return;
       }

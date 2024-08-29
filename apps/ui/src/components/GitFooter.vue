@@ -4,7 +4,7 @@
     <div class="card-body">
       <slot></slot>
       <button v-if="git_remote_url" type="button" class="btn btn-danger" @click="push"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Push</button>
-      <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="pull"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Pull</button>
+      <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="reset_pull"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Reset and Pull</button>
       <button v-if="git_remote_url" type="button" class="btn btn-secondary" @click="fetch"><i v-if="active_jobs.length > 0" class="fa-solid fa-rotate fa-spin"></i> Fetch</button>
       <span v-if="!git_remote_url">
         No git remote, go to <router-link :to="{ name: 'drive', params: { driveId }, hash: '#git_settings' }">settings</router-link>
@@ -33,6 +33,20 @@ export default {
     async fetch(event) {
       await disableElement(event, async () => {
         await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/fetch`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({})
+        });
+      });
+    },
+    async reset_pull(event) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/reset_local`, {
+          method: 'post'
+        });
+        await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/pull`, {
           method: 'post',
           headers: {
             'Content-type': 'application/json'

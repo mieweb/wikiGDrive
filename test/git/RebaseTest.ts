@@ -1,11 +1,12 @@
-import {GitScanner} from '../../src/git/GitScanner';
-import winston from 'winston';
-import {createTmpDir} from '../utils';
 import fs from 'fs';
 import path from 'path';
-import {assert} from 'chai';
 import {execSync} from 'child_process';
-import {instrumentLogger} from '../../src/utils/logger/logger';
+import winston from 'winston';
+import {assert} from 'chai';
+
+import {GitScanner} from '../../src/git/GitScanner.ts';
+import {createTmpDir} from '../utils.ts';
+import {instrumentLogger} from '../../src/utils/logger/logger.ts';
 
 const COMMITER1 = {
   name: 'John', email: 'john@example.tld'
@@ -71,7 +72,7 @@ describe('RebaseTest', function () {
       }
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
-      const masterCommit = await scannerLocal.getBranchCommit('master');
+      const masterCommit = await scannerLocal.getBranchCommit('main');
       const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
@@ -140,7 +141,7 @@ describe('RebaseTest', function () {
       }
 
       const headCommit = await scannerLocal.getBranchCommit('HEAD');
-      const masterCommit = await scannerLocal.getBranchCommit('master');
+      const masterCommit = await scannerLocal.getBranchCommit('main');
       const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
@@ -206,7 +207,7 @@ describe('RebaseTest', function () {
       }
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
-      const masterCommit = await scannerSecond.getBranchCommit('master');
+      const masterCommit = await scannerSecond.getBranchCommit('main');
       const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
@@ -298,7 +299,7 @@ describe('RebaseTest', function () {
       }
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
-      const masterCommit = await scannerSecond.getBranchCommit('master');
+      const masterCommit = await scannerSecond.getBranchCommit('main');
       const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
@@ -373,7 +374,7 @@ describe('RebaseTest', function () {
 
       {
         const headCommit = await scannerLocal.getBranchCommit('HEAD');
-        const masterCommit = await scannerLocal.getBranchCommit('master');
+        const masterCommit = await scannerLocal.getBranchCommit('main');
         const remoteCommit = await scannerLocal.getBranchCommit('refs/remotes/origin/main');
         assert.equal(headCommit, masterCommit);
         assert.equal(headCommit, remoteCommit);
@@ -393,7 +394,7 @@ describe('RebaseTest', function () {
       }
 
       const headCommit = await scannerSecond.getBranchCommit('HEAD');
-      const masterCommit = await scannerSecond.getBranchCommit('master');
+      const masterCommit = await scannerSecond.getBranchCommit('main');
       const remoteCommit = await scannerSecond.getBranchCommit('refs/remotes/origin/main');
       assert.equal(headCommit, masterCommit);
       assert.equal(headCommit, remoteCommit);
