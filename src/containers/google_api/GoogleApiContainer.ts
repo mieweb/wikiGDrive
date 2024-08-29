@@ -10,6 +10,7 @@ import {GoogleFile} from '../../model/GoogleFile.ts';
 import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient, getCliCode} from '../../google/AuthClient.ts';
 
 import {fileURLToPath} from 'url';
+import {AuthError} from '../server/auth.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -70,23 +71,39 @@ export class GoogleApiContainer extends Container {
   }
 
   async listDrives(): Promise<Drive[]> {
+    if (!this.auth) {
+      throw new AuthError('Not authenticated', 401);
+    }
+
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
     const accessToken = await this.auth.getAccessToken();
     return await googleDriveService.listDrives(accessToken);
   }
 
   async getDrive(driveId: FileId): Promise<Drive> {
+    if (!this.auth) {
+      throw new AuthError('Not authenticated', 401);
+    }
+
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
     const accessToken = await this.auth.getAccessToken();
     return await googleDriveService.getDrive(accessToken, driveId);
   }
 
   async getFolder(fileId: FileId): Promise<GoogleFile> {
+    if (!this.auth) {
+      throw new AuthError('Not authenticated', 401);
+    }
+
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
     return await googleDriveService.getFile(this.auth, fileId);
   }
 
   async shareDrive(driveId: string, shareEmail: string): Promise<Permission> {
+    if (!this.auth) {
+      throw new AuthError('Not authenticated', 401);
+    }
+
     const googleDriveService = new GoogleDriveService(this.logger, this.quotaLimiter);
     const accessToken = await this.auth.getAccessToken();
     return await googleDriveService.shareDrive(accessToken, driveId, shareEmail);

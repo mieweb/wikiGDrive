@@ -46,7 +46,7 @@ export class UserConfig {
 }
 
 const DEFAULT_CONFIG: UserConfig = {
-  remote_branch: 'master',
+  remote_branch: 'main',
   hugo_theme: {
     id: 'ananke',
     name: 'Anake',

@@ -364,7 +364,7 @@ export class ActionRunnerContainer extends Container {
 
   private payloadToEnv() {
     const additionalEnv = {};
-    additionalEnv['REMOTE_BRANCH'] = this.userConfigService.config?.remote_branch || 'master';
+    additionalEnv['REMOTE_BRANCH'] = this.userConfigService.config?.remote_branch || 'main';
 
     if (this.params.payload && this.params.payload.startsWith('{')) {
       try {

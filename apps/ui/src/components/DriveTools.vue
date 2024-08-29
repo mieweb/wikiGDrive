@@ -60,7 +60,7 @@ import {UiMixin} from './UiMixin.ts';
 import ToolButton from './ToolButton.vue';
 
 export default {
-  name: 'PreviewHeader',
+  name: 'DriveTools',
   mixins: [UtilsMixin, UiMixin],
   components: {ToolButton},
   props: {

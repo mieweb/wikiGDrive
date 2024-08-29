@@ -78,9 +78,9 @@
               </template>
             </GitSettings>
 
-            <UserSettings v-if="!contentDir && !(activeTab === 'drive_config' || activeTab === 'drive_config_git')" :activeTab="activeTab">
+            <UserSettings v-if="!(activeTab === 'drive_config' || activeTab === 'drive_config_git')" :activeTab="activeTab">
               <template v-slot:header>
-                <div class="card-header alert-danger">
+                <div class="card-header alert-danger" v-if="!contentDir">
                   Content subdirectory must be set and start with /
                 </div>
               </template>

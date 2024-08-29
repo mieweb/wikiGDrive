@@ -62,21 +62,29 @@ export class FolderRegistryContainer extends Container {
     const oldDrives = Object.values(await this.getFolders());
 
     const apiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
-    const drives = await apiContainer.listDrives();
+    try {
+      const drives = await apiContainer.listDrives();
 
-    for (const newDrive of drives) {
-      if (!oldDrives.find(oldDrive => oldDrive.id === newDrive.id)) {
-        try {
-          await this.registerFolder(newDrive.id);
-        } catch (err) {
-          this.logger.error(err.stack ? err.stack : err.message);
+      for (const newDrive of drives) {
+        if (!oldDrives.find(oldDrive => oldDrive.id === newDrive.id)) {
+          try {
+            await this.registerFolder(newDrive.id);
+          } catch (err) {
+            this.logger.error(err.stack ? err.stack : err.message);
+          }
         }
       }
-    }
-    for (const oldDrive of oldDrives) {
-      if (!drives.find(newDrive => newDrive.id === oldDrive.id)) {
-        await this.unregisterFolder(oldDrive.id);
+      for (const oldDrive of oldDrives) {
+        if (!drives.find(newDrive => newDrive.id === oldDrive.id)) {
+          await this.unregisterFolder(oldDrive.id);
+        }
       }
+    } catch (err) {
+      if (401 === err?.status) {
+        this.logger.warn('Not authenticated to Google API. Skipping drives refresh.');
+        return;
+      }
+      throw err;
     }
   }
 

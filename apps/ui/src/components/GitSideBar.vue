@@ -29,6 +29,7 @@
       <div class="dropdown" v-if="slotProps.ctx">
         <ul class="dropdown-menu show">
           <li><button class="dropdown-item" type="button" @click="removeFile(slotProps.ctx)"><i class="fa-solid fa-trash"></i> Remove</button></li>
+          <li><button class="dropdown-item" type="button" @click="removeFileCached(slotProps.ctx)"><i class="fa-solid fa-trash"></i> Remove from git</button></li>
         </ul>
       </div>
     </template>
@@ -37,6 +38,7 @@
 <script>
 import GitSideBarRow from './GitSideBarRow.vue';
 import ContextMenu from './ContextMenu.vue';
+import {UtilsMixin} from './UtilsMixin.ts';
 
 export default {
   components: {
@@ -48,6 +50,7 @@ export default {
     checked: Object,
     selectedPath: String
   },
+  mixins: [ UtilsMixin ],
   data() {
     return {
       tree: [],
@@ -117,6 +120,21 @@ export default {
       }
       const path = file.path;
       await this.FileClientService.removeFile('/' + this.driveId + (path.startsWith('/') ? path : '/' + path));
+      this.$refs.contextMenu.close();
+    },
+    async removeFileCached(file) {
+      if (!window.confirm('Are you sure?')) {
+        this.$refs.contextMenu.close();
+        return;
+      }
+      const filePath = file.path;
+      await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/remove_cached`, {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({ filePath })
+      });
       this.$refs.contextMenu.close();
     },
     showContextMenu(event, ctx) {

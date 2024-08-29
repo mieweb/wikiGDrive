@@ -188,7 +188,13 @@ export class GitScanner {
       const chunk = removedFiles.splice(0, 400);
       const rmParam = chunk.map(fileName => `"${sanitize(fileName)}"`).join(' ');
       if (rmParam) {
-        await this.exec(`git rm -r ${rmParam}`);
+        try {
+          await this.exec(`git rm -r ${rmParam}`);
+        } catch (err) {
+          if (err.message.indexOf('did not match any files') === -1) {
+            throw err;
+          }
+        }
       }
     }
 
@@ -208,11 +214,20 @@ export class GitScanner {
 
   async pullBranch(remoteBranch: string, sshParams?: SshParams) {
     if (!remoteBranch) {
-      remoteBranch = 'master';
+      remoteBranch = 'main';
     }
 
-    await this.exec(`git pull --autostash --rebase origin ${remoteBranch}:master`, {
+    const committer = {
+      name: 'WikiGDrive',
+      email: this.email
+    };
+
+    await this.exec(`git pull --rebase origin ${remoteBranch}`, {
       env: {
+        GIT_AUTHOR_NAME: committer.name,
+        GIT_AUTHOR_EMAIL: committer.email,
+        GIT_COMMITTER_NAME: committer.name,
+        GIT_COMMITTER_EMAIL: committer.email,
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
     });
@@ -230,12 +245,12 @@ export class GitScanner {
     await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
   }
 
-  async pushBranch(remoteBranch: string, sshParams?: SshParams, localBranch = 'master') {
+  async pushBranch(remoteBranch: string, sshParams?: SshParams, localBranch = 'main') {
     if (!remoteBranch) {
-      remoteBranch = 'master';
+      remoteBranch = 'main';
     }
 
-    if (localBranch !== 'master') {
+    if (localBranch !== 'main') {
       await this.exec(`git push --force origin ${localBranch}:${remoteBranch}`, {
         env: {
           GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
@@ -250,7 +265,7 @@ export class GitScanner {
     };
 
     try {
-      await this.exec(`git push origin master:${remoteBranch}`, {
+      await this.exec(`git push origin main:${remoteBranch}`, {
         env: {
           GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
         }
@@ -281,7 +296,7 @@ export class GitScanner {
           throw err;
         }
 
-        await this.exec(`git push origin master:${remoteBranch}`, {
+        await this.exec(`git push origin main:${remoteBranch}`, {
           env: {
             GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
           }
@@ -294,7 +309,10 @@ export class GitScanner {
   }
 
   async resetToLocal(sshParams?: SshParams) {
-    await this.exec('git checkout master --force', {});
+    await this.exec('git checkout main --force', {});
+    try {
+      await this.exec('git rebase --abort', {});
+    } catch (ignoredError) { /* empty */ }
     await this.exec('git reset --hard HEAD', {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
@@ -305,7 +323,7 @@ export class GitScanner {
 
   async resetToRemote(remoteBranch: string, sshParams?: SshParams) {
     if (!remoteBranch) {
-      remoteBranch = 'master';
+      remoteBranch = 'main';
     }
 
     await this.exec('git fetch origin', {
@@ -600,7 +618,7 @@ export class GitScanner {
     }
 
     if (!await this.isRepo()) {
-      await this.exec('git init -b master', { skipLogger: true });
+      await this.exec('git init -b main', { skipLogger: true });
     }
   }
 
@@ -881,12 +899,16 @@ export class GitScanner {
   }
 
   async cmd(cmd: string) {
-    if (!['status', 'remote -v'].includes(cmd)) {
+    if (!['status', 'remote -v', 'ls-files --stage'].includes(cmd)) {
       throw new Error('Forbidden command');
     }
 
     const result = await this.exec('git ' + cmd, { skipLogger: true });
 
     return { stdout: result.stdout, stderr: result.stderr };
+  }
+
+  async removeCached(filePath: string) {
+    await this.exec(`git rm --cached ${filePath}`);
   }
 }

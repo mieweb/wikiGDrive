@@ -86,7 +86,7 @@ export class ConfigController extends Controller {
     await userConfigService.load();
 
     if (body.config?.remote_branch) {
-      userConfigService.config.remote_branch = body.config?.remote_branch || 'master';
+      userConfigService.config.remote_branch = body.config?.remote_branch || 'main';
     }
     if (body.config?.hugo_theme) {
       userConfigService.config.hugo_theme = body.config?.hugo_theme;
