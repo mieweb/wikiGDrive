@@ -26,7 +26,6 @@
         <JobsViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
         <ChangesViewer v-if="activeTab === 'changes'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
-        <GitSettings v-if="activeTab === 'git_settings'" :active-tab="activeTab" :tree-empty="treeEmpty" />
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
 
@@ -35,9 +34,11 @@
           <LogsViewer v-else :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
         </div>
 
+        <SettingsTab v-if="['git_settings', 'drive_config', 'drive_config_git', 'drive_danger'].includes(activeTab)"
+                     :active-tab="activeTab"
+                     :tree-empty="treeEmpty"
+        />
         <ZipkinViewer v-if="activeTab === 'performance'" :active-tab="activeTab" />
-        <DangerSettings v-if="activeTab === 'drive_danger'" :activeTab="activeTab" />
-        <UserSettings v-if="activeTab === 'drive_config' || activeTab === 'drive_config_git'" :activeTab="activeTab" />
         <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
 
         <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
@@ -125,10 +126,12 @@ import DriveTools from '../components/DriveTools.vue';
 import NavBar from '../components/NavBar.vue';
 import GitSettings from '../components/GitSettings.vue';
 import WorkflowsEditor from '../components/WorkflowsEditor.vue';
+import SettingsTab from '../components/SettingsTab.vue';
 
 export default {
   name: 'FolderView',
   components: {
+    SettingsTab,
     GitSettings,
     NavBar,
     DriveTools,
