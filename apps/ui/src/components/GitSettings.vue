@@ -17,7 +17,7 @@
             <label>
               Remote URL
             </label>
-            <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="remote_url" />
+            <input class="form-control" size="50" placeholder="git@github.com:[...].git" v-model="drive_config.remote_url" />
           </div>
           <div class="form-group">
             <label>
@@ -40,7 +40,7 @@
         <div class="card-footer">
           <div class="btn-group">
             <button class="btn btn-primary" type="button" @click="save">Save</button>
-            <button v-if="remote_url && treeEmpty" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
+            <button v-if="drive_config.remote_url && treeEmpty" class="btn btn-secondary" type="button" @click="saveAndReset">Save and reset to remote</button>
           </div>
           <button class="btn btn-danger float-end" type="button" @click="regenerateKey">Regenerate key</button>
         </div>
@@ -66,26 +66,19 @@ export default {
     treeEmpty: {
       type: Boolean,
       default: false
-    }
+    },
+    drive_config: {}
   },
   data() {
     return {
-      user_config: null,
-      remote_url: '',
-      public_key: ''
     };
   },
-  async created() {
-    await this.fetch();
-  },
-  watch: {
-    async $route() {
-      await this.fetch();
-    }
-  },
   computed: {
+    user_config() {
+      return this.drive_config.config || {}
+    },
     github_url() {
-        const remote_url = this.remote_url || '';
+        const remote_url = this.drive_config.remote_url || '';
         if (remote_url.startsWith('git@github.com:')) {
             return remote_url.replace('git@github.com:', 'https://github.com/')
                 .replace(/.git$/, '');
@@ -97,16 +90,6 @@ export default {
     }
   },
   methods: {
-    async processResponse(json) {
-      this.user_config = json.config || {};
-      this.remote_url = json.remote_url;
-      this.public_key = json.public_key;
-    },
-    async fetch() {
-      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
-      const json = await response.json();
-      await this.processResponse(json);
-    },
     async save() {
       const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
@@ -115,12 +98,12 @@ export default {
         },
         body: JSON.stringify({
           config: this.user_config,
-          remote_url: this.remote_url
+          remote_url: this.drive_config.remote_url
         })
       });
       const json = await response.json();
-      await this.processResponse(json);
       await this.$root.changeDrive(this.driveId);
+      await this.emit('changed');
     },
     async saveAndReset() {
       await this.save();
@@ -131,12 +114,11 @@ export default {
         return;
       }
 
-      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}/regenerate_key`, {
+      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}/regenerate_key`, {
         method: 'post'
       });
 
-      const json = await response.json();
-      await this.processResponse(json);
+      await this.emit('changed');
     }
   }
 };

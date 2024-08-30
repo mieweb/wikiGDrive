@@ -1,5 +1,5 @@
 <template>
-  <div class="container mainbar__content-height" v-if="user_config">
+  <div class="container mainbar__content-height" v-if="drive_config">
     <slot name="toolbar">
       <StatusToolBar :active-tab="activeTab" />
     </slot>
@@ -12,7 +12,7 @@
       <div class="card flex-grow-1 flex-shrink-1 overflow-scroll border-left-0-not-first">
         <slot name="header">
         </slot>
-        <div class="card-body">
+        <div class="card-body" v-id="user_config">
           <form>
             <div class="form-group">
               <label :class="!user_config.transform_subdir ? 'text-danger' : ''">Content subdirectory</label>
@@ -91,42 +91,25 @@ export default {
   props: {
     activeTab: {
       type: String
-    }
-  },
-  data() {
-    return {
-      user_config: null,
-      remote_url: '',
-      hugo_themes: []
-    };
-  },
-  async created() {
-    await this.fetch();
-  },
-  watch: {
-    async $route() {
-      await this.fetch();
-    }
+    },
+    drive_config: {},
+    remote_url: {}
   },
   computed: {
+    user_config() {
+      return this.drive_config?.config || {};
+    },
+    hugo_themes() {
+      return this.drive_config?.hugo_themes || [];
+    },
     drive() {
       return this.$root.drive || {};
     },
     userThemeId() {
-      return this.user_config?.hugo_theme?.id || '';
+      return this.drive_config?.user_config?.hugo_theme?.id || '';
     }
   },
   methods: {
-    async processResponse(json) {
-      this.user_config = json.config || {};
-      this.remote_url = json.remote_url;
-      this.hugo_themes = json.hugo_themes;
-    },
-    async fetch() {
-      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`);
-      const json = await response.json();
-      await this.processResponse(json);
-    },
     async save() {
       const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
@@ -134,19 +117,18 @@ export default {
           'Content-type': 'application/json'
         },
         body: JSON.stringify({
-          config: this.user_config,
-          remote_url: this.remote_url
+          config: this.drive_config.config,
+          remote_url: this.drive_config.remote_url
         })
       });
-      const json = await response.json();
-      await this.processResponse(json);
       alert('Saved');
+      this.$emit('changed');
     },
     changeTheme(themeId) {
       if (!themeId) {
-        this.user_config.hugo_theme = {};
+        this.drive_config.config.hugo_theme = {};
       }
-      this.user_config.hugo_theme = this.hugo_themes.find(t => t.id === themeId) || {};
+      this.drive_config.config.hugo_theme = this.hugo_themes.find(t => t.id === themeId) || {};
     }
   }
 };
