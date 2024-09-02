@@ -92,13 +92,19 @@ export default {
     activeTab: {
       type: String
     },
-    drive_config: {},
-    remote_url: {}
+    drive_config: {}
+  },
+  data() {
+    return {
+      user_config: this.drive_config?.config || {}
+    };
+  },
+  watch: {
+    drive_config() {
+      this.user_config = this.drive_config?.config || {};
+    }
   },
   computed: {
-    user_config() {
-      return this.drive_config?.config || {};
-    },
     hugo_themes() {
       return this.drive_config?.hugo_themes || [];
     },
@@ -106,18 +112,18 @@ export default {
       return this.$root.drive || {};
     },
     userThemeId() {
-      return this.drive_config?.user_config?.hugo_theme?.id || '';
+      return this.user_config?.hugo_theme?.id || '';
     }
   },
   methods: {
     async save() {
-      const response = await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
+      await this.authenticatedClient.fetchApi(`/api/config/${this.driveId}`, {
         method: 'put',
         headers: {
           'Content-type': 'application/json'
         },
         body: JSON.stringify({
-          config: this.drive_config.config,
+          config: this.user_config,
           remote_url: this.drive_config.remote_url
         })
       });
@@ -126,9 +132,9 @@ export default {
     },
     changeTheme(themeId) {
       if (!themeId) {
-        this.drive_config.config.hugo_theme = {};
+        this.user_config.hugo_theme = {};
       }
-      this.drive_config.config.hugo_theme = this.hugo_themes.find(t => t.id === themeId) || {};
+      this.user_config.hugo_theme = this.hugo_themes.find(t => t.id === themeId) || {};
     }
   }
 };
