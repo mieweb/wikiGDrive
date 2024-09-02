@@ -184,24 +184,12 @@ export class ActionRunnerContainer extends Container {
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
             Binds: [ // Unlike Mounts those are created if not existing in the host
-              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public:rw`
+              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public:rw`,
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content:ro`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir:rw`,
             ],
             Mounts: [
-              {
-                Source: `${process.env.VOLUME_DATA}/${driveId}_transform`,
-                Target: '/repo',
-                Type: 'bind'
-              },
-              {
-                Source: `${process.env.VOLUME_DATA}${contentDir}`,
-                Target: '/site/content',
-                Type: 'bind'
-              },
-              {
-                Source: `${process.env.VOLUME_DATA}/${driveId}/tmp_dir`,
-                Target: '/site/tmp_dir',
-                Type: 'bind'
-              },
               {
                 Source: '',
                 Target: '/site/resources',
@@ -232,7 +220,7 @@ export class ActionRunnerContainer extends Container {
           -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
           -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site" \\
           -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
-          -v "${process.env.VOLUME_PREVIEW}/${driveId}:/site/public" \\
+          -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
           -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
           --mount "type=tmpfs,destination=/site/resources" \\
           ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
@@ -242,29 +230,13 @@ export class ActionRunnerContainer extends Container {
         result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
           HostConfig: {
             Binds: [ // Unlike Mounts those are created if not existing in the host
-              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public:rw`
+              `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public:rw`,
+              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
+              `${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw`,
+              `${process.env.VOLUME_DATA}${contentDir}:/site/content:rw`,
+              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir:rw`,
             ],
             Mounts: [
-              {
-                Source: `${process.env.VOLUME_DATA}/${driveId}_transform`,
-                Target: '/repo',
-                Type: 'bind'
-              },
-              {
-                Source: `${process.env.VOLUME_DATA}/${driveIdTransform}`,
-                Target: '/site',
-                Type: 'bind',
-              },
-              {
-                Source: `${process.env.VOLUME_DATA}${contentDir}`,
-                Target: '/site/content',
-                Type: 'bind'
-              },
-              {
-                Source: `${process.env.VOLUME_DATA}/${driveId}/tmp_dir`,
-                Target: '/site/tmp_dir',
-                Type: 'bind'
-              },
               {
                 Source: '',
                 Target: '/site/resources',
