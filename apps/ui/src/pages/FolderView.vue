@@ -118,7 +118,6 @@ import ZipkinViewer from '../components/ZipkinViewer.vue';
 import ChangesViewer from '../components/ChangesViewer.vue';
 import JobsViewer from '../components/JobsViewer.vue';
 import UserSettings from '../components/UserSettings.vue';
-import DangerSettings from '../components/DangerSettings.vue';
 import GitLog from '../components/GitLog.vue';
 import GitCommit from '../components/GitCommit.vue';
 import GitInfo from '../components/GitInfo.vue';
@@ -150,7 +149,6 @@ export default {
     ChangesViewer,
     JobsViewer,
     UserSettings,
-    DangerSettings,
     WorkflowsEditor,
     GitLog,
     GitCommit,
