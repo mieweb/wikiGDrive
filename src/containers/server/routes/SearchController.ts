@@ -6,10 +6,10 @@ import {
   RouteGet,
   RouteParamPath,
   RouteParamQuery
-} from './Controller';
-import {FileContentService} from '../../../utils/FileContentService';
-import {ShareErrorHandler} from './FolderController';
-import {UserConfigService} from '../../google_folder/UserConfigService';
+} from './Controller.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {ShareErrorHandler} from './FolderController.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
 
 export class SearchController extends Controller {
   constructor(subPath: string, private filesService: FileContentService) {

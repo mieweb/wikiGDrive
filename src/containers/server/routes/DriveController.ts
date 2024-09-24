@@ -1,16 +1,16 @@
-import {Controller, RouteGet, RouteParamPath, RouteParamUser, RouteResponse} from './Controller';
-import {GitScanner} from '../../../git/GitScanner';
-import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer';
-import {UserConfigService} from '../../google_folder/UserConfigService';
-import {FileContentService} from '../../../utils/FileContentService';
-import {GoogleDriveService} from '../../../google/GoogleDriveService';
-import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor';
-import {AuthConfig} from '../../../model/AccountJson';
-import {googleMimeToExt} from '../../transform/TaskLocalFileTransform';
-import {Container} from '../../../ContainerEngine';
-import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor';
-import {getContentFileService} from '../../transform/utils';
-import {redirError} from '../auth';
+import {Controller, RouteGet, RouteParamPath, RouteParamUser, RouteResponse} from './Controller.ts';
+import {GitScanner} from '../../../git/GitScanner.ts';
+import {FolderRegistryContainer} from '../../folder_registry/FolderRegistryContainer.ts';
+import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
+import {GoogleDriveService} from '../../../google/GoogleDriveService.ts';
+import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
+import {AuthConfig} from '../../../model/AccountJson.ts';
+import {googleMimeToExt} from '../../transform/TaskLocalFileTransform.ts';
+import {Container} from '../../../ContainerEngine.ts';
+import {GoogleTreeProcessor} from '../../google_folder/GoogleTreeProcessor.ts';
+import {getContentFileService} from '../../transform/utils.ts';
+import {redirError} from '../auth.ts';
 
 export class DriveController extends Controller {
   constructor(subPath: string,

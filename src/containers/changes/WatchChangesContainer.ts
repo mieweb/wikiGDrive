@@ -113,6 +113,9 @@ export class WatchChangesContainer extends Container {
     if (this.intervals[driveId]) {
       return;
     }
+
+    this.logger.info('Starting watching: ' + driveId);
+
     this.intervals[driveId] = setInterval(async () => {
       if (!this.auth) {
         return;
@@ -124,6 +127,7 @@ export class WatchChangesContainer extends Container {
       try {
         if (!this.lastToken[driveId]) {
           this.lastToken[driveId] = await this.googleDriveService.getStartTrackToken(this.auth, driveId);
+          // await this.googleDriveService.setupWatchChannel(this.auth, this.lastToken[driveId], driveId);
           return;
         }
 
