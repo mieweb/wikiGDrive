@@ -30,6 +30,12 @@ export interface ControllerRouteParamBody {
   docs?: RouteDoc;
 }
 
+export interface ControllerRouteParamHeaders {
+  type: 'headers';
+  parameterIndex: number;
+  docs?: RouteDoc;
+}
+
 export interface ControllerRouteParamStream {
   type: 'stream';
   parameterIndex: number;
@@ -70,7 +76,7 @@ export interface ControllerRouteParamPath {
 }
 
 type ControllerRouteParam = ControllerRouteParamGetAll | ControllerRouteParamQuery
-  | ControllerRouteParamBody | ControllerRouteParamPath | ControllerRouteParamStream
+  | ControllerRouteParamBody | ControllerRouteParamHeaders | ControllerRouteParamPath | ControllerRouteParamStream
   | ControllerRouteParamRelated | ControllerRouteParamUser | ControllerRouteParamMethod;
 
 export interface RouteDoc {
@@ -243,6 +249,12 @@ export class Controller implements ControllerCallContext {
                     body = await boundFilter(body);
                   }
                   args[param.parameterIndex] = body;
+                }
+                break;
+              case 'headers':
+                {
+                  const headers = req.headers;
+                  args[param.parameterIndex] = headers;
                 }
                 break;
               case 'stream':
@@ -443,6 +455,18 @@ export function RouteParamBody(docs: RouteDoc = {}) {
     const route = targetClass.getRoute(targetClass, methodProp);
     const param: ControllerRouteParamBody = {
       type: 'body',
+      parameterIndex,
+      docs
+    };
+    route.params.push(param);
+  };
+}
+
+export function RouteParamHeaders(docs: RouteDoc = {}) {
+  return function (targetClass: Controller, methodProp: string, parameterIndex: number) {
+    const route = targetClass.getRoute(targetClass, methodProp);
+    const param: ControllerRouteParamHeaders = {
+      type: 'headers',
       parameterIndex,
       docs
     };
