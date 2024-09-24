@@ -4,6 +4,7 @@
 
 import {Logger} from 'winston';
 import {Writable} from 'stream';
+import crypto from 'crypto';
 
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile.ts';
 import {FileId} from '../model/model.ts';
@@ -47,6 +48,40 @@ export class GoogleDriveService {
   constructor(private logger: Logger, private quotaLimiter: QuotaLimiter) {
   }
 
+  async setupWatchChannel(auth: HasAccessToken, startPageToken: string, driveId: string) {
+    // This API does not work as intended, no webhook is executed on change
+
+    const hexstring = crypto.randomBytes(16).toString('hex');
+    const uuid = hexstring.substring(0,8) + '-' + hexstring.substring(8,12) + '-' + hexstring.substring(12,16) + '-' + hexstring.substring(16,20) + '-' + hexstring.substring(20);
+
+    const params = {
+      pageToken: startPageToken,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      // fields: '*', // file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed)',
+      includeRemoved: true,
+      driveId: driveId ? driveId : undefined
+    };
+
+    const body = {
+      id: uuid,
+      type: 'web_hook',
+      address: process.env.DOMAIN + '/webhook', // Your receiving URL.
+      expiration: String(Date.now() + 10 * 60 * 1000)
+    };
+
+    await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'POST', 'https://www.googleapis.com/drive/v3/changes/watch', params, body);
+/*
+  {
+      kind: 'api#channel',
+        id: '1873c104-3f34-07e2-086e-c97e8c23cb55',
+        resourceId: 'VZoPsZrgUX6TNl0BxbV2rN_zUIU',
+        resourceUri: 'https://www.googleapis.com/drive/v3/changes?alt=json&driveId=0AI7ud-sa0EAJUk9PVA&fields=*&includeItemsFromAllDrives=true&includeRemoved=true&pageToken=78&supportsAllDrives=true',
+        expiration: '1727025863000'
+  }
+*/
+  }
+
   async getStartTrackToken(auth: HasAccessToken, driveId?: string): Promise<string> {
     const params = {
       supportsAllDrives: true,
@@ -59,23 +94,6 @@ export class GoogleDriveService {
 
     const res = await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'GET', 'https://www.googleapis.com/drive/v3/changes/startPageToken', params);
     return res.startPageToken;
-  }
-
-  async subscribeWatch(auth: HasAccessToken, pageToken: string, driveId?: string) {
-    try {
-      const params = {
-        pageToken,
-          supportsAllDrives: true,
-        includeItemsFromAllDrives: true,
-        fields: 'newStartPageToken, nextPageToken, changes( file(id, name, mimeType, modifiedTime, size, md5Checksum, lastModifyingUser, parents, version, exportLinks, trashed), removed)',
-        includeRemoved: true,
-        driveId: driveId ? driveId : undefined
-      };
-      return await driveFetch(this.quotaLimiter, await auth.getAccessToken(), 'POST', 'https://www.googleapis.com/drive/v3/changes/watch', params);
-    } catch (err) {
-      err.message = 'Error watching: ' + err.message;
-      throw err;
-    }
   }
 
   async watchChanges(auth: HasAccessToken, pageToken: string, driveId?: string): Promise<Changes> {

@@ -1,7 +1,7 @@
 import {Logger} from 'winston';
 
 import {
-  Controller, RouteParamBody, RoutePost,
+  Controller, RouteParamBody, RouteParamHeaders, RoutePost,
 } from './Controller.ts';
 
 export class WebHookController extends Controller {
@@ -11,8 +11,8 @@ export class WebHookController extends Controller {
   }
 
   @RoutePost('/')
-  async postEvent(@RouteParamBody() body: undefined) {
-    this.queryLogger.info(`WebHookController.postEvent ${JSON.stringify(body)}`);
+  async postEvent(@RouteParamBody() body: undefined, @RouteParamHeaders() headers: undefined) {
+    this.queryLogger.info(`WebHookController.postEvent ${JSON.stringify(headers)} ${JSON.stringify(body)}`);
 
     return {};
   }
