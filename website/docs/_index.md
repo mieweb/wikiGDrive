@@ -1,5 +1,5 @@
 ---
-title: _index
+title: Usage
 navWeight: 1000 # Upper weight gets higher precedence, optional.
 ---
 # wikiGDrive

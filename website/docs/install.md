@@ -17,8 +17,17 @@ npm i -g @mieweb/wikigdrive
 
 ## App setup
 
+Across few years Google changed this process several times.
+
+Here are rough guidelines where to click. They will be probably changed :(.
+
 1. Go to [console](https://console.developers.google.com/)
-2. Create New Project
-3. Enable Apis -> add Google Drive API
-4. Enable Apis -> Add Google Docs API
-5. Credentials -> Create Credentials (OAuth Client ID) -> Other ( see authorization section )
+2. Under project download click ![New project](./install/new_project.png)
+3. Add Google Drive API ![Enable Apis](./install/enable_api.png)
+4. Go to ![Credentials](./install/create_credentials3.png)
+5. Click ![Create Credentials](./install/create_credentials.png)
+6. Select type of data to access ![](./install/credentials.png)
+7. Create ![Service account](./install/service_account.png)
+8. Download ![Service account key](./install/service_account_key.png)
+8. Create ![Consent screen](./install/consent.png)
+9. Create ![Oauth Client ID](./install/oauth.png)
