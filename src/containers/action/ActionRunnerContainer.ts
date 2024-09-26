@@ -208,7 +208,7 @@ export class ActionRunnerContainer extends Container {
       } else {
         const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
           CONFIG_TOML: '/site/tmp_dir/config.toml',
-          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/`,
+          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
           GIT_AUTHOR_NAME: committer.name,
           GIT_AUTHOR_EMAIL: committer.email,
           GIT_COMMITTER_NAME: committer.name,
