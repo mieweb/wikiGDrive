@@ -57,9 +57,14 @@ Prism.hooks.add('before-highlight', function (env) {
 });
 
 Prism.hooks.add('wrap', function (env) {
+  function removeHash(url) {
+    url = (url || '').replace(/#.*$/, '');
+    return url;
+  }
+
   if ('url' === env.type) {
     env.tag = 'a';
-    env.attributes.href = env.content;
+    env.attributes.href = removeHash(env.content);
     env.attributes['data-to-rewrite'] = 'true';
   }
   if (/-link$/.test(env.type)) {

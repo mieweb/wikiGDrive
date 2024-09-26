@@ -80,6 +80,7 @@ export class ConfigController extends Controller {
 
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
+    await gitScanner.setSafeDirectory();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
     const userConfigService = new UserConfigService(googleFileSystem);

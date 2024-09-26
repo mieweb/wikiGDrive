@@ -1,5 +1,5 @@
 <template>
-  <div class="container mainbar__content-height" v-if="drive_config.config">
+  <div class="container mainbar__content-height" v-if="config">
     <StatusToolBar :active-tab="activeTab" />
 
     <div class="overflow-scroll d-flex flex-row mt-3">
@@ -15,7 +15,7 @@
           <h4>Git</h4>
 
           <button class="btn btn-warning" type="button" @click="resetToLocal">Reset to local</button>
-          <button v-if="drive_config.remote_url" class="btn btn-warning" type="button" @click="resetToRemote">Reset to remote</button>
+          <button v-if="remote_url" class="btn btn-warning" type="button" @click="resetToRemote">Reset to remote</button>
           <button class="btn btn-warning" type="button" @click="removeUntracked">Remove untracked files</button>
           <button class="btn btn-danger" type="button" @click="nukeGitDir()"><i class="fa-solid fa-explosion"></i> Nuke .git directory</button>
 
@@ -45,6 +45,14 @@ export default {
       type: String
     },
     drive_config: {}
+  },
+  computed: {
+    config() {
+      return this.drive_config?.config || {};
+    },
+    remote_url() {
+      return this.drive_config?.remote_url || '';
+    }
   }
 };
 </script>
