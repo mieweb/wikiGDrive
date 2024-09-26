@@ -82,6 +82,9 @@ export default {
     }
   },
   computed: {
+    public_key() {
+      return this.drive_config?.public_key || '';
+    },
     github_url() {
         const remote_url = this.remote_url || '';
         if (remote_url.startsWith('git@github.com:')) {
@@ -108,7 +111,7 @@ export default {
       });
       await response.json();
       await this.$root.changeDrive(this.driveId);
-      await this.emit('changed');
+      await this.$emit('changed');
     },
     async saveAndReset() {
       await this.save();
@@ -123,7 +126,7 @@ export default {
         method: 'post'
       });
 
-      await this.emit('changed');
+      await this.$emit('changed');
     }
   }
 };

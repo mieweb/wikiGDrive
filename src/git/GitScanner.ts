@@ -48,6 +48,13 @@ export class GitScanner {
 
     let [ stdout, stderr ] = [ null, null ];
 
+    if (!opts.env) {
+      opts.env = {};
+    }
+    if (!opts.env['HOME']) {
+      opts.env['HOME'] = process.env.HOME;
+    }
+
     try {
       await new Promise((resolve, reject) => {
         exec(command, { cwd: this.rootPath, env: opts.env, maxBuffer: 1024 * 1024 }, (error, stdoutResult, stderrResult) => {
@@ -620,6 +627,10 @@ export class GitScanner {
     if (!await this.isRepo()) {
       await this.exec('git init -b main', { skipLogger: true });
     }
+  }
+
+  async setSafeDirectory() {
+    await this.exec('git config --global --add safe.directory ' + this.rootPath);
   }
 
   async getBranchCommit(branch: string): Promise<string> {
