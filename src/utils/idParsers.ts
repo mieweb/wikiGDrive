@@ -55,13 +55,13 @@ export function urlToFolderId(url: string): string | null {
     return null;
   }
 
-  if (url.startsWith('https://docs.google.com/drawings/d/')) {
-    const id = url.substring(url.indexOf('docs.google.com/drawings/d/') + 'docs.google.com/drawings/d/'.length);
+  if (url.startsWith('https://docs.google.com/drawings/')) {
+    const id = url.split('/d/')[1];
     return stripUrlSuffix(id);
   }
 
-  if (url.indexOf('docs.google.com/document/d/') > 0) {
-    const id = url.substring(url.indexOf('docs.google.com/document/d/') + 'docs.google.com/document/d/'.length);
+  if (url.indexOf('docs.google.com/document/') > 0) {
+    const id = url.split('/d/')[1];
     return stripUrlSuffix(id);
   }
 
