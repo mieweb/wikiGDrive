@@ -36,11 +36,12 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
+      BODY: ${{ github.event.head_commit.message }}
     steps:
       - uses: actions/checkout@v4
       - name: Create pull request
         run: |
           gh_pr_up() {
-            gh pr create --draft $* || gh pr edit $*
+            gh pr create --draft $* --body "${BODY}" || gh pr edit $* --body "${BODY}"
           }
-          gh_pr_up --base master --title "${BRANCH_NAME}" --body "Description"
+          gh_pr_up --base master --title "${BRANCH_NAME}"
