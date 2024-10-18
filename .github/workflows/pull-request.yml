@@ -84,7 +84,7 @@ jobs:
           --tmpfs /tmp \
           -v "pr-${{ github.event.number }}":/data \
           -v /home/wikigdrive/service_account.json:/service_account.json \
-          -v /home/wikigdrive/env.develop:/usr/src/app/.env \
+          -v /home/wikigdrive/env.pr:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/dist/hugo" \
           -e "GIT_SHA=${{ github.sha }}" \
@@ -93,6 +93,7 @@ jobs:
           -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \
           -e "AUTH_INSTANCE=pr-${{ github.event.number }}" \
           -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
+          -e "ACTION_IMAGE=wgd-action-runner:pr-${{ github.event.number }}" \
           "wikigdrive-feature:${{ github.sha }}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
