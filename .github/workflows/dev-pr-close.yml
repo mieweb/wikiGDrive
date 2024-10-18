@@ -18,7 +18,7 @@ jobs:
           cache: 'npm'
       - name: Git config
         run: |
-          git config --global user.email "${GH_ORG_EMAI}"
+          git config --global user.email "${GH_ORG_EMAIL}"
           git config --global user.name "${GH_ORG_NAME}"
       - name: Apply version bump (major)
         if: contains(github.event.pull_request.labels.*.name, 'major')
