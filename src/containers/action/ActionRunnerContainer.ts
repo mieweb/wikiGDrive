@@ -1,7 +1,6 @@
 import * as path from 'path';
 import {fileURLToPath} from 'url';
 import winston from 'winston';
-import Docker from 'dockerode';
 import yaml from 'js-yaml';
 
 import {Container, ContainerEngine} from '../../ContainerEngine.ts';
@@ -10,12 +9,14 @@ import {BufferWritable} from '../../utils/BufferWritable.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {GitScanner} from '../../git/GitScanner.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
+import {DockerContainer} from './DockerContainer.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
 export interface ActionStep {
   name?: string;
   uses: string;
+  with?: {[key: string]: string};
   env?: {[key: string]: string};
 }
 
@@ -79,6 +80,15 @@ export async function convertActionYaml(actionYaml: string): Promise<ActionDefin
   return actionDefs;
 }
 
+function withToEnv(map: { [p: string]: string }) {
+  const retVal = {};
+  if (map) {
+    for (const key in map) {
+      retVal['INPUT_' + key.replace(/ /g, '_').toUpperCase()] = map[key];
+    }
+  }
+  return retVal;
+}
 
 export class ActionRunnerContainer extends Container {
   private logger: winston.Logger;
@@ -100,174 +110,28 @@ export class ActionRunnerContainer extends Container {
     await this.userConfigService.load();
   }
 
-  async runDocker(driveId: FileId, generatedFileService: FileContentService, step: ActionStep, config): Promise<number> {
+  async run(driveId: FileId) {
     if (!process.env.ACTION_IMAGE) {
       this.logger.error('No env.ACTION_IMAGE');
-      return -1;
+      this.isErr = true;
+      return;
     }
     if (!process.env.VOLUME_DATA) {
       this.logger.error('No env.VOLUME_DATA');
-      return -1;
+      this.isErr = true;
+      return;
     }
     if (!process.env.VOLUME_PREVIEW) {
       this.logger.error('No env.VOLUME_PREVIEW');
-      return -1;
+      this.isErr = true;
+      return;
     }
     if (!process.env.DOMAIN) {
       this.logger.error('No env.DOMAIN');
-      return -1;
+      this.isErr = true;
+      return;
     }
 
-    let code = 0;
-    const themeUrl = config?.hugo_theme?.url || '';
-    const themeSubPath = config?.hugo_theme?.path || '';
-
-    const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
-
-    const contentDir = config.transform_subdir ?
-      `/${driveIdTransform}${ !config.transform_subdir.startsWith('/') ? '/' : '' }${config.transform_subdir}` :
-      `/${driveIdTransform}`;
-    const docker = new Docker({socketPath: '/var/run/docker.sock'});
-
-    const themeId = config?.hugo_theme?.id || '';
-    const configToml = config?.config_toml || '#relativeURLs = true\n' +
-      'languageCode = "en-us"\n' +
-      'title = "My New Hugo Site"\n';
-
-    await this.filesService.mkdir('tmp_dir');
-
-    if (themeId) {
-      const configTomlPrefix = `theme="${themeId}"\n`;
-      await this.filesService.writeFile('tmp_dir/config.toml', configTomlPrefix + configToml);
-    } else {
-      await this.filesService.writeFile('tmp_dir/config.toml', configToml);
-    }
-
-    const committer = {
-      name: this.params.user_name || 'WikiGDrive',
-      email: this.params.user_email || 'wikigdrive@wikigdrive.com'
-    };
-
-    const additionalEnv = this.payloadToEnv();
-
-    try {
-      const writable = new BufferWritable();
-
-      let result;
-
-      await this.generatedFileService.remove('resources');
-
-      if (themeId) {
-        const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
-          CONFIG_TOML: '/site/tmp_dir/config.toml',
-          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/${themeId}/`,
-          THEME_ID: themeId,
-          THEME_SUBPATH: themeSubPath,
-          THEME_URL: themeUrl,
-          GIT_AUTHOR_NAME: committer.name,
-          GIT_AUTHOR_EMAIL: committer.email,
-          GIT_COMMITTER_NAME: committer.name,
-          GIT_COMMITTER_EMAIL: committer.email
-        }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
-
-        this.logger.info(`DockerAPI:\ndocker run \\
-        --user=${process.getuid()} \\
-        -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
-        -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
-        -v "${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public" \\
-        -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-        --mount type=tmpfs,destination=/site/resources" \
-        ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
-        ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
-        `);
-
-        result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
-          HostConfig: {
-            Binds: [ // Unlike Mounts those are created if not existing in the host
-              `${process.env.VOLUME_PREVIEW}/${driveId}/${themeId}:/site/public:rw`,
-              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
-              `${process.env.VOLUME_DATA}${contentDir}:/site/content:ro`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir:rw`,
-            ],
-            Mounts: [
-              {
-                Source: '',
-                Target: '/site/resources',
-                Type: 'tmpfs',
-                ReadOnly: false,
-                TmpfsOptions: {
-                  SizeBytes: undefined,
-                  Mode: 0o777
-                }
-              }
-            ]
-          },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
-          User: String(process.getuid())
-        });
-      } else {
-        const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
-          CONFIG_TOML: '/site/tmp_dir/config.toml',
-          BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
-          GIT_AUTHOR_NAME: committer.name,
-          GIT_AUTHOR_EMAIL: committer.email,
-          GIT_COMMITTER_NAME: committer.name,
-          GIT_COMMITTER_EMAIL: committer.email
-        }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);
-
-        this.logger.info(`DockerAPI:\ndocker run \\
-          --user=${process.getuid()} \\
-          -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo" \\
-          -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site" \\
-          -v "${process.env.VOLUME_DATA}${contentDir}:/site/content" \\
-          -v "${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public" \\
-          -v "${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir" \\
-          --mount "type=tmpfs,destination=/site/resources" \\
-          ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
-          ${process.env.ACTION_IMAGE} /steps/step_${step.uses}
-        `);
-
-        result = await docker.run(process.env.ACTION_IMAGE, [`/steps/step_${step.uses}`], writable, {
-          HostConfig: {
-            Binds: [ // Unlike Mounts those are created if not existing in the host
-              `${process.env.VOLUME_PREVIEW}/${driveId}/_manual:/site/public:rw`,
-              `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
-              `${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw`,
-              `${process.env.VOLUME_DATA}${contentDir}:/site/content:rw`,
-              `${process.env.VOLUME_DATA}/${driveId}/tmp_dir:/site/tmp_dir:rw`,
-            ],
-            Mounts: [
-              {
-                Source: '',
-                Target: '/site/resources',
-                Type: 'tmpfs',
-                ReadOnly: false,
-                TmpfsOptions: {
-                  SizeBytes: undefined,
-                  Mode: 0o777
-                }
-              }
-            ]
-          },
-          Env: Object.keys(env).map(key => `${key}=${env[key]}`),
-          User: String(process.getuid())
-        });
-      }
-
-      if (result?.length > 0 && result[0].StatusCode > 0) {
-        this.logger.error(writable.getBuffer().toString());
-        code = result[0].StatusCode;
-      } else {
-        this.logger.info(writable.getBuffer().toString());
-      }
-    } catch (err) {
-      code = err.statusCode || 1;
-      this.logger.error(err.stack ? err.stack : err.message);
-    }
-    return code;
-  }
-
-  async run(driveId: FileId) {
     const config = this.userConfigService.config;
 
     const gitScanner = new GitScanner(this.logger, this.generatedFileService.getRealPath(), 'wikigdrive@wikigdrive.com');
@@ -292,42 +156,130 @@ export class ActionRunnerContainer extends Container {
         throw new Error('No action steps');
       }
 
-      for (const step of actionDef.steps) {
-        this.logger.info('Step: ' + (step.name || step.uses));
+      const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
 
-        if (!step.env) {
-          step.env = {};
-        }
-        step.env['OWNER_REPO'] = ownerRepo;
-        step.env['PAYLOAD'] = this.params.payload;
+      const committer = {
+        name: this.params.user_name || 'WikiGDrive',
+        email: this.params.user_email || 'wikigdrive@wikigdrive.com'
+      };
 
-        let lastCode = 0;
-        switch (step.uses) {
-          case 'push_branch':
+      const additionalEnv = this.payloadToEnv();
+
+      const writable = new BufferWritable();
+
+      // await this.generatedFileService.remove('resources');
+
+/*      const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
+        CONFIG_TOML: '/site/tmp_dir/config.toml',
+        BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
+        GIT_AUTHOR_NAME: committer.name,
+        GIT_AUTHOR_EMAIL: committer.email,
+        GIT_COMMITTER_NAME: committer.name,
+        GIT_COMMITTER_EMAIL: committer.email
+      }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);*/
+
+      const env = Object.assign({
+        CONFIG_TOML: '/site/tmp_dir/config.toml',
+        BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
+        GIT_AUTHOR_NAME: committer.name,
+        GIT_AUTHOR_EMAIL: committer.email,
+        GIT_COMMITTER_NAME: committer.name,
+        GIT_COMMITTER_EMAIL: committer.email
+      }, additionalEnv);
+
+      //--user=$(id -u):$(getent group docker | cut -d: -f3)
+      this.logger.info(`DockerAPI:\ndocker start \\
+        --user=${process.getuid()}:${process.getegid()} \\
+        // -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro" \\
+        // -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw" \\
+        // --mount "type=tmpfs,destination=/site/resources" \\
+        ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
+        ${process.env.ACTION_IMAGE}
+      `);
+
+      const container = new DockerContainer(process.env.ACTION_IMAGE);
+
+      try {
+        await container.create(env, writable);
+        await container.start();
+        this.logger.info('container created: ' + container.id);
+
+        this.logger.info('docker cp . /site');
+        await container.copy(generatedFileService.getRealPath(), '/site');
+
+        // Convert to step:
+        const configToml = config?.config_toml || '#relativeURLs = true\n' +
+          'languageCode = "en-us"\n' +
+          'title = "My New Hugo Site"\n';
+        this.logger.info('docker write /site/tmp_dir/config.toml');
+        await container.putFile(new TextEncoder().encode(configToml), '/site/tmp_dir/config.toml');
+        //
+
+        for (const step of actionDef.steps) {
+          this.logger.info('Step: ' + (step.name || step.uses));
+
+          if (!step.env) {
+            step.env = {};
+          }
+          step.env['OWNER_REPO'] = ownerRepo;
+          step.env['PAYLOAD'] = this.params.payload;
+
+          let lastCode = 0;
+          switch (step.uses) {
+            case 'push_branch':
             {
               const additionalEnv = this.payloadToEnv();
               await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
                 privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
               }, `wgd/${additionalEnv['BRANCH']}`);
             }
-            break;
-          case 'auto_commit':
+              break;
+            case 'auto_commit':
             {
               await gitScanner.autoCommit();
             }
+              break;
+            default:
+              this.logger.info(`docker exec ${container.id} /steps/step_${step.uses}`);
+              try {
+                if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+                  const [action_repo, action_version] = step.uses.split('@');
+                  lastCode = await container.exec(`/steps/step_gh_action ${action_repo} ${action_version}`, Object.assign(step.env, withToEnv(step.with)));
+                } else {
+                  lastCode = await container.exec(`/steps/step_${step.uses}`, Object.assign(step.env, withToEnv(step.with)));
+                }
+                if (lastCode > 0) {
+                  this.logger.error(writable.getBuffer().toString());
+                } else {
+                  this.logger.info(writable.getBuffer().toString());
+                }
+              } catch (err) {
+                this.logger.error(err.stack ? err.stack : err.message);
+                lastCode = 1;
+              }
+              break;
+          }
+          if (0 !== lastCode) {
+            this.isErr = true;
             break;
-          default:
-            lastCode = await this.runDocker(driveId, generatedFileService, step, config);
-            break;
+          }
         }
-        if (0 !== lastCode) {
-          this.isErr = true;
-          break;
-        }
+
+        // Convert to step
+        const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+        this.logger.info('docker export /site/public ' + previewOutput);
+        await container.export('/site/public', previewOutput);
+        //
+
+        this.logger.info('Action completed');
+
+      } catch (err) {
+        this.logger.error(err.stack ? err.stack : err.message);
+        this.isErr = true;
+      } finally {
+        await container.stop();
       }
     }
-
-    // fs.unlinkSync(`${tempDir}/config.toml`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
