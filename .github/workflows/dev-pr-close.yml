@@ -12,10 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - uses: mheap/github-action-required-labels@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          node-version: 20
-          cache: 'npm'
+          mode: exactly
+          count: 1
+          labels: 'major, minor, patch'
       - name: Git config
         env:
           GH_ORG_EMAIL: "WikiGDrive"
