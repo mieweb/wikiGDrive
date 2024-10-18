@@ -25,7 +25,7 @@ import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
-import {frontmatter} from './frontmatters/frontmatter.js';
+import {frontmatter} from './frontmatters/frontmatter.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 
