@@ -17,6 +17,9 @@ jobs:
           node-version: 20
           cache: 'npm'
       - name: Git config
+        env:
+          GH_ORG_EMAIL: "WikiGDrive"
+          GH_ORG_NAME: "wikigdrive@wikigdrive.com"
         run: |
           git config --global user.email "${GH_ORG_EMAIL}"
           git config --global user.name "${GH_ORG_NAME}"
