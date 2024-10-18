@@ -1,0 +1,46 @@
+name: 'Dev - PR labeled'
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - labeled
+jobs:
+  merge_pr:
+    name: 'PR Version labeled'
+#    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v4
+      - uses: mheap/github-action-required-labels@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          mode: exactly
+          count: 1
+          labels: 'major, minor, patch'
+#      - name: Git config
+#        env:
+#          GH_ORG_EMAIL: "WikiGDrive"
+#          GH_ORG_NAME: "wikigdrive@wikigdrive.com"
+#        run: |
+#          git config --global user.email "${GH_ORG_EMAIL}"
+#          git config --global user.name "${GH_ORG_NAME}"
+#      - name: Apply version bump (major)
+#        if: contains(github.event.pull_request.labels.*.name, 'major')
+#        run: npm version major
+#      - name: Apply version bump (minor)
+#        if: contains(github.event.pull_request.labels.*.name, 'minor')
+#        run: npm version minor
+#      - name: Apply version bump (patch)
+#        if: contains(github.event.pull_request.labels.*.name, 'patch')
+#        run: npm version patch
+#      - name: Git push version bump
+#        run: git push origin master --follow-tags --force
+#      - name: Output current version
+#        run: npm pkg get version
