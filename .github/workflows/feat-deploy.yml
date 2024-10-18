@@ -40,4 +40,4 @@ jobs:
           gh_pr_up() {
             gh pr create $* || gh pr edit $*
           }
-          gh_pr_up --draft --branch master --template ".github/pull_request.md" --title "${BRANCH_NAME}" --body "Description"
+          gh_pr_up --draft --base master --template ".github/pull_request.md" --title "${BRANCH_NAME}" --body "Description"
