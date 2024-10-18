@@ -38,6 +38,6 @@ jobs:
       - name: Create pull request
         run: |
           gh_pr_up() {
-            gh pr create $* || gh pr edit $*
+            gh pr create --draft $* --template ".github/pull_request.md" || gh pr edit $*
           }
-          gh_pr_up --draft --base master --template ".github/pull_request.md" --title "${BRANCH_NAME}" --body "Description"
+          gh_pr_up --base master --title "${BRANCH_NAME}" --body "Description"
