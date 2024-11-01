@@ -9,16 +9,17 @@
           <div class="btn-group-vertical w-100">
             <a class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
             <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name && selectedFile.id" @click.prevent="$emit('transform', $event, selectedFile)">Transform Single Markdown</a>
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="transformAll">Transform All Markdown</a>
           </div>
         </div>
-        <div class="d-block mt-3" v-if="active_jobs.length === 0">
+        <div class="d-block mt-3" v-if="!isGDocsPreview && drive.name">
           <h6>Workflows <a href="#workflows"><i class="fa-solid fa-edit"></i></a></h6>
           <div class="btn-group-vertical w-100">
-            <a class="btn btn-outline-secondary me-2" v-if="!isGDocsPreview && drive.name" @click.prevent="renderPreview">Render Preview</a>
+            <div v-for="(workflow_job, id) in workflow_jobs" :key="id">
+              <a v-if="!workflow_job.hide_in_menu" class="btn btn-outline-secondary me-2 w-100" @click.prevent="runAction($event, id)">
+                {{ workflow_job.name }}
+              </a>
+            </div>
           </div>
-          {{actions}}
         </div>
       </div>
       <div class="flex-grow-1 flex-shrink-1 overflow-scroll border-left-0-not-first ms-3">
@@ -79,7 +80,7 @@
   </div>
 </template>
 <script>
-import {UtilsMixin} from './UtilsMixin.ts';
+import {disableElement, UtilsMixin} from './UtilsMixin.ts';
 import {UiMixin} from './UiMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
 import yaml from 'js-yaml';
@@ -95,7 +96,7 @@ export default {
   },
   data() {
     return {
-      actions: []
+      workflow_jobs: []
     };
   },
   components: {StatusToolBar},
@@ -138,12 +139,25 @@ export default {
       const json = await response.json();
       if (json.config?.actions_yaml) {
         const actions_yaml = json.config?.actions_yaml;
-        this.actions = [];
-        yaml.loadAll(actions_yaml, (actions) => {
-          this.actions = actions.map(action => action.on);
+        this.workflow_jobs = {};
+        yaml.loadAll(actions_yaml, (workflow) => {
+          this.workflow_jobs = workflow.jobs;
         });
       }
-    }
+    },
+    async runAction(event, id) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/${id}`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            selectedFileId: this.selectedFile.id
+          })
+        });
+      });
+    },
   }
 };
 </script>
