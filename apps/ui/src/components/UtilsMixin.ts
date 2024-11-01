@@ -212,20 +212,6 @@ export const UtilsMixin = {
         });
       });
     },
-    async renderPreview(event) {
-      await disableElement(event, async () => {
-        await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/transform`, {
-          method: 'post'
-        });
-      });
-    },
-    async transformAll(event) {
-      await disableElement(event, async () => {
-        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}`, {
-          method: 'post'
-        });
-      });
-    },
     async uploadGdrive(event) {
       await disableElement(event, async () => {
         const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/upload', { method: 'get' });
@@ -233,13 +219,6 @@ export const UtilsMixin = {
         if (json.shareUrl) {
           window.location = json.shareUrl;
         }
-      });
-    },
-    async transformSingle(event, selectedFile) {
-      await disableElement(event, async () => {
-        await this.authenticatedClient.fetchApi(`/api/transform/${this.driveId}/${selectedFile.id}`, {
-          method: 'post'
-        });
       });
     },
     downloadOdt(fileId) {

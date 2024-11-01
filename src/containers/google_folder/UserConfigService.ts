@@ -5,7 +5,7 @@ import yaml from 'js-yaml';
 import {FileContentService} from '../../utils/FileContentService.ts';
 import {HugoTheme} from '../server/routes/ConfigController.ts';
 import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter.ts';
-import {DEFAULT_ACTIONS} from '../action/ActionRunnerContainer.ts';
+import {convertActionYaml} from '../action/ActionRunnerContainer.ts';
 import {RewriteRule} from '../../odt/applyRewriteRule.ts';
 
 async function execAsync(command: string) {
@@ -85,9 +85,9 @@ export class UserConfigService {
       this.config = structuredClone(DEFAULT_CONFIG);
       await this.save();
     }
-    if (!this.config.actions_yaml) {
-      this.config.actions_yaml = yaml.dump(DEFAULT_ACTIONS, FRONTMATTER_DUMP_OPTS);
-    }
+
+    const workflow = await convertActionYaml(this.config.actions_yaml);
+    this.config.actions_yaml = yaml.dump(workflow, FRONTMATTER_DUMP_OPTS);
     if (!this.config.rewrite_rules || this.config.rewrite_rules.length === 0) {
       this.config.rewrite_rules = DEFAULT_REWRITE_RULES;
     }
