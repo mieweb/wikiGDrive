@@ -226,7 +226,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.folderId, jobId: this.params.jobId });
     this.transformLog = new TransformLog();
     this.logger.add(this.transformLog);
   }

@@ -7,7 +7,6 @@ import { randomUUID } from 'crypto';
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
 import {FileId} from '../../model/model.ts';
 import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer.ts';
-import {TransformContainer} from '../transform/TransformContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor.ts';
 import {WorkerPool} from './WorkerPool.ts';
@@ -38,6 +37,7 @@ export interface Job {
   type: JobType;
   title: string;
   trigger?: string;
+  action_id?: string;
   payload?: string;
   access_token?: string;
   ts?: number; // scheduled at
@@ -128,7 +128,7 @@ export class JobManagerContainer extends Container {
     this.workerPool = new WorkerPool(os.cpus().length);
   }
 
-  async getDriveJobs(driveId): Promise<DriveJobs> {
+  async getDriveJobs(driveId: FileId): Promise<DriveJobs> {
     if (!this.driveJobsMap[driveId]) {
       const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
       const driveJobs = await driveFileSystem.readJson('.jobs.json');
@@ -142,7 +142,7 @@ export class JobManagerContainer extends Container {
     return this.driveJobsMap[driveId];
   }
 
-  async setDriveJobs(driveId, driveJobs: DriveJobs) {
+  async setDriveJobs(driveId: FileId, driveJobs: DriveJobs) {
     if (driveJobs) {
       this.driveJobsMap[driveId] = driveJobs;
     }
@@ -192,25 +192,23 @@ export class JobManagerContainer extends Container {
           const userConfigService = new UserConfigService(googleFileSystem);
           await userConfigService.load();
           const config = userConfigService.config;
-          const actionDefs = await convertActionYaml(config.actions_yaml);
-          const action = actionDefs.find(action => action.on === job.trigger);
-          if (action && action['run-name']) {
-            job.title = action['run-name'];
+          const workflow = await convertActionYaml(config.actions_yaml);
+
+          const actionId = job.action_id ? job.action_id : workflow.on[job.trigger];
+          const workflowJob = workflow.jobs[actionId];
+          if (workflowJob && workflowJob.name) {
+            job.title = workflowJob.name;
+            job.action_id = actionId;
+            driveJobs.jobs.push(job);
+
+            this.engine.emit(driveId, 'toasts:added', {
+              title: 'Scheduled: ' + workflowJob.name,
+              message: JSON.stringify(job, null, 2),
+              type: 'action:scheduled',
+              payload: job.payload ? job.payload : 'all'
+            });
           }
         }
-        driveJobs.jobs.push(job);
-        break;
-      case 'transform':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'transform' && notCompletedJob(subJob))) {
-          return;
-        }
-        this.engine.emit(driveId, 'toasts:added', {
-          title: 'Transform scheduled',
-          message: JSON.stringify(job, null, 2),
-          type: 'transform:scheduled',
-          payload: job.payload ? job.payload : 'all'
-        });
-        driveJobs.jobs.push(job);
         break;
       case 'git_fetch':
         if (driveJobs.jobs.find(subJob => subJob.type === 'git_fetch' && notCompletedJob(subJob))) {
@@ -454,55 +452,6 @@ export class JobManagerContainer extends Container {
     }, 100);
   }
 
-  private async transform(folderId: FileId, jobId: string, filesIds: FileId[] = []) {
-    const transformContainer = new TransformContainer({
-      name: folderId,
-      jobId
-    }, { filesIds });
-    const transformedFileSystem = await this.filesService.getSubFileService(folderId + '_transform', '/');
-    const googleFileSystem = await this.filesService.getSubFileService(folderId, '/');
-    await transformContainer.mount2(
-      googleFileSystem,
-      transformedFileSystem
-    );
-
-    const userConfigService = new UserConfigService(googleFileSystem);
-    await userConfigService.load();
-
-    transformContainer.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
-
-    transformContainer.onProgressNotify(({ completed, total, warnings, failed }) => {
-      if (!this.driveJobsMap[folderId]) {
-        return;
-      }
-      const jobs = this.driveJobsMap[folderId].jobs || [];
-      const job = jobs.find(j => j.state === 'running' && j.type === 'transform');
-      if (job) {
-        job.progress = {
-          completed: completed,
-          total: total,
-          failed: failed,
-          warnings
-        };
-        this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
-      }
-    });
-    await this.engine.registerContainer(transformContainer);
-    try {
-      await transformContainer.run(folderId);
-      if (transformContainer.failed()) {
-        throw new Error('Transform failed');
-      }
-
-      const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
-      const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
-      await markdownTreeProcessor.load();
-
-    } finally {
-      await this.engine.unregisterContainer(transformContainer.params.name);
-    }
-  }
-
   private async upload(folderId: FileId, jobId: string, access_token: string) {
     const uploadContainer = new UploadContainer({
       cmd: 'pull',
@@ -576,13 +525,20 @@ export class JobManagerContainer extends Container {
     } finally {
       await this.engine.unregisterContainer(downloadContainer.params.name);
     }
+
+    await this.schedule(folderId, {
+      ...initJob(),
+      type: 'run_action',
+      title: 'Run action: on sync',
+      trigger: 'internal/sync'
+    });
   }
 
-  private async runAction(folderId: FileId, jobId: string, trigger: string, payload: string, user?: { name: string, email: string }) {
+  private async runAction(folderId: FileId, jobId: string, action_id: string, payload: string, user?: { name: string, email: string }) {
     const runActionContainer = new ActionRunnerContainer({
       name: folderId,
       jobId,
-      trigger,
+      action_id,
       payload,
       user_name: user?.name || 'WikiGDrive',
       user_email: user?.email || 'wikigdrive@wikigdrive.com'
@@ -821,56 +777,25 @@ export class JobManagerContainer extends Container {
       case 'sync_all':
         await this.sync(driveId, currentJob.id);
         break;
-      case 'transform':
-        try {
-          await this.transform(driveId, currentJob.id, currentJob.payload ? [ currentJob.payload ] : [] );
-          await this.clearGitCache(driveId);
-
-          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('transform'));
-          this.engine.emit(driveId, 'toasts:added', {
-            title: 'Transform done',
-            type: 'transform:done',
-            payload: currentJob.payload || 'all'
-          });
-
-          await this.schedule(driveId, {
-            ...initJob(),
-            type: 'run_action',
-            title: 'Run action: on ' + currentJob.type,
-            payload: currentJob.payload || 'all',
-            trigger: currentJob.type
-          });
-        } catch (err) {
-          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('transform'));
-          this.engine.emit(driveId, 'toasts:added', {
-            title: 'Transform failed',
-            type: 'transform:failed',
-            err: err.message,
-            links: {
-              ['#drive_logs:job-' + currentJob.id]: 'View logs'
-            },
-            payload: currentJob.payload || 'all'
-          });
-          throw err;
-        }
-        break;
       case 'run_action':
         try {
-          await this.runAction(driveId, currentJob.id, currentJob.trigger, currentJob.payload, currentJob.user);
-          await this.clearGitCache(driveId);
+          await this.runAction(driveId, currentJob.id, currentJob.action_id, currentJob.payload, currentJob.user);
+          await this.clearGitCache(driveId); // TODO: check if necessary?
 
           this.engine.emit(driveId, 'toasts:added', {
-            title: 'Action done',
+            title: 'Done: ' + currentJob.title,
             type: 'run_action:done',
+            payload: this.params.payload
           });
         } catch (err) {
           this.engine.emit(driveId, 'toasts:added', {
-            title: 'Action failed',
+            title: 'Failed: ' + currentJob.title,
             type: 'run_action:failed',
             err: err.message,
             links: {
               ['#drive_logs:job-' + currentJob.id]: 'View logs'
-            }
+            },
+            payload: this.params.payload
           });
           throw err;
         } finally {
@@ -913,12 +838,6 @@ export class JobManagerContainer extends Container {
             links: {
               '#git_log': 'View git history'
             },
-          });
-
-          await this.schedule(driveId, {
-            ...initJob(),
-            type: 'transform',
-            title: 'Transform markdown'
           });
         } catch (err) {
           driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('git_pull'));
@@ -964,4 +883,20 @@ export class JobManagerContainer extends Container {
   async destroy(): Promise<void> {
   }
 
+  progressJob(folderId: FileId, jobId: string,{ completed, total, warnings, failed }) {
+    if (!this.driveJobsMap[folderId]) {
+      return;
+    }
+    const jobs = this.driveJobsMap[folderId].jobs || [];
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      job.progress = {
+        completed: completed,
+        total: total,
+        failed: failed,
+        warnings
+      };
+      this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
+    }
+  }
 }

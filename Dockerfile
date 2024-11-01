@@ -1,6 +1,6 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client
+RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client podman-remote
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
