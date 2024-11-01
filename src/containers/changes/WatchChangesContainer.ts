@@ -99,11 +99,6 @@ export class WatchChangesContainer extends Container {
         payload: fileIdsString,
         title: 'Syncing file: ' + fileIdsString
       });
-      await jobManagerContainer.schedule(driveId, {
-        ...initJob(),
-        type: 'transform',
-        title: 'Transform markdown'
-      });
     }
   }
 

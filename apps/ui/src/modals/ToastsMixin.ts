@@ -11,14 +11,14 @@ export const ToastsMixin = {
           await this.$root.changeDrive(this.drive.id);
           window.location.reload();
           break;
-        case 'transform:scheduled':
-          this.$removeToastMatching(item => item.type.startsWith('transform:'));
+        case 'action:scheduled':
+          this.$removeToastMatching(item => item.type.startsWith('action:'));
           break;
-        case 'transform:failed':
-          this.$removeToastMatching(item => item.type.startsWith('transform:'));
+        case 'action:failed':
+          this.$removeToastMatching(item => item.type.startsWith('action:'));
           break;
-        case 'transform:done':
-          this.$removeToastMatching(item => item.type.startsWith('transform:'));
+        case 'action:done':
+          this.$removeToastMatching(item => item.type.startsWith('action:'));
           break;
         case 'sync:done':
       }
