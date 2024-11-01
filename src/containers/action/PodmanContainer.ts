@@ -7,20 +7,16 @@ import winston from 'winston';
 import {OciContainer} from './OciContainer.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
 
-export class DockerContainer implements OciContainer {
+export class PodmanContainer implements OciContainer {
   public skipMount: false;
 
-  private constructor(private logger: winston.Logger,
-                      public readonly id: string,
-                      public readonly image: string,
-                      private container: Docker.Container,
-                      private repoSubDir: string) {
+  private constructor(private logger: winston.Logger, public readonly id: string, public readonly image: string, private container: Docker.Container) {
   }
 
   static async create(logger: winston.Logger, image: string, env: { [p: string]: string }, repoSubDir: string): Promise<OciContainer> {
-    const dockerEngine = new Docker({socketPath: '/var/run/docker.sock'});
+    const podmanEngine = new Docker({socketPath: '/var/run/podman/podman.sock'});
 
-    const container = await dockerEngine.createContainer({
+    const container = await podmanEngine.createContainer({
       Image: image,
       AttachStdin: false,
       AttachStdout: true,
@@ -28,49 +24,22 @@ export class DockerContainer implements OciContainer {
       Tty: true,
       OpenStdin: false,
       StdinOnce: false,
+
       HostConfig: {
-        // Binds: [ // Unlike Mounts those are created if not existing in the host
-        //   `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
-        //   `${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw`,
-        //   `${process.env.VOLUME_DATA}${contentDir}:/site/content:rw`,
-        // ],
-        Mounts: [
-          {
-            Source: '',
-            Target: '/site/resources',
-            Type: 'tmpfs',
-            ReadOnly: false,
-            TmpfsOptions: {
-              SizeBytes: undefined,
-              Mode: 0o777
-            }
-          }
-        ]
+        Binds: [ // Unlike Mounts those are created if not existing in the host
+          `${process.env.VOLUME_DATA}/${repoSubDir}:/site:O`,
+        ],
       },
       Env: Object.keys(env).map(key => `${key}=${env[key]}`),
       User: String(process.getuid())+ ':' + String(process.getegid())
     });
 
-    //--user=$(id -u):$(getent group docker | cut -d: -f3)
-    // logger.info(`DockerAPI:\ndocker start \\
-    //     --user=${process.getuid()}:${process.getegid()} \\
-    //     // -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro" \\
-    //     // -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw" \\
-    //     // --mount "type=tmpfs,destination=/site/resources" \\
-    //     ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
-    //     ${process.env.ACTION_IMAGE}
-    //   `);
-
-    return new DockerContainer(logger, container.id, image, container, repoSubDir);
+    return new PodmanContainer(logger, container.id, image, container);
   }
 
   async start() {
     await this.container.start();
-    this.logger.info('docker started: ' + this.id);
-
-    if (!this.skipMount) {
-      await this.copy(this.repoSubDir, '/site');
-    }
+    this.logger.info('podman started: ' + this.id);
   }
 
   async stop() {
@@ -78,7 +47,7 @@ export class DockerContainer implements OciContainer {
   }
 
   async copy(realPath: string, remotePath: string, ignoreGit = false) {
-    this.logger.info('docker cp into ' + remotePath);
+    this.logger.info('podman copy into ' + remotePath);
 
     const archive = tarFs.pack(realPath, {
       ignore (name) {
@@ -105,7 +74,7 @@ export class DockerContainer implements OciContainer {
     const writable = new BufferWritable();
     archive.pipe(writable);
 
-    this.logger.info('docker write into ' + remotePath);
+    this.logger.info('podman write into ' + remotePath);
 
     await this.container.putArchive(writable.getBuffer(), {
       path: '/'
@@ -113,7 +82,7 @@ export class DockerContainer implements OciContainer {
   }
 
   async export(remotePath: string, outputDir: string) {
-    this.logger.info('docker export /site/public');
+    this.logger.info('podman export /site/public');
 
     const archive = await this.container.getArchive({
       path: remotePath
@@ -143,7 +112,7 @@ export class DockerContainer implements OciContainer {
   }
 
   async exec(command: string, env: { [p: string]: string}, writable: Writable) {
-    this.logger.info(`docker exec ${this.id} ${command}`);
+    this.logger.info(`podman exec ${this.id} ${command}`);
 
     const cancelTimeout = new AbortController();
 
@@ -152,13 +121,12 @@ export class DockerContainer implements OciContainer {
       AttachStdin: false,
       AttachStdout: true,
       AttachStderr: true,
-      Tty: true,
       Env: Object.keys(env).map(key => `${key}=${env[key]}`),
       //WorkingDir
       abortSignal: cancelTimeout.signal,
     });
 
-    const stream = await exec.start({});
+    const stream = await exec.start({hijack: true, Detach: false});
 
     const stdout = new PassThrough();
     const stderr = new PassThrough();
