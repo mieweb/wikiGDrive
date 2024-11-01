@@ -10,74 +10,142 @@ import {BufferWritable} from '../../utils/BufferWritable.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {GitScanner} from '../../git/GitScanner.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
+import {DockerContainer} from './DockerContainer.ts';
+import {PodmanContainer} from './PodmanContainer.ts';
+import {ActionTransform} from './ActionTransform.ts';
 
 const __filename = import.meta.filename;
 
 export interface ActionStep {
   name?: string;
-  uses: string;
+  uses?: string;
+  run?: string;
   with?: {[key: string]: string};
   env?: {[key: string]: string};
 }
 
-export interface ActionDefinition {
+export interface ActionDefinitionLegacy {
   on: string;
   'run-name'?: string;
   steps: Array<ActionStep>;
 }
 
-export const DEFAULT_ACTIONS: ActionDefinition[] = [
-  {
-    on: 'transform',
-    'run-name': 'AutoCommit and Render',
-    steps: [
-      {
-        name: 'auto_commit',
-        uses: 'auto_commit',
-      },
-      {
-        name: 'render_hugo',
-        uses: 'render_hugo',
-      }
-    ]
-  },
-  {
-    on: 'branch',
-    'run-name': 'Commit and Push branch',
-    steps: [
-      {
-        uses: 'commit_branch'
-      },
-      {
-        uses: 'push_branch'
-      }
-    ]
-  },
-  {
-    on: 'git_reset',
-    'run-name': 'Render',
-    steps: [
-      {
-        name: 'render_hugo',
-        uses: 'render_hugo',
-      }
-    ]
-  },
-  {
-    on: 'git_pull',
-    'run-name': 'Render',
-    steps: [
-      {
-        name: 'render_hugo',
-        uses: 'render_hugo',
-      }
-    ]
-  }
-];
+export interface WorkflowJob {
+  name: string;
+  'runs-on'?: string;
+  steps: Array<ActionStep>;
+  hide_in_menu?: boolean;
+}
 
-export async function convertActionYaml(actionYaml: string): Promise<ActionDefinition[]> {
-  const actionDefs: ActionDefinition[] = actionYaml ? yaml.load(actionYaml) : DEFAULT_ACTIONS;
-  return actionDefs;
+export interface WorkflowDefinition {
+  on: {[trigger: string]: string};
+
+  jobs: {
+    [key: string]: WorkflowJob
+  }
+}
+
+export const DEFAULT_WORKFLOW: WorkflowDefinition = {
+  on: {
+    'internal/sync': 'transform_all',
+    'transform_all': 'autocommit_render',
+    'internal/branch': 'commit_and_push_branch'
+  },
+
+  jobs: {
+    'transform_all': {
+      name: 'Transform All',
+      steps: [
+        {
+          uses: 'internal/transform',
+        }
+      ]
+    },
+    'autocommit_render': {
+      name: 'AutoCommit and Render',
+      steps: [
+        {
+          name: 'internal/auto_commit',
+          uses: 'internal/auto_commit',
+        },
+        {
+          name: 'internal/render_hugo',
+          uses: 'internal/render_hugo',
+        },
+        {
+          name: 'Export preview to nginx',
+          uses: 'internal/export_preview'
+        }
+      ]
+    },
+    'commit_and_push_branch': {
+      name: 'Commit and Push branch',
+      hide_in_menu: true,
+      steps: [
+        {
+          uses: 'internal/commit_branch'
+        },
+        {
+          uses: 'internal/push_branch'
+        }
+      ]
+    }
+  }
+  // name: 'Check PR Labels'
+  // runs-on: ubuntu-latest
+
+};
+
+function migrateStep(step: ActionStep): ActionStep {
+  if (step.uses === 'exec' && step.env?.EXEC) {
+    return {
+      name: step.name,
+      run: step.env.EXEC
+    };
+  }
+
+  if (step.uses === 'auto_commit') {
+    step.uses = 'internal/auto_commit';
+  }
+  if (step.uses === 'commit_branch') {
+    step.uses = 'internal/commit_branch';
+  }
+
+  return step;
+}
+
+export function migrateLegacy(actionDefs: ActionDefinitionLegacy[]): WorkflowDefinition {
+  const retVal: WorkflowDefinition = DEFAULT_WORKFLOW;
+
+  for (const actionDef of actionDefs) {
+    switch (actionDef.on) {
+      case 'transform':
+        retVal.jobs['autocommit_render'].steps = actionDef.steps.map(step => migrateStep(step));
+        retVal.jobs['autocommit_render'].steps.push(        {
+          name: 'Export preview to nginx',
+          uses: 'internal/export_preview'
+        });
+        break;
+    }
+  }
+
+  for (const jobId in retVal.jobs) {
+    const job = retVal.jobs[jobId];
+    job['runs-on'] = 'docker';
+  }
+
+  return retVal;
+}
+
+export async function convertActionYaml(actionYaml: string): Promise<WorkflowDefinition> {
+  if (!actionYaml) {
+    return DEFAULT_WORKFLOW;
+  }
+
+  const yamlObj = yaml.load(actionYaml);
+  const workflow: WorkflowDefinition = (Array.isArray(yamlObj)) ? migrateLegacy(yamlObj) : yamlObj;
+
+  return workflow;
 }
 
 function withToEnv(map: { [p: string]: string }) {
@@ -141,22 +209,20 @@ export class ActionRunnerContainer extends Container {
 
     this.isErr = false;
 
-    const actionDefs = await convertActionYaml(config.actions_yaml);
-    for (const actionDef of actionDefs) {
-      if (actionDef.on !== this.params['trigger']) {
-        continue;
-      }
+    const workflow = await convertActionYaml(config.actions_yaml);
+    const workflowJobId = workflow.on[this.params['trigger']] || this.params['action_id'];
 
-      if (actionDef.on === 'commit') {
-        await gitScanner.pushToDir(this.tempFileService.getRealPath());
+    if (workflow.jobs[workflowJobId]) {
+      const workflowJob = workflow.jobs[workflowJobId];
+      if (this.params['trigger'] === 'commit') {
+         await gitScanner.pushToDir(this.tempFileService.getRealPath());
       }
-      const generatedFileService = actionDef.on === 'commit' ? this.tempFileService : this.generatedFileService;
+      const generatedFileService = this.params['trigger'] === 'commit' ? this.tempFileService : this.generatedFileService;
 
-      if (!Array.isArray(actionDef.steps)) {
+      const steps = workflowJob.steps;
+      if (!Array.isArray(steps)) {
         throw new Error('No action steps');
       }
-
-      const driveIdTransform: string = path.basename(generatedFileService.getRealPath());
 
       const committer = {
         name: this.params.user_name || 'WikiGDrive',
@@ -167,17 +233,6 @@ export class ActionRunnerContainer extends Container {
 
       const writable = new BufferWritable();
 
-      // await this.generatedFileService.remove('resources');
-
-/*      const env = ['render_hugo', 'exec', 'commit_branch'].includes(step.uses) ? Object.assign({
-        CONFIG_TOML: '/site/tmp_dir/config.toml',
-        BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
-        GIT_AUTHOR_NAME: committer.name,
-        GIT_AUTHOR_EMAIL: committer.email,
-        GIT_COMMITTER_NAME: committer.name,
-        GIT_COMMITTER_EMAIL: committer.email
-      }, step.env, additionalEnv) : Object.assign({}, step.env, additionalEnv);*/
-
       const env = Object.assign({
         CONFIG_TOML: '/site/tmp_dir/config.toml',
         BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
@@ -187,37 +242,21 @@ export class ActionRunnerContainer extends Container {
         GIT_COMMITTER_EMAIL: committer.email
       }, additionalEnv);
 
-      //--user=$(id -u):$(getent group docker | cut -d: -f3)
-      this.logger.info(`DockerAPI:\ndocker start \\
-        --user=${process.getuid()}:${process.getegid()} \\
-        // -v "${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro" \\
-        // -v "${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw" \\
-        // --mount "type=tmpfs,destination=/site/resources" \\
-        ${Object.keys(env).map(key => `--env ${key}="${env[key]}"`).join(' ')} \\
-        ${process.env.ACTION_IMAGE}
-      `);
+      const container = workflowJob['runs-on'] === 'podman' ?
+        await PodmanContainer.create(this.logger, 'localhost/' + process.env.ACTION_IMAGE, env, `/${driveId}_transform`) :
+        await DockerContainer.create(this.logger, process.env.ACTION_IMAGE, env, generatedFileService.getRealPath());
 
-      const container = new DockerContainer(process.env.ACTION_IMAGE);
 
       try {
-        await container.create(env, writable);
+        container.skipMount = (steps.length === 1 && steps[0].uses === 'internal/transform');
         await container.start();
-        this.logger.info('container created: ' + container.id);
+        // await container.mountOverlay(generatedFileService.getRealPath(), '/site');
 
-        this.logger.info('docker cp . /site');
-        await container.copy(generatedFileService.getRealPath(), '/site');
-
-        // Convert to step:
-        const configToml = config?.config_toml || '#relativeURLs = true\n' +
-          'languageCode = "en-us"\n' +
-          'title = "My New Hugo Site"\n';
-        this.logger.info('docker write /site/tmp_dir/config.toml');
+        // TODO: Convert to step
+        const configToml = config?.config_toml || 'languageCode = "en-us"\ntitle = "My New Hugo Site"\n';
         await container.putFile(new TextEncoder().encode(configToml), '/site/tmp_dir/config.toml');
-        //
 
-        for (const step of actionDef.steps) {
-          this.logger.info('Step: ' + (step.name || step.uses));
-
+        for (const step of steps) {
           if (!step.env) {
             step.env = {};
           }
@@ -225,51 +264,87 @@ export class ActionRunnerContainer extends Container {
           step.env['PAYLOAD'] = this.params.payload;
 
           let lastCode = 0;
-          switch (step.uses) {
-            case 'push_branch':
-            {
-              const additionalEnv = this.payloadToEnv();
-              await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
-                privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
-              }, `wgd/${additionalEnv['BRANCH']}`);
-            }
-              break;
-            case 'auto_commit':
-            {
-              await gitScanner.autoCommit();
-            }
-              break;
-            default:
-              this.logger.info(`docker exec ${container.id} /steps/step_${step.uses}`);
-              try {
-                if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-                  const [action_repo, action_version] = step.uses.split('@');
-                  lastCode = await container.exec(`/steps/step_gh_action ${action_repo} ${action_version}`, Object.assign(step.env, withToEnv(step.with)));
-                } else {
-                  lastCode = await container.exec(`/steps/step_${step.uses}`, Object.assign(step.env, withToEnv(step.with)));
-                }
-                if (lastCode > 0) {
-                  this.logger.error(writable.getBuffer().toString());
-                } else {
-                  this.logger.info(writable.getBuffer().toString());
-                }
-              } catch (err) {
-                this.logger.error(err.stack ? err.stack : err.message);
-                lastCode = 1;
+
+          if (step.run) {
+            this.logger.info('Step: ' + (step.name || step.run));
+
+            try {
+              lastCode = await container.exec(step.run, Object.assign(step.env, withToEnv(step.with)), writable);
+              if (lastCode > 0) {
+                this.logger.error('err: '+new TextDecoder().decode(writable.getBuffer()));
+              } else {
+                this.logger.info(new TextDecoder().decode(writable.getBuffer()));
               }
-              break;
+            } catch (err) {
+              this.logger.error(err.stack ? err.stack : err.message);
+              lastCode = 1;
+            }
+          } else
+          if (step.uses) {
+            this.logger.info('Step: ' + (step.name || step.uses));
+
+            switch (step.uses) {
+              case 'internal/transform':
+                try {
+                  const action = new ActionTransform(this.engine, this.filesService, this.generatedFileService);
+                  let selectedFileId = undefined;
+                  try {
+                    const payload = JSON.parse(this.params.payload);
+                    selectedFileId = payload.selectedFileId;
+                  } catch (ignore) { /* empty */ }
+                  await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
+                } catch (err) {
+                  this.logger.error(err.stack ? err.stack : err.message);
+                  lastCode = 1;
+                }
+                break;
+
+              case 'internal/push_branch':
+              {
+                const additionalEnv = this.payloadToEnv();
+                await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
+                  privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
+                }, `wgd/${additionalEnv['BRANCH']}`);
+              }
+                break;
+              case 'internal/auto_commit':
+              {
+                gitScanner.debug = true;
+                await gitScanner.setSafeDirectory();
+                await gitScanner.autoCommit();
+              }
+                break;
+              default:
+                try {
+                  if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+                    const [action_repo, action_version] = step.uses.split('@');
+                    lastCode = await container.exec(`/steps/step_gh_action ${action_repo} ${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
+                  } else {
+                    lastCode = await container.exec(`/steps/step_${step.uses}`, Object.assign(step.env, withToEnv(step.with)), writable);
+                  }
+                  if (lastCode > 0) {
+                    this.logger.error('err: '+new TextDecoder().decode(writable.getBuffer()));
+                  } else {
+                    this.logger.info(new TextDecoder().decode(writable.getBuffer()));
+                  }
+                } catch (err) {
+                  this.logger.error(err.stack ? err.stack : err.message);
+                  lastCode = 1;
+                }
+                break;
+              case 'internal/export_preview':
+              {
+                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+                await container.export('/site/public', previewOutput);
+              }
+                break;
+            }
           }
           if (0 !== lastCode) {
             this.isErr = true;
             break;
           }
         }
-
-        // Convert to step
-        const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
-        this.logger.info('docker export /site/public ' + previewOutput);
-        await container.export('/site/public', previewOutput);
-        //
 
         this.logger.info('Action completed');
 

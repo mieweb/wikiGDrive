@@ -8,9 +8,6 @@ ENV THEME_ID=""
 ENV THEME_URL=""
 ENV NO_COLOR="true"
 
-VOLUME ["/site/content"]
-VOLUME ["/site/public"]
-
 RUN apt-get update
 RUN apt-get install -y git nodejs curl python3 python3-pip s3cmd yq
 RUN npm i -g postcss postcss-cli hugo-extended
@@ -26,3 +23,4 @@ ADD steps/ /steps
 RUN chmod a+x /steps/step_*
 
 WORKDIR /site
+ENTRYPOINT /bin/bash
