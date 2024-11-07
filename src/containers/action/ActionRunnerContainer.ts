@@ -49,6 +49,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
   on: {
     'internal/sync': 'transform_all',
     'transform_all': 'autocommit_render',
+    'transform_single': 'autocommit_render',
     'internal/branch': 'commit_and_push_branch'
   },
 
@@ -58,6 +59,20 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
       steps: [
         {
           uses: 'internal/transform',
+          with: {
+            'selectedFileId': null
+          }
+        }
+      ]
+    },
+    'transform_single': {
+      name: 'Transform Single',
+      steps: [
+        {
+          uses: 'internal/transform',
+          with: {
+            'selectedFileId': '$wgd.selectedFileId'
+          }
         }
       ]
     },
@@ -290,7 +305,10 @@ export class ActionRunnerContainer extends Container {
                   let selectedFileId = undefined;
                   try {
                     const payload = JSON.parse(this.params.payload);
-                    selectedFileId = payload.selectedFileId;
+
+                    if (step.with?.selectedFileId === '$wgd.selectedFileId') {
+                      selectedFileId = payload.selectedFileId;
+                    }
                   } catch (ignore) { /* empty */ }
                   await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
                 } catch (err) {
