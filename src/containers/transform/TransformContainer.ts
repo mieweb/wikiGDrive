@@ -472,6 +472,8 @@ export class TransformContainer extends Container {
                 return '';
               }
               return retVal;
+            } else {
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
             return str;
           });
