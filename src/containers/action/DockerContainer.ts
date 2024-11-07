@@ -97,9 +97,9 @@ export class DockerContainer implements OciContainer {
     });
   }
 
-  async putFile(configToml: Uint8Array, remotePath: string) {
+  async putFile(content: Uint8Array, remotePath: string) {
     const archive = tarStream.pack();
-    archive.entry({ name: remotePath }, configToml);
+    archive.entry({ name: remotePath }, content);
     archive.finalize();
 
     const writable = new BufferWritable();
