@@ -2,40 +2,36 @@ import path from 'path';
 import fs from 'fs';
 import type {Application, Request, Response, NextFunction} from 'express';
 import {fileURLToPath} from 'url';
+import {generateIndexHtml} from '@mieweb/wikigdrive-ui/vite.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
 
-export async function handleStaticHtml(app: Application, reqPath: string, url: string) {
-  const hugoPath = path.resolve(MAIN_DIR, 'dist', 'hugo', (reqPath.substring(1) || 'index.html'));
-  const generatedHtmlPath = path.resolve(MAIN_DIR, 'dist', 'hugo', 'ui', 'index.html');
-  const distPath = path.resolve(HTML_DIR, 'dist');
-  const baseHtmlPath = path.resolve(MAIN_DIR, 'hugo', 'themes', 'wgd-bootstrap', 'layouts', '_default', 'baseof.html');
+export async function handleStaticHtml(app: Application, reqPath: string, url: string, template?: string) {
+  const renderedPath = path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist', (reqPath.substring(1) || 'index.html'));
+  const distPath = path.resolve(HTML_DIR, 'website', '.vitepress', 'dist');
 
-  if (reqPath.startsWith('/drive') || reqPath.startsWith('/gdocs') || reqPath.startsWith('/auth') || reqPath === '/' || reqPath.startsWith('/share-drive') || reqPath.endsWith('.html')) {
-    if (fs.existsSync(hugoPath)) {
-      const template = fs.readFileSync(hugoPath)
-        .toString()
+  if (reqPath.startsWith('/drive')
+    || reqPath.startsWith('/gdocs')
+    || reqPath.startsWith('/auth')
+    || reqPath === '/'
+    || reqPath.startsWith('/share-drive')
+    || reqPath.endsWith('.html')) {
+
+    if (fs.existsSync(renderedPath)) {
+      const template = generateIndexHtml()
         .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
       return template;
     } else if (fs.existsSync(distPath)) {
-      const template = fs.readFileSync(path.join(distPath, 'index.html'))
-        .toString()
-        .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-        .replace(/GIT_SHA/g, process.env.GIT_SHA);
-      return template;
-    } else if (fs.existsSync(generatedHtmlPath)) {
-      const template = fs.readFileSync(generatedHtmlPath)
-        .toString()
+      const template = generateIndexHtml()
         .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
       return template;
     } else {
-      const template = fs.readFileSync(baseHtmlPath)
-        .toString()
+      const template = generateIndexHtml()
         .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
 
