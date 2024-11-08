@@ -49,6 +49,9 @@ export default {
     await this.fetch();
   },
   methods: {
+    onHydrated() {
+      console.log('this function will never be called !');
+    },
     async fetch() {
       await this.$root.fetchUser();
       if (!this.isLogged) {

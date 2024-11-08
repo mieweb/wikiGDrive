@@ -46,6 +46,10 @@ export async function initUiServer(app: Application, logger: winston.Logger) {
     },
     customLogger: customLogger
   });
+
+  // const vitePressInstance = app.get('vitePressInstance');
+  // viteInstance.middlewares.use(vitePressInstance);
+
   app.set('viteInstance', viteInstance);
   app.use(viteInstance.middlewares);
 }

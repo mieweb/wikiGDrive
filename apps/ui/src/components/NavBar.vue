@@ -20,7 +20,7 @@
           <a class="nav-link" :class="{'active': $route.path.startsWith('/drive')}" href="/drive">Drives</a>
         </li>
       </ul>
-      <ul class="navbar-nav mr-auto align-items-center">
+      <ul class="navbar-nav mr-auto align-items-center" v-if="!inVuePress">
         <li>
           <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
           <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
@@ -44,6 +44,9 @@ export default {
     };
   },
   computed: {
+    inVuePress() {
+      return this.$root._.type.name === 'VitePressApp';
+    },
     rootFolder() {
       return this.$root.drive;
     }
