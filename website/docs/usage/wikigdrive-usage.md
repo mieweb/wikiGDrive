@@ -53,7 +53,7 @@ $ wikigdrive add https://google.drive...
 $ wikigdrive config [<options>]
 ```
 
-Stores authentication config inside <workdir>/auth_config.json to avoid specifying authentication options each time 
+Stores authentication config inside `<workdir>/auth_config.json` to avoid specifying authentication options each time 
 
 Options:
 
