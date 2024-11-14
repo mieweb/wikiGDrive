@@ -19,8 +19,8 @@ function escapeHtml(str: string): string {
 
 function renderHead() {
   const retVal = [];
-
   const head = generateHead();
+  // head.push(['script', { src: '/src/main.ts?GIT_SHA', type: 'module' }]);
 
   for (const header of head) {
     const rest = [];

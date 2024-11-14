@@ -10,13 +10,12 @@ const vitePressConfigs = {
     cleanUrls: true,
     metaChunk: true,
 
-
     transformHtml(code: string, id: string, ctx: TransformContext) {
-        return code
-           .replaceAll('<!---->', '<!--v-if-->');
-
-            // .replaceAll('<!--[-->', '<!--[--><!--x-->');
-    // .replace('<!--[--><div id="main"', '<!--[--><!--x--><div id="main"');
+        const scriptRegex = /<script type="module" src="\/assets\/[^"]+"><\/script>/g;
+        if (id.endsWith('404.html')) {
+            code = code.replace('<div id="app">', '<div id="app">' + ctx.content);
+        }
+        return code.replace(scriptRegex, '');
     },
     markdown: {
         codeTransformers: [
