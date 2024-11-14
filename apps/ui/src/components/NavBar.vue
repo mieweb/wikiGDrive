@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-nav">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-nav" data-allow-mismatch>
     <span class="navbar-brand">
 
       <span v-if="sidebar">
@@ -8,19 +8,19 @@
         </a>
       </span>
       <span v-if="!isGDocsPreview" class="drive-link">
-        <router-link :to="{ name: 'home' }">WikiGDrive</router-link>
+        <router-link activeClass="active" :to="{ name: 'home' }">WikiGDrive</router-link>
       </span>
     </span>
     <slot>
       <ul class="navbar-nav mr-auto align-items-center justify-content-start">
         <li class="nav-item">
-          <a class="nav-link" :class="{'active': $route.path.startsWith('/docs')}" href="/docs">Documentation</a>
+          <router-link activeClass="active" class="nav-link" :to="{ name: 'docs' }">Documentation</router-link>
         </li>
         <li class="nav-item" v-if="isLogged">
-          <a class="nav-link" :class="{'active': $route.path.startsWith('/drive')}" href="/drive">Drives</a>
+          <router-link activeClass="active" class="nav-link" :to="{ name: 'drives' }">Drives</router-link>
         </li>
       </ul>
-      <ul class="navbar-nav mr-auto align-items-center" v-if="!inVuePress">
+      <ul class="navbar-nav mr-auto align-items-center" v-if="!inVitePress">
         <li>
           <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
           <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
@@ -44,7 +44,7 @@ export default {
     };
   },
   computed: {
-    inVuePress() {
+    inVitePress() {
       return this.$root._.type.name === 'VitePressApp';
     },
     rootFolder() {

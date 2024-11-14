@@ -1,11 +1,27 @@
 import type {Application, NextFunction, Request, Response} from 'express';
 import winston from 'winston';
 
-import {GoogleDriveServiceError} from '../../google/driveFetch';
-import {AuthError} from './auth';
-import {handleStaticHtml} from './static';
+import {GoogleDriveServiceError} from '../../google/driveFetch.ts';
+import {AuthError} from './auth.ts';
+import {handleStaticHtml} from './static.ts';
+import path from 'path';
+import {fileURLToPath} from 'url';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const MAIN_DIR = __dirname + '/../../..';
 
 export async function initErrorHandler(app: Application, logger: winston.Logger) {
+  app.use((req, res, next) => {
+    const notFoundPath = path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist', '404.html');
+    const buffer = fs.readFileSync(notFoundPath)
+    if (buffer) {
+      res.status(404).send(new TextDecoder().decode(buffer));
+    }
+    next(false);
+  });
+
   app.use(async (err: GoogleDriveServiceError & AuthError, req: Request, res: Response, next: NextFunction) => {
     const code = err.status || 501;
     logger.warn(`http error ${code} for: ${req.originalUrl}`);

@@ -3,17 +3,6 @@
     <slot name="navbar" :collapsed="collapsed" :collapse="collapse">
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse" />
     </slot>
-<!--
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <span v-if="!isGDocsPreview && rootFolder.name" class="navbar-brand">
-          <a @click.prevent="collapse">
-            <i class="fa-solid fa-bars"></i>
-          </a>
-          <router-link class="text-white" :to="{ name: 'drive', params: {driveId} }">{{ rootFolder.name }}</router-link>
-        </span>
-      <span class="navbar-brand" v-else-if="!isGDocsPreview">WikiGDrive</span>
-    </nav>
--->
     <main class="mainbar">
       <Sidebar v-if="sidebar" class="mainbar__sidebar">
         <slot name="sidebar" :collapsed="collapsed" :collapse="collapse"></slot>

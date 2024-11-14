@@ -4,14 +4,14 @@
       <NavBar :sidebar="sidebar" :collapsed="collapsed" @collapse="collapse">
         <ul class="navbar-nav mr-auto align-items-center justify-content-start">
           <li class="nav-item">
-            <a class="nav-link" :class="{'active': $route.path.startsWith('/docs')}" href="/docs">Documentation</a>
+            <router-link activeClass="active" class="nav-link" :to="{ name: 'docs' }">Documentation</router-link>
           </li>
           <li class="nav-item" v-if="isLogged">
-            <a class="nav-link" :class="{'active': $route.path.startsWith('/drive')}" href="/drive">Drives</a>
+            <router-link activeClass="active" class="nav-link" :to="{ name: 'drives' }">Drives</router-link>
           </li>
         </ul>
         <ul class="navbar-nav mr-auto align-items-center">
-          <li>
+          <li v-if="afterFetch">
             <button v-if="!isLogged" class="btn btn-secondary" @click="login">Sign in</button>
             <button v-if="isLogged" class="btn btn-secondary" @click="logout">Logout User</button>
           </li>
@@ -20,7 +20,8 @@
     </template>
 
     <template v-slot:default>
-      <StaticContent />
+      <LazyHydrate ssrOnly v-if="!content"></LazyHydrate>
+      <div v-if="content" v-html="content"></div>
     </template>
   </BaseLayout>
 </template>
@@ -29,31 +30,36 @@ import {markRaw} from 'vue';
 import {UtilsMixin} from '../components/UtilsMixin';
 import BaseLayout from '../layout/BaseLayout.vue';
 import ShareModal from '../components/ShareModal.vue';
-import StaticContent from '../components/StaticContent.vue';
 import NavBar from '../components/NavBar.vue';
+import LazyHydrate from './LazyHydrate.vue';
 
 export default {
   mixins: [ UtilsMixin ],
   components: {
-    BaseLayout, StaticContent, NavBar
+    BaseLayout, NavBar, LazyHydrate
   },
   data() {
     return {
       url: '',
       drivesShared: [],
       drivesNotShared: [],
-      loading: false
+      loading: false,
+      afterFetch: false,
+      content: ''
     };
   },
   async created() {
+    if (this.emitter) {
+      this.emitter.on('html_lazy_content', (html) => {
+        this.content = html;
+      });
+    }
     await this.fetch();
   },
   methods: {
-    onHydrated() {
-      console.log('this function will never be called !');
-    },
     async fetch() {
       await this.$root.fetchUser();
+      this.afterFetch = true;
       if (!this.isLogged) {
         this.drivesShared = [];
         this.drivesNotShared = [];
