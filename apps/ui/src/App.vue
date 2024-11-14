@@ -9,12 +9,19 @@
 import ModalsContainer from './modals/ModalsContainer.vue';
 import ToastsContainer from './modals/ToastsContainer.vue';
 import ErrorView from './pages/ErrorView.vue';
+import * as VueRouter from 'vue-router';
 
 export default {
   data() {
-    const el = document.querySelector('meta[name=errorMessage]');
+    let errorMessage = '';
+
+    if (!import.meta.env.SSR) {
+      const el = document.querySelector('meta[name=errorMessage]');
+      errorMessage = el ? el.getAttribute('content') : '';
+    }
+
     return {
-      errorMessage: el ? el.getAttribute('content') : ''
+      errorMessage
     };
   },
   components: {

@@ -1,6 +1,6 @@
 ---
 #layout: overridden inside /hugo/themes/wgd-bootstrap/layouts/index.html
-title: wikiGDrive
+title: WikiGDrive
 raw_html: true
 ---
 

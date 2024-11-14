@@ -47,9 +47,13 @@ export async function initUiServer(app: Application, logger: winston.Logger) {
     customLogger: customLogger
   });
 
-  // const vitePressInstance = app.get('vitePressInstance');
-  // viteInstance.middlewares.use(vitePressInstance);
+  async function renderSSR(href = '/') {
+    const { render } = await viteInstance.ssrLoadModule('/src/entry-server.ts');
+    const appHtml = await render(href);
+    return appHtml;
+  }
 
+  app.set('renderSSR', renderSSR());
   app.set('viteInstance', viteInstance);
   app.use(viteInstance.middlewares);
 }

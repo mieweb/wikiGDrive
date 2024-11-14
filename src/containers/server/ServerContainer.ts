@@ -112,7 +112,7 @@ export class ServerContainer extends Container {
       next();
     });
 
-    app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist')));
+    app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist'), { extensions: ['html'] }));
     const distPath = path.resolve(HTML_DIR, 'dist');
     app.use(express.static(distPath));
 
