@@ -6,12 +6,10 @@ import {generateIndexHtml} from '@mieweb/wikigdrive-ui/vite.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
 
 export async function handleStaticHtml(app: Application, reqPath: string, url: string, template?: string) {
   const renderedPath = path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist', (reqPath.substring(1) || 'index.html'));
-  const distPath = path.resolve(HTML_DIR, 'website', '.vitepress', 'dist');
 
   if (reqPath.startsWith('/drive')
     || reqPath.startsWith('/gdocs')
@@ -21,11 +19,6 @@ export async function handleStaticHtml(app: Application, reqPath: string, url: s
     || reqPath.endsWith('.html')) {
 
     if (fs.existsSync(renderedPath)) {
-      const template = generateIndexHtml()
-        .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
-        .replace(/GIT_SHA/g, process.env.GIT_SHA);
-      return template;
-    } else if (fs.existsSync(distPath)) {
       const template = generateIndexHtml()
         .replace('</head>', process.env.ZIPKIN_URL ? `<meta name="ZIPKIN_URL" content="${process.env.ZIPKIN_URL}" />\n</head>` : '</head>')
         .replace(/GIT_SHA/g, process.env.GIT_SHA);
