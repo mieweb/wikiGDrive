@@ -30,4 +30,8 @@ WORKDIR "/usr/src/app"
 # Add the GIT_SSH_COMMAND to /etc/profile so that we can debug git issues from the command line
 RUN echo 'export GIT_SSH_COMMAND="ssh -i \$(pwd | sed s/_transform.*//)/.private/id_rsa"' >> /etc/profile
 
+# Git 2.47:
+RUN apk upgrade git --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN git config --global --add safe.directory /srv/wikigdrive/*
+
 CMD [ "sh", "-c", "wikigdrive --workdir /data server 3000" ]
