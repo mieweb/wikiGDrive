@@ -1,8 +1,8 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, watch } from "vue";
+import { defineComponent, onMounted, PropType, ref, watch } from 'vue';
 type VoidFunction = () => void;
 const isBrowser = () => {
-  return typeof window === "object";
+  return typeof window === 'object';
 };
 
 export default defineComponent({
@@ -13,7 +13,7 @@ export default defineComponent({
       boolean | IntersectionObserverInit
     >,
     didHydrate: Function as PropType<() => void>,
-    promise: Object as PropType<Promise<any>>,
+    promise: Object as PropType<Promise<unknown>>,
     on: [Array, String] as PropType<
       (keyof HTMLElementEventMap)[] | keyof HTMLElementEventMap
     >,
@@ -64,12 +64,12 @@ export default defineComponent({
           promise.then(hydrate, hydrate);
         }
         if (whenVisible) {
-          if (wrapper && typeof IntersectionObserver !== "undefined") {
+          if (wrapper && typeof IntersectionObserver !== 'undefined') {
             const observerOptions =
-              typeof whenVisible === "object"
+              typeof whenVisible === 'object'
                 ? whenVisible
                 : {
-                  rootMargin: "250px",
+                  rootMargin: '250px',
                 };
             const io = new IntersectionObserver((entries) => {
               entries.forEach((entry) => {
@@ -87,7 +87,7 @@ export default defineComponent({
           }
         }
         if (whenIdle) {
-          if (typeof window.requestIdleCallback !== "undefined") {
+          if (typeof window.requestIdleCallback !== 'undefined') {
             const idleCallbackId = window.requestIdleCallback(hydrate, {
               timeout: 500,
             });
@@ -101,8 +101,8 @@ export default defineComponent({
             });
           }
         }
-        if (on) {
-          const events = ([] as Array<keyof HTMLElementEventMap>).concat(<any>on);
+        if (Array.isArray(on)) {
+          const events = ([] as Array<keyof HTMLElementEventMap>).concat(on);
           events.forEach((event) => {
             wrapper?.addEventListener(event, hydrate, {
               once: true,
