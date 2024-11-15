@@ -32,10 +32,10 @@ const vm= app.mount('#app', true);
 router.beforeEach(async (to, from, next) => {
   if (to.meta.ssg) {
     try {
-      const response = await fetch(to.path);
+      const response = await fetch(window.location.protocol + '//' + window.location.host + to.path);
       const html = await response.text();
 
-      const parser = new DOMParser()
+      const parser = new DOMParser();
       const r = parser.parseFromString(html, 'text/html');
       const titleElem = r.querySelector('title');
       if (titleElem) {
@@ -58,8 +58,8 @@ router.beforeEach(async (to, from, next) => {
   const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
   const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
   if (toDriveId !== fromDriveId) {
-    await (<any>vm).FileClientService.clearCache();
-    await (<any>vm).changeDrive(toDriveId);
+    await (<unknown>vm).FileClientService.clearCache();
+    await (<unknown>vm).changeDrive(toDriveId);
   }
   next();
 });
