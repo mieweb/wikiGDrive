@@ -481,11 +481,16 @@ export class TransformContainer extends Container {
         newContent = newContent.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
           let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
           let hash = getUrlHash(str) || '';
-          if (hash && this.globalHeadersMap[str]) {
-            const idx = this.globalHeadersMap[str].indexOf('#');
-            if (idx >= 0) {
-              fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
-              hash = this.globalHeadersMap[str].substring(idx);
+          if (hash) {
+            if (this.globalHeadersMap[str]) {
+              const idx = this.globalHeadersMap[str].indexOf('#');
+              if (idx >= 0) {
+                fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
+                hash = this.globalHeadersMap[str].substring(idx);
+              }
+            } else {
+              const fullLink = str;
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
           }
           const lastLog = this.localLog.findLastFile(fileId);
