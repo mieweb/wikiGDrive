@@ -32,6 +32,9 @@ const vm= app.mount('#app', true);
 router.beforeEach(async (to, from, next) => {
   if (to.meta.ssg) {
     try {
+      console.log('test0', to, window.location);
+      console.log('test1', window.location.protocol + '//' + window.location.host + to.path)
+      console.trace();
       const response = await fetch(window.location.protocol + '//' + window.location.host + to.path);
       const html = await response.text();
 
