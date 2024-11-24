@@ -80,7 +80,7 @@
     "@opentelemetry/sdk-trace-node": "1.8.0",
     "@opentelemetry/sdk-trace-web": "1.8.0",
     "@opentelemetry/semantic-conventions": "1.8.0",
-    "@vitejs/plugin-vue": "5.1.4",
+    "@vitejs/plugin-vue": "5.2.1",
     "async": "3.2.3",
     "bootstrap": "5.2.3",
     "buffer": "^5.7.1",

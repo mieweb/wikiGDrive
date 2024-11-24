@@ -1,11 +1,16 @@
 FROM node:20-alpine
 
+ARG BUILD_UI
+ARG GIT_SHA
+
 RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
 RUN npm install
 RUN npm install --location=global ts-node
+
+RUN if [[ -z "$BUILD_UI" ]] ; then cd /usr/src/app/apps/ui && npm run build ; fi
 
 COPY . ./
 RUN npm link --location=user

@@ -15,7 +15,7 @@ ORIG_ARGS=$@
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --inspect | watch)
+    --inspect | --watch | --prof)
       OPTS="$OPTS $1"
       shift # past argument
       ;;

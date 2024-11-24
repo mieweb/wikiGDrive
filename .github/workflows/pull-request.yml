@@ -54,12 +54,15 @@ jobs:
       with:
         tags: "wikigdrive-feature:${{ github.sha }}"
         push: false
-        build-args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
+        build-args: |
+          GIT_SHA=${{ github.sha }}
+          BUILD_UI=yes
 
     - name: Build docs
       run: |
         docker run \
         -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+        -e "GIT_SHA=${{ github.sha }}" \ 
         "wikigdrive-feature:${{ github.sha }}" npm run docs:build
 
     - name: Stop and remove

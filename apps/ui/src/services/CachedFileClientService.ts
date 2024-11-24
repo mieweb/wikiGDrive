@@ -1,7 +1,7 @@
 import {FileClientService} from './FileClientService.ts';
 
 export class CachedFileClientService extends FileClientService {
-  private cache: unknown;
+  private cache: {[key: string]: string};
 
   constructor(authenticatedClient) {
     super(authenticatedClient);
@@ -12,7 +12,7 @@ export class CachedFileClientService extends FileClientService {
     this.cache = {};
   }
 
-  async getFile(path) {
+  async getFile(path: string) {
     if (this.cache[path]) {
       return this.cache[path];
     }
@@ -21,12 +21,12 @@ export class CachedFileClientService extends FileClientService {
     return result;
   }
 
-  async saveFile(path, content) {
+  async saveFile(path: string, content: string) {
     delete this.cache[path];
     return super.saveFile(path, content);
   }
 
-  async removeFile(path) {
+  async removeFile(path: string) {
     await super.removeFile(path);
 
     const parts = path.split('/');
