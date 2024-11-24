@@ -3,6 +3,7 @@
 import {Tooltip} from 'bootstrap';
 import {createApp} from './app.ts';
 import {addTelemetry} from './telemetry.ts';
+import {Emitter, EventType} from 'mitt';
 
 const { app, router } = createApp();
 await router.isReady();
@@ -32,9 +33,6 @@ const vm= app.mount('#app', true);
 router.beforeEach(async (to, from, next) => {
   if (to.meta.ssg) {
     try {
-      console.log('test0', to, window.location);
-      console.log('test1', window.location.protocol + '//' + window.location.host + to.path)
-      console.trace();
       const response = await fetch(window.location.protocol + '//' + window.location.host + to.path);
       const html = await response.text();
 
@@ -48,7 +46,8 @@ router.beforeEach(async (to, from, next) => {
       const elemContent = document.querySelector('.mainbar__content');
       if (mainContent && elemContent) {
         setTimeout(() => {
-          vm.emitter.emit('html_lazy_content', mainContent.innerHTML);
+          const emitter = (vm as any).emitter;
+          emitter.emit('html_lazy_content', mainContent.innerHTML);
         }, 100);
       }
       next(true);
@@ -61,8 +60,8 @@ router.beforeEach(async (to, from, next) => {
   const toDriveId = Array.isArray(to.params?.driveId) ? to.params.driveId[0] : to.params.driveId;
   const fromDriveId = Array.isArray(from.params?.driveId) ? from.params.driveId[0] : from.params.driveId;
   if (toDriveId !== fromDriveId) {
-    await (<unknown>vm).FileClientService.clearCache();
-    await (<unknown>vm).changeDrive(toDriveId);
+    await (vm as any).FileClientService.clearCache();
+    await (vm as any).changeDrive(toDriveId);
   }
   next();
 });
