@@ -12,9 +12,16 @@ export function generateHead(): unknown[] {
     ['link', { rel: 'stylesheet', type: 'text/css', href: '/assets/prism.css?GIT_SHA', media: '(prefers-color-scheme: light)' }],
     ['link', { rel: 'stylesheet', type: 'text/css', href: '/assets/prism-dark.css?GIT_SHA', media: '(prefers-color-scheme: dark)' }],
 
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/images/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/images/logo.svg?GIT_SHA' }],
 
     ['script', { src: '/assets/prism.js?GIT_SHA' }],
     ['script', { src: '/src/main.ts?GIT_SHA', type: 'module' }],
-  ];
+  ].map(header => {
+    if (header.length > 0) {
+      for (const key of Object.keys(header[1])) {
+        header[1][key] = header[1][key].replaceAll('GIT_SHA', process.env.GIT_SHA || process.env.GITHUB_SHA || 'dev');
+      }
+    }
+    return header;
+  });
 }

@@ -44,6 +44,11 @@ export async function initUiServer(app: Application, logger: winston.Logger) {
         interval: 100
       }
     },
+    resolve: {
+      alias: {
+        'vue/server-renderer': '@vue/server-renderer/dist/server-renderer.esm-bundler.js',
+      }
+    },
     customLogger: customLogger
   });
 
@@ -53,7 +58,7 @@ export async function initUiServer(app: Application, logger: winston.Logger) {
     return appHtml;
   }
 
-  app.set('renderSSR', renderSSR());
+  app.set('renderSSR', renderSSR);
   app.set('viteInstance', viteInstance);
   app.use(viteInstance.middlewares);
 }

@@ -46,23 +46,20 @@ jobs:
     - name: Build action runner
       run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
-    - name: Build hugo docs
-      run: |
-        docker run \
-        -v "${GITHUB_WORKSPACE}/hugo:/site" \
-        -v "${GITHUB_WORKSPACE}/website:/website" \
-        -v "/var/www/wikigdrive.com:/dist/hugo" \
-        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://wikigdrive.com" \
-        wgd-action-runner:prod /steps/step_render_hugo
-
-    - name: Copy index for vite
-      run: mkdir -p ${GITHUB_WORKSPACE}/dist/hugo && cp -rf /var/www/wikigdrive.com/* ${GITHUB_WORKSPACE}/dist/hugo
-
     - uses: docker/build-push-action@v6
       with:
         tags: "wikigdrive-prod:${{ github.sha }},wikigdrive-prod:latest"
         push: false
-        build-args: "{'--build-arg': 'GIT_SHA=${{ github.sha }}'}"
+        build-args: |
+          GIT_SHA=${{ github.sha }}
+          BUILD_UI=yes
+
+    - name: Build docs
+      run: |
+        docker run \
+        -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+        -e "GIT_SHA=${{ github.sha }}" \
+        "wikigdrive-prod:${{ github.sha }}" npm run docs:build
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod

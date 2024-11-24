@@ -42,7 +42,7 @@
         <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
 
         <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-          <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
         </div>
         <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
           <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />

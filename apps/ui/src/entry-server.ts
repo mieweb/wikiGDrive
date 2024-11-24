@@ -1,7 +1,7 @@
-import { renderToString } from '@vue/server-renderer';
+import { renderToString } from 'vue/server-renderer';
 import { createApp } from './app.ts';
 
-export async function render(url) {
+export async function render(url: string) {
   const { app, router } = createApp();
 
   // passing SSR context object which will be available via useSSRContext()
@@ -12,8 +12,11 @@ export async function render(url) {
   await router.push(url);
   await router.isReady();
 
-  const html = await renderToString(app, ctx);
+  try {
+    const html = await renderToString(app, ctx);
+    return { html };
+  } catch (err) {
+    console.error(err);
+  }
 
-  return { html };
 }
-

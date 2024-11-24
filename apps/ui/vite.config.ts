@@ -58,6 +58,7 @@ ${renderHead()}
 </head>
 <body>
   <div id="app">${content}</div>${inlinedScript}
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>`;
   return html;
@@ -66,8 +67,9 @@ ${renderHead()}
 const htmlPlugin = () => {
   return {
     name: 'html-transform',
-    transformIndexHtml() {
-      return generateIndexHtml().replace(
+    transformIndexHtml(html) {
+      // html = generateIndexHtml();
+      return html.replace(
         /GIT_SHA/g,
         process.env.VERSION,
       );
@@ -83,6 +85,7 @@ export default defineConfig({
   publicDir: '../../html/public',
   resolve: {
     alias: {
+      // 'vue/server-renderer': '@vue/server-renderer/dist/server-renderer.esm-bundler.js',
       vue: 'vue/dist/vue.esm-bundler.js',
     }
   },
