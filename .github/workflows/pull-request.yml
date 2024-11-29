@@ -62,7 +62,7 @@ jobs:
       run: |
         docker run \
         -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
-        -e "GIT_SHA=${{ github.sha }}" \ 
+        -e "GIT_SHA=${{ github.sha }}" \
         "wikigdrive-feature:${{ github.sha }}" npm run docs:build
 
     - name: Stop and remove
