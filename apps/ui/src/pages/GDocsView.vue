@@ -222,7 +222,7 @@
 </template>
 <script lang="js">
 import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import relativeTime from 'dayjs/plugin/relativeTime.js';
 import {UiMixin} from '../components/UiMixin.ts';
 import {DEFAULT_TAB, disableElement, UtilsMixin} from '../components/UtilsMixin.ts';
 import {GitMixin} from '../components/GitMixin.ts';

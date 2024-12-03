@@ -1,6 +1,6 @@
-import {FileContentService} from '../utils/FileContentService';
-import {AuthConfig} from '../model/AccountJson';
-import {UsageError} from "./usage";
+import {FileContentService} from '../utils/FileContentService.ts';
+import {AuthConfig} from '../model/AccountJson.ts';
+import {UsageError} from './usage.ts';
 
 interface Params {
   client_id?: string;

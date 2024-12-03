@@ -1,9 +1,10 @@
-import {defineConfig, HeadConfig, TransformContext} from 'vitepress';
+import {defineConfig} from 'vitepress';
+import type {HeadConfig, TransformContext} from 'vitepress';
 import { withSidebar } from 'vitepress-sidebar';
-import {generateHead} from '../../html/generateHead.ts';
+import {generateHead} from '../generateHead.ts';
 
 const vitePressConfigs = {
-    title: "WikiGDrive",
+    title: 'WikiGDrive',
     // description: "A VitePress Site",
 
     lastUpdated: true,
@@ -24,7 +25,7 @@ const vitePressConfigs = {
             {
                 postprocess(code) {
                     return code
-                        .replace(/\[\!\!code/g, '[!code')
+                        .replace(/\[!!code/g, '[!code');
                 }
             }
         ]
@@ -33,7 +34,7 @@ const vitePressConfigs = {
     themeConfig: {
         logo:  './images/logo.svg'
     }
-}
+};
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig(withSidebar(vitePressConfigs, {

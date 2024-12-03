@@ -1,9 +1,6 @@
-import {Worker} from 'worker_threads';
-import {fileURLToPath} from 'url';
-import path from 'path';
+import {Worker} from 'node:worker_threads';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 export interface BackLog {
   taskId: number;

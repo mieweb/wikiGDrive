@@ -1,5 +1,3 @@
-'use strict';
-
 // Legacy menu generator, use: navigation2menu.mjs
 
 import {urlToFolderId} from '../../utils/idParsers.ts';

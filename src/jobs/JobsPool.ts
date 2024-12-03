@@ -1,7 +1,5 @@
-'use strict';
-
-import {EventEmitter} from 'events';
-import {JobsQueue} from './JobsQueue';
+import {EventEmitter} from 'node:events';
+import {JobsQueue} from './JobsQueue.ts';
 
 export class JobsPool extends EventEmitter {
   private size: number;

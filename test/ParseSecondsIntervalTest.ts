@@ -1,13 +1,12 @@
-import { assert } from 'chai';
-import {parseSecondsInterval} from '../src/utils/parseSecondsInterval';
+import {parseSecondsInterval} from '../src/utils/parseSecondsInterval.ts';
 
-describe('ParseSecondsInterval', () => {
-  it('test collisions', async () => {
-    assert.equal(parseSecondsInterval('7'), 0);
-    assert.equal(parseSecondsInterval('7s'), 7);
-    assert.equal(parseSecondsInterval('7m'), 7 * 60);
-    assert.equal(parseSecondsInterval('7h'), 7 * 60 * 60);
-    assert.equal(parseSecondsInterval('7d'), 7 * 60 * 60 * 24);
-    assert.equal(parseSecondsInterval('7w'), 7 * 60 * 60 * 24 * 7);
-  });
+import test from './tester.ts';
+
+test('test collisions', async (t) => {
+  t.is(parseSecondsInterval('7'), 0);
+  t.is(parseSecondsInterval('7s'), 7);
+  t.is(parseSecondsInterval('7m'), 7 * 60);
+  t.is(parseSecondsInterval('7h'), 7 * 60 * 60);
+  t.is(parseSecondsInterval('7d'), 7 * 60 * 60 * 24);
+  t.is(parseSecondsInterval('7w'), 7 * 60 * 60 * 24 * 7);
 });

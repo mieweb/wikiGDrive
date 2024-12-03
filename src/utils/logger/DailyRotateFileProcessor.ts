@@ -1,7 +1,7 @@
-import {PassThrough, Readable, Transform} from 'stream';
-import fs, {ReadStream} from 'fs';
-import zlib from 'zlib';
-import {FileId} from '../../model/model';
+import {PassThrough, Readable} from 'node:stream';
+import fs, {ReadStream} from 'node:fs';
+import zlib from 'node:zlib';
+import {FileId} from '../../model/model.ts';
 
 interface LogLine {
   level: 'error' | 'info' | 'debug';

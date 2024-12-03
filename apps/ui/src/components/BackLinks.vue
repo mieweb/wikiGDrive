@@ -52,7 +52,8 @@
 </template>
 <script>
 import {UtilsMixin} from './UtilsMixin.ts';
-import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
+// eslint-disable-next-line import/no-unresolved
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm.mjs';
 
 function smartSlice(limit, arr) {
   arr = Array.from(arr).map(subArr => {

@@ -5,7 +5,7 @@
 </template>
 <script>
 import {UtilsMixin} from '../components/UtilsMixin.ts';
-
+// eslint-disable-next-line import/no-unresolved
 await import('https://apis.google.com/js/api.js');
 
 export default {

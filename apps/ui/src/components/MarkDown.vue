@@ -2,7 +2,7 @@
   <pre><code class="language-markdown line-numbers" ref="code"><slot></slot></code></pre>
 </template>
 <script lang="ts">
-import {Prism} from './prismFix';
+import {Prism} from './prismFix.ts';
 
 export default {
   props: ['absPath'],

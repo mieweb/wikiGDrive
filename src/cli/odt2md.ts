@@ -1,18 +1,16 @@
-'use strict';
+import process from 'node:process';
+import { Buffer } from 'node:buffer';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import path from 'path';
 import minimist from 'minimist';
-import {fileURLToPath} from 'url';
-import {Buffer} from 'buffer';
-import fs from 'fs';
 
 import {OdtProcessor} from '../odt/OdtProcessor.ts';
 import {UnMarshaller} from '../odt/UnMarshaller.ts';
 import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../odt/LibreOffice.ts';
 import {OdtToMarkdown} from '../odt/OdtToMarkdown.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 

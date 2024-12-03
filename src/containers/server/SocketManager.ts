@@ -1,13 +1,13 @@
 import WebSocket from 'ws';
-import {ContainerEngine} from '../../ContainerEngine';
-import {DriveJobs, JobManagerContainer, Toast} from '../job/JobManagerContainer';
-import {FileId} from '../../model/model';
-import {GoogleFile} from '../../model/GoogleFile';
-import {WatchChangesContainer} from '../changes/WatchChangesContainer';
-import {FileContentService} from '../../utils/FileContentService';
-import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor';
-import {UserConfigService} from '../google_folder/UserConfigService';
-import {getContentFileService} from '../transform/utils';
+import {ContainerEngine} from '../../ContainerEngine.ts';
+import {DriveJobs, JobManagerContainer, Toast} from '../job/JobManagerContainer.ts';
+import {FileId} from '../../model/model.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
+import {WatchChangesContainer} from '../changes/WatchChangesContainer.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
+import {getContentFileService} from '../transform/utils.ts';
 
 export class SocketManager {
 

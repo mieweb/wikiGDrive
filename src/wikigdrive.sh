@@ -10,6 +10,7 @@ cd $MAIN_DIR
 POSITIONAL_ARGS=()
 CMD=""
 OPTS=""
+DENO_OPTS=""
 
 ORIG_ARGS=$@
 
@@ -17,6 +18,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --inspect | --watch | --prof)
       OPTS="$OPTS $1"
+      DENO_OPTS="$DENO_OPTS $1"
       shift # past argument
       ;;
     --watch-path)
@@ -48,4 +50,11 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrive-$CMD.ts" ]]; then
     CMD="usage"
 fi
 
-/usr/bin/env node $OPTS --no-warnings --enable-source-maps --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+socat TCP-LISTEN:5000,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock &
+
+#/usr/bin/env node $OPTS --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm/transpile-only $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+#/usr/bin/env node $OPTS --import tsx $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+#npx tsx $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+#/usr/bin/env node $OPTS --import jiti/register $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+#/usr/bin/env node $OPTS --experimental-strip-types --experimental-transform-types --no-warnings --enable-source-maps --experimental-specifier-resolution=node $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+/usr/bin/env deno run --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $DENO_OPTS $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS

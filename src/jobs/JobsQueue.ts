@@ -1,6 +1,4 @@
-'use strict';
-
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
 
 class Job<T> {
   private readonly starter: { (): Promise<T> };
@@ -28,7 +26,7 @@ class Job<T> {
 }
 
 export class JobsQueue extends EventEmitter {
-  private jobs: Job<any>[];
+  private jobs: Job<unknown>[];
 
   constructor() {
     super();

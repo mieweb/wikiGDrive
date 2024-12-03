@@ -61,12 +61,7 @@ export interface MarkdownTagNode {
 
 export type MarkdownNode = MarkdownTextNode | MarkdownTagNode;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-
-
 export class MarkdownNodes {
-  // chunks: MarkdownNode[] = [];
-
   public readonly body: MarkdownTagNode;
 
   constructor() {

@@ -1,21 +1,19 @@
-'use strict';
+import process from 'node:process';
 
-import path from 'path';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
-import {fileURLToPath} from 'url';
 
-import {addTelemetry} from '../telemetry';
-import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer';
-import {getAuthConfig} from './getAuthConfig';
-import {urlToFolderId} from '../utils/idParsers';
-import {TransformContainer} from '../containers/transform/TransformContainer';
-import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer';
-import {usage} from './usage';
-import {initEngine} from './initEngine';
+import {addTelemetry} from '../telemetry.ts';
+import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer.ts';
+import {getAuthConfig} from './getAuthConfig.ts';
+import {urlToFolderId} from '../utils/idParsers.ts';
+import {TransformContainer} from '../containers/transform/TransformContainer.ts';
+import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer.ts';
+import {usage} from './usage.ts';
+import {initEngine} from './initEngine.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 
 process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 

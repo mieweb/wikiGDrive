@@ -1,11 +1,11 @@
-import path from 'path';
-import fs from 'fs';
-import type {Application, Request, Response, NextFunction} from 'express';
-import {fileURLToPath} from 'url';
-import {generateIndexHtml} from '@mieweb/wikigdrive-ui/vite.config.js';
+import process from 'node:process';
+import path from 'node:path';
+import fs from 'node:fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import type {Application, Request, Response, NextFunction} from 'express';
+import {generateIndexHtml} from '../../../apps/ui/vite.config.ts';
+
+const __dirname = import.meta.dirname;
 const MAIN_DIR = __dirname + '/../../..';
 
 export async function handleStaticHtml(app: Application, reqPath: string, url: string, template?: string) {

@@ -1,11 +1,13 @@
-import {Controller, RouteResponse, RouteUse} from './Controller';
-import fs from 'fs';
-import path from 'path';
+import process from 'node:process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import {Controller, RouteResponse, RouteUse} from './Controller.ts';
 
 export default class HtmlController extends Controller {
   private indexHtml: string;
 
-  constructor(subPath: string, HTML_DIR) {
+  constructor(subPath: string, HTML_DIR: string) {
     super(subPath);
 
     this.indexHtml = fs.readFileSync(path.resolve(HTML_DIR, 'index.html'))

@@ -1,8 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import {exec, spawn} from 'child_process';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {Logger} from 'winston';
+import fs from 'node:fs';
+import path from 'node:path';
+import {exec, spawn} from 'node:child_process';
+import process from 'node:process';
+
+import type {Logger} from 'winston';
+
 import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
 import {TelemetryMethod} from '../telemetry.ts';
 
@@ -604,6 +608,7 @@ export class GitScanner {
       '*.debug.xml',
       '.tree.json'
     ];
+    await this.setSafeDirectory();
 
     const ignorePath = path.join(this.rootPath, '.gitignore');
     const originalIgnore = [];

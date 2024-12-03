@@ -1,4 +1,4 @@
-import {FileContentService} from '../../utils/FileContentService';
+import {FileContentService} from '../../utils/FileContentService.ts';
 
 export interface LogRow {
   filePath: string;

@@ -1,5 +1,8 @@
-import json from './swagger.json' assert { type: 'json' };
-import { ControllerRoute } from './Controller';
+import process from 'node:process';
+
+import json from './swagger.json' with { type: 'json' };
+
+import { ControllerRoute } from './Controller.ts';
 
 class SwaggerDoc {
 

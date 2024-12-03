@@ -1,8 +1,9 @@
-import {QueueTask} from '../google_folder/QueueTask';
 import winston from 'winston';
-import {FileContentService} from '../../utils/FileContentService';
-import {LocalFile, RedirFile} from '../../model/LocalFile';
-import {generateRedirectMarkdown} from './frontmatters/generateRedirectMarkdown';
+
+import {QueueTask} from '../google_folder/QueueTask.ts';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {LocalFile, RedirFile} from '../../model/LocalFile.ts';
+import {generateRedirectMarkdown} from './frontmatters/generateRedirectMarkdown.ts';
 
 export class TaskRedirFileTransform extends QueueTask {
   constructor(protected logger: winston.Logger,

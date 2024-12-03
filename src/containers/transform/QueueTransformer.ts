@@ -1,10 +1,9 @@
 import {queue, QueueObject} from 'async';
 import winston from 'winston';
-import {QueueTask, QueueTaskError} from '../google_folder/QueueTask';
-import {fileURLToPath} from 'url';
-import * as os from 'os';
+import {QueueTask, QueueTaskError} from '../google_folder/QueueTask.ts';
+import * as os from 'node:os';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export const SINGLE_THREADED_TRANSFORM = false;
 const CONCURRENCY = SINGLE_THREADED_TRANSFORM ? 4 : os.cpus().length;
