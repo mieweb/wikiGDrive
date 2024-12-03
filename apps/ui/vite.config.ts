@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import {generateHead} from '../../html/generateHead.ts';
+
+import {generateHead} from '../../website/generateHead.ts';
 
 if (!process.env.BUILD_TIME) {
   process.env.BUILD_TIME = new Date().toISOString();
@@ -82,7 +83,7 @@ export default defineConfig({
     vue(),
     htmlPlugin()
   ],
-  publicDir: '../../html/public',
+  publicDir: './public',
   resolve: {
     alias: {
       // 'vue/server-renderer': '@vue/server-renderer/dist/server-renderer.esm-bundler.js',

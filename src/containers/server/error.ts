@@ -1,15 +1,15 @@
+import process from 'node:process';
+
 import type {Application, NextFunction, Request, Response} from 'express';
 import winston from 'winston';
 
 import {GoogleDriveServiceError} from '../../google/driveFetch.ts';
 import {AuthError} from './auth.ts';
 import {handleStaticHtml} from './static.ts';
-import path from 'path';
-import {fileURLToPath} from 'url';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 const MAIN_DIR = __dirname + '/../../..';
 
 export async function initErrorHandler(app: Application, logger: winston.Logger) {

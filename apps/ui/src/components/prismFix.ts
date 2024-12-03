@@ -5,10 +5,10 @@ const email = /\b\S+@[\w.]+[a-z]{2}/;
 const linkMd = /\[([^\]]+)]\(([^)]+)\)/;
 
 // Tokens that may contain URLs and emails
-const candidates = ['comment', 'url', 'attr-value', 'string', 'front-matter'];
+const candidates = ['comment', 'node:url', 'attr-value', 'string', 'front-matter'];
 
-// Prism.languages.markdown.url.inside['url-link'] = Prism.languages.markdown.url.inside['url'];
-// delete Prism.languages.markdown.url.inside['url'];
+// Prism.languages.markdown.url.inside['url-link'] = Prism.languages.markdown.url.inside['node:url'];
+// delete Prism.languages.markdown.url.inside['node:url'];
 // Prism.languages.markdown['url-reference'].alias = 'url-link';
 
 Prism.languages.markdown.urlOuter = Prism.languages.markdown.url;
@@ -62,7 +62,7 @@ Prism.hooks.add('wrap', function (env) {
     return url;
   }
 
-  if ('url' === env.type) {
+  if ('node:url' === env.type) {
     env.tag = 'a';
     env.attributes.href = removeHash(env.content);
     env.attributes['data-to-rewrite'] = 'true';

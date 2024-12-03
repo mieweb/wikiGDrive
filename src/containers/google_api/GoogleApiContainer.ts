@@ -9,10 +9,9 @@ import {FileId} from '../../model/model.ts';
 import {GoogleFile} from '../../model/GoogleFile.ts';
 import {GoogleAuth, HasAccessToken, UserAuthClient, ServiceAuthClient, getCliCode} from '../../google/AuthClient.ts';
 
-import {fileURLToPath} from 'url';
 import {AuthError} from '../server/auth.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export class GoogleApiContainer extends Container {
   private logger: winston.Logger;

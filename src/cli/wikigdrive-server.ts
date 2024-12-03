@@ -1,31 +1,29 @@
-'use strict';
+import process from 'node:process';
+import {EventEmitter} from 'node:events';
 
-import path from 'path';
 import minimist from 'minimist';
 import winston from 'winston';
-import {fileURLToPath} from 'url';
-import {EventEmitter} from 'events';
 import dotenv from 'dotenv';
-import {default as envPaths, Paths} from 'env-paths';
+import {default as envPaths, type Paths} from 'env-paths';
 
-import {addTelemetry} from '../telemetry';
-import {CliParams} from '../model/CliParams';
+import {addTelemetry} from '../telemetry.ts';
+import type {CliParams} from '../model/CliParams.ts';
 
-import {createLogger} from '../utils/logger/logger';
-import {ContainerEngine} from '../ContainerEngine';
-import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer';
-import {FileContentService} from '../utils/FileContentService';
-import {AuthConfig} from '../model/AccountJson';
-import {loadRunningInstance} from '../containers/server/loadRunningInstance';
-import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer';
-import {JobManagerContainer} from '../containers/job/JobManagerContainer';
-import {WatchChangesContainer} from '../containers/changes/WatchChangesContainer';
-import {ServerContainer} from '../containers/server/ServerContainer';
-import {getAuthConfig} from './getAuthConfig';
-import {usage} from './usage';
+import {createLogger} from '../utils/logger/logger.ts';
+import {ContainerEngine} from '../ContainerEngine.ts';
+import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer.ts';
+import {FileContentService} from '../utils/FileContentService.ts';
+import type {AuthConfig} from '../model/AccountJson.ts';
+import {loadRunningInstance} from '../containers/server/loadRunningInstance.ts';
+import {FolderRegistryContainer} from '../containers/folder_registry/FolderRegistryContainer.ts';
+import {JobManagerContainer} from '../containers/job/JobManagerContainer.ts';
+import {WatchChangesContainer} from '../containers/changes/WatchChangesContainer.ts';
+import {ServerContainer} from '../containers/server/ServerContainer.ts';
+import {getAuthConfig} from './getAuthConfig.ts';
+import {usage} from './usage.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 
 process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 
@@ -108,7 +106,6 @@ export class MainService {
     await serverContainer.run();
 
     const containerEnginePromise = this.containerEngine.run();
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     containerEnginePromise.then(() => {
     });
 

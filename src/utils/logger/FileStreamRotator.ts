@@ -1,17 +1,11 @@
-/*!
- * FileStreamRotator
- * Copyright(c) 2012-2017 Holiday Extras.
- * Copyright(c) 2017 Roger C.
- * MIT Licensed
- */
+import process from 'node:process';
+import { Buffer } from 'node:buffer';
+import fs, {ReadStream, WriteStream} from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import EventEmitter from 'node:events';
+import {StreamOptions} from 'node:stream';
 
-import fs, {ReadStream, WriteStream} from 'fs';
-import path from 'path';
-import moment from 'moment';
-import crypto from 'crypto';
-import EventEmitter from 'events';
-import util from 'util';
-import {StreamOptions} from 'stream';
 import dayjs from 'dayjs';
 
 interface AuditFile {
@@ -124,8 +118,8 @@ export class FileStreamRotator extends EventEmitter {
       if (!options.date_format) {
         this.dateFormat = 'YYYY-MM-DD';
       }
-      if (moment().format(this.dateFormat) != moment().endOf('day').format(this.dateFormat) ||
-        moment().format(this.dateFormat) == moment().add(1,'day').format(this.dateFormat)) {
+      if (dayjs().format(this.dateFormat) != dayjs().endOf('day').format(this.dateFormat) ||
+        dayjs().format(this.dateFormat) == dayjs().add(1,'day').format(this.dateFormat)) {
         if (this.verbose) {
           console.log(new Date(), '[FileStreamRotator] Changing type to custom as date format changes more often than once a day or not every day');
         }
@@ -268,7 +262,7 @@ export class FileStreamRotator extends EventEmitter {
       this.curSize = 0;
 
       if (this.verbose) {
-        console.log(new Date(), util.format('[FileStreamRotator] Changing logs from %s to %s', this.logfile, newLogfile));
+        console.log(new Date(), `[FileStreamRotator] Changing logs from ${this.logfile} to ${newLogfile}`);
       }
       this.curDate = newDate;
       this.oldFile = this.logfile;

@@ -1,5 +1,4 @@
 import winston from 'winston';
-import {fileURLToPath} from 'url';
 
 import {Container, ContainerConfig, ContainerConfigArr, ContainerEngine} from '../../ContainerEngine.ts';
 import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
@@ -13,7 +12,7 @@ import {GoogleTreeProcessor} from './GoogleTreeProcessor.ts';
 import {HasAccessToken} from '../../google/AuthClient.ts';
 import {UserConfigService} from './UserConfigService.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export interface GoogleTreeItem {
   id: FileId;

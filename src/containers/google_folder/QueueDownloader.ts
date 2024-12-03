@@ -1,9 +1,8 @@
 import {queue, QueueObject} from 'async';
 import winston from 'winston';
-import {QueueTask, QueueTaskError} from './QueueTask';
-import {fileURLToPath} from 'url';
+import {QueueTask, QueueTaskError} from './QueueTask.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 const CONCURRENCY = 4;
 

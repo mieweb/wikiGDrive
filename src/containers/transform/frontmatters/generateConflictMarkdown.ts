@@ -1,7 +1,9 @@
+import process from 'node:process';
+
 import yaml from 'js-yaml';
 
-import {ConflictFile} from '../../../model/LocalFile';
-import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
+import {ConflictFile} from '../../../model/LocalFile.ts';
+import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
 
 export function generateConflictMarkdown(conflictFile: ConflictFile): string {
   const fmt = yaml.dump({

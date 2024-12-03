@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {dump} from '../markdownNodesUtils.ts';
 

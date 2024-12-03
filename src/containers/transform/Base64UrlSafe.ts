@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+
 export function encodeBase64UrlSafe(buffer) {
   return buffer.toString('base64')
     .replace(/\+/g, '-')
@@ -10,7 +12,7 @@ export function decodeBase64UrlSafe(base64) {
   base64 = base64
     .replace(/-/g, '+')
     .replace(/_/g, '/');
-  return new Buffer(base64, 'base64');
+  return Buffer.from(base64, 'base64');
 }
 
 export const Base64UrlSafe = {

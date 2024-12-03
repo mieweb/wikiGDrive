@@ -1,4 +1,9 @@
-import opentelemetry, {Span, SpanKind} from '@opentelemetry/api';
+import type {ClientRequest, IncomingMessage} from 'node:http';
+import * as path from 'node:path';
+import process from 'node:process';
+
+import opentelemetry, {SpanKind} from '@opentelemetry/api';
+import type {Span} from '@opentelemetry/api';
 import {ZipkinExporter} from '@opentelemetry/exporter-zipkin';
 import {InstrumentationBase, registerInstrumentations} from '@opentelemetry/instrumentation';
 import {HttpInstrumentation} from '@opentelemetry/instrumentation-http';
@@ -6,12 +11,8 @@ import {Resource} from '@opentelemetry/resources';
 import {NodeTracerProvider} from '@opentelemetry/sdk-trace-node';
 import {AlwaysOnSampler, SimpleSpanProcessor} from '@opentelemetry/sdk-trace-base';
 import {SemanticResourceAttributes} from '@opentelemetry/semantic-conventions';
-import {ClientRequest, IncomingMessage} from 'http';
-import * as path from 'path';
-import {fileURLToPath} from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 let mainDirLength = 0;
 let provider: NodeTracerProvider;
@@ -45,13 +46,15 @@ export function TelemetryClass() {
 
 export function TelemetryMethod(config: { paramsCount: number }) {
   return function (classPrototype, methodFunc: string) {
-    classPrototype[methodFunc].telemetryParamCount = config.paramsCount;
+    const method = classPrototype[methodFunc] || methodFunc;
+    method.telemetryParamCount = config.paramsCount;
   };
 }
 
 export function TelemetryMethodDisable() {
   return function (classPrototype, methodFunc: string) {
-    classPrototype[methodFunc].telemetryDisable = true;
+    const method = classPrototype[methodFunc] || methodFunc;
+    method.telemetryDisable = true;
   };
 }
 
@@ -88,7 +91,7 @@ export async function instrumentAndWrap(spanName, req, res, func) {
 export class ClassInstrumentation extends InstrumentationBase {
   private className: string;
 
-  constructor(private classPrototype: any, private path: string) {
+  constructor(private classPrototype: unknown, private path: string) {
     super('opentelemetry-instrumentation-class', '1.0', { enabled: false });
     this.className = classPrototype.constructor.name;
   }
@@ -232,8 +235,8 @@ export async function addTelemetry(serviceName: string, mainDir: string) {
     ],
   });
 
-  const {GitScanner} = await import('./git/GitScanner');
-  const {GoogleDriveService} = await import('./google/GoogleDriveService');
+  const {GitScanner} = await import('./git/GitScanner.ts');
+  const {GoogleDriveService} = await import('./google/GoogleDriveService.ts');
 
   registerInstrumentations({
     tracerProvider: provider,

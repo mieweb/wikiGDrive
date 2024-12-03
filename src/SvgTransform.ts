@@ -1,8 +1,6 @@
-'use strict';
-
+import { Transform } from 'node:stream';
 import { XmlDocument } from 'xmldoc';
-import { Transform } from 'stream';
-import {urlToFolderId} from './utils/idParsers';
+import {urlToFolderId} from './utils/idParsers.ts';
 
 export class SvgTransform extends Transform {
   private readonly localPath: string;

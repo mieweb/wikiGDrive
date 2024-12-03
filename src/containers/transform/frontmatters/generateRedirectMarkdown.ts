@@ -1,7 +1,9 @@
+import process from 'node:process';
+
 import yaml from 'js-yaml';
 
-import {LocalFile, RedirFile} from '../../../model/LocalFile';
-import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
+import {LocalFile, RedirFile} from '../../../model/LocalFile.ts';
+import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
 
 export function generateRedirectMarkdown(redirFile: RedirFile, redirectTo: LocalFile): string {
   if (!redirFile.redirectTo) {

@@ -1,5 +1,3 @@
-'use strict';
-
 import {Tooltip} from 'bootstrap';
 import {createApp} from './app.ts';
 import {addTelemetry} from './telemetry.ts';

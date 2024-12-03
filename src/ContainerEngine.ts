@@ -1,6 +1,8 @@
+import process from 'node:process';
+
+import type {QueueObject} from 'async';
 import casual from 'casual';
 import winston from 'winston';
-import {QueueObject} from 'async';
 
 import {FileContentService} from './utils/FileContentService.ts';
 import {QueueTask} from './containers/google_folder/QueueTask.ts';

@@ -1,5 +1,4 @@
 import winston from 'winston';
-import {fileURLToPath} from 'url';
 
 import {Container, ContainerEngine} from '../../ContainerEngine.ts';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
@@ -13,7 +12,7 @@ import {type FileId} from '../../model/model.ts';
 import {TelemetryClass, TelemetryMethod, TelemetryMethodDisable} from '../../telemetry.ts';
 import {HasAccessToken} from '../../google/AuthClient.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 @TelemetryClass()
 export class WatchChangesContainer extends Container {
@@ -77,12 +76,12 @@ export class WatchChangesContainer extends Container {
   async destroy(): Promise<void> {
   }
 
-  async getChanges(driveId: string): Promise<GoogleFile[]> {
+  async getChanges(driveId: FileId): Promise<GoogleFile[]> {
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     return await driveFileSystem.readJson('.changes.json') || [];
   }
 
-  async setChanges(driveId, changes: GoogleFile[]) {
+  async setChanges(driveId: FileId, changes: GoogleFile[]) {
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     await driveFileSystem.writeJson('.changes.json', changes);
     this.engine.emit(driveId, 'changes:changed', changes);
@@ -109,9 +108,14 @@ export class WatchChangesContainer extends Container {
   }
 
   @TelemetryMethodDisable()
-  async startWatching(driveId: string) {
+  async startWatching(driveId: FileId) {
     if (this.intervals[driveId]) {
       return;
+    }
+
+    // TODO: remove me
+    if (Object.keys(this.intervals).length > 0) {
+      // return;
     }
 
     this.logger.info('Starting watching: ' + driveId);
@@ -158,7 +162,7 @@ export class WatchChangesContainer extends Container {
     this.lastToken[driveId] = changes.token;
   }
 
-  stopWatching(driveId) {
+  stopWatching(driveId: FileId) {
     if (!this.intervals[driveId]) {
       return;
     }

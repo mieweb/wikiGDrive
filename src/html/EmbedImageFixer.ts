@@ -1,5 +1,5 @@
-import {DownloadFile, DownloadFileImage} from '../storage/DownloadFilesStorage';
-import {getImageDistance} from '../utils/getImageMeta';
+import {DownloadFile, DownloadFileImage} from '../storage/DownloadFilesStorage.ts';
+import {getImageDistance} from '../utils/getImageMeta.ts';
 
 const TOLERANCE = 5;
 

@@ -1,7 +1,4 @@
-import {fileURLToPath} from 'url';
-import path from 'path';
-import fs from 'fs';
-import {assert} from 'chai';
+import fs from 'node:fs';
 import {compareTexts} from '../utils.ts';
 import {FileContentService} from '../../src/utils/FileContentService.ts';
 import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
@@ -10,8 +7,9 @@ import {DocumentContent, DocumentStyles, LIBREOFFICE_CLASSES} from '../../src/od
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
 import {RewriteRule} from '../../src/odt/applyRewriteRule.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
+
+import test from '../tester.ts';
 
 const RULES: RewriteRule[] = [
   {
@@ -29,14 +27,10 @@ const RULES: RewriteRule[] = [
   }
 ];
 
-describe('RewriteRulesTest', () => {
-
-  it('test ./rewrite-rules.md.markdown', async () => {
-    const testMarkdown = fs.readFileSync(__dirname + '/rewrite-rules.md').toString();
-    const markdown = await transformOdt('rewrite-rules');
-    assert.ok(compareTexts(testMarkdown, markdown));
-  });
-
+test('test ./rewrite-rules.md.markdown', async (t) => {
+  const testMarkdown = fs.readFileSync(__dirname + '/rewrite-rules.md').toString();
+  const markdown = await transformOdt('rewrite-rules');
+  t.true(compareTexts(testMarkdown, markdown));
 });
 
 async function transformOdt(id: string) {

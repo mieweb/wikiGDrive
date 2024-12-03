@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import yaml from 'js-yaml';
 
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';

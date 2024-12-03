@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as htmlparser2 from 'htmlparser2';
 
 // TODO https://relaxng.org/relaxng.rng

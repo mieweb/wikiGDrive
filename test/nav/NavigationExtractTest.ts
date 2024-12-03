@@ -1,20 +1,18 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
   generateNavigationHierarchy,
   NavigationHierarchy,
   NavigationHierarchyNode
-} from '../../src/containers/transform/generateNavigationHierarchy';
-import {LocalFile} from '../../src/model/LocalFile';
-import {UnMarshaller} from '../../src/odt/UnMarshaller';
-import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice';
-import {compareObjects} from '../utils';
-import path from 'path';
+} from '../../src/containers/transform/generateNavigationHierarchy.ts';
+import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
+import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
+import {compareObjects} from '../utils.ts';
 
-import { fileURLToPath } from 'url';
+import test from '../tester.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 const NODES: NavigationHierarchyNode[] = [
   {
@@ -64,72 +62,6 @@ const NODES: NavigationHierarchyNode[] = [
     weight: 100,
     parent: '1D-Ah67z4hSAKLf0PITZr19h2pvlg3rVBva6P3yl1bno',
   }
-];
-
-const FILES: LocalFile[] = [
-  {
-    type: 'md',
-    id: '1',
-    title: 'Programs',
-    fileName: 'https://drive.google.com/open?id=1TbYl56bYzCZsXjAtsF3wMay92vryJzpt7YrLOm22oyk',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '2',
-    title: 'Medical Programs',
-    fileName: 'https://drive.google.com/open?id=1qfdYxyVgYVpx-5CSpa9MgE22iijISUGMA-5Kg4Zd9jU',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '3',
-    title: 'Occupational Medicine',
-    fileName: 'https://drive.google.com/open?id=1VhdbTx-CN21VofK5OI8hM7_t8ZE931BH-CjqQsi0-B0',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '4',
-    title: 'Medical Clearance',
-    fileName: 'https://drive.google.com/open?id=1o9yP0CDEwr8G6Fgr5xRbbJe2TWKl4JavucDvzvIGU_c',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '5',
-    title: 'Surveillance Procedures',
-    fileName: 'https://drive.google.com/open?id=1ZazV-O1C7sT_Alm_cVaPWxbLBLpUz9wBXsR_-P3_uEs',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '6',
-    title: 'Clinical Medicine',
-    fileName: 'https://drive.google.com/open?id=1D2Tr1fpF7oqAx0hsXkwT5D2RA1epjcGuNFVNv87bXEM',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '7',
-    title: 'Compliance Programs',
-    fileName: 'https://drive.google.com/open?id=1D-Ah67z4hSAKLf0PITZr19h2pvlg3rVBva6P3yl1bno',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '8',
-    title: 'Worksite Injury & Illness',
-    fileName: 'https://drive.google.com/open?id=11c7LYNpC6JP7pLJuiK9RWaFFr6CN20w9S0z9t5hvN8o',
-    lastAuthor: 'John Smith'
-  },
-  {
-    type: 'md',
-    id: '9',
-    title: 'Functionss',
-    fileName: 'https://drive.google.com/open?id=1E0DKcCJjdeSPf_YjJUF7pMO72HzWYbsLw3cEmdGW5g0',
-    lastAuthor: 'John Smith'
-  },
 ];
 
 const NAV2 = {
@@ -233,34 +165,30 @@ const NAV2 = {
   }
 };
 
-describe('NavigationExtractTest', () => {
+test('test ./nav.xml', async (t) => {
+  const content = fs.readFileSync(path.join(__dirname, 'nav.xml'));
+  const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
+  const navDoc: DocumentContent = parser.unmarshal(content);
 
-  it('test ./nav.xml', async () => {
-    const content = fs.readFileSync(path.join(__dirname, 'nav.xml'));
-    const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-    const navDoc: DocumentContent = parser.unmarshal(content);
+  const expected: NavigationHierarchy = {};
+  for (const node of NODES) {
+    expected[node.identifier] = node;
+  }
 
-    const expected: NavigationHierarchy = {};
-    for (const node of NODES) {
-      expected[node.identifier] = node;
-    }
+  const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
+  t.true(compareObjects(actual, expected));
+});
 
-    const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
-    compareObjects(actual, expected);
-  });
+test('test ./nav2.xml', async (t) => {
+  const content = fs.readFileSync(path.join(__dirname, 'nav2.xml'));
+  const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
+  const navDoc: DocumentContent = parser.unmarshal(content);
 
-  it('test ./nav2.xml', async () => {
-    const content = fs.readFileSync(path.join(__dirname, 'nav2.xml'));
-    const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
-    const navDoc: DocumentContent = parser.unmarshal(content);
+  const expected: NavigationHierarchy = {};
+  for (const node of NODES) {
+    expected[node.identifier] = node;
+  }
 
-    const expected: NavigationHierarchy = {};
-    for (const node of NODES) {
-      expected[node.identifier] = node;
-    }
-
-    const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
-    compareObjects(actual, NAV2);
-  });
-
+  const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
+  t.true(compareObjects(actual, NAV2));
 });

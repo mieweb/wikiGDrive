@@ -21,7 +21,7 @@ sudo apt install nodejs
 
 ```
 sudo npm install -g n
-sudo n 20.10.0
+sudo n 22.10.0
 ```
 
 ## Version Strategy

@@ -1,13 +1,14 @@
-import fs, {ReadStream} from 'fs';
-import os from 'os';
-import path from 'path';
-import zlib from 'zlib';
+import fs, {ReadStream} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {StreamOptions} from 'node:stream';
+import zlib from 'node:zlib';
+
 import Transport, {TransportStreamOptions} from 'winston-transport';
 
-import {FileStreamRotator} from './FileStreamRotator';
-import crypto from 'crypto';
-import {DailyRotateFileProcessor} from './DailyRotateFileProcessor';
-import {StreamOptions} from 'stream';
+import {FileStreamRotator} from './FileStreamRotator.ts';
+import {DailyRotateFileProcessor} from './DailyRotateFileProcessor.ts';
 
 const loggerDefaults = {
   json: false,
@@ -113,7 +114,6 @@ export class DailyRotateFile extends Transport {
     const logStream = new FileStreamRotator({
       filename: path.join(dirname, this.filename),
       frequency: options.frequency ? options.frequency : 'custom',
-      date_format: options.datePattern ? options.datePattern : 'YYYY-MM-DD',
       verbose: false,
       size: getMaxSize(options.maxSize),
       max_logs: options.maxFiles,

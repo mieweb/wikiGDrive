@@ -1,5 +1,5 @@
-import {FileContentService} from '../../utils/FileContentService';
-import {UserConfigService} from '../google_folder/UserConfigService';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {UserConfigService} from '../google_folder/UserConfigService.ts';
 
 export function fileNameToExt(fileName: string) {
   const idx = fileName.lastIndexOf('.');
