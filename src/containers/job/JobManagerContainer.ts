@@ -1,8 +1,7 @@
-import os from 'os';
-import {fileURLToPath} from 'url';
-import fs from 'fs';
-import path from 'path';
-import { randomUUID } from 'crypto';
+import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
 import {FileId} from '../../model/model.ts';
@@ -19,7 +18,7 @@ import {ActionRunnerContainer, convertActionYaml} from '../action/ActionRunnerCo
 import {getContentFileService} from '../transform/utils.ts';
 import {UploadContainer} from '../google_folder/UploadContainer.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export type JobType = 'sync' | 'sync_all' | 'transform' | 'git_fetch' | 'git_pull' | 'git_push' | 'git_reset' | 'git_commit' | 'run_action' | 'upload';
 export type JobState = 'waiting' | 'running' | 'failed' | 'done';
@@ -152,6 +151,7 @@ export class JobManagerContainer extends Container {
   }
 
   async scheduleWorker(type: string, payload: unknown): Promise<unknown> {
+    this.engine.logger.info(`scheduleWorker: ${type}`);
     try {
       return await this.workerPool.schedule(type, payload);
     } catch(err) {

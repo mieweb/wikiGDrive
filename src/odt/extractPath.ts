@@ -1,4 +1,4 @@
-import {DrawEnhancedGeometry, DrawEquation} from './LibreOffice';
+import {DrawEnhancedGeometry, DrawEquation} from './LibreOffice.ts';
 import {create, all} from 'mathjs';
 
 const math = create(all);
@@ -37,7 +37,7 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
           variables[k] = nevValue;
           change = true;
         }
-        // eslint-disable-next-line no-empty
+        // eslint-disable-next-line no-empty, @typescript-eslint/no-unused-vars
       } catch (ignore) {}
     }
   }

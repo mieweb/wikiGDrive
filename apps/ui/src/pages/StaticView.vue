@@ -27,7 +27,7 @@
 </template>
 <script>
 import {markRaw} from 'vue';
-import {UtilsMixin} from '../components/UtilsMixin';
+import {UtilsMixin} from '../components/UtilsMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
 import ShareModal from '../components/ShareModal.vue';
 import NavBar from '../components/NavBar.vue';

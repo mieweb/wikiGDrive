@@ -11,7 +11,7 @@
     "Wiki"
   ],
   "engines": {
-    "node": ">= 20.10.0",
+    "node": ">= 22.10.0",
     "npm": ">= 10.2.3"
   },
   "bin": {
@@ -22,8 +22,9 @@
   },
   "main": "src/cli/wikigdrive.ts",
   "scripts": {
-    "test": "mocha --require ts-node/register --ui bdd test/*.ts test/**/*.ts",
-    "lint": "eslint ./apps/**/*.ts ./apps/**/*.vue",
+    "test": "ava test/*Test.ts test/**/*.ts",
+    "test:deno": "deno test test/*Test.ts test/**/*.ts",
+    "lint": "eslint ./apps/**/*.ts ./apps/**/*.vue ./src/**/*.ts ./test/**/*.ts",
     "start": "wikigdrive server 3000",
     "build": "",
     "docs:dev": "vitepress dev website",
@@ -65,8 +66,7 @@
   },
   "homepage": "https://github.com/mieweb/wikiGDrive#readme",
   "workspaces": [
-    "apps/ui",
-    "html"
+    "apps/ui"
   ],
   "dependencies": {
     "@opentelemetry/api": "1.3.0",
@@ -80,7 +80,6 @@
     "@opentelemetry/sdk-trace-node": "1.8.0",
     "@opentelemetry/sdk-trace-web": "1.8.0",
     "@opentelemetry/semantic-conventions": "1.8.0",
-    "@vitejs/plugin-vue": "5.2.1",
     "async": "3.2.3",
     "bootstrap": "5.2.3",
     "buffer": "^5.7.1",
@@ -91,9 +90,9 @@
     "dayjs": "1.11.1",
     "dockerode": "4.0.2",
     "dom-serializer": "2.0.0",
+    "domhandler": "5.0.3",
     "domutils": "3.1.0",
     "dotenv": "^8.6.0",
-    "enquirer": "^2.3.6",
     "env-paths": "2.2.1",
     "express": "4.21.1",
     "express-jwt": "8.2.1",
@@ -101,6 +100,7 @@
     "htmlparser2": "9.0.0",
     "identify-filetype": "^1.0.0",
     "js-yaml": "4.1.0",
+    "jsonwebtoken": "9.0.2",
     "jszip": "3.10.1",
     "listr2": "^3.14.0",
     "lunr": "2.3.9",
@@ -114,12 +114,11 @@
     "prismjs": "1.29.0",
     "relateurl": "0.2.7",
     "sharp": "0.32.6",
-    "sharp-phash": "^2.0.0",
+    "sharp-phash": "2.2.0",
     "slugify": "1.6.6",
     "stream": "^0.0.2",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "vite": "5.4.10",
     "winston": "3.8.2",
     "winston-transport": "4.5.0",
     "ws": "8.18.0",
@@ -134,20 +133,21 @@
     "@types/dockerode": "3.3.28",
     "@types/express": "4.17.13",
     "@types/lunr": "2.3.4",
-    "@types/mocha": "10.0.9",
-    "@types/node": "20.10.0",
+    "@types/node": "22.10.1",
     "@types/passport": "1.0.9",
     "@types/relateurl": "0.2.29",
     "@types/ws": "8.5.3",
     "@types/xmldoc": "^1.1.5",
-    "typescript-eslint": "8.14.0",
-    "chai": "5.0.0",
+    "@vitejs/plugin-vue": "5.2.1",
+    "ava": "^6.2.0",
     "diff": "5.2.0",
     "eslint": "9.14.0",
+    "eslint-plugin-import": "2.31.0",
     "husky": "7.0.4",
     "jshint": "2.13.4",
-    "mocha": "10.7.3",
     "sinon": "13.0.1",
+    "typescript-eslint": "8.14.0",
+    "vite": "5.4.10",
     "vitepress": "1.5.0",
     "vitepress-sidebar": "1.29.0"
   },
@@ -157,14 +157,14 @@
       "pre-push": "npm run lint -- --quiet && npm run test"
     }
   },
-  "mocha": {
-    "extension": [
-      "ts"
-    ],
-    "node-option": [
-      "no-warnings",
-      "experimental-specifier-resolution=node",
-      "loader=ts-node/esm"
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--no-warnings",
+      "--experimental-specifier-resolution=node",
+      "--loader=ts-node/esm"
     ]
   }
 }

@@ -1,5 +1,3 @@
-'use strict';
-
 export function parseSecondsInterval(str) {
   if (!str) {
     return 0;

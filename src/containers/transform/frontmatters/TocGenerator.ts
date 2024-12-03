@@ -1,9 +1,10 @@
-'use strict';
+import process from 'node:process';
 
-import {FRONTMATTER_DUMP_OPTS} from './frontmatter';
 import yaml from 'js-yaml';
-import {DirectoryScanner} from '../DirectoryScanner';
-import {FileContentService} from '../../../utils/FileContentService';
+
+import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
+import {DirectoryScanner} from '../DirectoryScanner.ts';
+import {FileContentService} from '../../../utils/FileContentService.ts';
 
 export class TocGenerator {
 

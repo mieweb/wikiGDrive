@@ -1,12 +1,9 @@
 import {Logger} from 'vite';
 import * as vite from 'vite';
-import {fileURLToPath} from 'url';
-import path from 'path';
 import type {Application} from 'express';
 import winston from 'winston';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 const HTML_DIR = __dirname + '/../../../apps/ui';
 
 export async function initUiServer(app: Application, logger: winston.Logger) {

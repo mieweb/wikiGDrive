@@ -1,10 +1,11 @@
+import process from 'node:process';
+import http from 'node:http';
+import path from 'node:path';
+
+import {WebSocketServer} from 'ws';
 import type {Express, NextFunction, Request, Response} from 'express';
 import express from 'express';
-import http from 'http';
-import {WebSocketServer} from 'ws';
 import winston from 'winston';
-import path from 'path';
-import {fileURLToPath} from 'url';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import compress from 'compression';
@@ -46,8 +47,8 @@ import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
 import {WebHookController} from './routes/WebHookController.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
 

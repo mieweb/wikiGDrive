@@ -1,5 +1,6 @@
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, watch } from 'vue';
+import { defineComponent, onMounted, ref, watch } from 'vue';
+import type { PropType } from 'vue';
 type VoidFunction = () => void;
 const isBrowser = () => {
   return typeof window === 'object';

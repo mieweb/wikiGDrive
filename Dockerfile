@@ -1,16 +1,18 @@
-FROM node:20-alpine
+FROM node:22-bookworm-slim
 
 ARG BUILD_UI
 ARG GIT_SHA
 
-RUN apk add --no-cache bash openssh-keygen git-lfs openssh-client
+RUN apt-get update
+RUN apt-get install -yq bash git-lfs openssh-client curl unzip socat
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json ./
 RUN npm install
 RUN npm install --location=global ts-node
 
-RUN if [[ -z "$BUILD_UI" ]] ; then cd /usr/src/app/apps/ui && npm run build ; fi
+RUN if [ -z "$BUILD_UI" ] ; then cd /usr/src/app/apps/ui && npm run build ; fi
 
 COPY . ./
 RUN npm link --location=user
