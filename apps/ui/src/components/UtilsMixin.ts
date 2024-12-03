@@ -104,12 +104,18 @@ export const UtilsMixin = {
       return this.$root.gitStats;
     },
     github_url() {
-      const remote_url = this.gitStats?.remote_url || '';
+      let remote_url = this.gitStats?.remote_url || '';
+
+      if (!remote_url) return '';
+
       if (remote_url.startsWith('git@github.com:')) {
-        return remote_url.replace('git@github.com:', 'https://github.com/')
-          .replace(/.git$/, '');
+        remote_url = remote_url.replace('git@github.com:', 'https://github.com/').replace(/.git$/, '');
       }
-      return '';
+
+      if (this.selectedFile && this.selectedFile.path) {
+        return `${remote_url}/blob/master/content${this.selectedFile.path}`
+      }
+      return remote_url;
     }
   },
   methods: {
