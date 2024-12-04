@@ -9,7 +9,11 @@ const __dirname = import.meta.dirname;
 const MAIN_DIR = __dirname + '/../../..';
 
 export async function handleStaticHtml(app: Application, reqPath: string, url: string, template?: string) {
-  const renderedPath = path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist', (reqPath.substring(1) || 'index.html'));
+  let renderedPath = path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist', (reqPath.substring(1) || 'index.html'));
+
+  if (!renderedPath.startsWith(path.resolve(MAIN_DIR))) {
+    return null;
+  }
 
   if (reqPath.startsWith('/drive')
     || reqPath.startsWith('/gdocs')
