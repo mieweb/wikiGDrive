@@ -16,14 +16,14 @@
   },
   "dependencies": {
     "bootstrap": "5.2.3",
-    "vue": "3.5.12",
+    "vue": "3.5.13",
     "vue-prism-editor": "2.0.0-alpha.2",
     "vue-router": "4.4.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "5.1.4",
     "eslint-plugin-vue": "9.31.0",
-    "vite": "5.4.10",
+    "vite": "5.4.11",
     "vue-tsc": "2.1.10"
   }
 }
