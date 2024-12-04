@@ -49,7 +49,6 @@ import {WebHookController} from './routes/WebHookController.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
-const HTML_DIR = __dirname + '/../../../apps/ui';
 const MAIN_DIR = __dirname + '/../../..';
 
 function getDurationInMilliseconds(start) {
@@ -113,15 +112,17 @@ export class ServerContainer extends Container {
       next();
     });
 
-    app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist'), { extensions: ['html'] }));
-    const distPath = path.resolve(HTML_DIR, 'dist');
-    app.use(express.static(distPath));
-
     await this.initRouter(app);
     await this.initAuth(app);
 
-    await initStaticDistPages(app);
-    await initUiServer(app, this.logger);
+    if (process.env.GIT_SHA === 'dev') {
+      await initStaticDistPages(app);
+      await initUiServer(app, this.logger);
+    }
+
+    app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist'), { extensions: ['html'] }));
+    app.use(express.static(path.resolve(MAIN_DIR, 'apps', 'ui', 'dist')));
+
     await initErrorHandler(app, this.logger);
 
     const server = http.createServer(app);
