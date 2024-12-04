@@ -25,8 +25,15 @@ if (!import.meta.env.SSR) {
   }
 }
 
-router.isReady().then(() => {
+router.isReady().then(async () => {
   const vm = app.mount('#app', true);
+
+  await (vm as any).FileClientService.clearCache();
+  const driveId = router.currentRoute?.value?.params?.driveId;
+  if (driveId) {
+    await (vm as any).changeDrive(driveId);
+  }
+
   router.beforeEach(async (to, from, next) => {
     if (to.meta.ssg) {
       try {
