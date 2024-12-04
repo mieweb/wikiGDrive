@@ -4,7 +4,6 @@ import {EventEmitter} from 'node:events';
 import minimist from 'minimist';
 import winston from 'winston';
 import dotenv from 'dotenv';
-import {default as envPaths, type Paths} from 'env-paths';
 
 import {addTelemetry} from '../telemetry.ts';
 import type {CliParams} from '../model/CliParams.ts';
@@ -31,7 +30,6 @@ export class MainService {
   private readonly eventBus: EventEmitter;
   private readonly logger: winston.Logger;
   private containerEngine: ContainerEngine;
-  private paths: Paths;
   private mainFileService: FileContentService;
   private authConfig: AuthConfig;
 
@@ -42,7 +40,6 @@ export class MainService {
       this.attachDebug();
     }
 
-    this.paths = envPaths('wikigdrive', {suffix: null});
     this.logger = createLogger(this.params.workdir, this.eventBus);
   }
 

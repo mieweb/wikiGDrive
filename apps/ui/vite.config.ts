@@ -55,6 +55,7 @@ export function generateIndexHtml() {
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>WikiGDrive</title>
   <meta name="description" content="${description}" />
+  <meta name="generator" content="generateIndexHtml()" />
 ${renderHead()}
 </head>
 <body>
@@ -90,6 +91,7 @@ export default defineConfig({
       vue: 'vue/dist/vue.esm-bundler.js',
     }
   },
+  base: '/',
   build: {
     sourcemap: true,
     manifest: true,

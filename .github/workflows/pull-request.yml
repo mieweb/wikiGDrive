@@ -30,7 +30,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm run test
+        run: npm run test --workspaces --if-present
 
   build:
     if: github.event.pull_request.head.ref != 'develop' && contains( github.event.pull_request.labels.*.name, 'deploy-pr')
@@ -63,14 +63,15 @@ jobs:
         docker run \
         -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
         -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-feature:${{ github.sha }}" npm run docs:build
+        "wikigdrive-feature:${{ github.sha }}" npm run build --workspace website
 
     - name: Stop and remove
       run: docker stop "pr-${{ github.event.number }}" ; docker rm "pr-${{ github.event.number }}"
       continue-on-error: true
 
     - name: "Create empty volume"
-      run: docker volume rm -f "pr-${{ github.event.number }}" ; docker volume create "pr-${{ github.event.number }}"
+      run: docker volume create "pr-${{ github.event.number }}"
+      continue-on-error: true
 
     - name: Start
       run: |
