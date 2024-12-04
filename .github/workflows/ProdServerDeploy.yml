@@ -28,7 +28,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        run: npm run test
+        run: npm run test --workspaces --if-present
 
   build:
     needs: test
@@ -59,7 +59,7 @@ jobs:
         docker run \
         -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
         -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-prod:${{ github.sha }}" npm run docs:build
+        "wikigdrive-prod:${{ github.sha }}" npm run npm run build --workspace website
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod

@@ -17,7 +17,7 @@ export function generateHead(): unknown[] {
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/images/logo.svg?GIT_SHA' }],
 
     ['script', { src: '/assets/prism.js?GIT_SHA' }],
-    ['script', { src: '/src/main.ts?GIT_SHA', type: 'module' }],
+    // ['script', { src: '/src/main.ts?GIT_SHA', type: 'module' }],
   ].map(header => {
     if (header.length > 0) {
       for (const key of Object.keys(header[1])) {
