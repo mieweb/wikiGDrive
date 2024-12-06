@@ -104,12 +104,18 @@ export const UtilsMixin = {
       return this.$root.gitStats;
     },
     github_url() {
-      const remote_url = this.gitStats?.remote_url || '';
+      let remote_url = this.gitStats?.remote_url || '';
+
+      if (!remote_url) return '';
+
       if (remote_url.startsWith('git@github.com:')) {
-        return remote_url.replace('git@github.com:', 'https://github.com/')
-          .replace(/.git$/, '');
+        remote_url = remote_url.replace('git@github.com:', 'https://github.com/').replace(/.git$/, '');
       }
-      return '';
+
+      if (this.selectedFile && this.selectedFile.path) {
+        return `${remote_url}/blob/${this.gitStats.remote_branch}/content${this.selectedFile.path}`
+      }
+      return remote_url;
     }
   },
   methods: {
@@ -122,13 +128,13 @@ export const UtilsMixin = {
         if (this.fullDrivePath) {
           window.open(this.fullDrivePath + '#' + tab, '_blank');
         } else
-        if ('undefined' !== typeof selectedFilePath) {
-          const routeData = this.$router.resolve('/drive/' + this.driveId + selectedFilePath + '#' + tab);
-          window.open(routeData.href, '_blank');
-        } else {
-          const routeData = this.$router.resolve('/drive/' + this.driveId + '#' + tab);
-          window.open(routeData.href, '_blank');
-        }
+          if ('undefined' !== typeof selectedFilePath) {
+            const routeData = this.$router.resolve('/drive/' + this.driveId + selectedFilePath + '#' + tab);
+            window.open(routeData.href, '_blank');
+          } else {
+            const routeData = this.$router.resolve('/drive/' + this.driveId + '#' + tab);
+            window.open(routeData.href, '_blank');
+          }
         return;
       }
 
@@ -222,7 +228,7 @@ export const UtilsMixin = {
     },
     async uploadGdrive(event) {
       await disableElement(event, async () => {
-        const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/upload', { method: 'get'});
+        const response = await this.authenticatedClient.fetchApi('/api/gdrive/' + this.driveId + '/upload', { method: 'get' });
         const json = await response.json();
         if (json.shareUrl) {
           window.location = json.shareUrl;
