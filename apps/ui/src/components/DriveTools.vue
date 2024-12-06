@@ -55,7 +55,7 @@
   </div>
 </template>
 <script>
-import {UtilsMixin} from './UtilsMixin.ts';
+import {disableElement, UtilsMixin} from './UtilsMixin.ts';
 import {UiMixin} from './UiMixin.ts';
 import ToolButton from './ToolButton.vue';
 
@@ -89,6 +89,20 @@ export default {
     GIT_SHA() {
       return this.drive.GIT_SHA;
     }
+  },
+  methods: {
+    async transformAll(event) {
+      await disableElement(event, async () => {
+        await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/transform_all`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({})
+        });
+
+      });
+    },
   }
 };
 </script>

@@ -297,7 +297,7 @@ export class ServerContainer extends Container {
       }
     });
 
-    app.post('/api/run_action/:driveId/:trigger', authenticate(this.logger, 2), async (req, res, next) => {
+    app.post('/api/run_action/:driveId/:action_id', authenticate(this.logger, 2), async (req, res, next) => {
       try {
         const driveId = urlToFolderId(req.params.driveId);
 
@@ -305,46 +305,10 @@ export class ServerContainer extends Container {
         await jobManagerContainer.schedule(driveId, {
           ...initJob(),
           type: 'run_action',
-          title: 'Run action: on ' + req.params.trigger,
-          trigger: req.params.trigger,
+          title: 'Run action: ' + req.params.action_id,
+          action_id: req.params.action_id,
           payload: req.body ? JSON.stringify(req.body) : '',
           user: req.user
-        });
-
-        res.json({ driveId });
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.post('/api/transform/:driveId', authenticate(this.logger, 2), async (req, res, next) => {
-      try {
-        const driveId = urlToFolderId(req.params.driveId);
-
-        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
-        await jobManagerContainer.schedule(driveId, {
-          ...initJob(),
-          type: 'transform',
-          title: 'Transform Markdown'
-        });
-
-        res.json({ driveId });
-      } catch (err) {
-        next(err);
-      }
-    });
-
-    app.post('/api/transform/:driveId/:fileId', authenticate(this.logger, 2), async (req, res, next) => {
-      try {
-        const driveId = urlToFolderId(req.params.driveId);
-        const fileId = req.params.fileId;
-
-        const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
-        await jobManagerContainer.schedule(driveId, {
-          ...initJob(),
-          type: 'transform',
-          payload: fileId,
-          title: 'Transform Single'
         });
 
         res.json({ driveId });
@@ -362,11 +326,6 @@ export class ServerContainer extends Container {
           ...initJob(),
           type: 'sync_all',
           title: 'Syncing all'
-        });
-        await jobManagerContainer.schedule(driveId, {
-          ...initJob(),
-          type: 'transform',
-          title: 'Transform markdown'
         });
 
         res.json({ driveId });
@@ -396,12 +355,6 @@ export class ServerContainer extends Container {
           type: 'sync',
           payload: fileId,
           title: 'Syncing file: ' + fileTitle
-        });
-        await jobManagerContainer.schedule(driveId, {
-          ...initJob(),
-          type: 'transform',
-          payload: fileId,
-          title: 'Transform markdown'
         });
 
         res.json({ driveId, fileId });

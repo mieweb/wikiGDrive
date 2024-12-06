@@ -77,12 +77,12 @@ export class WatchChangesContainer extends Container {
   async destroy(): Promise<void> {
   }
 
-  async getChanges(driveId: string): Promise<GoogleFile[]> {
+  async getChanges(driveId: FileId): Promise<GoogleFile[]> {
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     return await driveFileSystem.readJson('.changes.json') || [];
   }
 
-  async setChanges(driveId, changes: GoogleFile[]) {
+  async setChanges(driveId: FileId, changes: GoogleFile[]) {
     const driveFileSystem = await this.filesService.getSubFileService(driveId, '');
     await driveFileSystem.writeJson('.changes.json', changes);
     this.engine.emit(driveId, 'changes:changed', changes);
@@ -100,16 +100,11 @@ export class WatchChangesContainer extends Container {
         payload: fileIdsString,
         title: 'Syncing file: ' + fileIdsString
       });
-      await jobManagerContainer.schedule(driveId, {
-        ...initJob(),
-        type: 'transform',
-        title: 'Transform markdown'
-      });
     }
   }
 
   @TelemetryMethodDisable()
-  async startWatching(driveId: string) {
+  async startWatching(driveId: FileId) {
     if (this.intervals[driveId]) {
       return;
     }
