@@ -1,9 +1,10 @@
-'use strict';
+import process from 'node:process';
+import readline from 'node:readline';
+import {promisify} from 'node:util';
 
-import jsonwebtoken from 'jsonwebtoken';
 import open from 'open';
-import readline from 'readline';
-import {promisify} from 'util';
+import jsonwebtoken from 'jsonwebtoken';
+
 import {convertResponseToError} from './driveFetch.ts';
 import {ServiceAccountJson} from '../model/AccountJson.ts';
 import {AuthError, GoogleUser} from '../containers/server/auth.ts';

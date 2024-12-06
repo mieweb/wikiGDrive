@@ -3,12 +3,12 @@
     <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" v-for="(toast, idx) in toasts" :key="idx" @click="clickDefaultLink(toast)">
       <div class="toast-header">
         <strong class="me-auto">{{ toast.title }}</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" @click.stop.prevent="$root.$removeToastAt(idx)"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close" @click.stop.prevent="($root as any).$removeToastAt(idx)"></button>
       </div>
       <div class="toast-body overflow-scroll mh-90" v-if="toast.description || toast.err || Object.keys(links).length > 0">
         {{ toast.description }}
         {{ toast.err }}
-        <a :href="getHref(hash)" @click.prevent.stop="setActiveTab(hash.substring(1))" v-for="(title, hash) in links(toast)" :key="hash">
+        <a :href="getHref(hash)" @click.prevent.stop="setActiveTab(String(hash).substring(1))" v-for="(title, hash) in links(toast)" :key="hash">
           {{ title }}
         </a>
       </div>
@@ -17,7 +17,7 @@
   </div>
 </template>
 <script lang="ts">
-import {UtilsMixin} from '../components/UtilsMixin';
+import {UtilsMixin} from '../components/UtilsMixin.ts';
 
 export default {
   data() {

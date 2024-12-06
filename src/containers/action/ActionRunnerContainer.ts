@@ -1,5 +1,6 @@
-import * as path from 'path';
-import {fileURLToPath} from 'url';
+import * as path from 'node:path';
+import process from 'node:process';
+
 import winston from 'winston';
 import Docker from 'dockerode';
 import yaml from 'js-yaml';
@@ -11,7 +12,7 @@ import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {GitScanner} from '../../git/GitScanner.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export interface ActionStep {
   name?: string;
@@ -127,7 +128,11 @@ export class ActionRunnerContainer extends Container {
     const contentDir = config.transform_subdir ?
       `/${driveIdTransform}${ !config.transform_subdir.startsWith('/') ? '/' : '' }${config.transform_subdir}` :
       `/${driveIdTransform}`;
-    const docker = new Docker({socketPath: '/var/run/docker.sock'});
+
+    // const docker = new Docker({socketPath: '/var/run/docker.sock'});
+    // HACK: https://github.com/apocas/dockerode/issues/747
+    // https://github.com/denoland/deno/issues/17910
+    const docker = new Docker({protocol: 'http', host: 'localhost', port: 5000});
 
     const themeId = config?.hugo_theme?.id || '';
     const configToml = config?.config_toml || '#relativeURLs = true\n' +
@@ -261,6 +266,7 @@ export class ActionRunnerContainer extends Container {
         this.logger.info(writable.getBuffer().toString());
       }
     } catch (err) {
+      console.error('eeee', err);
       code = err.statusCode || 1;
       this.logger.error(err.stack ? err.stack : err.message);
     }

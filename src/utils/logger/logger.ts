@@ -1,13 +1,11 @@
 import winston from 'winston';
-import {EventEmitter} from 'events';
-import path from 'path';
-import {DailyRotateFile} from './DailyRotateFile';
-import {fileURLToPath} from 'url';
-import {ansi_colors} from './colors';
-import {JobLogFile} from './JobLogFile';
+import {EventEmitter} from 'node:events';
+import path from 'node:path';
+import {DailyRotateFile} from './DailyRotateFile.ts';
+import {ansi_colors} from './colors.ts';
+import {JobLogFile} from './JobLogFile.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 

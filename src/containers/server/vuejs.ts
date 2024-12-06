@@ -1,12 +1,9 @@
 import {Logger} from 'vite';
 import * as vite from 'vite';
-import {fileURLToPath} from 'url';
-import path from 'path';
 import type {Application} from 'express';
 import winston from 'winston';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 const HTML_DIR = __dirname + '/../../../apps/ui';
 
 export async function initUiServer(app: Application, logger: winston.Logger) {
@@ -44,8 +41,21 @@ export async function initUiServer(app: Application, logger: winston.Logger) {
         interval: 100
       }
     },
+    resolve: {
+      alias: {
+        'vue/server-renderer': '@vue/server-renderer/dist/server-renderer.esm-bundler.js',
+      }
+    },
     customLogger: customLogger
   });
+
+  async function renderSSR(href = '/') {
+    const { render } = await viteInstance.ssrLoadModule('/src/entry-server.ts');
+    const appHtml = await render(href);
+    return appHtml;
+  }
+
+  app.set('renderSSR', renderSSR);
   app.set('viteInstance', viteInstance);
   app.use(viteInstance.middlewares);
 }

@@ -1,5 +1,4 @@
-import { parentPort } from 'worker_threads';
-
+import {parentPort} from 'node:worker_threads';
 import {executeOdtToMarkdown} from '../../odt/executeOdtToMarkdown.ts';
 
 parentPort.on('message', async (msg) => {
@@ -8,7 +7,7 @@ parentPort.on('message', async (msg) => {
 
     switch (type) {
       case 'OdtToMarkdown':
-        parentPort.postMessage({ result: await executeOdtToMarkdown(payload) });
+       parentPort.postMessage({ result: await executeOdtToMarkdown(payload) });
         return;
     }
 

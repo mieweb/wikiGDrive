@@ -1,5 +1,3 @@
-'use strict';
-
 import RelateUrl from 'relateurl';
 
 import {LinkMode} from './model/model.ts';

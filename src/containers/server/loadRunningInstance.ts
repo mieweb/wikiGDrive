@@ -1,6 +1,7 @@
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
+import process from 'node:process';
+import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export async function loadRunningInstance() {
   const tmpdir = os.tmpdir();

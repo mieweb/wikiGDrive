@@ -1,5 +1,4 @@
-import {assert} from 'chai';
-import fs from 'fs';
+import fs from 'node:fs';
 
 import {compareTexts} from '../utils.ts';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
@@ -8,71 +7,65 @@ import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
 import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
 import {FileContentService} from '../../src/utils/FileContentService.ts';
 
-import path from 'path';
-import { fileURLToPath } from 'url';
+import test from '../tester.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 
-describe('MarkDownTransformTest', () => {
+test('test ./issue-431', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/431
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-431.md').toString();
+  const markdown = await transformOdt('issue-431');
+  t.true(compareTexts(testMarkdown, markdown, false, 'issue-431.md'));
+});
 
-  it('test ./issue-431', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/431
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-431.md').toString();
-    const markdown = await transformOdt('issue-431');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-431.md'));
-  });
+test('test ./issue-432', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/432
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-432.md').toString();
+  const markdown = await transformOdt('issue-432');
+  t.true(compareTexts(testMarkdown, markdown, false, 'issue-432.md'));
+});
 
-  it('test ./issue-432', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/432
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-432.md').toString();
-    const markdown = await transformOdt('issue-432');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-432.md'));
-  });
+test('test ./issue-434', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/434
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-434.md').toString();
+  const markdown = await transformOdt('issue-434');
+  t.true(compareTexts(testMarkdown, markdown, false));
+});
 
-  it('test ./issue-434', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/434
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-434.md').toString();
-    const markdown = await transformOdt('issue-434');
-    assert.ok(compareTexts(testMarkdown, markdown, false));
-  });
+test('test ./issue-434-2', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/434
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-434-2.md').toString();
+  const markdown = await transformOdt('issue-434-2');
+  t.true(compareTexts(testMarkdown, markdown, false, 'issue-434-2.md'));
+});
 
-  it('test ./issue-434-2', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/434
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-434-2.md').toString();
-    const markdown = await transformOdt('issue-434-2');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-434-2.md'));
-  });
+test('test ./issue-435-436', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/435
+  // https://github.com/mieweb/wikiGDrive/issues/436
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-435-436.md').toString();
+  const markdown = await transformOdt('issue-435-436');
+  t.true(compareTexts(testMarkdown, markdown, false, 'issue-435-436.md'));
+});
 
-  it('test ./issue-435-436', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/435
-    // https://github.com/mieweb/wikiGDrive/issues/436
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-435-436.md').toString();
-    const markdown = await transformOdt('issue-435-436');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-435-436.md'));
-  });
+test('test ./issue-443', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/443
+  const testMarkdown = fs.readFileSync(__dirname + '/issue-443.md').toString();
+  const markdown = await transformOdt('issue-443');
+  t.true(compareTexts(testMarkdown, markdown, false, 'issue-443.md'));
+});
 
-  it('test ./issue-443', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/443
-    const testMarkdown = fs.readFileSync(__dirname + '/issue-443.md').toString();
-    const markdown = await transformOdt('issue-443');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'issue-443.md'));
-  });
+test('test ./our-docs', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/443
+  const testMarkdown = fs.readFileSync(__dirname + '/our-docs.md').toString();
+  const markdown = await transformOdt('our-docs');
+  t.true(compareTexts(testMarkdown, markdown, false, 'our-docs.md'));
+});
 
-  it('test ./our-docs', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/443
-    const testMarkdown = fs.readFileSync(__dirname + '/our-docs.md').toString();
-    const markdown = await transformOdt('our-docs');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'our-docs.md'));
-  });
-
-  it('test ./header-link', async () => {
-    // https://github.com/mieweb/wikiGDrive/issues/443
-    const testMarkdown = fs.readFileSync(__dirname + '/header-link.md').toString();
-    const markdown = await transformOdt('header-link');
-    assert.ok(compareTexts(testMarkdown, markdown, false, 'header-link.md'));
-  });
-
+test('test ./header-link', async (t) => {
+  // https://github.com/mieweb/wikiGDrive/issues/443
+  const testMarkdown = fs.readFileSync(__dirname + '/header-link.md').toString();
+  const markdown = await transformOdt('header-link');
+  t.true(compareTexts(testMarkdown, markdown, false, 'header-link.md'));
 });
 
 async function transformOdt(id: string) {
