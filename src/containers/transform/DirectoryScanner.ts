@@ -1,10 +1,11 @@
-import {FileContentService} from '../../utils/FileContentService';
-import {BinaryFile, ConflictFile, Directory, DrawingFile, LocalFile, MdFile, RedirFile} from '../../model/LocalFile';
-import {frontmatter} from './frontmatters/frontmatter';
-import {MimeTypes} from '../../model/GoogleFile';
-import {FileId} from '../../model/model';
 import yaml from 'js-yaml';
-import {LOG_NAME} from './LocalLog';
+
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {BinaryFile, ConflictFile, Directory, DrawingFile, LocalFile, MdFile, RedirFile} from '../../model/LocalFile.ts';
+import {frontmatter} from './frontmatters/frontmatter.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
+import {FileId} from '../../model/model.ts';
+import {LOG_NAME} from './LocalLog.ts';
 
 export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
   '.tree.json'];

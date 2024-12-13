@@ -1,15 +1,14 @@
-'use strict';
+import process from 'node:process';
 
 import minimist from 'minimist';
 import dotenv from 'dotenv';
-import {fileURLToPath} from 'url';
 
-import {createLogger} from '../utils/logger/logger';
-import {loadRunningInstance} from '../containers/server/loadRunningInstance';
-import {urlToFolderId} from '../utils/idParsers';
-import {usage} from './usage';
+import {createLogger} from '../utils/logger/logger.ts';
+import {loadRunningInstance} from '../containers/server/loadRunningInstance.ts';
+import {urlToFolderId} from '../utils/idParsers.ts';
+import {usage} from './usage.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 

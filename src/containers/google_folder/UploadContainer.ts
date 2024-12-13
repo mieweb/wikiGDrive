@@ -1,5 +1,6 @@
+import { Buffer } from 'node:buffer';
+
 import winston from 'winston';
-import {fileURLToPath} from 'url';
 import * as htmlparser2 from 'htmlparser2';
 import {ElementType} from 'htmlparser2';
 import * as domutils from 'domutils';
@@ -19,7 +20,7 @@ import {getDesiredPath} from '../transform/LocalFilesGenerator.ts';
 import {markdownToHtml} from '../../google/markdownToHtml.ts';
 import {convertToAbsolutePath} from '../../LinkTranslator.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 interface FileToUpload {
   performRewrite?: string;

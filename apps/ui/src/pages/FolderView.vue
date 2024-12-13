@@ -23,8 +23,8 @@
           </div>
         </div>
 
-        <JobsViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
-        <ChangesViewer v-if="activeTab === 'changes'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @transform="transformSingle" @showLogs="showLogs" />
+        <JobsViewer v-if="activeTab === 'sync'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @showLogs="showLogs" />
+        <ChangesViewer v-if="activeTab === 'changes'" :selected-file="selectedFile" :activeTab="activeTab" @sync="syncSingle($event.$event, $event.file)" @showLogs="showLogs" />
         <GitLog v-if="activeTab === 'git_log'" :folderPath="folderPath" :selectedFile="selectedFile" :active-tab="activeTab" />
 
         <DriveTools v-if="activeTab === 'drive_tools'" :folderPath="folderPath" :selectedFile="selectedFile" :selected-folder="selectedFolder" :active-tab="activeTab" />
@@ -42,7 +42,7 @@
         <WorkflowsEditor v-if="activeTab === 'workflows'" :active-tab="activeTab" />
 
         <div v-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'text/x-markdown'">
-          <FilePreview :contentDir="contentDir" :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
+          <FilePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />
         </div>
         <div v-else-if="(activeTab === 'html' || activeTab === 'markdown' || activeTab === 'drive_backlinks') && selectedFile.mimeType === 'image/svg+xml'">
           <ImagePreview :folder-path="folderPath" :activeTab="activeTab" :selectedFile="selectedFile" :content-dir="contentDir" />

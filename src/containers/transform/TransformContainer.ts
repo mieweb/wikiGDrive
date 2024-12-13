@@ -1,4 +1,3 @@
-import {fileURLToPath} from 'url';
 import winston from 'winston';
 import Transport from 'winston-transport';
 
@@ -25,9 +24,9 @@ import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
-import {frontmatter} from './frontmatters/frontmatter.js';
+import {frontmatter} from './frontmatters/frontmatter.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 function doesExistIn(googleFolderFiles: LocalFile[], localFile: LocalFile) {
   return !!googleFolderFiles.find(file => file.id === localFile.id);
@@ -226,7 +225,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.folderId, jobId: this.params.jobId });
     this.transformLog = new TransformLog();
     this.logger.add(this.transformLog);
   }
@@ -472,6 +471,8 @@ export class TransformContainer extends Container {
                 return '';
               }
               return retVal;
+            } else {
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
             return str;
           });
@@ -480,11 +481,16 @@ export class TransformContainer extends Container {
         newContent = newContent.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
           let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
           let hash = getUrlHash(str) || '';
-          if (hash && this.globalHeadersMap[str]) {
-            const idx = this.globalHeadersMap[str].indexOf('#');
-            if (idx >= 0) {
-              fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
-              hash = this.globalHeadersMap[str].substring(idx);
+          if (hash) {
+            if (this.globalHeadersMap[str]) {
+              const idx = this.globalHeadersMap[str].indexOf('#');
+              if (idx >= 0) {
+                fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
+                hash = this.globalHeadersMap[str].substring(idx);
+              }
+            } else {
+              const fullLink = str;
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
           }
           const lastLog = this.localLog.findLastFile(fileId);

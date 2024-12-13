@@ -1,7 +1,9 @@
-import {EventEmitter} from 'events';
-import {FileContentService} from '../utils/FileContentService';
-import {createLogger} from '../utils/logger/logger';
-import {ContainerEngine} from '../ContainerEngine';
+import {EventEmitter} from 'node:events';
+import process from 'node:process';
+
+import {FileContentService} from '../utils/FileContentService.ts';
+import {createLogger} from '../utils/logger/logger.ts';
+import {ContainerEngine} from '../ContainerEngine.ts';
 
 export async function initEngine(workdir: string) {
   const mainFileService = new FileContentService(workdir);

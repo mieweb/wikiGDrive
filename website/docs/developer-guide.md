@@ -21,7 +21,7 @@ sudo apt install nodejs
 
 ```
 sudo npm install -g n
-sudo n 20.10.0
+sudo n 22.10.0
 ```
 
 ## Version Strategy
@@ -77,6 +77,7 @@ docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
         -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
         -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
         -e VOLUME_DATA=$VOLUME_DATA \
         -e VOLUME_PREVIEW=$VOLUME_PREVIEW \
         --link zipkin:zipkin \

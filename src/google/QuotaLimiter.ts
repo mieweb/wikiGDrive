@@ -1,9 +1,7 @@
-'use strict';
-
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 import winston from 'winston';
-import opentelemetry, {SpanKind} from '@opentelemetry/api';
-import {Context} from '@opentelemetry/api/build/src/context/types';
+import {SpanKind, trace} from '@opentelemetry/api';
+import type {Context} from '@opentelemetry/api/build/src/context/types.d.ts';
 
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;
@@ -145,7 +143,7 @@ export class QuotaLimiter {
         if (process.env.ZIPKIN_URL && notStartedJob.func['parentCtx']) {
           const parentCtx: Context = notStartedJob.func['parentCtx'];
           const serviceName = process.env.ZIPKIN_SERVICE || 'wikigdrive';
-          const tracer = opentelemetry.trace.getTracer(
+          const tracer = trace.getTracer(
             serviceName,
             '1.0'
           );

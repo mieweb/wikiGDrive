@@ -1,8 +1,8 @@
-import {FileContentService} from '../../utils/FileContentService';
-import {MimeTypes} from '../../model/GoogleFile';
-import {GoogleTreeItem} from './GoogleFolderContainer';
-import {GoogleFilesScanner} from '../transform/GoogleFilesScanner';
-import {FileId} from '../../model/model';
+import {FileContentService} from '../../utils/FileContentService.ts';
+import {MimeTypes} from '../../model/GoogleFile.ts';
+import {GoogleTreeItem} from './GoogleFolderContainer.ts';
+import {GoogleFilesScanner} from '../transform/GoogleFilesScanner.ts';
+import {FileId} from '../../model/model.ts';
 
 type CallBack<K> = (treeItem: K) => boolean;
 

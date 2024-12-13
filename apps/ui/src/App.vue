@@ -12,9 +12,15 @@ import ErrorView from './pages/ErrorView.vue';
 
 export default {
   data() {
-    const el = document.querySelector('meta[name=errorMessage]');
+    let errorMessage = '';
+
+    if (!import.meta.env.SSR) {
+      const el = document.querySelector('meta[name=errorMessage]');
+      errorMessage = el ? el.getAttribute('content') : '';
+    }
+
     return {
-      errorMessage: el ? el.getAttribute('content') : ''
+      errorMessage
     };
   },
   components: {

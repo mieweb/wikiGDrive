@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import jsonwebtoken from 'jsonwebtoken';
 import type {Request, Response} from 'express';
 import {Logger} from 'winston';
@@ -10,10 +12,10 @@ import {initJob, JobManagerContainer} from '../job/JobManagerContainer.ts';
 
 export class AuthError extends Error {
   public status: number;
-  public authPath: string;
-  public redirectTo: string;
+  public authPath = '';
+  public redirectTo = '';
   public showHtml = false;
-  constructor(msg, status) {
+  constructor(msg: string, status: number) {
     super(msg);
     this.status = status;
   }

@@ -1,9 +1,7 @@
-'use strict';
+import process from 'node:process';
 
-import path from 'path';
 import minimist from 'minimist';
 import dotenv from 'dotenv';
-import {fileURLToPath} from 'url';
 
 import {addTelemetry} from '../telemetry.ts';
 import {GoogleApiContainer} from '../containers/google_api/GoogleApiContainer.ts';
@@ -17,8 +15,8 @@ import {initEngine} from './initEngine.ts';
 import {JobManagerContainer} from '../containers/job/JobManagerContainer.ts';
 import {UserConfigService} from '../containers/google_folder/UserConfigService.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 
 process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 

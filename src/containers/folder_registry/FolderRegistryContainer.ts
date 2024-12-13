@@ -1,12 +1,11 @@
 import winston from 'winston';
-import { fileURLToPath } from 'url';
 
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
 import {FileId} from '../../model/model.ts';
 import {GoogleApiContainer} from '../google_api/GoogleApiContainer.ts';
 import {GoogleDriveServiceError} from '../../google/driveFetch.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 export interface Drive {
   id: FileId;
@@ -58,6 +57,8 @@ export class FolderRegistryContainer extends Container {
       this.logger.warn('Not authenticated to Google API. Skipping drives refresh.');
       return;
     }
+
+    this.logger.info('refreshDrives');
 
     const oldDrives = Object.values(await this.getFolders());
 
