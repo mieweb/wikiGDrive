@@ -187,11 +187,17 @@ export function createApp() {
       {
         path: '/drive/:driveId*',
         name: 'drive',
+        meta: {
+          requireDriveId: true
+        },
         component: () => import('./pages/FolderView.vue')
       },
       {
         path: '/gdocs/:driveId/:fileId',
         name: 'gdocs',
+        meta: {
+          requireDriveId: true
+        },
         component: () => import('./pages/GDocsView.vue')
       },
       {
@@ -202,6 +208,9 @@ export function createApp() {
       {
         path: '/share-drive/:driveId',
         name: 'share-drive',
+        meta: {
+          requireDriveId: true
+        },
         component: () => import('./pages/ShareView.vue'),
       },
       {

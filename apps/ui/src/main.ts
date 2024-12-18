@@ -29,7 +29,8 @@ router.isReady().then(async () => {
   const vm = app.mount('#app', true);
 
   await (vm as any).FileClientService.clearCache();
-  const driveId = router.currentRoute?.value?.params?.driveId;
+  const driveIdParam = router.currentRoute?.value?.params?.driveId;
+  const driveId = Array.isArray(driveIdParam) ? driveIdParam[0] : driveIdParam;
   if (driveId) {
     await (vm as any).changeDrive(driveId);
   }
