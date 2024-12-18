@@ -101,8 +101,6 @@ export class GitScanner {
   async changes(opts: { includeAssets: boolean } = { includeAssets: false }): Promise<GitChange[]> {
     const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
-    const skipOthers = false;
-
     function addEntry(path, state, attachments = 0) {
       if (!retVal[path]) {
         retVal[path] = {
@@ -148,11 +146,10 @@ export class GitScanner {
       if (err.message.indexOf('fatal: bad revision') === -1) {
         throw err;
       }
-      // skipOthers = true;
     }
 
     const untrackedResult = await this.exec(
-      skipOthers ? 'git -c core.quotepath=off ls-files --exclude-standard' : 'git -c core.quotepath=off ls-files --others --exclude-standard',
+      'git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard',
       { skipLogger: true }
     );
     for (const line of untrackedResult.stdout.split('\n')) {
@@ -834,7 +831,7 @@ export class GitScanner {
     let unstaged = 0;
 
     try {
-      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard', { skipLogger: true });
       for (const line of untrackedResult.stdout.split('\n')) {
         if (!line.trim()) {
           continue;
