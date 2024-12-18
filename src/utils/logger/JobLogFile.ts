@@ -1,9 +1,11 @@
-import path from 'path';
-import fs, {ReadStream} from 'fs';
-import os from 'os';
-import {StreamOptions} from 'stream';
+import path from 'node:path';
+import fs, {ReadStream} from 'node:fs';
+import os from 'node:os';
+import {StreamOptions} from 'node:stream';
+
 import Transport, {TransportStreamOptions} from 'winston-transport';
-import {JobLogFileProcessor} from './JobLogFileProcessor';
+
+import {JobLogFileProcessor} from './JobLogFileProcessor.ts';
 
 interface JobLogStreamOptions extends TransportStreamOptions {
   file_options?: StreamOptions<ReadStream>;

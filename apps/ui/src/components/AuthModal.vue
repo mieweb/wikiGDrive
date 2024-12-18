@@ -16,7 +16,7 @@
   </div>
 </template>
 <script>
-import {UtilsMixin} from './UtilsMixin';
+import {UtilsMixin} from './UtilsMixin.ts';
 
 export default {
   name: 'AuthModal',

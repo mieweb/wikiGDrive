@@ -1,8 +1,8 @@
+import process from 'node:process';
+
 import type * as express from 'express';
 import winston from 'winston';
-import SwaggerDocService from './SwaggerDocService.ts';
 import {instrumentAndWrap} from '../../../telemetry.ts';
-// import SwaggerDocService from '../api-docs.api/SwaggerDocService';
 
 export const HttpStatus = {
   OK: 200,
@@ -69,7 +69,7 @@ export interface ControllerRouteParamMethod {
 }
 
 export interface ControllerRouteParamPath {
-  type: 'path';
+  type: 'node:path';
   parameterIndex: number;
   name: string;
   docs?: RouteDoc;
@@ -133,7 +133,7 @@ export interface ControllerCallContext {
 }
 
 function addSwaggerRoute(mainPath: string, route: ControllerRoute) {
-  SwaggerDocService.addRoute(mainPath, route);
+  // SwaggerDocService.addRoute(mainPath, route);
 }
 
 export class Controller implements ControllerCallContext {

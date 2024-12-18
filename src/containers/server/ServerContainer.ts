@@ -1,10 +1,11 @@
+import process from 'node:process';
+import http from 'node:http';
+import path from 'node:path';
+
+import {WebSocketServer} from 'ws';
 import type {Express, NextFunction, Request, Response} from 'express';
 import express from 'express';
-import http from 'http';
-import {WebSocketServer} from 'ws';
 import winston from 'winston';
-import path from 'path';
-import {fileURLToPath} from 'url';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import compress from 'compression';
@@ -46,9 +47,8 @@ import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
 import {WebHookController} from './routes/WebHookController.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const HTML_DIR = __dirname + '/../../../apps/ui';
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 const MAIN_DIR = __dirname + '/../../..';
 
 function getDurationInMilliseconds(start) {
@@ -112,15 +112,17 @@ export class ServerContainer extends Container {
       next();
     });
 
-    app.use(express.static(path.resolve(MAIN_DIR, 'dist', 'hugo')));
-    const distPath = path.resolve(HTML_DIR, 'dist');
-    app.use(express.static(distPath));
-
     await this.initRouter(app);
     await this.initAuth(app);
 
-    await initStaticDistPages(app);
-    await initUiServer(app, this.logger);
+    if (process.env.GIT_SHA === 'dev') {
+      await initStaticDistPages(app);
+      await initUiServer(app, this.logger);
+    }
+
+    app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist'), { extensions: ['html'] }));
+    app.use(express.static(path.resolve(MAIN_DIR, 'apps', 'ui', 'dist')));
+
     await initErrorHandler(app, this.logger);
 
     const server = http.createServer(app);

@@ -1,8 +1,12 @@
-import fs from 'fs';
-import path from 'path';
-import {exec, spawn} from 'child_process';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {Logger} from 'winston';
+import fs from 'node:fs';
+import path from 'node:path';
+import {exec, spawn} from 'node:child_process';
+import process from 'node:process';
+
+import type {Logger} from 'winston';
+
 import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
 import {TelemetryMethod} from '../telemetry.ts';
 
@@ -97,8 +101,6 @@ export class GitScanner {
   async changes(opts: { includeAssets: boolean } = { includeAssets: false }): Promise<GitChange[]> {
     const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
-    const skipOthers = false;
-
     function addEntry(path, state, attachments = 0) {
       if (!retVal[path]) {
         retVal[path] = {
@@ -144,11 +146,10 @@ export class GitScanner {
       if (err.message.indexOf('fatal: bad revision') === -1) {
         throw err;
       }
-      // skipOthers = true;
     }
 
     const untrackedResult = await this.exec(
-      skipOthers ? 'git -c core.quotepath=off ls-files --exclude-standard' : 'git -c core.quotepath=off ls-files --others --exclude-standard',
+      'git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard',
       { skipLogger: true }
     );
     for (const line of untrackedResult.stdout.split('\n')) {
@@ -604,6 +605,7 @@ export class GitScanner {
       '*.debug.xml',
       '.tree.json'
     ];
+    await this.setSafeDirectory();
 
     const ignorePath = path.join(this.rootPath, '.gitignore');
     const originalIgnore = [];
@@ -829,7 +831,7 @@ export class GitScanner {
     let unstaged = 0;
 
     try {
-      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard', { skipLogger: true });
       for (const line of untrackedResult.stdout.split('\n')) {
         if (!line.trim()) {
           continue;

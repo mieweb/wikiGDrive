@@ -117,7 +117,6 @@ export default {
       });
       this.commitMsg = '';
     },
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     fetch() {},
     reportBug(selectedFile) {
       const url = 'https://github.com/mieweb/wikiGDrive/issues/new?' + new URLSearchParams({

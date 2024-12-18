@@ -1,6 +1,5 @@
-'use strict';
-
-import {Writable} from 'stream';
+import {Buffer} from 'node:buffer';
+import {Writable} from 'node:stream';
 
 export class BufferWritable extends Writable {
     private buffer: Buffer;

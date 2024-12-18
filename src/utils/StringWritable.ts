@@ -1,6 +1,4 @@
-'use strict';
-
-import {Writable} from 'stream';
+import {Writable} from 'node:stream';
 
 export class StringWritable extends Writable {
   private content: string;
