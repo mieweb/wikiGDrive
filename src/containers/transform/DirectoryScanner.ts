@@ -8,7 +8,7 @@ import {FileId} from '../../model/model.ts';
 import {LOG_NAME} from './LocalLog.ts';
 
 export const RESERVED_NAMES = [LOG_NAME, '.wgd-directory.yaml', '.wgd-local-log.csv', '.wgd-local-links.csv',
-  '.tree.json'];
+  '.tree.json', '.private'];
 
 export const RESERVED_DIR_NAMES = ['.git'];
 
