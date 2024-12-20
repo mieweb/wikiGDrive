@@ -1,10 +1,10 @@
-'use strict';
-
 // https://developers.google.com/drive/api/v3/reference
 
+import process from 'node:process';
+import {Writable} from 'node:stream';
+import crypto from 'node:crypto';
+
 import {Logger} from 'winston';
-import {Writable} from 'stream';
-import crypto from 'crypto';
 
 import {GoogleFile, MimeToExt, MimeTypes, SimpleFile} from '../model/GoogleFile.ts';
 import {FileId} from '../model/model.ts';
@@ -26,6 +26,10 @@ export interface ListContext {
   driveId?: string;
   retries?: number;
   // parentName?: string;
+}
+
+export interface HasId {
+  id: string;
 }
 
 function apiFileToGoogleFile(apiFile): GoogleFile {
@@ -312,7 +316,7 @@ export class GoogleDriveService {
     });
   }
 
-  async createDir(accessToken: string, folderId: FileId, name: string) {
+  async createDir(accessToken: string, folderId: FileId, name: string): Promise<HasId> {
     const url = 'https://www.googleapis.com/upload/drive/v3/files';
 
     const metadata = {
@@ -343,7 +347,7 @@ export class GoogleDriveService {
     return response.ids;
   }
 
-  async upload(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, id?: FileId) {
+  async upload(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, id?: FileId): Promise<HasId> {
     const url = 'https://www.googleapis.com/upload/drive/v3/files';
 
     let googleMimeType = 'application/octet-stream';
@@ -382,7 +386,7 @@ export class GoogleDriveService {
     }
   }
 
-  async update(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, fileId: FileId) {
+  async update(accessToken: string, folderId: FileId, name: string, mimeType: string, buffer: Buffer, fileId: FileId): Promise<HasId> {
     const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}`;
 
     let googleMimeType = 'application/octet-stream';

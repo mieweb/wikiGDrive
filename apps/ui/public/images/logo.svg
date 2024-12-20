@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="48"
+   height="48"
+   viewBox="0 0 12.7 12.7"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showguides="false"
+     units="px"
+     inkscape:zoom="4.5121546"
+     inkscape:cx="34.684095"
+     inkscape:cy="61.278929"
+     inkscape:window-width="1920"
+     inkscape:window-height="1138"
+     inkscape:window-x="0"
+     inkscape:window-y="28"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <rect
+       x="356.52606"
+       y="456.58618"
+       width="31.811682"
+       height="71.827301"
+       id="rect38782" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g71479"
+       transform="scale(0.23422798,0.23042695)">
+      <g
+         id="g71465"
+         transform="matrix(0.38846076,0,0,0.38846076,-13.678041,-30.128882)">
+        <rect
+           style="fill:#003dfa;fill-opacity:1;stroke-width:0.264583"
+           id="rect4678"
+           width="139.57826"
+           height="141.88069"
+           x="35.210869"
+           y="77.559654"
+           ry="45.57732" />
+        <g
+           id="g56974"
+           transform="translate(-7.8481465,7.1969515)">
+          <path
+             id="rect4830"
+             style="fill:#ffffff;stroke-width:0.264583"
+             d="m 81.955223,94.039017 c 6.924573,0 68.374047,0 40.445147,0 l 21.3407,21.800013 v 72.72805 H 81.955223 Z"
+             sodipodi:nodetypes="cccccc" />
+          <path
+             id="rect5603"
+             style="fill:#ff0000;stroke-width:0.411224"
+             d="m 122.40037,94.039017 21.3407,21.800013 v 0 h -21.3407 z"
+             sodipodi:nodetypes="ccccc" />
+        </g>
+        <text
+           xml:space="preserve"
+           transform="scale(0.26458333)"
+           id="text38780"
+           style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect38782);fill:#000000;fill-opacity:1;stroke:none" />
+        <g
+           id="g71452"
+           transform="translate(-5.4459291,3.8925568)">
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;white-space:pre;inline-size:31.9902;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="93.828255"
+             y="119.97785"
+             id="text9432"
+             transform="matrix(1.6904289,0,0,1.6904289,-71.934137,-57.060221)"><tspan
+               x="93.828255"
+               y="119.97785"
+               id="tspan71517"><tspan
+                 style="font-size:14.1111px;font-family:'Linux Libertine O';-inkscape-font-specification:'Linux Libertine O, Normal'"
+                 id="tspan71515">Wiki</tspan></tspan></text>
+          <text
+             xml:space="preserve"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+             x="86.14769"
+             y="159.91122"
+             id="text53392"><tspan
+               sodipodi:role="line"
+               id="tspan53390"
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+               x="86.14769"
+               y="159.91122">GDrive</tspan></text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

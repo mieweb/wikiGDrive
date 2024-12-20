@@ -123,7 +123,7 @@ export const UtilsMixin = {
       const parts = (this.$route.hash.replace(/^#/, '') || DEFAULT_TAB).split(':');
       return parts;
     },
-    setActiveTab(tab, selectedFilePath) {
+    setActiveTab(tab: string, selectedFilePath?: string) {
       if (this.isAddon) {
         if (this.fullDrivePath) {
           window.open(this.fullDrivePath + '#' + tab, '_blank');

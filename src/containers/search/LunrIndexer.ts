@@ -1,5 +1,5 @@
 import lunr from 'lunr';
-import stemmerSupport from 'lunr-languages/lunr.stemmer.support';
+import stemmerSupport from 'lunr-languages/lunr.stemmer.support.js';
 
 stemmerSupport(lunr);
 

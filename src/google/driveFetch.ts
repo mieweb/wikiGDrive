@@ -1,4 +1,9 @@
-import opentelemetry from '@opentelemetry/api';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import process from 'node:process';
+
+import {trace, context} from '@opentelemetry/api';
+
 import {SimpleFile} from '../model/GoogleFile.ts';
 import {QuotaLimiter} from './QuotaLimiter.ts';
 import {instrumentFunction} from '../telemetry.ts';
@@ -122,7 +127,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
 
   let traceparent;
   if (process.env.ZIPKIN_URL) {
-    const span = opentelemetry.trace.getActiveSpan();
+    const span = trace.getActiveSpan();
     if (span) {
       traceparent = span.spanContext().traceId;
     }
@@ -133,6 +138,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
     const response = await fetchInstrumented(url, {
       method,
       headers: {
+        'User-Agent': 'wikigdrive (gzip)',
         Authorization: 'Bearer ' + accessToken,
         'Accept-Encoding': 'gzip',
         'Content-type': body ? 'application/json' : undefined,
@@ -177,7 +183,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
     }
 
     if (process.env.ZIPKIN_URL) {
-      job.parentCtx = opentelemetry.context.active();
+      job.parentCtx = context.active();
     }
 
     quotaLimiter.addJob(job);
@@ -202,13 +208,13 @@ export async function driveFetchStream(quotaLimiter: QuotaLimiter, accessToken: 
 
 const boundary = '-------314159265358979323846';
 
-export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToken: string, method: string, requestUrl: string, params: Record<string, string|number|boolean>, formData: FormData): Promise<unknown> {
+export async function driveFetchMultipart<T>(quotaLimiter: QuotaLimiter, accessToken: string, method: string, requestUrl: string, params: Record<string, string|number|boolean>, formData: FormData): Promise<T> {
   const filteredParams = filterParams(params);
   const url = requestUrl + '?' + new URLSearchParams(filteredParams).toString();
 
   let traceparent: string;
   if (process.env.ZIPKIN_URL) {
-    const span = opentelemetry.trace.getActiveSpan();
+    const span = trace.getActiveSpan();
     if (span) {
       traceparent = span.spanContext().traceId;
     }
@@ -308,7 +314,7 @@ export async function driveFetchMultipart(quotaLimiter: QuotaLimiter, accessToke
     }
 
     if (process.env.ZIPKIN_URL) {
-      job.parentCtx = opentelemetry.context.active();
+      job.parentCtx = context.active();
     }
 
     quotaLimiter.addJob(job);

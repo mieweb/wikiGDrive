@@ -1,5 +1,3 @@
-'use strict';
-
 type DateISO = string;
 type FileId = string;
 

@@ -1,25 +1,28 @@
-'use strict';
-
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import {Buffer} from 'node:buffer';
 
 // https://stackoverflow.com/questions/19641783/google-drive-api-username-password-authentication#19643080
 // https://developers.google.com/identity/protocols/OAuth2ServiceAccount
 const IV = '5383165476e1c2e3';
 export function encrypt(val: string, key: string) {
-  key = new Buffer(key).toString('hex').substring(0, 32);
+  key = Buffer.from(key).toString('hex').substring(0, 32);
   const cipher = crypto.createCipheriv('aes-256-cbc', key, IV);
-  const encrypted = cipher.update(val, 'utf8', 'base64');
-  return encrypted + cipher.final('base64');
+  const encrypted = cipher.update(val, 'utf8', 'hex');
+  const final = encrypted + cipher.final('hex');
+  const buffer = Buffer.from(final, 'hex');
+  return buffer.toString('base64');
 }
 
 export function decrypt(encrypted: string, key: string) {
   if (!encrypted) {
     return null;
   }
-  key = new Buffer(key).toString('hex').substring(0, 32);
+  key = Buffer.from(key).toString('hex').substring(0, 32);
+  const buffer = Buffer.from(encrypted, 'base64');
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, IV);
-  const decrypted = decipher.update(encrypted, 'base64', 'utf8');
-  return decrypted + decipher.final('utf8');
+  const decrypted = decipher.update(buffer.toString('hex'), 'hex', 'utf8');
+  const f = decrypted + decipher.final('utf8');
+  return f;
 }
 
 export interface TokenInfo {

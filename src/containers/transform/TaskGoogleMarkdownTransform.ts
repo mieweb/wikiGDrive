@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import winston from 'winston';
 
 import {QueueTask} from '../google_folder/QueueTask.ts';

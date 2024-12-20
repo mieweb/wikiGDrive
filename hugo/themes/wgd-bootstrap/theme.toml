@@ -1,6 +1,0 @@
-name = "wgd-bootstrap"
-license = "MIT"
-description = "Theme for wikigdrive"
-homepage = "https://wikigdrive.com"
-tags = ["bootstrap"]
-min_version = "0.41"
