@@ -19,6 +19,7 @@
       <div class="btn-group-vertical w-100 p-1">
         <button type="button" class="btn btn-secondary mb-1" @click="cmd('status')">git status</button>
         <button type="button" class="btn btn-secondary mb-1" @click="cmd('remote -v')">git remote -v</button>
+        <button type="button" class="btn btn-secondary mb-1" @click="cmd('branch -m', '?')">git branch -m</button>
       </div>
     </template>
 
@@ -30,7 +31,7 @@
     </form>
   </BaseLayout>
 </template>
-<script>
+<script lang="ts">
 import {UtilsMixin} from './UtilsMixin.ts';
 import {GitMixin} from './GitMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
@@ -97,14 +98,17 @@ export default {
 
   },
   methods: {
-    async cmd(cmd) {
+    async cmd(cmd: string, arg: string = '') {
       this.gitChanges = null;
+      if (arg === '?') {
+        arg = prompt('');
+      }
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/cmd`, {
         method: 'post',
         headers: {
           'Content-type': 'application/json'
         },
-        body: JSON.stringify({ cmd })
+        body: JSON.stringify({ cmd, arg })
       });
       const json = await response.json();
       this.stdout = json.stdout;

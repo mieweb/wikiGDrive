@@ -911,12 +911,12 @@ export class GitScanner {
     }
   }
 
-  async cmd(cmd: string) {
-    if (!['status', 'remote -v', 'ls-files --stage'].includes(cmd)) {
+  async cmd(cmd: string, arg: string = '') {
+    if (!['status', 'remote -v', 'ls-files --stage', 'branch -m'].includes(cmd)) {
       throw new Error('Forbidden command');
     }
 
-    const result = await this.exec('git ' + cmd, { skipLogger: true });
+    const result = await this.exec('git ' + cmd + ' ' + (arg || ''), { skipLogger: true });
 
     return { stdout: result.stdout, stderr: result.stderr };
   }
