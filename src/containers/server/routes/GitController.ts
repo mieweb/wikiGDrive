@@ -13,6 +13,7 @@ interface CommitPost {
 
 interface CmdPost {
   cmd: string;
+  arg?: string;
 }
 
 interface RemovePath {
@@ -93,7 +94,7 @@ export default class GitController extends Controller {
     const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const output = await gitScanner.cmd(body.cmd);
+    const output = await gitScanner.cmd(body.cmd, body.arg || '');
     return output;
   }
 
