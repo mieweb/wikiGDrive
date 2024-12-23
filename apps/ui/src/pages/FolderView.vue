@@ -34,7 +34,7 @@
           <LogsViewer v-else :contentDir="contentDir" :active-tab="activeTab" v-model="logsState" />
         </div>
 
-        <SettingsTab v-if="['git_settings', 'drive_config', 'drive_config_git', 'drive_danger'].includes(activeTab)"
+        <SettingsTab v-if="['git_settings', 'drive_config', 'drive_config_git', 'drive_danger', 'import_export'].includes(activeTab)"
                      :active-tab="activeTab"
                      :tree-empty="treeEmpty"
         />
@@ -183,7 +183,9 @@ export default {
       if (this.notRegistered) {
         return false;
       }
-      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' && this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' && this.activeTab !== 'changes' && this.activeTab !== 'workflows';
+      return this.activeTab !== 'drive_logs' && this.activeTab !== 'performance' && this.activeTab !== 'drive_config' &&
+        this.activeTab !== 'drive_danger' && this.activeTab !== 'git_settings' && this.activeTab !== 'sync' &&
+        this.activeTab !== 'changes' && this.activeTab !== 'workflows' && this.activeTab !== 'import_export';
     },
     jobs() {
       return this.$root.jobs || [];
