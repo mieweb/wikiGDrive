@@ -64,8 +64,8 @@ export default {
           reader.onload = readerEvent => {
             const content = readerEvent.target.result; // this is the content!
             resolve(content);
-          }
-        }
+          };
+        };
 
         input.click();
       });

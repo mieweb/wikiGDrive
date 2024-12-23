@@ -18,6 +18,7 @@ import {UserAuthClient} from '../../../google/AuthClient.ts';
 import {filterParams} from '../../../google/driveFetch.ts';
 import {GoogleDriveService} from '../../../google/GoogleDriveService.ts';
 import {redirError} from '../auth.ts';
+import {LocalLog} from '../../transform/LocalLog.ts';
 
 export class GoogleDriveController extends Controller {
 
@@ -77,9 +78,13 @@ export class GoogleDriveController extends Controller {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
 
+    const localLog = new LocalLog(contentFileService);
+    await localLog.load();
+    const logRow = localLog.findLastFile(fileId);
+
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
-    const [foundTreeItem] = await markdownTreeProcessor.findById(fileId);
+    const [foundTreeItem] = await markdownTreeProcessor.findByPath(logRow.filePath);
 
     const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
     this.res.setHeader('wgd-content-dir', contentDir || '');
