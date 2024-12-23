@@ -1,5 +1,5 @@
-import {DownloadFileImage} from '../storage/DownloadFilesStorage';
-import { urlToFolderId } from './idParsers';
+import {DownloadFileImage} from '../storage/DownloadFilesStorage.ts';
+import { urlToFolderId } from './idParsers.ts';
 import {xml2js} from 'xml-js';
 
 export function traverseObject(obj: string|object|string[]|object[], func: (obj: string|object|string[]|object[], path: string) => boolean, path = '') {
@@ -60,6 +60,7 @@ export async function processRecursive(json, func) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function extractDocumentImages(document: any): Promise<DownloadFileImage[]> {
   const links: DownloadFileImage[] = [];
   await processRecursive(document.body.content, async (json) => {

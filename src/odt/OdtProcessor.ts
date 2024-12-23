@@ -1,9 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import JSZip from 'jszip';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
-function getExt(fileName) {
+function getExt(fileName: string) {
   const idx = fileName.lastIndexOf('.');
   if (idx > -1) {
     return fileName.substring(idx);

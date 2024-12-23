@@ -155,13 +155,13 @@ export function addTelemetry(app) {
         new FetchInstrumentation({
           ignoreUrls: [],
           applyCustomAttributesOnSpan(span: Span, request: Request | RequestInit, result: Response | FetchError) {
-            if (result['url'] && result['url'].indexOf('/api/') > -1) {
+            if (result['node:url'] && result['node:url'].indexOf('/api/') > -1) {
               const method = request.method || 'get';
-              const url = new URL(result['url']);
+              const url = new URL(result['node:url']);
               span.updateName('http_client ' + method + ' ' + url.toString());
             } else {
-              if (result['url']) {
-                console.log(result['url']);
+              if (result['node:url']) {
+                console.log(result['node:url']);
               }
             }
           },

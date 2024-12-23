@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import phash from 'sharp-phash';
-import dist from 'sharp-phash/distance';
+import dist from 'sharp-phash/distance.js';
 
 export function getImageDistance(hash1, hash2) {
   return dist(hash1, hash2);

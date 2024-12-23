@@ -10,6 +10,10 @@
                :tree-empty="treeEmpty"
                @changed="fetch()"
   />
+  <ImportExportSettings v-if="activeTab === 'import_export'"
+                        :activeTab="activeTab"
+                        :drive_config="drive_config"
+  />
   <DangerSettings v-if="activeTab === 'drive_danger'"
                   :activeTab="activeTab"
                   :drive_config="drive_config"
@@ -19,12 +23,13 @@
 import UserSettings from './UserSettings.vue';
 import DangerSettings from './DangerSettings.vue';
 import GitSettings from './GitSettings.vue';
+import ImportExportSettings from './ImportExportSettings.vue';
 import {UtilsMixin} from './UtilsMixin.ts';
 
 export default {
   name: 'SettingsTab',
   mixins: [UtilsMixin],
-  components: {GitSettings, DangerSettings, UserSettings},
+  components: {GitSettings, DangerSettings, UserSettings, ImportExportSettings},
   props: {
     activeTab: {},
     treeEmpty: {}

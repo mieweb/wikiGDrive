@@ -1,4 +1,3 @@
-import {fileURLToPath} from 'url';
 import winston from 'winston';
 import Transport from 'winston-transport';
 
@@ -25,9 +24,9 @@ import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
-import {frontmatter} from './frontmatters/frontmatter.js';
+import {frontmatter} from './frontmatters/frontmatter.ts';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.filename;
 
 function doesExistIn(googleFolderFiles: LocalFile[], localFile: LocalFile) {
   return !!googleFolderFiles.find(file => file.id === localFile.id);

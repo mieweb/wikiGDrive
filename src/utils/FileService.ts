@@ -1,9 +1,7 @@
-'use strict';
-
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import {Readable, Writable} from 'stream';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import type {Readable, Writable} from 'node:stream';
 
 export function pathResolve(rootPath: string, ...args: string[]): string {
   const retVal = path.resolve(path.join(rootPath, ...args));

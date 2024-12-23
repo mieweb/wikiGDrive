@@ -1,7 +1,8 @@
-import {usage} from './usage';
-import {fileURLToPath} from 'url';
+import process from 'node:process';
 
-const __filename = fileURLToPath(import.meta.url);
+import {usage} from './usage.ts';
+
+const __filename = import.meta.filename;
 
 await usage(__filename);
 process.exit(1);

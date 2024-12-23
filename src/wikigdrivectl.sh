@@ -9,15 +9,20 @@ cd $MAIN_DIR
 
 POSITIONAL_ARGS=()
 CMD=""
-INSPECT=""
+OPTS=""
 
 ORIG_ARGS=$@
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --inspect)
-      INSPECT="$1"
+    --inspect | --watch | --prof)
+      OPTS="$OPTS $1"
       shift # past argument
+      ;;
+    --watch-path)
+      OPTS="$OPTS $1 $2"
+      shift # past argument
+      shift # past value
       ;;
     --server_port)
       POSITIONAL_ARGS+=("$1") # save positional arg1
@@ -45,8 +50,5 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts" ]]; then
     exit 2
 fi
 
-if test "$INSPECT" = "--inspect"; then
-  /usr/bin/env node --inspect --no-warnings --enable-source-maps --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
-else
-  /usr/bin/env node --no-warnings --enable-source-maps --experimental-specifier-resolution=node --loader ts-node/esm $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
-fi
+#/usr/bin/env node $OPTS --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm/transpile-only $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
+/usr/bin/env deno run --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS

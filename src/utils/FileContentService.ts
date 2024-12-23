@@ -1,4 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Buffer } from 'node:buffer';
+
 import identify from 'identify-filetype';
+
 import {FileService, pathResolve} from './FileService.ts';
 
 export class FileContentService extends FileService {
@@ -26,6 +31,7 @@ export class FileContentService extends FileService {
     try {
       const content = await this.readFile(filePath);
       return JSON.parse(content);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       return null;
     }
