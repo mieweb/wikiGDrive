@@ -224,22 +224,15 @@ export default {
 
       await disableElement(event, async () => {
         const filePaths = [];
-        const removeFilePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
-          const change = this.gitChanges.find(change => change.path === checkedFileName);
-          if (!change?.state?.isDeleted) {
-            filePaths.push(checkedFileName);
-          } else {
-            removeFilePaths.push(checkedFileName);
-          }
+          filePaths.push(checkedFileName);
         }
 
         await this.commitBranch({
           branch,
           message: this.commitMsg,
-          filePaths: filePaths,
-          removeFilePaths
+          filePaths
         });
         this.commitMsg = '';
       });
@@ -258,22 +251,15 @@ export default {
 
       await disableElement(event, async () => {
         const filePaths = [];
-        const removeFilePaths = [];
 
         for (const checkedFileName of checkedFileNames) {
-          const change = this.gitChanges.find(change => change.path === checkedFileName);
-          if (change?.state?.isDeleted) {
-            removeFilePaths.push(checkedFileName);
-          } else {
-            filePaths.push(checkedFileName);
-          }
+          filePaths.push(checkedFileName);
         }
 
         try {
           await this.commit({
             message: this.commitMsg,
-            filePaths: filePaths,
-            removeFilePaths
+            filePaths
           });
           this.commitMsg = '';
         } catch (err) {

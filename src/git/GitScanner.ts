@@ -24,6 +24,11 @@ interface SshParams {
   privateKeyFile: string;
 }
 
+interface Commiter {
+  name: string;
+  email: string;
+}
+
 function sanitize(txt) {
   txt = txt.replace(/[;"|]/g, '');
   return txt;
@@ -130,7 +135,7 @@ export class GitScanner {
       const result = await this.exec(cmd, { skipLogger: true });
       for (const line of result.stdout.split('\n')) {
         const parts = line.split(/\s/);
-        const path = parts[parts.length - 1];
+        const path = parts[parts.length - 1].trim();
 
         if (line.match(/^A\s/)) {
           addEntry(path, { isNew: true });
@@ -149,17 +154,21 @@ export class GitScanner {
     }
 
     const untrackedResult = await this.exec(
-      'git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard',
+      'git status --short --untracked-files',
       { skipLogger: true }
     );
+
     for (const line of untrackedResult.stdout.split('\n')) {
       if (!line.trim()) {
         continue;
       }
-      const path = line
+
+      const [status, path] = line
+        .replace(/\s+/g, ' ')
         .trim()
         .replace(/^"/, '')
-        .replace(/"$/, '');
+        .replace(/"$/, '')
+        .split(' ');
 
       if (path.indexOf('.assets/') > -1 && !opts.includeAssets) {
         const idx = path.indexOf('.assets/');
@@ -168,7 +177,14 @@ export class GitScanner {
         continue;
       }
 
-      addEntry(path, { isNew: true });
+      if (status === 'D') {
+        addEntry(path, { isDeleted: true });
+      } else
+      if (status === 'M') {
+        addEntry(path, { isModified: true });
+      } else {
+        addEntry(path, { isNew: true });
+      }
     }
 
     const retValArr: GitChange[] = Object.values(retVal);
@@ -178,11 +194,28 @@ export class GitScanner {
     return retValArr;
   }
 
-  async commit(message: string, addedFiles: string[], removedFiles: string[], committer): Promise<string> {
-    addedFiles = addedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
-      .filter(fileName => !! fileName);
-    removedFiles = removedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
-      .filter(fileName => !! fileName);
+  async commit(message: string, selectedFiles: string[], committer: Commiter): Promise<string> {
+    selectedFiles = selectedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
+      .filter(fileName => !!fileName);
+
+    const addedFiles: string[] = [];
+    const removedFiles: string[] = [];
+
+    const changes = await this.changes({ includeAssets: true });
+    for (const change of changes) {
+      let mdPath = change.path;
+      if (mdPath.indexOf('.assets/') > -1) {
+        mdPath = mdPath.replace(/.assets\/.*/, '.md');
+      }
+
+      if (selectedFiles.includes(mdPath)) {
+        if (change.state?.isDeleted) {
+          removedFiles.push(change.path);
+        } else {
+          addedFiles.push(change.path);
+        }
+      }
+    }
 
     while (addedFiles.length > 0) {
       const chunk = addedFiles.splice(0, 400);
@@ -197,7 +230,7 @@ export class GitScanner {
       const rmParam = chunk.map(fileName => `"${sanitize(fileName)}"`).join(' ');
       if (rmParam) {
         try {
-          await this.exec(`git rm -r ${rmParam}`);
+          await this.exec(`git rm -r --ignore-unmatch ${rmParam}`);
         } catch (err) {
           if (err.message.indexOf('did not match any files') === -1) {
             throw err;
@@ -803,7 +836,7 @@ export class GitScanner {
       }
       addedFiles.push(...fileAssetsPaths);
 
-      await this.commit('Auto commit for file version change', addedFiles, [], committer);
+      await this.commit('Auto commit for file version change', addedFiles, committer);
     }
   }
 
@@ -831,7 +864,7 @@ export class GitScanner {
     let unstaged = 0;
 
     try {
-      const untrackedResult = await this.exec('git -c core.quotepath=off ls-files --modified --deleted --others --exclude-standard', { skipLogger: true });
+      const untrackedResult = await this.exec('git status --short --untracked-files', { skipLogger: true });
       for (const line of untrackedResult.stdout.split('\n')) {
         if (!line.trim()) {
           continue;

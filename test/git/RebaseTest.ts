@@ -44,7 +44,7 @@ test('test clone', async (t) => {
     {
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -101,7 +101,7 @@ test('test fast forward', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -124,7 +124,7 @@ test('test fast forward', async (t) => {
       fs.writeFileSync(path.join(secondRepoDir, 'file1.txt'), 'Change on second repo');
       const changes = await scannerSecond.changes();
       t.is(1, (await scannerSecond.changes()).length);
-      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
+      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), COMMITER2);
       await scannerSecond.pushBranch('main');
     }
 
@@ -171,7 +171,7 @@ test('test local fast forward', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -192,7 +192,7 @@ test('test local fast forward', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Change on local repo');
       const changes = await scannerLocal.changes();
       t.is(1, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), COMMITER1);
       await scannerLocal.pushBranch('main');
     }
 
@@ -239,7 +239,7 @@ test('test non conflict', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -262,7 +262,7 @@ test('test non conflict', async (t) => {
       fs.writeFileSync(path.join(secondRepoDir, 'file2.txt'), 'Change on second repo');
       const changes = await scannerSecond.changes();
       t.is(1, (await scannerSecond.changes()).length);
-      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
+      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), COMMITER2);
       logger.info('Push second');
       await scannerSecond.pushBranch('main');
       logger.info('Pushed second');
@@ -284,7 +284,7 @@ test('test non conflict', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Change on local repo');
       const changes = await scannerLocal.changes();
       t.is(1, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), COMMITER1);
       logger.info('Push local');
       await scannerLocal.pushBranch('main');
       logger.info('Pushed local');
@@ -333,7 +333,7 @@ test('test conflict', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Initial content');
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -356,14 +356,14 @@ test('test conflict', async (t) => {
       fs.writeFileSync(path.join(secondRepoDir, 'file1.txt'), 'Change on second repo');
       const changes = await scannerSecond.changes();
       t.is(1, (await scannerSecond.changes()).length);
-      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), [], COMMITER2);
+      await scannerSecond.commit('Change on second repo', changes.map(change => change.path), COMMITER2);
       await scannerSecond.pushBranch('main');
     }
     {
       fs.writeFileSync(path.join(localRepoDir, 'file1.txt'), 'Change on local repo');
       const changes = await scannerLocal.changes();
       t.is(1, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('Change on local repo', changes.map(change => change.path), COMMITER1);
       try {
         await scannerLocal.pushBranch('main');
         t.true(false, 'Should fail because of conflict');
