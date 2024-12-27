@@ -59,7 +59,7 @@ jobs:
         docker run \
         -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
         -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-prod:${{ github.sha }}" npm run npm run build --workspace website
+        "wikigdrive-prod:${{ github.sha }}" npm run build --workspace website
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
