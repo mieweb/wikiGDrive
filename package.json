@@ -22,7 +22,7 @@
   },
   "main": "src/cli/wikigdrive.ts",
   "scripts": {
-    "test": "ava test/*Test.ts test/**/*.ts",
+    "test": "ava --timeout=16s -c 8 test/*Test.ts test/**/*.ts",
     "test:deno": "deno test test/*Test.ts test/**/*.ts",
     "lint": "eslint ./apps/**/*.ts ./apps/**/*.vue ./src/**/*.ts ./test/**/*.ts",
     "start": "wikigdrive server 3000",

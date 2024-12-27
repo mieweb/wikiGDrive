@@ -1,6 +1,6 @@
 export const GitMixin = {
   methods: {
-    async commit({ message, filePaths, removeFilePaths }) {
+    async commit({ message, filePaths }) {
       const response = await this.authenticatedClient.fetchApi(`/api/git/${this.driveId}/commit`, {
         method: 'post',
         headers: {
@@ -8,7 +8,6 @@ export const GitMixin = {
         },
         body: JSON.stringify({
           filePaths,
-          removeFilePaths,
           message: message
         })
       });
@@ -19,7 +18,7 @@ export const GitMixin = {
         window.location.hash = '#drive_logs';
       }
     },
-    async commitBranch({ branch, message, filePaths, removeFilePaths }) {
+    async commitBranch({ branch, message, filePaths }) {
       await this.authenticatedClient.fetchApi(`/api/run_action/${this.driveId}/branch`, {
         method: 'post',
         headers: {
@@ -28,7 +27,6 @@ export const GitMixin = {
         body: JSON.stringify({
           branch,
           filePaths,
-          removeFilePaths,
           message: message
         })
       });

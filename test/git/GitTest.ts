@@ -69,7 +69,7 @@ test('test commit', async (t) => {
       t.is(changes.length, 2);
     }
 
-    const commitId = await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md'], [], COMMITER1);
+    const commitId = await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md'], COMMITER1);
     t.is(commitId.length, 40);
 
     const changes = await scannerLocal.changes();
@@ -94,7 +94,7 @@ test('test removeUntracked', async (t) => {
       t.is(changes.length, 2);
     }
 
-    await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
+    await scannerLocal.commit('initial commit', ['.gitignore'], COMMITER1);
 
     {
       const changes = await scannerLocal.changes();
@@ -141,7 +141,7 @@ test('test diff', async (t) => {
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'line1\nline2\nline3\nline4\n');
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'testdel.md'), 'garbage\n');
 
-    await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md', 'testdel.md'], [], COMMITER1);
+    await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md', 'testdel.md'], COMMITER1);
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'line1\nline2 modified\nline4\nline5\n');
     fs.mkdirSync(path.join(scannerLocal.rootPath, 'test2.assets'));
@@ -194,7 +194,7 @@ test('test autoCommit', async (t) => {
     const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
     await scannerLocal.initialize();
 
-    await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
+    await scannerLocal.commit('initial commit', ['.gitignore'], COMMITER1);
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
@@ -223,7 +223,7 @@ test('test autoCommit huge', async (t) => {
     const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
     await scannerLocal.initialize();
 
-    await scannerLocal.commit('initial commit', ['.gitignore'], [], COMMITER1);
+    await scannerLocal.commit('initial commit', ['.gitignore'], COMMITER1);
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test1.md'), 'wikigdrive: aaa\nline2\nline3\nline4\n');
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test2.md'), 'wikigdrive: aaa\nversion:\nlastAuthor:\n');
@@ -267,7 +267,7 @@ test('pushBranch', async (t) => {
     {
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -309,7 +309,7 @@ test('pullBranch', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
       const changes = await scannerLocal.changes();
       t.is(2, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('First commit', changes.map(change => change.path), [], COMMITER1);
+      await scannerLocal.commit('First commit', changes.map(change => change.path), COMMITER1);
     }
 
     {
@@ -338,7 +338,7 @@ test('pullBranch', async (t) => {
       fs.writeFileSync(path.join(localRepoDir, 'file2.md'), 'Second change');
       const changes = await scannerLocal.changes();
       t.is(1, (await scannerLocal.changes()).length);
-      await scannerLocal.commit('Second commit', changes.map(change => change.path), [], COMMITER2);
+      await scannerLocal.commit('Second commit', changes.map(change => change.path), COMMITER2);
     }
 
     await scannerLocal.pushBranch('main');
@@ -347,7 +347,7 @@ test('pullBranch', async (t) => {
       // fs.writeFileSync(path.join(localRepoDir, '_errors1.md'), 'Change local');
       // const changes = await scannerLocal.changes();
       // t.is(1, (await scannerLocal.changes()).length);
-      // await scannerLocal.commit('Local commit', changes.map(change => change.path), [], COMMITER1);
+      // await scannerLocal.commit('Local commit', changes.map(change => change.path), COMMITER1);
     }
 
     const fd = fs.openSync(path.join(secondRepoDir, '_errors.md'), 'w');
@@ -408,7 +408,7 @@ test('test history', async (t) => {
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
 
     await scannerLocal.setRemoteUrl(githubRepoDir);
     await scannerLocal.pushBranch('main');
@@ -420,13 +420,13 @@ test('test history', async (t) => {
     await scannerSecond.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
-    await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
+    await scannerSecond.commit('Second commit', ['file1.md'], COMMITER2);
 
     await scannerSecond.pushBranch('main');
     await scannerLocal.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
-    await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
+    await scannerLocal.commit('Third commit', ['file1.md'], COMMITER1);
 
     const history = await scannerLocal.history('/', 'main');
     t.is(history.length, 3);
@@ -474,7 +474,7 @@ test('test getStats', async (t) => {
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
 
     await scannerLocal.setRemoteUrl(githubRepoDir);
     await scannerLocal.pushBranch('main');
@@ -486,13 +486,13 @@ test('test getStats', async (t) => {
     await scannerSecond.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
-    await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
+    await scannerSecond.commit('Second commit', ['file1.md'], COMMITER2);
 
     await scannerSecond.pushBranch('main');
     await scannerLocal.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
-    await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
+    await scannerLocal.commit('Third commit', ['file1.md'], COMMITER1);
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'unstaged.md'), 'unstaged');
 
@@ -506,7 +506,7 @@ test('test getStats', async (t) => {
     }
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Another mod');
-    await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
+    await scannerLocal.commit('Third commit', ['file1.md'], COMMITER1);
 
     {
       const stats = await scannerLocal.getStats({ remote_branch: 'main' });
@@ -535,7 +535,7 @@ test('test getBranchCommit', async (t) => {
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
 
     await scannerLocal.setRemoteUrl(githubRepoDir);
     await scannerLocal.pushBranch('main');
@@ -547,13 +547,13 @@ test('test getBranchCommit', async (t) => {
     await scannerSecond.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
-    await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
+    await scannerSecond.commit('Second commit', ['file1.md'], COMMITER2);
 
     await scannerSecond.pushBranch('main');
     await scannerLocal.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
-    await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
+    await scannerLocal.commit('Third commit', ['file1.md'], COMMITER1);
 
     const headCommit = await scannerLocal.getBranchCommit('HEAD');
     const masterCommit = await scannerLocal.getBranchCommit('main');
@@ -583,7 +583,7 @@ test('test reset', async (t) => {
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Initial content');
 
-    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], [], COMMITER1);
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
 
     await scannerLocal.setRemoteUrl(githubRepoDir);
     await scannerLocal.pushBranch('main');
@@ -595,13 +595,13 @@ test('test reset', async (t) => {
     await scannerSecond.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerSecond.rootPath, 'file1.md'), 'Mod by second');
-    await scannerSecond.commit('Second commit', ['file1.md'], [], COMMITER2);
+    await scannerSecond.commit('Second commit', ['file1.md'], COMMITER2);
 
     await scannerSecond.pushBranch('main');
     await scannerLocal.pullBranch('main');
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'file1.md'), 'Mod by local');
-    await scannerLocal.commit('Third commit', ['file1.md'], [], COMMITER1);
+    await scannerLocal.commit('Third commit', ['file1.md'], COMMITER1);
 
     {
       const history = await scannerLocal.history('');
@@ -638,7 +638,7 @@ test('test changes', async (t) => {
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_del.md'), 'test');
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_rename.md'), 'test');
 
-    await scannerLocal.commit('initial commit', ['.gitignore', 'test_mod.md', 'test_del.md', 'test_rename.md'], [], COMMITER1);
+    await scannerLocal.commit('initial commit', ['.gitignore', 'test_mod.md', 'test_del.md', 'test_rename.md'], COMMITER1);
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_new.md'), 'test');
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test_mod.md'), 'mod');
@@ -693,26 +693,8 @@ test('test remove assets', async (t) => {
     const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
     await scannerLocal.initialize();
 
-    const commit = async (filePaths = [], removeFilePaths = []) => {
-      const fileAssetsPaths = [];
-      for (const filePath of filePaths.filter(path => path.endsWith('.md'))) {
-        const assetsPath = filePath.substring(0, filePath.length - 3) + '.assets';
-        if (fs.existsSync(path.join(scannerLocal.rootPath, assetsPath))) {
-          fileAssetsPaths.push(assetsPath);
-        }
-      }
-      const removeFileAssetsPaths = [];
-      for (const fileToRemove of removeFilePaths
-        .filter(filePath => filePath.endsWith('.md'))
-        .map(filePath => filePath.substring(0, filePath.length - 3) + '.assets')) {
-
-        removeFileAssetsPaths.push(fileToRemove);
-      }
-
-      filePaths.push(...fileAssetsPaths);
-      removeFilePaths.push(...removeFileAssetsPaths);
-
-      await scannerLocal.commit('initial commit', filePaths, removeFilePaths, COMMITER1);
+    const commit = async (filePaths = []) => {
+      await scannerLocal.commit('initial commit', filePaths, COMMITER1);
     };
 
     fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.md'), 'test');
@@ -730,7 +712,7 @@ test('test remove assets', async (t) => {
       t.true(!!changes.find(item => item.path === 'test.assets/2.png'));
     }
 
-    await commit(['.gitignore', 'test.md'], []);
+    await commit(['.gitignore', 'test.md']);
 
     {
       const changes = await scannerLocal.changes({ includeAssets: true });
@@ -746,9 +728,72 @@ test('test remove assets', async (t) => {
       t.true(!!changes.find(item => item.path === 'test.md'));
       t.true(!!changes.find(item => item.path === 'test.assets/1.png'));
       t.true(!!changes.find(item => item.path === 'test.assets/2.png'));
+      t.true(changes.find(item => item.path === 'test.md').state.isDeleted);
+      t.true(changes.find(item => item.path === 'test.assets/1.png').state.isDeleted);
+      t.true(changes.find(item => item.path === 'test.assets/2.png').state.isDeleted);
     }
 
-    await commit([], ['test.md']);
+    await commit(['test.md']);
+
+    {
+      const changes = await scannerLocal.changes({ includeAssets: true });
+      t.is(changes.length, 0);
+    }
+
+  } finally {
+    fs.rmSync(localRepoDir, { recursive: true, force: true });
+  }
+});
+
+test('test remove assets not file', async (t) => {
+  t.timeout(5000);
+  const localRepoDir: string = createTmpDir();
+
+  try {
+    const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+    await scannerLocal.initialize();
+
+    const commit = async (filePaths = []) => {
+      await scannerLocal.commit('initial commit', filePaths, COMMITER1);
+    };
+
+    fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.md'), 'test');
+    fs.mkdirSync(path.join(scannerLocal.rootPath, 'test.assets'));
+
+    fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.assets', '1.png'), '1');
+    fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.assets', '2.png'), '2');
+
+    {
+      const changes = await scannerLocal.changes({ includeAssets: true });
+      t.is(changes.length, 4);
+      t.true(!!changes.find(item => item.path === '.gitignore'));
+      t.true(!!changes.find(item => item.path === 'test.md'));
+      t.true(!!changes.find(item => item.path === 'test.assets/1.png'));
+      t.true(!!changes.find(item => item.path === 'test.assets/2.png'));
+    }
+
+    await commit(['.gitignore', 'test.md']);
+
+    {
+      const changes = await scannerLocal.changes({ includeAssets: true });
+      t.is(changes.length, 0);
+    }
+
+    fs.writeFileSync(path.join(scannerLocal.rootPath, 'test.md'), 'renamed');
+    rmSync(path.join(scannerLocal.rootPath, 'test.assets'), { recursive: true, force: true });
+
+    {
+      const changes = await scannerLocal.changes({ includeAssets: true });
+      t.is(changes.length, 3);
+      t.true(!!changes.find(item => item.path === 'test.md'));
+      t.true(!!changes.find(item => item.path === 'test.assets/1.png'));
+      t.true(!!changes.find(item => item.path === 'test.assets/2.png'));
+      t.true(changes.find(item => item.path === 'test.md').state.isModified);
+      t.true(changes.find(item => item.path === 'test.assets/1.png').state.isDeleted);
+      t.true(changes.find(item => item.path === 'test.assets/2.png').state.isDeleted);
+    }
+
+    await commit(['test.md']);
 
     {
       const changes = await scannerLocal.changes({ includeAssets: true });

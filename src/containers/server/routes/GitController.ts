@@ -8,7 +8,6 @@ import {ContainerEngine} from '../../../ContainerEngine.ts';
 interface CommitPost {
   message: string;
   filePaths: string[];
-  removeFilePaths: string[];
 }
 
 interface CmdPost {
@@ -73,16 +72,13 @@ export default class GitController extends Controller {
     const filePaths: string[] = Array.isArray(body.filePaths)
       ? body.filePaths
       : (body.filePaths ? [body.filePaths] : []);
-    const removeFilePaths: string[] = Array.isArray(body.removeFilePaths)
-      ? body.removeFilePaths
-      : (body.removeFilePaths ? [body.removeFilePaths] : []);
 
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_commit',
       title: 'Git Commit',
       payload: JSON.stringify({
-        message, filePaths, removeFilePaths, user
+        message, filePaths, user
       })
     });
     return { driveId, message };

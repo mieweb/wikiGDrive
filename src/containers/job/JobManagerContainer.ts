@@ -696,31 +696,14 @@ export class JobManagerContainer extends Container {
     }
   }
 
-  private async gitCommit(driveId: FileId, jobId: string, message: string, filePaths: string[], removeFilePaths: string[], user) {
+  private async gitCommit(driveId: FileId, jobId: string, message: string, filePaths: string[], user) {
     const logger = this.engine.logger.child({ filename: __filename, driveId, jobId });
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const fileAssetsPaths = [];
-    for (const path of filePaths.filter(path => path.endsWith('.md'))) {
-      const assetsPath = path.substring(0, path.length - 3) + '.assets';
-      if (await transformedFileSystem.exists(assetsPath)) {
-        fileAssetsPaths.push(assetsPath);
-      }
-    }
-    const removeFileAssetsPaths = [];
-    for (const fileToRemove of removeFilePaths
-        .filter(path => path.endsWith('.md'))
-        .map(path => path.substring(0, path.length - 3) + '.assets')) {
-      removeFileAssetsPaths.push(fileToRemove);
-    }
-
-    filePaths.push(...fileAssetsPaths);
-    removeFilePaths.push(...removeFileAssetsPaths);
-
-    await gitScanner.commit(message, filePaths, removeFilePaths, user);
+    await gitScanner.commit(message, filePaths, user);
 
     await this.schedule(driveId, {
       ...initJob(),
@@ -939,8 +922,8 @@ export class JobManagerContainer extends Container {
         break;
       case 'git_commit':
         {
-          const { message, filePaths, removeFilePaths, user } = JSON.parse(currentJob.payload);
-          await this.gitCommit(driveId, currentJob.id, message, filePaths, removeFilePaths, user);
+          const { message, filePaths, user } = JSON.parse(currentJob.payload);
+          await this.gitCommit(driveId, currentJob.id, message, filePaths, user);
           await this.clearGitCache(driveId);
         }
         break;
