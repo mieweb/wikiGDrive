@@ -7,7 +7,7 @@ VOLUME /data
 WORKDIR /usr/src/app
 
 RUN apt-get update
-RUN apt-get install -yq bash git-lfs openssh-client curl unzip socat podman-remote
+RUN apt-get install -yq bash git-lfs openssh-client curl unzip socat podman
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
 COPY package.json package-lock.json ./
