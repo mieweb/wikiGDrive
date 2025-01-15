@@ -1,9 +1,11 @@
+import path from 'node:path';
+import {PassThrough, Writable} from 'node:stream';
+
 import Docker from 'dockerode';
-import path from 'path';
 import tarFs from 'tar-fs';
 import tarStream from 'tar-stream';
-import {PassThrough, Writable} from 'stream';
 import winston from 'winston';
+
 import {OciContainer} from './OciContainer.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
 
