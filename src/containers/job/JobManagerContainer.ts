@@ -186,9 +186,6 @@ export class JobManagerContainer extends Container {
         driveJobs.jobs.push(job);
         break;
       case 'run_action':
-        if (driveJobs.jobs.find(subJob => subJob.type === 'run_action' && notCompletedJob(subJob))) {
-          return;
-        }
         {
           const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
           const userConfigService = new UserConfigService(googleFileSystem);
@@ -831,6 +828,13 @@ export class JobManagerContainer extends Container {
           await this.runAction(driveId, currentJob.id, currentJob.action_id, currentJob.payload, currentJob.user);
           await this.clearGitCache(driveId); // TODO: check if necessary?
 
+          await this.schedule(driveId, {
+            ...initJob(),
+            type: 'run_action',
+            title: 'Run action:',
+            trigger: currentJob.action_id
+          });
+
           this.engine.emit(driveId, 'toasts:added', {
             title: 'Done: ' + currentJob.title,
             type: 'run_action:done',
@@ -847,8 +851,6 @@ export class JobManagerContainer extends Container {
             payload: this.params.payload
           });
           throw err;
-        } finally {
-          driveJobs.jobs = driveJobs.jobs.filter(removeOldByType('run_action'));
         }
         break;
       case 'git_fetch':
