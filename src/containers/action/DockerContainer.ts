@@ -1,5 +1,6 @@
 import path from 'node:path';
-import {PassThrough, Writable} from 'node:stream';
+import {PassThrough, type Writable} from 'node:stream';
+import type { Buffer } from 'node:buffer';
 
 import Docker from 'dockerode';
 import tarFs from 'tar-fs';
@@ -20,7 +21,10 @@ export class DockerContainer implements OciContainer {
   }
 
   static async create(logger: winston.Logger, image: string, env: { [p: string]: string }, repoSubDir: string): Promise<OciContainer> {
-    const dockerEngine = new Docker({socketPath: '/var/run/docker.sock'});
+    // https://github.com/apocas/dockerode/issues/747
+    // const dockerEngine = new Docker({socketPath: '/var/run/docker.sock'});
+
+    const dockerEngine = new Docker({ protocol: 'http', host: 'localhost', port: 5000 });
 
     const container = await dockerEngine.createContainer({
       Image: image,
