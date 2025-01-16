@@ -95,7 +95,8 @@ jobs:
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
-          server 3000
+          server 3000 \
+          --disable_google_watch
 
   remove:
     if: github.event.pull_request.head.ref != 'develop' && !contains( github.event.pull_request.labels.*.name, 'deploy-pr')

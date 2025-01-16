@@ -8,4 +8,5 @@ export interface CliParams {
   service_account?: string;
   server_port?: number;
   share_email?: string;
+  disable_google_watch: boolean;
 }
