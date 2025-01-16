@@ -47,13 +47,15 @@ export class SocketManager {
     }));
 
 
-    const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
-    const changes = await watchChangesContainer.getChanges(driveId);
-    const filteredChanges = await this.getFilteredChanges(driveId, changes);
-    ws.send(JSON.stringify({
-      cmd: 'changes:changed',
-      payload: filteredChanges
-    }));
+    if (this.engine.hasContainer('watch_changes')) {
+      const watchChangesContainer = <WatchChangesContainer>this.engine.getContainer('watch_changes');
+      const changes = await watchChangesContainer.getChanges(driveId);
+      const filteredChanges = await this.getFilteredChanges(driveId, changes);
+      ws.send(JSON.stringify({
+        cmd: 'changes:changed',
+        payload: filteredChanges
+      }));
+    }
 
     ws.on('close', () => {
       this.socketsMap[driveId].delete(ws);

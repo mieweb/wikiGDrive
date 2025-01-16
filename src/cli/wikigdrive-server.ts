@@ -91,10 +91,12 @@ export class MainService {
       process.exit(1);
     }
 
-    const changesContainer = new WatchChangesContainer({ name: 'watch_changes', share_email: this.params.share_email });
-    await changesContainer.mount(await this.mainFileService);
-    await this.containerEngine.registerContainer(changesContainer);
-    await changesContainer.run();
+    if (!this.params.disable_google_watch) {
+      const changesContainer = new WatchChangesContainer({ name: 'watch_changes', share_email: this.params.share_email });
+      await changesContainer.mount(await this.mainFileService);
+      await this.containerEngine.registerContainer(changesContainer);
+      await changesContainer.run();
+    }
 
     const port = parseInt(this.params.args[1]) || 3000;
     const serverContainer = new ServerContainer({ name: 'server', share_email: this.params.share_email }, port);
@@ -159,7 +161,8 @@ async function main() {
 
     service_account: argv['service_account'] || null,
     share_email: argv['share_email'] || process.env.SHARE_EMAIL || null,
-    server_port: +argv['server_port']
+    server_port: +argv['server_port'],
+    disable_google_watch: !!argv['disable_google_watch']
   };
 
   const mainService = new MainService(params);
