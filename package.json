@@ -67,6 +67,7 @@
     "website"
   ],
   "dependencies": {
+    "@nyariv/sandboxjs": "0.8.23",
     "@opentelemetry/core": "1.28.0",
     "@opentelemetry/api": "1.3.0",
     "@opentelemetry/context-zone": "1.8.0",

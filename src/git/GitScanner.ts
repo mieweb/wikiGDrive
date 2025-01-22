@@ -45,6 +45,7 @@ interface ExecOpts {
 
 export class GitScanner {
   private logger: Logger;
+  private companionFileResolver: (filePath: string) => Promise<string[]> = async () => ([]);
 
   constructor(logger: Logger, public readonly rootPath: string, private email: string) {
     this.logger = logger.child({ filename: __filename });
@@ -201,9 +202,25 @@ export class GitScanner {
     return retValArr;
   }
 
+  async resolveCompanionFiles(filePaths: string[]): Promise<string[]> {
+    const retVal = [];
+    for (const filePath of filePaths) {
+      retVal.push(filePath);
+      try {
+        retVal.push(...(await this.companionFileResolver(filePath) || []));
+      } catch (err) {
+        this.logger.warn('Error evaluating companion files: ' + err.message);
+        break;
+      }
+    }
+    return retVal;
+  }
+
   async commit(message: string, selectedFiles: string[], committer: Commiter): Promise<string> {
     selectedFiles = selectedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
       .filter(fileName => !!fileName);
+
+    selectedFiles = await this.resolveCompanionFiles(selectedFiles);
 
     const addedFiles: string[] = [];
     const removedFiles: string[] = [];
@@ -964,4 +981,9 @@ export class GitScanner {
   async removeCached(filePath: string) {
     await this.exec(`git rm --cached ${filePath}`);
   }
+
+  setCompanionFileResolver(resolver: (filePath: string) => Promise<string[]>) {
+    this.companionFileResolver = resolver;
+  }
+
 }
