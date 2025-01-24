@@ -13,6 +13,8 @@ function getStackInfo(stackIndex, stackOffset = 0) {
   // get call stack, and analyze it
   // get all file, method, and line numbers
   const stackList = (new Error()).stack.split('\n')
+    .filter(line => line.trim() !== 'Error')
+    .filter(line => line.indexOf('src/utils/logger/logger.ts') == -1)
     .filter(line => line.indexOf('src/telemetry.ts') === -1)
     .slice(3 + stackOffset);
 

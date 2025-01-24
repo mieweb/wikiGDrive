@@ -67,6 +67,9 @@ export class GitScanner {
     if (!opts.env['HOME']) {
       opts.env['HOME'] = process.env.HOME;
     }
+    if (!opts.env['PATH']) {
+      opts.env['PATH'] = process.env.PATH;
+    }
 
     try {
       await new Promise((resolve, reject) => {
@@ -706,7 +709,7 @@ export class GitScanner {
 
       const childProcess = spawn('git',
         ['diff', '--minimal', '--ignore-space-change'],
-        { cwd: this.rootPath, env: {} });
+        { cwd: this.rootPath, env: { PATH: process.env.PATH } });
       const promise = new Promise((resolve) => {
         childProcess.on('close', resolve);
       });
@@ -788,15 +791,13 @@ export class GitScanner {
         }
       };
 
-      if (childProcess?.stdout) {
-        for await (const chunk of childProcess.stdout) {
-          buff += chunk;
+      for await (const chunk of childProcess.stdout) {
+        buff += chunk;
 
-          while ((idx = buff.indexOf('\n')) > -1) {
-            const line = buff.substring(0, idx);
-            processLine(line);
-            buff = buff.substring(idx + 1);
-          }
+        while ((idx = buff.indexOf('\n')) > -1) {
+          const line = buff.substring(0, idx);
+          processLine(line);
+          buff = buff.substring(idx + 1);
         }
       }
 
@@ -807,10 +808,8 @@ export class GitScanner {
       }
 
       let error = '';
-      if (childProcess?.stderr) {
-        for await (const chunk of childProcess.stderr) {
-          error += chunk;
-        }
+      for await (const chunk of childProcess.stderr) {
+        error += chunk;
       }
 
       const exitCode = await promise;
