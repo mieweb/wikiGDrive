@@ -10,6 +10,8 @@ import type {Logger} from 'winston';
 import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
 import {TelemetryMethod} from '../telemetry.ts';
 
+const __filename = import.meta.filename;
+
 export interface GitChange {
   path: string;
   state: {
@@ -42,8 +44,10 @@ interface ExecOpts {
 }
 
 export class GitScanner {
+  private logger: Logger;
 
-  constructor(private logger: Logger, public readonly rootPath: string, private email: string) {
+  constructor(logger: Logger, public readonly rootPath: string, private email: string) {
+    this.logger = logger.child({ filename: __filename });
   }
 
   @TelemetryMethod({ paramsCount: 1 })
@@ -784,13 +788,15 @@ export class GitScanner {
         }
       };
 
-      for await (const chunk of childProcess.stdout) {
-        buff += chunk;
+      if (childProcess?.stdout) {
+        for await (const chunk of childProcess.stdout) {
+          buff += chunk;
 
-        while ((idx = buff.indexOf('\n')) > -1) {
-          const line = buff.substring(0, idx);
-          processLine(line);
-          buff = buff.substring(idx + 1);
+          while ((idx = buff.indexOf('\n')) > -1) {
+            const line = buff.substring(0, idx);
+            processLine(line);
+            buff = buff.substring(idx + 1);
+          }
         }
       }
 
@@ -801,8 +807,10 @@ export class GitScanner {
       }
 
       let error = '';
-      for await (const chunk of childProcess.stderr) {
-        error += chunk;
+      if (childProcess?.stderr) {
+        for await (const chunk of childProcess.stderr) {
+          error += chunk;
+        }
       }
 
       const exitCode = await promise;
