@@ -84,7 +84,7 @@ export class GoogleDriveController extends Controller {
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();
-    const [foundTreeItem] = await markdownTreeProcessor.findByPath(logRow.filePath);
+    const [foundTreeItem] = await markdownTreeProcessor.findByPath(logRow?.filePath);
 
     const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
     this.res.setHeader('wgd-content-dir', contentDir || '');
