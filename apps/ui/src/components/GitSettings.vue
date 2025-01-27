@@ -36,6 +36,11 @@
               <textarea class="form-control" rows="6" placeholder="Deploy key" readonly :value="public_key" @click="copyEmail"></textarea>
             </div>
           </div>
+
+          <div class="form-group">
+            <label>Git commit companion files rule</label>
+            <input class="form-control" v-model="user_config.companion_files_rule" />
+          </div>
         </div>
         <div class="card-footer">
           <div class="btn-group">

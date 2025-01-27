@@ -43,6 +43,7 @@ export class UserConfig {
   fm_without_version?: boolean;
   actions_yaml?: string;
   rewrite_rules?: RewriteRule[];
+  companion_files_rule?: string;
 }
 
 const DEFAULT_CONFIG: UserConfig = {
@@ -90,7 +91,9 @@ export class UserConfigService {
     if (!this.config.rewrite_rules || this.config.rewrite_rules.length === 0) {
       this.config.rewrite_rules = DEFAULT_REWRITE_RULES;
     }
-
+    if (!this.config.companion_files_rule) {
+      this.config.companion_files_rule = '(file.path == "content/navigation.md") || (file.path == "content/toc.md") || (commit.id && file.redirectTo == commit.id) || (commit.redirectTo == file.id && file.id)';
+    }
     return this.config;
   }
 

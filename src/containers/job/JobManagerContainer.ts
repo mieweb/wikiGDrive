@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
+import Sandbox from '@nyariv/sandboxjs';
+
 import {Container, ContainerConfig, ContainerEngine} from '../../ContainerEngine.ts';
 import {FileId} from '../../model/model.ts';
 import {GoogleFolderContainer} from '../google_folder/GoogleFolderContainer.ts';
@@ -702,6 +704,70 @@ export class JobManagerContainer extends Container {
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
     const gitScanner = new GitScanner(logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
+
+    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
+    const userConfigService = new UserConfigService(googleFileSystem);
+    const userConfig = await userConfigService.load();
+
+    const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
+    const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
+    await markdownTreeProcessor.load();
+
+    if (userConfig.companion_files_rule) {
+      gitScanner.setCompanionFileResolver(async (filePath: string) => {
+        if (!filePath.endsWith('.md')) {
+          return [];
+        }
+
+        let subdir = (userConfigService.config.transform_subdir || '')
+          .replace(/^\//, '')
+          .replace(/\/$/, '');
+        if (subdir.length > 0) {
+          subdir += '/';
+        }
+
+        filePath = filePath
+          .replace(/^\//, '')
+          .substring(subdir.length);
+
+        const tuple = await markdownTreeProcessor.findByPath('/' + filePath);
+
+        const treeItem = tuple[0];
+        if (!treeItem) {
+          return [];
+        }
+
+        const retVal: Set<string> = new Set();
+
+        const sandbox = new Sandbox.default();
+        const exec = sandbox.compile('return ' + (userConfig.companion_files_rule || 'false'));
+
+        await markdownTreeProcessor.walkTree((treeNode) => {
+          const commit = {
+            path: subdir + treeItem.path.replace(/^\//, ''),
+            id: treeItem.id,
+            fileName: treeItem.fileName,
+            mimeType: treeItem.mimeType,
+            redirectTo: treeItem.redirectTo
+          };
+          const file = {
+            path: subdir + treeNode.path.replace(/^\//, ''),
+            id: treeNode.id,
+            fileName: treeNode.fileName,
+            mimeType: treeNode.mimeType,
+            redirectTo: treeNode.redirectTo
+          };
+
+          const result = exec({ commit, file }).run();
+
+          if (result) {
+            retVal.add(file.path);
+          }
+          return false;
+        });
+        return Array.from(retVal);
+      });
+    }
 
     await gitScanner.commit(message, filePaths, user);
 
