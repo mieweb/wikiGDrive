@@ -51,6 +51,7 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrive-$CMD.ts" ]]; then
 fi
 
 socat TCP-LISTEN:5000,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock &
+socat TCP-LISTEN:5001,reuseaddr,fork UNIX-CONNECT:/var/run/podman/podman.sock &
 
 #/usr/bin/env node $OPTS --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm/transpile-only $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
 #/usr/bin/env node $OPTS --import tsx $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
