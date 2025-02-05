@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import process from 'node:process';
 
 import winston from 'winston';
@@ -332,11 +331,27 @@ export class ActionRunnerContainer extends Container {
                 await gitScanner.autoCommit();
               }
                 break;
+              case 'internal/export_preview':
+              {
+                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+                await container.export('/site/public', previewOutput);
+              }
+                break;
               default:
                 try {
                   if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
                     const [action_repo, action_version] = step.uses.split('@');
-                    lastCode = await container.exec(`/steps/step_gh_action ${action_repo} ${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
+                    await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
+                    const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
+
+                    const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
+
+                    const runsMain = ghActionObj?.runs?.main;
+                    if (runsMain) {
+                      lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                    } else {
+                      lastCode = -1;
+                    }
                   } else {
                     lastCode = await container.exec(`/steps/step_${step.uses}`, Object.assign(step.env, withToEnv(step.with)), writable);
                   }
@@ -350,12 +365,7 @@ export class ActionRunnerContainer extends Container {
                   lastCode = 1;
                 }
                 break;
-              case 'internal/export_preview':
-              {
-                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
-                await container.export('/site/public', previewOutput);
-              }
-                break;
+
             }
           }
           if (0 !== lastCode) {
