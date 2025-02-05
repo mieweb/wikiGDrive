@@ -44,7 +44,10 @@ interface ExecOpts {
 }
 
 export class GitScanner {
+  public debug = false;
   private logger: Logger;
+
+  private companionFileResolver: (filePath: string) => Promise<string[]> = async () => ([]);
 
   constructor(logger: Logger, public readonly rootPath: string, private email: string) {
     this.logger = logger.child({ filename: __filename });
@@ -139,7 +142,7 @@ export class GitScanner {
         'git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'' :
         'git --no-pager diff HEAD --name-status --';
 
-      const result = await this.exec(cmd, { skipLogger: true });
+      const result = await this.exec(cmd, { skipLogger: !this.debug });
       for (const line of result.stdout.split('\n')) {
         const parts = line.split(/\s/);
         const path = parts[parts.length - 1].trim();
@@ -201,9 +204,25 @@ export class GitScanner {
     return retValArr;
   }
 
+  async resolveCompanionFiles(filePaths: string[]): Promise<string[]> {
+    const retVal = [];
+    for (const filePath of filePaths) {
+      retVal.push(filePath);
+      try {
+        retVal.push(...(await this.companionFileResolver(filePath) || []));
+      } catch (err) {
+        this.logger.warn('Error evaluating companion files: ' + err.message);
+        break;
+      }
+    }
+    return retVal;
+  }
+
   async commit(message: string, selectedFiles: string[], committer: Commiter): Promise<string> {
     selectedFiles = selectedFiles.map(fileName => fileName.startsWith('/') ? fileName.substring(1) : fileName)
       .filter(fileName => !!fileName);
+
+    selectedFiles = await this.resolveCompanionFiles(selectedFiles);
 
     const addedFiles: string[] = [];
     const removedFiles: string[] = [];
@@ -255,7 +274,7 @@ export class GitScanner {
       }
     });
 
-    const res = await this.exec('git rev-parse HEAD', { skipLogger: true });
+    const res = await this.exec('git rev-parse HEAD', { skipLogger: !this.debug });
 
     return res.stdout.trim();
   }
@@ -290,7 +309,7 @@ export class GitScanner {
   }
 
   async pushToDir(dir: string) {
-    await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: true });
+    await this.exec(`git clone ${this.rootPath} ${dir}`, { skipLogger: !this.debug });
   }
 
   async pushBranch(remoteBranch: string, sshParams?: SshParams, localBranch = 'main') {
@@ -374,13 +393,17 @@ export class GitScanner {
       remoteBranch = 'main';
     }
 
-    await this.exec('git fetch origin', {
+    await this.exec(`git fetch origin ${remoteBranch}`, {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
     });
 
-    await this.exec(`git reset --hard refs/remotes/origin/${remoteBranch}`, {
+    try {
+      await this.exec('git rebase --abort', {});
+    } catch (ignoredError) { /* empty */ }
+
+    await this.exec(`git reset --hard origin/${remoteBranch}`, {
       env: {
         GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : undefined
       }
@@ -404,7 +427,7 @@ export class GitScanner {
 
   async getRemoteUrl(): Promise<string> {
     try {
-      const result = await this.exec('git remote get-url origin', { skipLogger: true });
+      const result = await this.exec('git remote get-url origin', { skipLogger: !this.debug });
       return result.stdout.trim();
     } catch (e) {
       return null;
@@ -413,10 +436,10 @@ export class GitScanner {
 
   async setRemoteUrl(url) {
     try {
-      await this.exec('git remote rm origin', { skipLogger: true });
+      await this.exec('git remote rm origin', { skipLogger: !this.debug });
       // eslint-disable-next-line no-empty
     } catch (ignore) {}
-    await this.exec(`git remote add origin "${sanitize(url)}"`, { skipLogger: true });
+    await this.exec(`git remote add origin "${sanitize(url)}"`, { skipLogger: !this.debug });
   }
 
   async diff(fileName: string) {
@@ -425,7 +448,7 @@ export class GitScanner {
     }
 
     try {
-      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: !this.debug });
 
       const list = untrackedList.stdout.trim().split('\n')
         .filter(fileName => !!fileName)
@@ -450,7 +473,7 @@ export class GitScanner {
         fileName = fileName.substring(0, fileName.length - '.md'.length) + '.*' + ' ' + fileName.substring(0, fileName.length - '.md'.length) + '.*/*';
       }
 
-      const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: true });
+      const result = await this.exec(`git diff --minimal ${sanitize(fileName)}`, { skipLogger: !this.debug });
 
       const retVal = [];
 
@@ -564,7 +587,7 @@ export class GitScanner {
     try {
       const result = await this.exec(
         `git log --source --pretty="commit %H%d\n\nAuthor: %an <%ae>\nDate: %ct\n\n%B\n" ${sanitize(fileName)}`,
-        { skipLogger: true }
+        { skipLogger: !this.debug }
       );
 
       let remoteCommit;
@@ -667,7 +690,7 @@ export class GitScanner {
     }
 
     if (!await this.isRepo()) {
-      await this.exec('git init -b main', { skipLogger: true });
+      await this.exec('git init -b main', { skipLogger: !this.debug });
     }
   }
 
@@ -677,7 +700,7 @@ export class GitScanner {
 
   async getBranchCommit(branch: string): Promise<string> {
     try {
-      const res = await this.exec(`git rev-parse ${branch}`, { skipLogger: true });
+      const res = await this.exec(`git rev-parse ${branch}`, { skipLogger: !this.debug });
       return res.stdout.trim();
     } catch (err) {
       return null;
@@ -685,11 +708,12 @@ export class GitScanner {
   }
 
   async autoCommit() {
+    this.logger.info('Auto commit');
     const dontCommit = new Set<string>();
     const toCommit = new Set<string>();
 
     try {
-      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: true });
+      const untrackedList = await this.exec('git -c core.quotepath=off ls-files --others --exclude-standard', { skipLogger: !this.debug });
 
       const list = untrackedList.stdout.trim().split('\n')
         .filter(fileName => !!fileName)
@@ -709,7 +733,7 @@ export class GitScanner {
 
       const childProcess = spawn('git',
         ['diff', '--minimal', '--ignore-space-change'],
-        { cwd: this.rootPath, env: { PATH: process.env.PATH } });
+        { cwd: this.rootPath, env: { HOME: process.env.HOME, PATH: process.env.PATH } });
       const promise = new Promise((resolve) => {
         childProcess.on('close', resolve);
       });
@@ -814,7 +838,8 @@ export class GitScanner {
 
       const exitCode = await promise;
       if (exitCode) {
-        throw new Error( `subprocess error exit ${exitCode}, ${error}`);
+        const cmd =  'git ' + ['diff', '--minimal', '--ignore-space-change'].join(' ');
+        throw new Error( `subprocess (${cmd}) in ${this.rootPath} error exit ${exitCode}, ${error}`);
       }
 
       current = flushCurrent(current);
@@ -850,7 +875,7 @@ export class GitScanner {
   async countAheadBehind(remoteBranch: string) {
     try {
       const result = await this.exec(`git rev-list --left-right --count HEAD...origin/${remoteBranch}`, {
-        skipLogger: true
+        skipLogger: !this.debug
       });
       const firstLine = result.stdout.split('\n')[0];
 
@@ -871,7 +896,7 @@ export class GitScanner {
     let unstaged = 0;
 
     try {
-      const untrackedResult = await this.exec('git status --short --untracked-files', { skipLogger: true });
+      const untrackedResult = await this.exec('git status --short --untracked-files', { skipLogger: !this.debug  });
       for (const line of untrackedResult.stdout.split('\n')) {
         if (!line.trim()) {
           continue;
@@ -887,7 +912,7 @@ export class GitScanner {
     }
 
     try {
-      const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: true });
+      const result = await this.exec('git --no-pager diff HEAD --name-status -- \':!**/*.assets/*.png\'', { skipLogger: !this.debug });
       for (const line of result.stdout.split('\n')) {
         if (line.match(/^A\s/)) {
           unstaged++;
@@ -913,7 +938,7 @@ export class GitScanner {
   }
 
   async removeUntracked() {
-    const result = await this.exec('git -c core.quotepath=off status', { skipLogger: true });
+    const result = await this.exec('git -c core.quotepath=off status', { skipLogger: !this.debug });
     let mode = 0;
 
     const untracked = [];
@@ -956,7 +981,7 @@ export class GitScanner {
       throw new Error('Forbidden command');
     }
 
-    const result = await this.exec('git ' + cmd + ' ' + (arg || ''), { skipLogger: true });
+    const result = await this.exec('git ' + cmd + ' ' + (arg || ''), { skipLogger: !this.debug });
 
     return { stdout: result.stdout, stderr: result.stderr };
   }
@@ -964,4 +989,9 @@ export class GitScanner {
   async removeCached(filePath: string) {
     await this.exec(`git rm --cached ${filePath}`);
   }
+
+  setCompanionFileResolver(resolver: (filePath: string) => Promise<string[]>) {
+    this.companionFileResolver = resolver;
+  }
+
 }
