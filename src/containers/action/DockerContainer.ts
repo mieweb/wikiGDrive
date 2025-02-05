@@ -1,6 +1,7 @@
 import path from 'node:path';
 import {PassThrough, type Writable} from 'node:stream';
 import type { Buffer } from 'node:buffer';
+// import {Buffer} from 'https://deno.land/std/io/buffer.ts';
 
 import Docker from 'dockerode';
 import tarFs from 'tar-fs';
@@ -138,6 +139,48 @@ export class DockerContainer implements OciContainer {
 
         stream.on('finish', () => {
           resolve();
+        });
+        stream.on('error', (err: unknown) => {
+          reject(err);
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async getFile(remotePath: string): Promise<Uint8Array> {
+    const archive = await this.container.getArchive({
+      path: remotePath
+    });
+
+    return await new Promise<Uint8Array>((resolve, reject) => {
+      const retVal: Uint8Array[] = [];
+      const extract = tarStream.extract();
+
+      extract.on('entry', (header, stream, next) => {
+        stream.on('data', (data: Buffer) => {
+          retVal.push(new Uint8Array(data.buffer, data.byteOffset, data.length));
+        });
+        stream.on('end', () => {
+          next();
+        });
+        stream.resume();
+      });
+
+      try {
+        const stream = archive.pipe(extract);
+
+        stream.on('finish', () => {
+          const totalLength = retVal.reduce((acc, arr) => acc + arr.length, 0);
+          const combinedArray = new Uint8Array(totalLength);
+
+          let offset = 0;
+          retVal.forEach(arr => {
+            combinedArray.set(arr, offset);  // Copy each array into the combined one
+            offset += arr.length;  // Update the offset for the next array
+          });
+          resolve(combinedArray);
         });
         stream.on('error', (err: unknown) => {
           reject(err);
