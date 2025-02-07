@@ -63,15 +63,15 @@ interface JwtDecryptedPayload extends GoogleUser {
   driveId: string;
 }
 
-function signToken(payload: JwtDecryptedPayload, jwtSecret: string): string {
+async function signToken(payload: JwtDecryptedPayload, jwtSecret: string): Promise<string> {
   const expiresIn = 365 * 24 * 3600;
 
   const encrypted: JwtEncryptedPayload = {
     sub: payload.id,
     name: payload.name,
     email: payload.email,
-    gat: encrypt(payload.google_access_token, jwtSecret),
-    grt: payload.google_refresh_token ? encrypt(payload.google_refresh_token, jwtSecret) : undefined,
+    gat: await encrypt(payload.google_access_token, jwtSecret),
+    grt: payload.google_refresh_token ? await encrypt(payload.google_refresh_token, jwtSecret) : undefined,
     ged: payload.google_expiry_date,
     driveId: payload.driveId
   };
@@ -79,15 +79,15 @@ function signToken(payload: JwtDecryptedPayload, jwtSecret: string): string {
   return jsonwebtoken.sign(encrypted, jwtSecret, { expiresIn });
 }
 
-function verifyToken(accessCookie: string, jwtSecret: string): JwtDecryptedPayload {
+async function verifyToken(accessCookie: string, jwtSecret: string): Promise<JwtDecryptedPayload> {
   const encrypted: JwtEncryptedPayload = <JwtEncryptedPayload>jsonwebtoken.verify(accessCookie, jwtSecret);
 
   return {
     id: encrypted.sub,
     name: encrypted.name,
     email: encrypted.email,
-    google_access_token: decrypt(encrypted.gat, process.env.JWT_SECRET),
-    google_refresh_token: encrypted.grt ? decrypt(encrypted.grt, process.env.JWT_SECRET) : undefined,
+    google_access_token: await decrypt(encrypted.gat, process.env.JWT_SECRET),
+    google_refresh_token: encrypted.grt ? await decrypt(encrypted.grt, process.env.JWT_SECRET) : undefined,
     google_expiry_date: encrypted.ged,
     driveId: encrypted.driveId
   };
@@ -247,7 +247,7 @@ export async function getAuth(req: Request, res: Response, next) {
     if (driveId) {
       const drive = await googleDriveService.getDrive(await authClient.getAccessToken(), driveId);
       if (drive.id) {
-        const accessToken = signToken({
+        const accessToken = await signToken({
           ...googleUser,
           ...await authClient.getAuthData(),
           driveId: driveId
@@ -257,7 +257,7 @@ export async function getAuth(req: Request, res: Response, next) {
         return;
       }
     } else {
-      const accessToken = signToken({
+      const accessToken = await signToken({
         ...googleUser,
         ...await authClient.getAuthData(),
         driveId: driveId
@@ -296,7 +296,7 @@ async function decodeAuthenticateInfo(req, res, next) {
   const jwtSecret = process.env.JWT_SECRET;
 
   try {
-    const decoded = verifyToken(req.cookies.accessToken, jwtSecret);
+    const decoded = await verifyToken(req.cookies.accessToken, jwtSecret);
     if (!decoded.id) {
       return next(redirError(req, 'No jwt.sub'));
     }
@@ -321,7 +321,7 @@ async function decodeAuthenticateInfo(req, res, next) {
         return next(redirError(req, 'Unauthorized to read drive: ' + driveId));
       }
 
-      const accessToken: string = signToken({
+      const accessToken: string = await signToken({
         ...decoded,
         ...await authClient.getAuthData(),
         driveId: driveId
