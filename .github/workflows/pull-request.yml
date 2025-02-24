@@ -76,6 +76,7 @@ jobs:
     - name: Start
       run: |
         docker run -d --name "pr-${{ github.event.number }}" \
+          --cpu-period=100000 --cpu-quota=800000 --memory=8192m \
           --restart unless-stopped \
           --network nginx \
           --tmpfs /tmp \
