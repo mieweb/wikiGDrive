@@ -260,25 +260,88 @@ export class ActionRunnerContainer extends Container {
         await PodmanContainer.create(this.logger, 'localhost/' + process.env.ACTION_IMAGE, env, `/${driveId}_transform`) :
         await DockerContainer.create(this.logger, process.env.ACTION_IMAGE, env, generatedFileService.getRealPath());
 
-
-      try {
-        container.skipMount = (steps.length === 1 && steps[0].uses === 'internal/transform');
-        await container.start();
-        // await container.mountOverlay(generatedFileService.getRealPath(), '/site');
-
-        // TODO: Convert to step
-        const configToml = config?.config_toml || 'languageCode = "en-us"\ntitle = "My New Hugo Site"\n';
-        await container.putFile(new TextEncoder().encode(configToml), '/site/tmp_dir/config.toml');
-
+      let lastCode = 0;
+      const iterateSteps = async (callback: (step: ActionStep) => Promise<void>) => {
         for (const step of steps) {
+          if (0 !== lastCode) {
+            this.isErr = true;
+            break;
+          }
+
           if (!step.env) {
             step.env = {};
           }
           step.env['OWNER_REPO'] = ownerRepo;
           step.env['PAYLOAD'] = this.params.payload;
 
-          let lastCode = 0;
+          await callback(step);
+        }
+      };
 
+      const tryExecuteStep = async (step: ActionStep, callback: (step: ActionStep) => Promise<void>) => {
+        try {
+          await callback(step);
+          if (lastCode > 0) {
+            this.logger.error('err: '+new TextDecoder().decode(writable.getBuffer()));
+          } else {
+            this.logger.info(new TextDecoder().decode(writable.getBuffer()));
+          }
+        } catch (err) {
+          this.logger.error(err.stack ? err.stack : err.message);
+          lastCode = 1;
+        }
+      };
+
+      try {
+        container.skipMount = (steps.length === 1 && steps[0].uses === 'internal/transform');
+        await container.start();
+        // await container.mountOverlay(generatedFileService.getRealPath(), '/site');
+
+        const ghActionObjs = new Map();
+
+        // fetch actions
+        await iterateSteps(async (step) => {
+          if (!step.uses) {
+            return false;
+          }
+          if (!step.uses?.startsWith('internal/')) {
+            if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+              const [action_repo, action_version] = step.uses.split('@');
+              await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
+              const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
+
+              const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
+
+              ghActionObjs.set(step.uses, {
+                action_repo, action_version, ghActionObj
+              });
+
+            } else {
+              // legacy step action
+            }
+          }
+        });
+
+        // action.yml:runs.pre
+        await iterateSteps(async (step) => {
+          if (!step.uses?.startsWith('internal/')) {
+            await tryExecuteStep(step, async () => {
+              if (!step.uses) {
+                return;
+              }
+              if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+                const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+                const toRun = ghActionObj?.runs?.pre;
+                if (toRun) {
+                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                }
+              }
+            });
+          }
+        });
+
+        // action.yml:runs.main
+        await iterateSteps(async (step) => {
           if (step.run) {
             this.logger.info('Step: ' + (step.name || step.run));
 
@@ -297,82 +360,86 @@ export class ActionRunnerContainer extends Container {
           if (step.uses) {
             this.logger.info('Step: ' + (step.name || step.uses));
 
-            switch (step.uses) {
-              case 'internal/transform':
-                try {
-                  const action = new ActionTransform(this.engine, this.filesService, this.generatedFileService);
-                  let selectedFileId = undefined;
+            if (step.uses?.startsWith('internal/')) {
+              switch (step.uses) {
+                case 'internal/transform':
                   try {
-                    const payload = JSON.parse(this.params.payload);
+                    const action = new ActionTransform(this.engine, this.filesService, this.generatedFileService);
+                    let selectedFileId = undefined;
+                    try {
+                      const payload = JSON.parse(this.params.payload);
 
-                    if (step.with?.selectedFileId === '$wgd.selectedFileId') {
-                      selectedFileId = payload.selectedFileId;
-                    }
-                  } catch (ignore) { /* empty */ }
-                  await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
-                } catch (err) {
-                  this.logger.error(err.stack ? err.stack : err.message);
-                  lastCode = 1;
-                }
-                break;
-
-              case 'internal/push_branch':
-              {
-                const additionalEnv = this.payloadToEnv();
-                await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
-                  privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
-                }, `wgd/${additionalEnv['BRANCH']}`);
-              }
-                break;
-              case 'internal/auto_commit':
-              {
-                gitScanner.debug = true;
-                await gitScanner.setSafeDirectory();
-                await gitScanner.autoCommit();
-              }
-                break;
-              case 'internal/export_preview':
-              {
-                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
-                await container.export('/site/public', previewOutput);
-              }
-                break;
-              default:
-                try {
-                  if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-                    const [action_repo, action_version] = step.uses.split('@');
-                    await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
-                    const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
-
-                    const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
-
-                    const runsMain = ghActionObj?.runs?.main;
-                    if (runsMain) {
-                      lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
-                    } else {
-                      lastCode = -1;
-                    }
-                  } else {
-                    lastCode = await container.exec(`/steps/step_${step.uses}`, Object.assign(step.env, withToEnv(step.with)), writable);
+                      if (step.with?.selectedFileId === '$wgd.selectedFileId') {
+                        selectedFileId = payload.selectedFileId;
+                      }
+                    // deno-lint-ignore no-unused-vars
+                    } catch (ignore) { /* empty */ }
+                    await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
+                  } catch (err) {
+                    this.logger.error(err.stack ? err.stack : err.message);
+                    lastCode = 1;
                   }
-                  if (lastCode > 0) {
-                    this.logger.error('err: '+new TextDecoder().decode(writable.getBuffer()));
-                  } else {
-                    this.logger.info(new TextDecoder().decode(writable.getBuffer()));
-                  }
-                } catch (err) {
-                  this.logger.error(err.stack ? err.stack : err.message);
-                  lastCode = 1;
-                }
-                break;
+                  break;
 
+                case 'internal/push_branch':
+                {
+                  const additionalEnv = this.payloadToEnv();
+                  await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
+                    privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
+                  }, `wgd/${additionalEnv['BRANCH']}`);
+                }
+                  break;
+                case 'internal/auto_commit':
+                {
+                  gitScanner.debug = true;
+                  await gitScanner.setSafeDirectory();
+                  await gitScanner.autoCommit();
+                }
+                  break;
+                case 'internal/export_preview':
+                {
+                  const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+                  await container.export('/site/public', previewOutput);
+                }
+                  break;
+              }
+            } else {
+              await tryExecuteStep(step, async () => {
+                if (!step.uses) {
+                  return;
+                }
+                if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+                  const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+                  const runsMain = ghActionObj?.runs?.main;
+                  if (runsMain) {
+                    lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                  }
+                } else {
+                  lastCode = await container.exec(`/steps/step_${step.uses}.js`, Object.assign(step.env, withToEnv(step.with)), writable);
+                }
+              });
             }
+
           }
-          if (0 !== lastCode) {
-            this.isErr = true;
-            break;
+        });
+
+        // action.yml:runs.post
+        await iterateSteps(async (step) => {
+          if (!step.uses?.startsWith('internal/')) {
+            await tryExecuteStep(step, async () => {
+              if (!step.uses) {
+                return;
+              }
+              if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+                const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+                const toRun = ghActionObj?.runs?.post;
+                if (toRun) {
+                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                }
+              }
+            });
           }
-        }
+        });
 
         this.logger.info('Action completed');
 
