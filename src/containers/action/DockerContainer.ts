@@ -76,7 +76,7 @@ export class DockerContainer implements OciContainer {
     this.logger.info('docker started: ' + this.id);
 
     if (!this.skipMount) {
-      await this.copy(this.repoSubDir, '/site');
+      await this.copy(this.repoSubDir, '/site', true);
     }
   }
 
@@ -89,10 +89,16 @@ export class DockerContainer implements OciContainer {
 
     const archive = tarFs.pack(realPath, {
       ignore (name) {
+        if (name.startsWith(path.join(realPath, '.private'))) {
+          return true;
+        }
+        if (ignoreGit && name.startsWith(path.join(realPath, '.git', 'lfs'))) {
+          return true;
+        }
         if (ignoreGit && name.startsWith(path.join(realPath, '.git'))) {
           return true;
         }
-        if (name.startsWith(path.join(realPath, '.private'))) {
+        if (name.endsWith('.debug.xml')) {
           return true;
         }
         return false;
@@ -120,7 +126,7 @@ export class DockerContainer implements OciContainer {
   }
 
   async export(remotePath: string, outputDir: string) {
-    this.logger.info('docker export /site/public');
+    this.logger.info('docker export ' + remotePath);
 
     const archive = await this.container.getArchive({
       path: remotePath
