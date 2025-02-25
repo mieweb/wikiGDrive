@@ -9,6 +9,7 @@ import tarStream from 'tar-stream';
 import winston from 'winston';
 import {OciContainer} from './OciContainer.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
+import process from 'node:process';
 
 export class PodmanContainer implements OciContainer {
   public skipMount: false;
@@ -31,6 +32,7 @@ export class PodmanContainer implements OciContainer {
       HostConfig: {
         Binds: [ // Unlike Mounts those are created if not existing in the host
           `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
+          `${process.env.VOLUME_PREVIEW}:/output-preview:rw`,
           `${process.env.VOLUME_DATA}/${repoSubDir}:/site:O`,
         ],
       },
