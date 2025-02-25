@@ -161,7 +161,7 @@ export async function convertActionYaml(actionYaml: string): Promise<WorkflowDef
   return workflow;
 }
 
-function withToEnv(map: { [p: string]: string }) {
+function withToEnv(map?: { [p: string]: string }) {
   const retVal = {};
   if (map) {
     for (const key in map) {
@@ -286,6 +286,7 @@ export class ActionRunnerContainer extends Container {
           } else {
             this.logger.info(new TextDecoder().decode(writable.getBuffer()));
           }
+          writable.clear();
         } catch (err) {
           this.logger.error(err.stack ? err.stack : err.message);
           lastCode = 1;
@@ -304,7 +305,7 @@ export class ActionRunnerContainer extends Container {
           if (step.uses && step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
             const [action_repo, action_version] = step.uses.split('@');
             if (!step.uses?.startsWith('internal/')) {
-              await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
+              await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, { ...step.env, ...withToEnv(step.with) }, writable);
             }
             const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
             const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
@@ -323,7 +324,7 @@ export class ActionRunnerContainer extends Container {
               const toRun = ghActionObj?.runs?.pre;
               if (toRun) {
                 this.logger.info('Step [pre]: ' + (step.name || step.uses));
-                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, { ...step.env, ...withToEnv(step.with) }, writable);
               }
             }
           });
@@ -333,18 +334,11 @@ export class ActionRunnerContainer extends Container {
         await iterateSteps(async (step) => {
           if (step.run) {
             this.logger.info('Step: ' + (step.name || step.run));
-
-            try {
-              lastCode = await container.exec(step.run, Object.assign(step.env, withToEnv(step.with)), writable);
-              if (lastCode > 0) {
-                this.logger.error('err: '+new TextDecoder().decode(writable.getBuffer()));
-              } else {
-                this.logger.info(new TextDecoder().decode(writable.getBuffer()));
+            await tryExecuteStep(step, async () => {
+              if (step.run) {
+                lastCode = await container.exec(step.run, { ...step.env, ...withToEnv(step.with) }, writable);
               }
-            } catch (err) {
-              this.logger.error(err.stack ? err.stack : err.message);
-              lastCode = 1;
-            }
+            });
           } else
           if (step.uses && step.uses?.startsWith('internal/') && !ghActionObjs.has(step.uses)) {
             this.logger.info('Step: ' + (step.name || step.uses));
@@ -399,7 +393,7 @@ export class ActionRunnerContainer extends Container {
                 const runsMain = ghActionObj?.runs?.main;
                 if (runsMain) {
                   this.logger.info('Step: ' + (step.name || step.uses));
-                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, { ...step.env, ...withToEnv(step.with) }, writable);
                 }
               }
             });
@@ -414,7 +408,7 @@ export class ActionRunnerContainer extends Container {
               const toRun = ghActionObj?.runs?.post;
               if (toRun) {
                 this.logger.info('Step [post]: ' + (step.name || step.uses));
-                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, { ...step.env, ...withToEnv(step.with) }, writable);
               }
             }
           });

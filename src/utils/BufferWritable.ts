@@ -19,4 +19,8 @@ export class BufferWritable extends Writable {
         return this.buffer;
     }
 
+  clear() {
+    this.buffer = Buffer.alloc(0);
+  }
+
 }
