@@ -2,7 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 
 // Environment variables
 const themeId = process.env.THEME_ID;
@@ -15,9 +15,9 @@ const siteDir = '/site';
 const themeDir = '/themes';
 
 // Function to execute a shell command and return a promise
-const execPromise = (command) => {
+const execPromise = (command, args) => {
   return new Promise((resolve, reject) => {
-    exec(command, (err, stdout, stderr) => {
+    execFile(command, args, (err, stdout, stderr) => {
       if (err) {
         reject(`Error: ${stderr || err}`);
       } else {
@@ -49,7 +49,7 @@ try {
     } else {
       // Theme does not exist, clone from git
       console.log(`Using theme ${themeUrl} ${themeSubpath}`);
-      await execPromise(`git clone ${themeUrl} ${path.join(siteDir, 'themes', themeId)}`);
+      await execPromise('git', ['clone', themeUrl, path.join(siteDir, 'themes', themeId)]);
     }
 
     // If THEME_SUBPATH is defined, move files
@@ -80,8 +80,9 @@ try {
   }
 
   // Step 5: Run Hugo command
-  const hugoCommand = `hugo --logLevel info --config="${configToml}" --baseURL="${baseUrl}"`;
-  await execPromise(hugoCommand);
+  const hugoCommand = 'hugo';
+  const hugoArgs = ['--logLevel', 'info', `--config=${configToml}`, `--baseURL=${baseUrl}`];
+  await execPromise(hugoCommand, hugoArgs);
 
   // Step 6: Clean up lock files
   const hugoBuildLock = path.join(siteDir, '.hugo_build.lock');
