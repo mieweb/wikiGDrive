@@ -10,6 +10,7 @@ import winston from 'winston';
 
 import {OciContainer} from './OciContainer.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
+import process from 'node:process';
 
 export class DockerContainer implements OciContainer {
   public skipMount: false;
@@ -38,6 +39,7 @@ export class DockerContainer implements OciContainer {
       HostConfig: {
         Binds: [ // Unlike Mounts those are created if not existing in the host
           `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
+          `${process.env.VOLUME_PREVIEW}:/output-preview:rw`
         //   `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
         //   `${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw`,
         //   `${process.env.VOLUME_DATA}${contentDir}:/site/content:rw`,
