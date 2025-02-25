@@ -1,0 +1,6 @@
+name: 'Create GitHub Pull Request'
+description: 'Creates a GitHub pull request.'
+
+runs:
+  using: node20
+  main: main.js

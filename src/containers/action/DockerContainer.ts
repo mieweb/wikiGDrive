@@ -36,11 +36,12 @@ export class DockerContainer implements OciContainer {
       OpenStdin: false,
       StdinOnce: false,
       HostConfig: {
-        // Binds: [ // Unlike Mounts those are created if not existing in the host
+        Binds: [ // Unlike Mounts those are created if not existing in the host
+          `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
         //   `${process.env.VOLUME_DATA}/${driveId}_transform:/repo:ro`,
         //   `${process.env.VOLUME_DATA}/${driveIdTransform}:/site:rw`,
         //   `${process.env.VOLUME_DATA}${contentDir}:/site/content:rw`,
-        // ],
+        ],
         Mounts: [
           {
             Source: '',

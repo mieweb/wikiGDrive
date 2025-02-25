@@ -84,7 +84,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
         },
         {
           name: 'internal/render_hugo',
-          uses: 'internal/render_hugo',
+          uses: 'internal/render_hugo@v1',
         },
         {
           name: 'Export preview to nginx',
@@ -97,7 +97,7 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
       hide_in_menu: true,
       steps: [
         {
-          uses: 'internal/commit_branch'
+          uses: 'internal/commit_branch@v1'
         },
         {
           uses: 'internal/push_branch'
@@ -107,7 +107,6 @@ export const DEFAULT_WORKFLOW: WorkflowDefinition = {
   }
   // name: 'Check PR Labels'
   // runs-on: ubuntu-latest
-
 };
 
 function migrateStep(step: ActionStep): ActionStep {
@@ -253,7 +252,8 @@ export class ActionRunnerContainer extends Container {
         GIT_AUTHOR_NAME: committer.name,
         GIT_AUTHOR_EMAIL: committer.email,
         GIT_COMMITTER_NAME: committer.name,
-        GIT_COMMITTER_EMAIL: committer.email
+        GIT_COMMITTER_EMAIL: committer.email,
+        DRIVE_ID: driveId,
       }, additionalEnv);
 
       const container = workflowJob['runs-on'] === 'podman' ?
@@ -301,43 +301,32 @@ export class ActionRunnerContainer extends Container {
 
         // fetch actions
         await iterateSteps(async (step) => {
-          if (!step.uses) {
-            return false;
-          }
-          if (!step.uses?.startsWith('internal/')) {
-            if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-              const [action_repo, action_version] = step.uses.split('@');
+          if (step.uses && step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
+            const [action_repo, action_version] = step.uses.split('@');
+            if (!step.uses?.startsWith('internal/')) {
               await container.exec(`git clone --depth 1 --branch ${action_version} https://github.com/${action_repo} /gh_actions/${action_repo}@${action_version}`, Object.assign(step.env, withToEnv(step.with)), writable);
-              const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
-
-              const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
-
-              ghActionObjs.set(step.uses, {
-                action_repo, action_version, ghActionObj
-              });
-
-            } else {
-              // legacy step action
             }
+            const actionYaml = await container.getFile(`/gh_actions/${action_repo}@${action_version}/action.yml`);
+            const ghActionObj = yaml.load(new TextDecoder().decode(actionYaml));
+
+            ghActionObjs.set(step.uses, {
+              action_repo, action_version, ghActionObj
+            });
           }
         });
 
         // action.yml:runs.pre
         await iterateSteps(async (step) => {
-          if (!step.uses?.startsWith('internal/')) {
-            await tryExecuteStep(step, async () => {
-              if (!step.uses) {
-                return;
+          await tryExecuteStep(step, async () => {
+            if (step.uses && step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1 && ghActionObjs.has(step.uses)) {
+              const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+              const toRun = ghActionObj?.runs?.pre;
+              if (toRun) {
+                this.logger.info('Step [pre]: ' + (step.name || step.uses));
+                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
               }
-              if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-                const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
-                const toRun = ghActionObj?.runs?.pre;
-                if (toRun) {
-                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
-                }
-              }
-            });
-          }
+            }
+          });
         });
 
         // action.yml:runs.main
@@ -357,88 +346,78 @@ export class ActionRunnerContainer extends Container {
               lastCode = 1;
             }
           } else
-          if (step.uses) {
+          if (step.uses && step.uses?.startsWith('internal/') && !ghActionObjs.has(step.uses)) {
             this.logger.info('Step: ' + (step.name || step.uses));
 
-            if (step.uses?.startsWith('internal/')) {
-              switch (step.uses) {
-                case 'internal/transform':
+            switch (step.uses) {
+              case 'internal/transform':
+                try {
+                  const action = new ActionTransform(this.engine, this.filesService, this.generatedFileService);
+                  let selectedFileId = undefined;
                   try {
-                    const action = new ActionTransform(this.engine, this.filesService, this.generatedFileService);
-                    let selectedFileId = undefined;
-                    try {
-                      const payload = JSON.parse(this.params.payload);
+                    const payload = JSON.parse(this.params.payload);
 
-                      if (step.with?.selectedFileId === '$wgd.selectedFileId') {
-                        selectedFileId = payload.selectedFileId;
-                      }
-                    // deno-lint-ignore no-unused-vars
-                    } catch (ignore) { /* empty */ }
-                    await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
-                  } catch (err) {
-                    this.logger.error(err.stack ? err.stack : err.message);
-                    lastCode = 1;
-                  }
-                  break;
+                    if (step.with?.selectedFileId === '$wgd.selectedFileId') {
+                      selectedFileId = payload.selectedFileId;
+                    }
+                  // deno-lint-ignore no-unused-vars
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  } catch (ignore) { /* empty */ }
+                  await action.execute(driveId, this.params.jobId, selectedFileId ? [ selectedFileId ] : [] );
+                } catch (err) {
+                  this.logger.error(err.stack ? err.stack : err.message);
+                  lastCode = 1;
+                }
+                break;
 
-                case 'internal/push_branch':
-                {
-                  const additionalEnv = this.payloadToEnv();
-                  await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
-                    privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
-                  }, `wgd/${additionalEnv['BRANCH']}`);
-                }
-                  break;
-                case 'internal/auto_commit':
-                {
-                  gitScanner.debug = true;
-                  await gitScanner.setSafeDirectory();
-                  await gitScanner.autoCommit();
-                }
-                  break;
-                case 'internal/export_preview':
-                {
-                  const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
-                  await container.export('/site/public', previewOutput);
-                }
-                  break;
+              case 'internal/push_branch':
+              {
+                const additionalEnv = this.payloadToEnv();
+                await gitScanner.pushBranch(`wgd/${additionalEnv['BRANCH']}`, {
+                  privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
+                }, `wgd/${additionalEnv['BRANCH']}`);
               }
-            } else {
-              await tryExecuteStep(step, async () => {
-                if (!step.uses) {
-                  return;
-                }
-                if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-                  const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
-                  const runsMain = ghActionObj?.runs?.main;
-                  if (runsMain) {
-                    lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
-                  }
-                } else {
-                  lastCode = await container.exec(`/steps/step_${step.uses}.js`, Object.assign(step.env, withToEnv(step.with)), writable);
-                }
-              });
+                break;
+              case 'internal/auto_commit':
+              {
+                gitScanner.debug = true;
+                await gitScanner.setSafeDirectory();
+                await gitScanner.autoCommit();
+              }
+                break;
+              case 'internal/export_preview':
+              {
+                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+                await container.export('/site/public', previewOutput);
+              }
+                break;
             }
-
+          } else {
+            await tryExecuteStep(step, async () => {
+              if (step.uses && step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1 && ghActionObjs.has(step.uses)) {
+                const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+                const runsMain = ghActionObj?.runs?.main;
+                if (runsMain) {
+                  this.logger.info('Step: ' + (step.name || step.uses));
+                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${runsMain} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
+                }
+              }
+            });
           }
         });
 
         // action.yml:runs.post
         await iterateSteps(async (step) => {
-          if (!step.uses?.startsWith('internal/')) {
-            await tryExecuteStep(step, async () => {
-              if (!step.uses) {
-                return;
+          await tryExecuteStep(step, async () => {
+            if (step.uses && step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1 && ghActionObjs.has(step.uses)) {
+              const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
+              const toRun = ghActionObj?.runs?.post;
+              if (toRun) {
+                this.logger.info('Step [post]: ' + (step.name || step.uses));
+                lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
               }
-              if (step.uses.indexOf('/') > -1 && step.uses.indexOf('@') > -1) {
-                const { action_repo, action_version, ghActionObj } = ghActionObjs.get(step.uses);
-                const toRun = ghActionObj?.runs?.post;
-                if (toRun) {
-                  lastCode = await container.exec(`node /gh_actions/${action_repo}@${action_version}/${toRun} || cat /root/.npm/_logs/*`, Object.assign(step.env, withToEnv(step.with)), writable);
-                }
-              }
-            });
-          }
+            }
+          });
         });
 
         this.logger.info('Action completed');

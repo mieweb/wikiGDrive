@@ -1,0 +1,6 @@
+name: 'Commit branch'
+description: 'Performs a series of Git operations to create and commit changes to a new branch.'
+
+runs:
+  using: node20
+  main: main.js
