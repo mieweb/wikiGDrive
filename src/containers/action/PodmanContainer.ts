@@ -30,6 +30,7 @@ export class PodmanContainer implements OciContainer {
 
       HostConfig: {
         Binds: [ // Unlike Mounts those are created if not existing in the host
+          `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
           `${process.env.VOLUME_DATA}/${repoSubDir}:/site:O`,
         ],
       },

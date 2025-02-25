@@ -1,0 +1,6 @@
+name: 'Render Hugo'
+description: 'Builds a Hugo site, handling theme installation and configuration.'
+
+runs:
+  using: node20
+  main: main.js

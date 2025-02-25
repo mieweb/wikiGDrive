@@ -343,6 +343,10 @@ async function decodeAuthenticateInfo(req, res, next) {
       res.clearCookie('accessToken');
       return next(redirError(req, 'JWT invalid signature'));
     }
+    if (err.message === 'Decryption failed') {
+      res.clearCookie('accessToken');
+      return next(redirError(req, 'Decryption failed'));
+    }
     next(err);
   }
 }
