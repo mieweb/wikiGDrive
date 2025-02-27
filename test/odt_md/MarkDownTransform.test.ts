@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {assertStrictEquals} from 'asserts';
 
 import {compareTexts} from '../utils.ts';
 import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
@@ -7,134 +8,132 @@ import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
 import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
 import {FileContentService} from '../../src/utils/FileContentService.ts';
 
-import test from '../tester.ts';
-
 const __dirname = import.meta.dirname;
 
-test('test ./nested-ordered-list.md', async (t) => {
+Deno.test('test ./nested-ordered-list.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/nested-ordered-list.md').toString();
   const markdown = await transformOdt('nested-ordered-list');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./bullets.md', async (t) => {
+Deno.test('test ./bullets.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/bullets.md').toString();
   const markdown = await transformOdt('bullets');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./quotes.md', async (t) => {
+Deno.test('test ./quotes.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/quotes.md').toString();
   const markdown = await transformOdt('quotes');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./curly-braces.md', async (t) => {
+Deno.test('test ./curly-braces.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/curly-braces.md').toString();
   const markdown = await transformOdt('curly-braces');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./confluence.md', async (t) => {
+Deno.test('test ./confluence.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/confluence.md').toString();
   const markdown = await transformOdt('confluence');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./project-overview.md', async (t) => {
+Deno.test('test ./project-overview.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/project-overview.md').toString();
   const markdown = await transformOdt('project-overview');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./intro-to-the-system.md', async (t) => {
+Deno.test('test ./intro-to-the-system.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/intro-to-the-system.md').toString();
   const markdown = await transformOdt('intro-to-the-system');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./list-test.md', async (t) => {
+Deno.test('test ./list-test.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/list-test.md').toString();
   const markdown = await transformOdt('list-test');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./lettered-list.md', async (t) => {
+Deno.test('test ./lettered-list.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/lettered-list.md').toString();
   const markdown = await transformOdt('lettered-list');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./list-indent.md', async (t) => {
+Deno.test('test ./list-indent.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/list-indent.md').toString();
   const markdown = await transformOdt('list-indent');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./strong-headers.md', async (t) => {
+Deno.test('test ./strong-headers.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/strong-headers.md').toString();
   const markdown = await transformOdt('strong-headers');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./embedded-diagram-example.md', async (t) => {
+Deno.test('test ./embedded-diagram-example.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/embedded-diagram-example.md').toString();
   const markdown = await transformOdt('embedded-diagram-example');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./suggest.md', async (t) => {
+Deno.test('test ./suggest.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/suggest.md').toString();
   const markdown = await transformOdt('suggest');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./raw-html.md', async (t) => {
+Deno.test('test ./raw-html.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/raw-html.md').toString();
   const markdown = await transformOdt('raw-html');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./pre-mie.md', async (t) => {
+Deno.test('test ./pre-mie.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/pre-mie.md').toString();
   const markdown = await transformOdt('pre-mie');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./block-macro.md', async (t) => {
+Deno.test('test ./block-macro.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/block-macro.md').toString();
   const markdown = await transformOdt('block-macro');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./example-document.md', async (t) => {
+Deno.test('test ./example-document.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/example-document.md').toString();
   const markdown = await transformOdt('example-document');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./td-bullets.md', async (t) => {
+Deno.test('test ./td-bullets.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/td-bullets.md').toString();
   const markdown = await transformOdt('td-bullets');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
 });
 
-test('test ./line-breaks.md', async (t) => {
+Deno.test('test ./line-breaks.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/line-breaks.md').toString();
   const markdown = await transformOdt('line-breaks');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./code-links.md', async (t) => {
+Deno.test('test ./code-links.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/code-links.md').toString();
   const markdown = await transformOdt('code-links');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
-test('test ./code-blocks.md', async (t) => {
+Deno.test('test ./code-blocks.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/code-blocks.md').toString();
   const markdown = await transformOdt('code-blocks');
-  t.true(compareTexts(testMarkdown, markdown, false));
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown, false));
 });
 
 async function transformOdt(id: string) {

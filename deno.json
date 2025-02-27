@@ -1,5 +1,19 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true
+  },
+  "imports": {
+    "asserts": "https://deno.land/std@0.178.0/testing/asserts.ts",
+    "js-yaml": "npm:js-yaml@4.1.0",
+    "identify-filetype": "npm:identify-filetype@^1.0.0"
+  },
+  "lint": {
+    "include": ["src/", "test/"]
+  },
+  "test": {
+    "include": [
+      "test/*Test.ts",
+      "test/**/*.ts"
+    ]
   }
 }

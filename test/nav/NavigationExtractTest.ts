@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {assertStrictEquals} from 'asserts';
 
 import {
   generateNavigationHierarchy,
@@ -10,7 +11,6 @@ import {UnMarshaller} from '../../src/odt/UnMarshaller.ts';
 import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts';
 import {compareObjects} from '../utils.ts';
 
-import test from '../tester.ts';
 
 const __dirname = import.meta.dirname;
 
@@ -165,7 +165,7 @@ const NAV2 = {
   }
 };
 
-test('test ./nav.xml', async (t) => {
+Deno.test('test ./nav.xml', async () => {
   const content = fs.readFileSync(path.join(__dirname, 'nav.xml'));
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
   const navDoc: DocumentContent = parser.unmarshal(content);
@@ -176,10 +176,10 @@ test('test ./nav.xml', async (t) => {
   }
 
   const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
-  t.true(compareObjects(actual, expected));
+  assertStrictEquals(true, compareObjects(actual, expected));
 });
 
-test('test ./nav2.xml', async (t) => {
+Deno.test('test ./nav2.xml', async () => {
   const content = fs.readFileSync(path.join(__dirname, 'nav2.xml'));
   const parser = new UnMarshaller(LIBREOFFICE_CLASSES, 'DocumentContent');
   const navDoc: DocumentContent = parser.unmarshal(content);
@@ -190,5 +190,5 @@ test('test ./nav2.xml', async (t) => {
   }
 
   const actual = await generateNavigationHierarchy(navDoc, { warn: (msg) => console.warn(msg)});
-  t.true(compareObjects(actual, NAV2));
+  assertStrictEquals(true, compareObjects(actual, NAV2));
 });
