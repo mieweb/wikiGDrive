@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 
 const pattern = /(^-{3}(?:\r\n|\r|\n)([\w\W]*?)-{3}(?:\r\n|\r|\n))?([\w\W]*)*/;
 
-export function frontmatter(string) {
+export function frontmatter(string: string) {
   const parsed = {
     data: null,
     content: ''
@@ -10,7 +10,7 @@ export function frontmatter(string) {
 
   const matches = string.match(pattern);
 
-  if (matches[2] !== undefined) {
+  if (matches && matches[2] !== undefined) {
     try {
       parsed.data = yaml.load(matches[2]) || {};
     } catch (err) {
@@ -18,7 +18,7 @@ export function frontmatter(string) {
     }
   }
 
-  if (matches[3] !== undefined) {
+  if (matches && matches[3] !== undefined) {
     parsed.content = matches[3];
   }
 
@@ -27,7 +27,7 @@ export function frontmatter(string) {
 
 export const FRONTMATTER_DUMP_OPTS = {
   flowLevel: 9,
-  forceQuotes: false,
+  forceQuotes: true,
   styles: {
     '!!null' : 'camelcase'
   }
