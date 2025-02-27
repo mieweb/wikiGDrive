@@ -67,7 +67,7 @@ jobs:
     - name: Start
       run: |
         docker run -d --name wikigdrive-develop \
-          --cpu-period=100000 --cpu-quota=800000 --memory=8192m \
+          --cpu-period=100000 --cpu-quota=800000 --memory=12000m \
           --restart unless-stopped \
           --network nginx \
           --tmpfs /tmp \
