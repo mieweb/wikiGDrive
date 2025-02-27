@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// eslint-disable-next-line import/no-unresolved
 import { assertStrictEquals } from 'asserts';
 
 import {compareTexts} from '../utils.ts';

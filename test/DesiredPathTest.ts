@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import {assertStrictEquals} from 'asserts';
 
 import { getDesiredPath } from '../src/containers/transform/LocalFilesGenerator.ts';
