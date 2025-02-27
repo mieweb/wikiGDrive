@@ -10,7 +10,7 @@ ENV THEME_URL=""
 ENV NO_COLOR="true"
 
 RUN apt-get update
-RUN apt-get install -y git nodejs curl
+RUN apt-get install -y git nodejs curl pandoc
 RUN npm i -g postcss postcss-cli hugo-extended
 
 RUN git clone https://github.com/budparr/gohugo-theme-ananke.git /themes/ananke
