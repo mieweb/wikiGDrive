@@ -136,16 +136,21 @@ export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
         }
 
         const listStyle = parentLevel.payload.listStyle || currentElement.payload.listStyle;
-        const isNumeric = !!(listStyle?.listLevelStyleNumber && listStyle.listLevelStyleNumber.find(i => i.level == level));
+        const listLevelStyleNumber = listStyle?.listLevelStyleNumber.find(i => i.level == listLevel);
 
         currentElement.payload.listLevel = level;
         parentLevel.payload.listLevel = level;
 
-        if (isNumeric) {
+        const firstLevelStyleNumber = listStyle?.listLevelStyleNumber ? listStyle?.listLevelStyleNumber[0] : undefined;
+
+        currentElement.payload.numFormat = listLevelStyleNumber?.numFormat;
+        parentLevel.payload.numFormat = listLevelStyleNumber?.numFormat;
+
+        if (listLevelStyleNumber?.numFormat) {
           currentElement.payload.number = parentLevel.payload.number;
-          if (listStyle?.listLevelStyleNumber?.length > 0 && listStyle?.listLevelStyleNumber[0].startValue) {
-            currentElement.payload.number = +listStyle?.listLevelStyleNumber[0].startValue;
-            parentLevel.payload.number = +listStyle?.listLevelStyleNumber[0].startValue;
+          if (firstLevelStyleNumber?.startValue) {
+            currentElement.payload.number = +firstLevelStyleNumber.startValue;
+            parentLevel.payload.number = +firstLevelStyleNumber.startValue;
           }
         } else {
           currentElement.payload.bullet = true;

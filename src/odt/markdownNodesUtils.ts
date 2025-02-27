@@ -107,7 +107,24 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, pare
   const level = !ctx.parentLevel ? (chunk.payload.listLevel || 1) - 1 : 0;
 
   const indent = spaces(level * 4);
-  const listStr = chunk.payload.bullet ? '* ' : chunk.payload.number > 0 ? `${chunk.payload.number}. ` : '';
+  const listStr = ((payload) => {
+    if (payload.bullet) {
+      return '* ';
+    }
+    if (payload.number && payload.number > 0) {
+      if (['a'].includes(payload.numFormat || '')) {
+        return String.fromCharCode('a'.charCodeAt(0) + payload.number - 1) + '.  ';
+      }
+      if (['A'].includes(payload.numFormat || '')) {
+        return String.fromCharCode('A'.charCodeAt(0) + payload.number - 1) + '.  ';
+      }
+      if (['1', 'i', 'I'].includes(payload.numFormat || '')) { // TODO roman
+        return `${chunk.payload.number}. `;
+      }
+    }
+    return '';
+  })(chunk.payload);
+
   const firstStr = indent + listStr;
   const otherStr = indent + spaces(4);
 

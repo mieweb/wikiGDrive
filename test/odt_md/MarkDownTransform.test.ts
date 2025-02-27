@@ -59,6 +59,12 @@ test('test ./list-test.md', async (t) => {
   t.true(compareTexts(testMarkdown, markdown, false));
 });
 
+test('test ./lettered-list.md', async (t) => {
+  const testMarkdown = fs.readFileSync(__dirname + '/lettered-list.md').toString();
+  const markdown = await transformOdt('lettered-list');
+  t.true(compareTexts(testMarkdown, markdown, false));
+});
+
 test('test ./list-indent.md', async (t) => {
   const testMarkdown = fs.readFileSync(__dirname + '/list-indent.md').toString();
   const markdown = await transformOdt('list-indent');
