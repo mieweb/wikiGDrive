@@ -2,7 +2,7 @@
 
 import { Buffer } from 'node:buffer';
 
-import identify from 'identify-filetype';
+import { getSignature } from 'file-isignature';
 
 import {FileService, pathResolve} from './FileService.ts';
 
@@ -39,7 +39,8 @@ export class FileContentService extends FileService {
 
   async guessExtension(filePath: string) {
     const buffer = await this.readBuffer(filePath);
-    return identify(buffer) || 'bin';
+    const signature = getSignature(buffer);
+    return signature.value || 'bin';
   }
 
   async writeJson(filePath: string, data: any) {

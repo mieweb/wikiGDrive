@@ -1,11 +1,23 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "types": [
+      "npm:@types/async@3.2.12",
+      "npm:@types/compression@1.7.3",
+      "npm:@types/dockerode@3.3.28",
+      "npm:@types/express@4.17.13",
+      "npm:@types/lunr@2.3.4",
+      "npm:@types/node@22.10.1",
+      "npm:@types/passport@1.0.9",
+      "npm:@types/relateurl@0.2.29",
+      "npm:@types/ws@8.5.3",
+      "npm:@types/xmldoc@1.1.9",
+      "npm:@types/js-yaml@4.0.9"
+    ]
   },
   "imports": {
     "asserts": "https://deno.land/std@0.178.0/testing/asserts.ts",
     "js-yaml": "npm:js-yaml@4.1.0",
-    "identify-filetype": "npm:identify-filetype@^1.0.0"
   },
   "lint": {
     "include": ["src/", "test/"]

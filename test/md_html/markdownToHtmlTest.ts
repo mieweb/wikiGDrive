@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Buffer } from 'node:buffer';
+// eslint-disable-next-line import/no-unresolved
 import {assertStrictEquals} from 'asserts';
 
 import * as htmlparser2 from 'htmlparser2';

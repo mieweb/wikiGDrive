@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import {assertStrictEquals} from 'asserts';
 
 import {parseSecondsInterval} from '../src/utils/parseSecondsInterval.ts';

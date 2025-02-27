@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import winston from 'winston';
 import Sandbox from '@nyariv/sandboxjs';
-import { assertStrictEquals } from 'asserts';
+// eslint-disable-next-line import/no-unresolved
+import {assertStrictEquals} from 'asserts';
 
 import {createTmpDir} from '../utils.ts';
 import {GitScanner} from '../../src/git/GitScanner.ts';

@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execSync} from 'node:child_process';
-import {assertStrictEquals} from 'asserts';
 import winston from 'winston';
+// eslint-disable-next-line import/no-unresolved
+import {assertStrictEquals} from 'asserts';
 
 import {GitScanner} from '../../src/git/GitScanner.ts';
 import {createTmpDir} from '../utils.ts';
