@@ -28,6 +28,7 @@ export interface TagPayload {
   alt?: string;
   marginLeft?: number;
   bullet?: boolean;
+  numFormat?: string;
   number?: number;
   style?: Style;
   styleTxt?: string;

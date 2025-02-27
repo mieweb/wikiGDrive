@@ -141,8 +141,13 @@ export class TaskGoogleMarkdownTransform extends QueueTask {
       return match.slice(1, -1);
     });
 
+    const frontMatterOverload: Record<string, string> = {};
+    if (markdown.indexOf(' A.  ') > -1 || markdown.indexOf(' a.  ') > -1) {
+      frontMatterOverload['markup'] = 'pandoc';
+    }
+
     // links = Array.from(converter.links);
-    const frontMatter = generateDocumentFrontMatter(localFile, Array.from(links), this.userConfig.fm_without_version);
+    const frontMatter = generateDocumentFrontMatter(localFile, Array.from(links), this.userConfig.fm_without_version, frontMatterOverload);
     const errors = [];
     this.warnings = errors.length;
 

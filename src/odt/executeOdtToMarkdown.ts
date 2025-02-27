@@ -36,11 +36,16 @@ export async function executeOdtToMarkdown(workerData) {
   const markdown = await converter.convert();
   const links = Array.from(converter.links);
 
-  const frontMatter = generateDocumentFrontMatter(workerData.localFile, links, workerData.fm_without_version);
+  const frontMatterOverload: Record<string, string> = {};
+  if (markdown.indexOf(' A.  ') > -1 || markdown.indexOf(' a.  ') > -1) {
+    frontMatterOverload['markup'] = 'pandoc';
+  }
+
+  const frontMatter = generateDocumentFrontMatter(workerData.localFile, links, workerData.fm_without_version, frontMatterOverload);
   const errors = converter.getErrors();
 
   if (process.env.VERSION === 'dev') {
-    fs.writeFileSync(path.join(workerData.destinationPath, workerData.realFileName.replace(/.md$/, '.debug.xml')), markdown);
+    fs.writeFileSync(path.join(workerData.destinationPath, workerData.realFileName.replace(/.md$/, '.debug.xml')), content);
   }
 
   const headersMap = converter.getHeadersMap();

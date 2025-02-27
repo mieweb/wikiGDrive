@@ -126,9 +126,9 @@ This is after the horizontal line.
     1. SubNumeric 1
     2. SubNumeric 2
     3. SubNumeric 3
-1. Alpha 1
-2. Alpha 2
-3. Alpha 3
+A.  Alpha 1
+B.  Alpha 2
+C.  Alpha 3
 
 ## Formatting
 

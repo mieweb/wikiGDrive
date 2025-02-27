@@ -6,7 +6,7 @@ import {MdFile} from '../../../model/LocalFile.ts';
 import {FRONTMATTER_DUMP_OPTS} from './frontmatter.ts';
 
 export function generateDocumentFrontMatter(localFile: MdFile, links: string[],
-                                            fm_without_version = false) {
+                                            fm_without_version = false, overrides: Record<string, string> = {}): string {
   const obj = {
     id: localFile.id,
     title: localFile.title,
@@ -17,7 +17,8 @@ export function generateDocumentFrontMatter(localFile: MdFile, links: string[],
     links,
     // url: htmlPath,
     source: 'https://drive.google.com/open?id=' + localFile.id,
-    wikigdrive: !fm_without_version ? process.env.GIT_SHA : undefined
+    wikigdrive: !fm_without_version ? process.env.GIT_SHA : undefined,
+    ...overrides
   };
 
   const fmt = yaml.dump(obj, FRONTMATTER_DUMP_OPTS);

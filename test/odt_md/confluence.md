@@ -39,16 +39,16 @@ confluence2google <path to space> <path to google shared drive>
 ## Links and Possible Approaches
 
 1. Use REST API
-    1. [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
-    2. [Confluence Server REST API](https://docs.atlassian.com/ConfluenceServer/rest/7.0.3/)
-    3. [https://confluence.example.com/rest/api/space/DOCS10/content](https://confluence.example.com/rest/api/space/DOCS10/content)
-    4. Tiny Example Space: [https://confluence.example.com/rest/api/space/TES/content](https://confluence.example.com/rest/api/space/TES/content)
+    a.  [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/)
+    b.  [Confluence Server REST API](https://docs.atlassian.com/ConfluenceServer/rest/7.0.3/)
+    c.  [https://confluence.example.com/rest/api/space/DOCS10/content](https://confluence.example.com/rest/api/space/DOCS10/content)
+    d.  Tiny Example Space: [https://confluence.example.com/rest/api/space/TES/content](https://confluence.example.com/rest/api/space/TES/content)
 2. Use export file
-    1. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) makes a zipped file with [XML Format](https://confluence.atlassian.com/jirakb/xml-format-for-import-export-files-695108230.html)
-    2. [Example HTML zip file](gdoc:abc)
-    3. [Example XML zip file](gdoc:abc)
+    a.  [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) makes a zipped file with [XML Format](https://confluence.atlassian.com/jirakb/xml-format-for-import-export-files-695108230.html)
+    b.  [Example HTML zip file](gdoc:abc)
+    c.  [Example XML zip file](gdoc:abc)
 3. Use HTML
-    1. [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
+    a.  [Confluence Export](https://confluence.atlassian.com/confcloud/import-a-confluence-space-724765531.html) that makes an HTML file
 
 <a id="ggsym7lvzx37"></a>
 

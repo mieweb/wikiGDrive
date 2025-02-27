@@ -1,6 +1,10 @@
 import {XmlAttribute, XmlElement, XmlElementChild, XmlRootElement, XmlText} from './UnMarshaller.ts';
 
-// TODO https://git.libreoffice.org/core/+/refs/heads/master/schema/libreoffice/OpenDocument-v1.3+libreoffice-schema.rng
+// https://en.wikipedia.org/wiki/OpenDocument_technical_specification
+// TODO https://git.libreoffice.org/core/+/refs/heads/master/schema/libreoffice/OpenDocument-v1.4+libreoffice-schema.rng
+// TODO https://git.libreoffice.org/core/+/refs/heads/master/schema/odf1.4/OpenDocument-v1.4-schema.rng
+// https://docs.libreoffice.org/schema.html
+// https://wiki.documentfoundation.org/Development/ODF_Implementer_Notes/List_of_LibreOffice_ODF_Extensions
 
 interface TextSection {
   type: string;
@@ -257,7 +261,7 @@ export class TextList implements TextSection {
   continueNumbering?: string;
   continueList?: string;
   list: Array<TextListItem> = [];
-  styleName: string; // WWNum3 is for List Bullet. WWNum2 is for List Number. WWNum1 is for List Alpha
+  styleName: string;
 }
 
 @XmlElement()
@@ -358,9 +362,11 @@ export class ListLevelStyleBullet {
 @XmlElement()
 @XmlAttribute('text:level', 'level')
 @XmlAttribute('text:start-value', 'startValue')
+@XmlAttribute('style:num-format', 'numFormat')
 export class  ListLevelStyleNumber {
   level = 0;
   startValue = 0;
+  numFormat = '1';
 }
 
 @XmlElement()

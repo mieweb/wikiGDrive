@@ -23,8 +23,8 @@ Item before  list
 3. Some item level1
 4. Some item level1
 5. Some item level1
-    1. Some item level2
-    2. Some item level2
+    a.  Some item level2
+    b.  Some item level2
         * Some item level3
         * Some item level3
         * Some item level3

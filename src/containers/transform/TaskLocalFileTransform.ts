@@ -171,7 +171,11 @@ export class TaskLocalFileTransform extends QueueTask {
       invisibleBookmarks = converter.getInvisibleBookmarks();
       markdown = await converter.convert();
       links = Array.from(converter.links);
-      frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version);
+      const frontMatterOverload: Record<string, string> = {};
+      if (markdown.indexOf(' A.  ') > -1 || markdown.indexOf(' a.  ') > -1) {
+        frontMatterOverload['markup'] = 'pandoc';
+      }
+      frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version, frontMatterOverload);
       errors = converter.getErrors();
       this.warnings = errors.length;
     } else {

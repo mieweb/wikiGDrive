@@ -95,7 +95,7 @@ export class OdtToMarkdown {
     return structuredClone(mergeDeep(parentStyle, this.styles[styleName]));
   }
 
-  getListStyle(listStyleName): ListStyle {
+  getListStyle(listStyleName: string): ListStyle | null {
     if (!this.documentStyles?.styles?.listStyles) {
       return null;
     }
@@ -184,7 +184,7 @@ export class OdtToMarkdown {
   async spanToText(currentTagNode: MarkdownTagNode, span: TextSpan): Promise<void> {
     const style = this.getStyle(span.styleName);
 
-    if (COURIER_FONTS.indexOf(style.textProperties.fontName) > -1) {
+    if (COURIER_FONTS.indexOf(style.textProperties.fontName || '') > -1) {
       const block = this.chunks.createNode('CODE');
       this.chunks.append(currentTagNode, block);
       currentTagNode = block;
@@ -450,9 +450,9 @@ export class OdtToMarkdown {
   }
 */
 
-  isCourier(styleName: string) {
+  isCourier(styleName: string): boolean {
     const style = this.getStyle(styleName);
-    if (COURIER_FONTS.indexOf(style.textProperties?.fontName) > -1) {
+    if (COURIER_FONTS.indexOf(style.textProperties?.fontName || '') > -1) {
       return true;
     }
 
@@ -512,7 +512,7 @@ export class OdtToMarkdown {
         if (isMarkdownMacro(innerTxt)) {
           continue;
         }
-        if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+        if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName || '') > -1) {
           codeElementsCount++;
         }
       }
@@ -550,11 +550,11 @@ export class OdtToMarkdown {
           {
             const span = <TextSpan>child;
             const spanStyle = this.getStyle(span.styleName);
-            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1 && onlyCodeChildren) {
+            if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName || '') > -1 && onlyCodeChildren) {
               const span2 = Object.assign({}, span);
               span2.styleName = '';
               await this.spanToText(currentTagNode, span2);
-            } else if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName) > -1) {
+            } else if (COURIER_FONTS.indexOf(spanStyle.textProperties.fontName || '') > -1) {
               const codeBlock = this.chunks.createNode('CODE');
               this.chunks.append(currentTagNode, codeBlock);
               const span2 = Object.assign({}, span);
