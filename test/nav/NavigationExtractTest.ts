@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+// eslint-disable-next-line import/no-unresolved
 import {assertStrictEquals} from 'asserts';
 
 import {

@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import {assertStrictEquals} from 'asserts';
 
 import {decrypt, encrypt} from '../src/google/GoogleAuthService.ts';

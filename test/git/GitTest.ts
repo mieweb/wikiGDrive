@@ -3,7 +3,8 @@ import path from 'node:path';
 import {execSync} from 'node:child_process';
 
 import winston from 'winston';
-import { assertStrictEquals } from 'asserts';
+// eslint-disable-next-line import/no-unresolved
+import {assertStrictEquals} from 'asserts';
 
 import {instrumentLogger} from '../../src/utils/logger/logger.ts';
 import {GitScanner} from '../../src/git/GitScanner.ts';
