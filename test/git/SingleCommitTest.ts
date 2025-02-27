@@ -1,12 +1,13 @@
-import {createTmpDir} from '../utils.ts';
-import {GitScanner} from '../../src/git/GitScanner.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import test from '../tester.ts';
 import winston from 'winston';
-import {instrumentLogger} from '../../src/utils/logger/logger.ts';
 import Sandbox from '@nyariv/sandboxjs';
+import { assertStrictEquals } from 'asserts';
+
+import {createTmpDir} from '../utils.ts';
+import {GitScanner} from '../../src/git/GitScanner.ts';
+import {instrumentLogger} from '../../src/utils/logger/logger.ts';
 
 const COMMITER1 = {
   name: 'John', email: 'john@example.tld'
@@ -21,8 +22,8 @@ const logger = winston.createLogger({
 });
 instrumentLogger(logger);
 
-test('test single commit', async (t) => {
-  t.timeout(5000);
+Deno.test('test single commit', async () => {
+  // t.timeout(5000);
 
   const localRepoDir: string = createTmpDir();
 
@@ -36,7 +37,7 @@ test('test single commit', async (t) => {
 
     {
       const changes = await scannerLocal.changes();
-      t.is(changes.length, 4);
+      assertStrictEquals(changes.length, 4);
     }
 
     // console.log('Sandbox', Sandbox);
@@ -50,7 +51,7 @@ test('test single commit', async (t) => {
     await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md'], COMMITER1);
 
     const changes = await scannerLocal.changes();
-    t.is(changes.length, 0);
+    assertStrictEquals(changes.length, 0);
   } finally {
     fs.rmSync(localRepoDir, { recursive: true, force: true });
   }
