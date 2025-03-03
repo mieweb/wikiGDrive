@@ -5,6 +5,7 @@ import { TreeItem } from '../../model/TreeItem.ts';
 import { DirectoryScanner, RESERVED_NAMES } from './DirectoryScanner.ts';
 import { MimeTypes } from '../../model/GoogleFile.ts';
 import { FileId } from '../../model/model.ts';
+import { Indexer } from '../search/Indexer.ts';
 
 type CallBack<K> = (treeItem: K) => boolean;
 
@@ -27,11 +28,11 @@ export class MarkdownTreeProcessor {
     await this.driveFileSystem.writeJson('.tree.json', this.driveTree);
   }
 
-  async regenerateTree(rootFolderId: FileId): Promise<void> {
-    this.driveTree = await this.internalRegenerateTree(this.driveFileSystem, rootFolderId);
+  async regenerateTree(rootFolderId: FileId, indexer?): Promise<void> {
+    this.driveTree = await this.internalRegenerateTree(this.driveFileSystem, indexer, rootFolderId);
   }
 
-  private async internalRegenerateTree(contentFileService: FileContentService, parentId?: string): Promise<Array<TreeItem>> {
+  private async internalRegenerateTree(contentFileService: FileContentService, indexer?: Indexer, parentId?: string): Promise<Array<TreeItem>> {
     const scanner = new DirectoryScanner();
     const files = await scanner.scan(contentFileService);
     const retVal = [];
@@ -59,10 +60,22 @@ export class MarkdownTreeProcessor {
           redirectTo: file.type === 'redir' ? file.redirectTo : undefined,
           lastAuthor: 'lastAuthor' in file ? file.lastAuthor : undefined,
           parentId,
-          children: await this.internalRegenerateTree(subFilesService, file.id)
+          children: await this.internalRegenerateTree(subFilesService, indexer, file.id)
         };
         retVal.push(item);
       } else {
+        if (indexer && file.mimeType === MimeTypes.MARKDOWN && !('redirectTo' in file)) {
+          const content = (await contentFileService.readFile(realFileName))
+            .split('---\n')[2] || '';
+
+          await indexer.addPage({
+            id: file.id,
+            title: file.title,
+            path: contentFileService.getVirtualPath() + realFileName,
+            content
+          });
+        }
+
         const item: TreeItem = {
           id: file.id,
           title: file.title,

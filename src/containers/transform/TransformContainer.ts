@@ -19,12 +19,12 @@ import {TaskRedirFileTransform} from './TaskRedirFileTransform.ts';
 import {TocGenerator} from './frontmatters/TocGenerator.ts';
 import {FileId} from '../../model/model.ts';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
-import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
 import {frontmatter} from './frontmatters/frontmatter.ts';
+import {createIndexer} from '../search/Indexer.ts';
 
 const __filename = import.meta.filename;
 
@@ -418,17 +418,14 @@ export class TransformContainer extends Container {
 
     this.logger.info('Regenerate tree: ' + rootFolderId + ` to: ${contentFileService.getRealPath()}/.tree.json`);
 
+    const indexer = await createIndexer();
+
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
-    await markdownTreeProcessor.regenerateTree(rootFolderId);
+    await markdownTreeProcessor.regenerateTree(rootFolderId, indexer);
     await markdownTreeProcessor.save();
 
-    const indexer = new LunrIndexer();
-    await markdownTreeProcessor.walkTree((page) => {
-      indexer.addPage(page);
-      return false;
-    });
     await this.generatedFileService.mkdir('/.private');
-    await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
+    await this.generatedFileService.writeBuffer('/.private/' + indexer.getFileName(), await indexer.getData());
   }
 
   public failed() {

@@ -1,5 +1,3 @@
-import lunr from 'lunr';
-
 import {
   Controller,
   RouteErrorHandler,
@@ -10,6 +8,7 @@ import {
 import {FileContentService} from '../../../utils/FileContentService.ts';
 import {ShareErrorHandler} from './FolderController.ts';
 import {UserConfigService} from '../../google_folder/UserConfigService.ts';
+import {createIndexer} from '../../search/Indexer.ts';
 
 export class SearchController extends Controller {
   constructor(subPath: string, private filesService: FileContentService) {
@@ -27,29 +26,16 @@ export class SearchController extends Controller {
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const lunrData = await transformedFileSystem.readJson('/.private/lunr.json');
-    if (!lunrData?.index) {
-      return [];
-    }
+    const indexer = await createIndexer();
+    await indexer.setData(await transformedFileSystem.readBuffer('/.private/' + indexer.getFileName()));
 
-    const store = lunrData.store || {};
-    const lunrIndex = lunr.Index.load(lunrData.index);
+    const retVal = await indexer.search(queryParam);
 
-    queryParam = (queryParam || '').trim().replace(/:/g, ' ');
+    retVal.result = retVal.result.map(a => ({
+      ...a,
+      path: prefix + a.path
+    }));
 
-    let result = lunrIndex.search(queryParam);
-    if (result.length === 0 && queryParam.indexOf('*') === -1) {
-      result = lunrIndex.search(queryParam.split(/\s+/g).map(w => w.length > 2 ? w + '*' : w).join(' '));
-    }
-    if (result.length === 0 && queryParam.replace(/[_-]*/g, '').length > 10) {
-      result = lunrIndex.search(queryParam.replace(/[_-]*/g, ''));
-    }
-
-    return { result: result.map((doc) => ({
-      path: prefix + doc.ref,
-      score: doc.score,
-      matchData: doc.matchData,
-      ...store[doc.ref]
-    })) };
+    return retVal;
   }
 }

@@ -18,6 +18,7 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {ActionRunnerContainer, convertActionYaml} from '../action/ActionRunnerContainer.ts';
 import {getContentFileService} from '../transform/utils.ts';
 import {UploadContainer} from '../google_folder/UploadContainer.ts';
+import {createIndexer} from '../search/Indexer.ts';
 
 const __filename = import.meta.filename;
 
@@ -747,13 +748,15 @@ export class JobManagerContainer extends Container {
       const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
       const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
 
+      const indexer = await createIndexer();
+
       switch (type) {
         case 'local':
           await gitScanner.resetToLocal({
             privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
           });
 
-          await markdownTreeProcessor.regenerateTree(driveId);
+          await markdownTreeProcessor.regenerateTree(driveId, indexer);
           await markdownTreeProcessor.save();
           break;
         case 'remote':
@@ -762,11 +765,14 @@ export class JobManagerContainer extends Container {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
 
-            await markdownTreeProcessor.regenerateTree(driveId);
+            await markdownTreeProcessor.regenerateTree(driveId, indexer);
             await markdownTreeProcessor.save();
           }
           break;
       }
+
+      await transformedFileSystem.mkdir('/.private');
+      await transformedFileSystem.writeBuffer('/.private/' + indexer.getFileName(), await indexer.getData());
 
       await this.schedule(driveId, {
         ...initJob(),
