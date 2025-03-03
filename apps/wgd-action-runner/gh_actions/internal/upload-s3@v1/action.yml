@@ -1,0 +1,6 @@
+name: 'Upload S3'
+description: 'Uploads files to an S3 bucket, with separate handling for CSS files'
+
+runs:
+  using: node20
+  main: main.js

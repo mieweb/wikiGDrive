@@ -1,9 +1,10 @@
-import test from './tester.ts';
+// eslint-disable-next-line import/no-unresolved
+import {assertStrictEquals} from 'asserts';
 
 import { getDesiredPath } from '../src/containers/transform/LocalFilesGenerator.ts';
 
-test('test slugified path', (t) => {
-  t.is(getDesiredPath('Neat Page #1: My first (& only_page)'), 'neat-page-1-my-first-and-only_page');
-  t.is(getDesiredPath('Injection/Immunization'), 'injection-immunization');
-  t.is(getDesiredPath('.navigation'), '.navigation');
+Deno.test('test slugified path', () => {
+  assertStrictEquals(getDesiredPath('Neat Page #1: My first (& only_page)'), 'neat-page-1-my-first-and-only_page');
+  assertStrictEquals(getDesiredPath('Injection/Immunization'), 'injection-immunization');
+  assertStrictEquals(getDesiredPath('.navigation'), '.navigation');
 });

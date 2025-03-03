@@ -6,7 +6,7 @@
       <div class="card-body">
         <form>
           <div class="form-group">
-            <label>Config.toml for preview</label>
+            <label>Workflows</label>
             <CodeEditor v-model="user_config.actions_yaml" lang="yaml" />
           </div>
         </form>

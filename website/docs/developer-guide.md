@@ -58,13 +58,10 @@ docker run --name zipkin -d -p 9411:9411 --restart unless-stopped openzipkin/zip
 # Build action runner
 docker build -t wgd-action-runner apps/wgd-action-runner
 
-# Build hugo docs
+# Build docs
 docker run \
-        -v ~/workspaces/mieweb/wikiGDrive/hugo:/site \
-        -v ~/workspaces/mieweb/wikiGDrive/website:/website \
-        -v $VOLUME_PREVIEW/docs:/dist/hugo \
-        --env CONFIG_TOML="/site/config/_default/config.toml" --env BASE_URL="https://localhost:3000" \
-        wgd-action-runner /steps/step_render_hugo
+        -v "~/workspaces/mieweb/wikiGDrive/website:/usr/src/app/website/.vitepress/dist" \
+        "wikigdrive-develop" npm run build --workspace website
 
 # Build wikigdrive
 docker build -t wikigdrive .
@@ -77,6 +74,7 @@ docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
         -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
         -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
         -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
         -e VOLUME_DATA=$VOLUME_DATA \
         -e VOLUME_PREVIEW=$VOLUME_PREVIEW \
         --link zipkin:zipkin \

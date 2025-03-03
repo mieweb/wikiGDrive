@@ -7,7 +7,7 @@ VOLUME /data
 WORKDIR /usr/src/app
 
 RUN apt-get update
-RUN apt-get install -yq bash git-lfs openssh-client curl unzip socat
+RUN apt-get install -yq bash git-lfs openssh-client curl unzip socat podman
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
 COPY package.json package-lock.json ./
@@ -29,5 +29,9 @@ WORKDIR "/usr/src/app"
 
 # Add the GIT_SSH_COMMAND to /etc/profile so that we can debug git issues from the command line
 RUN echo 'export GIT_SSH_COMMAND="ssh -i \$(pwd | sed s/_transform.*//)/.private/id_rsa"' >> /etc/profile
+
+# Git 2.47:
+#RUN apt upgrade git --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN git config --global --add safe.directory /srv/wikigdrive/*
 
 CMD [ "sh", "-c", "wikigdrive --workdir /data server 3000" ]

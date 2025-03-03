@@ -1,0 +1,7 @@
+name: 'Cache'
+description: 'Cache files and directories between workflow runs.'
+
+runs:
+  using: node20
+  main: main.js
+  post: post.js

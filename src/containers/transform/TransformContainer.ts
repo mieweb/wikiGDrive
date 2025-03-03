@@ -19,12 +19,12 @@ import {TaskRedirFileTransform} from './TaskRedirFileTransform.ts';
 import {TocGenerator} from './frontmatters/TocGenerator.ts';
 import {FileId} from '../../model/model.ts';
 import {MarkdownTreeProcessor} from './MarkdownTreeProcessor.ts';
-import {LunrIndexer} from '../search/LunrIndexer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getUrlHash} from '../../utils/idParsers.ts';
 import {TaskGoogleMarkdownTransform} from './TaskGoogleMarkdownTransform.ts';
 import {frontmatter} from './frontmatters/frontmatter.ts';
+import {createIndexer} from '../search/Indexer.ts';
 
 const __filename = import.meta.filename;
 
@@ -225,7 +225,7 @@ export class TransformContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
-    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.name, jobId: this.params.jobId });
+    this.logger = engine.logger.child({ filename: __filename, driveId: this.params.folderId, jobId: this.params.jobId });
     this.transformLog = new TransformLog();
     this.logger.add(this.transformLog);
   }
@@ -418,17 +418,14 @@ export class TransformContainer extends Container {
 
     this.logger.info('Regenerate tree: ' + rootFolderId + ` to: ${contentFileService.getRealPath()}/.tree.json`);
 
+    const indexer = await createIndexer();
+
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
-    await markdownTreeProcessor.regenerateTree(rootFolderId);
+    await markdownTreeProcessor.regenerateTree(rootFolderId, indexer);
     await markdownTreeProcessor.save();
 
-    const indexer = new LunrIndexer();
-    await markdownTreeProcessor.walkTree((page) => {
-      indexer.addPage(page);
-      return false;
-    });
     await this.generatedFileService.mkdir('/.private');
-    await this.generatedFileService.writeJson('/.private/lunr.json', indexer.getJson());
+    await this.generatedFileService.writeBuffer('/.private/' + indexer.getFileName(), await indexer.getData());
   }
 
   public failed() {
@@ -471,6 +468,8 @@ export class TransformContainer extends Container {
                 return '';
               }
               return retVal;
+            } else {
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
             return str;
           });
@@ -479,11 +478,16 @@ export class TransformContainer extends Container {
         newContent = newContent.replace(/(gdoc:[A-Z0-9_-]+)(#[^'")\s]*)?/ig, (str: string) => {
           let fileId = str.substring('gdoc:'.length).replace(/#.*/, '');
           let hash = getUrlHash(str) || '';
-          if (hash && this.globalHeadersMap[str]) {
-            const idx = this.globalHeadersMap[str].indexOf('#');
-            if (idx >= 0) {
-              fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
-              hash = this.globalHeadersMap[str].substring(idx);
+          if (hash) {
+            if (this.globalHeadersMap[str]) {
+              const idx = this.globalHeadersMap[str].indexOf('#');
+              if (idx >= 0) {
+                fileId = this.globalHeadersMap[str].substring('gdoc:'.length, idx);
+                hash = this.globalHeadersMap[str].substring(idx);
+              }
+            } else {
+              const fullLink = str;
+              this.logger.warn(`In ${fileName} there is a link to ${fullLink} which can't be translated into bookmark link`);
             }
           }
           const lastLog = this.localLog.findLastFile(fileId);

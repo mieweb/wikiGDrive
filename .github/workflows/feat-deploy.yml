@@ -33,13 +33,15 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
-
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      BODY: ${{ github.event.head_commit.message }}
     steps:
+      - uses: actions/checkout@v4
       - name: Create pull request
-        id: open-pr
-        uses: repo-sync/pull-request@v2
-        with:
-          destination_branch: "master"
-          pr_title: "${BRANCH_NAME}"
-          pr_template: ".github/pull_request.md"
-          pr_draft: true
+        run: |
+          gh_pr_up() {
+            gh pr edit $* --body "${BODY}" || gh pr create --draft $* --body "${BODY}"
+          }
+          gh_pr_up --base master --title "${BRANCH_NAME}"

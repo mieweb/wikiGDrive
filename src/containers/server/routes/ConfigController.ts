@@ -13,6 +13,7 @@ export interface ConfigBody {
     config_toml?: string;
     transform_subdir?: string;
     rewrite_rules_yaml?: string;
+    companion_files_rule?: string;
     hugo_theme: HugoTheme;
     auto_sync: boolean;
     use_google_markdowns: boolean;
@@ -97,6 +98,9 @@ export class ConfigController extends Controller {
     }
     if (body.config?.rewrite_rules_yaml) {
       userConfigService.config.rewrite_rules = yaml.load(body.config?.rewrite_rules_yaml);
+    }
+    if (body.config?.companion_files_rule) {
+      userConfigService.config.companion_files_rule = body.config?.companion_files_rule;
     }
     let modified = false;
     if ('string' === typeof body.config?.transform_subdir) {

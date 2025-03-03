@@ -1,11 +1,11 @@
-import test from './tester.ts';
+import { assertStrictEquals } from 'asserts';
 
 import {LocalFile, LocalFileMap} from '../src/model/LocalFile.ts';
 import {solveConflicts} from '../src/containers/transform/TransformContainer.ts';
 import {compareObjects} from './utils.ts';
 import {MimeTypes} from '../src/model/GoogleFile.ts';
 
-export function compareFiles(files1: LocalFileMap, files2: LocalFileMap, t) {
+export function compareFiles(files1: LocalFileMap, files2: LocalFileMap) {
   for (const realFileName in files1) {
     delete files1[realFileName].modifiedTime;
   }
@@ -13,10 +13,10 @@ export function compareFiles(files1: LocalFileMap, files2: LocalFileMap, t) {
     delete files2[realFileName].modifiedTime;
   }
 
-  t.true(compareObjects(files1, files2));
+  assertStrictEquals(true, compareObjects(files1, files2));
 }
 
-test('test collisions', async (t) => {
+Deno.test('test collisions', async () => {
   const files1: LocalFile[] = [
     {
       type: 'md',
@@ -70,10 +70,10 @@ test('test collisions', async (t) => {
       fileName: 'test-file.md',
       lastAuthor: 'John Smith'
     }
-  }, t);
+  });
 });
 
-test('test collision then trash', async (t) => {
+Deno.test('test collision then trash', async () => {
   const files1: LocalFile[] = [
     {
       type: 'md',
@@ -126,7 +126,7 @@ test('test collision then trash', async (t) => {
       fileName: 'example-1.md',
       lastAuthor: 'John Smith'
     }
-  }, t);
+  });
 
   const dbFiles2 = solveConflicts([
     {
@@ -160,5 +160,5 @@ test('test collision then trash', async (t) => {
       fileName: 'example-2.md',
       lastAuthor: 'John Smith'
     }
-  }, t);
+  });
 });

@@ -1,4 +1,7 @@
 import fs from 'node:fs';
+// eslint-disable-next-line import/no-unresolved
+import {assertStrictEquals} from 'asserts';
+
 import {compareTexts} from '../utils.ts';
 import {FileContentService} from '../../src/utils/FileContentService.ts';
 import {OdtProcessor} from '../../src/odt/OdtProcessor.ts';
@@ -8,8 +11,6 @@ import {OdtToMarkdown} from '../../src/odt/OdtToMarkdown.ts';
 import {RewriteRule} from '../../src/odt/applyRewriteRule.ts';
 
 const __dirname = import.meta.dirname;
-
-import test from '../tester.ts';
 
 const RULES: RewriteRule[] = [
   {
@@ -27,10 +28,10 @@ const RULES: RewriteRule[] = [
   }
 ];
 
-test('test ./rewrite-rules.md.markdown', async (t) => {
+Deno.test('test ./rewrite-rules.md.markdown', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/rewrite-rules.md').toString();
   const markdown = await transformOdt('rewrite-rules');
-  t.true(compareTexts(testMarkdown, markdown));
+  assertStrictEquals(compareTexts(testMarkdown, markdown), true);
 });
 
 async function transformOdt(id: string) {

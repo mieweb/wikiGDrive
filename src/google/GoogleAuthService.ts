@@ -1,28 +1,47 @@
-import crypto from 'node:crypto';
-import {Buffer} from 'node:buffer';
+import * as base64 from './base64.ts';
 
 // https://stackoverflow.com/questions/19641783/google-drive-api-username-password-authentication#19643080
 // https://developers.google.com/identity/protocols/OAuth2ServiceAccount
-const IV = '5383165476e1c2e3';
-export function encrypt(val: string, key: string) {
-  key = Buffer.from(key).toString('hex').substring(0, 32);
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, IV);
-  const encrypted = cipher.update(val, 'utf8', 'hex');
-  const final = encrypted + cipher.final('hex');
-  const buffer = Buffer.from(final, 'hex');
-  return buffer.toString('base64');
+
+const IV: ArrayBuffer = new TextEncoder().encode('5383165476e1c2e3').slice(0, 16);
+
+export async function encrypt(val: string, keyString: string) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(keyString).slice(0, 16), {   //this is the algorithm options
+      name: 'AES-CBC',
+    },
+    false,
+    ['encrypt', 'decrypt']
+  );
+
+  const encrypted = await crypto.subtle.encrypt({
+    name: 'AES-CBC',
+    iv: IV, // @TODO: Don't re-use initialization vectors! Always generate a new iv every time your encrypt!
+  }, key, new TextEncoder().encode(val));
+
+  return base64.fromUint8Array(new Uint8Array(encrypted));
 }
 
-export function decrypt(encrypted: string, key: string) {
+export async function decrypt(encrypted: string, keyString: string) {
   if (!encrypted) {
     return null;
   }
-  key = Buffer.from(key).toString('hex').substring(0, 32);
-  const buffer = Buffer.from(encrypted, 'base64');
-  const decipher = crypto.createDecipheriv('aes-256-cbc', key, IV);
-  const decrypted = decipher.update(buffer.toString('hex'), 'hex', 'utf8');
-  const f = decrypted + decipher.final('utf8');
-  return f;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(keyString).slice(0, 16), { //this is the algorithm options
+      name: 'AES-CBC',
+    },
+    false,
+    ['encrypt', 'decrypt']
+  );
+
+  const decrypted =  await crypto.subtle.decrypt({
+    name: 'AES-CBC',
+    iv: IV,
+  }, key, base64.toUint8Array(encrypted));
+
+  return new TextDecoder().decode(decrypted);
 }
 
 export interface TokenInfo {
