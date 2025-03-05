@@ -27,7 +27,7 @@ export function frontmatter(string) {
 
 export const FRONTMATTER_DUMP_OPTS = {
   flowLevel: 9,
-  forceQuotes: false,
+  forceQuotes: true,
   styles: {
     '!!null' : 'camelcase'
   }
