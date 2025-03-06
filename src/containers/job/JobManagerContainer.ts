@@ -529,7 +529,10 @@ export class JobManagerContainer extends Container {
       ...initJob(),
       type: 'run_action',
       title: 'Run action: on sync',
-      trigger: 'internal/sync'
+      trigger: 'internal/sync',
+      payload: JSON.stringify({
+        selectedFileId: filesIds.length === 1 ? filesIds[0] : null
+      })
     });
   }
 
