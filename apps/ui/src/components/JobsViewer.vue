@@ -7,7 +7,7 @@
       <div class="flex-column order-0 w-auto">
         <div class="d-block" v-if="active_jobs.length === 0">
           <div class="btn-group-vertical w-100">
-            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
+            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL' && selectedFile.id !== 'UNKNOWN'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
             <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
           </div>
         </div>
