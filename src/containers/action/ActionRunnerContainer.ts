@@ -381,7 +381,7 @@ export class ActionRunnerContainer extends Container {
                 break;
               case 'internal/export_preview':
               {
-                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}/_manual`;
+                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}` + (this.userConfigService.config.hugo_theme?.id ? `/${this.userConfigService.config.hugo_theme?.id}` : '/_manual');
                 await container.export('/site/public', previewOutput);
               }
                 break;
