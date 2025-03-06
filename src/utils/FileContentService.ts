@@ -38,8 +38,7 @@ export class FileContentService extends FileService {
   }
 
   async guessExtension(filePath: string) {
-    const buffer = await this.readBuffer(filePath);
-    const signature = getSignature(buffer);
+    const signature = getSignature(pathResolve(this.rootPath, filePath));
     return signature.value || 'bin';
   }
 
