@@ -75,6 +75,7 @@ jobs:
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
           -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
+          -v "/var/www/preview-prod:/var/www/preview-prod" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
