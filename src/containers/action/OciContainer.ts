@@ -10,4 +10,5 @@ export interface OciContainer {
   getFile(remotePath: string): Promise<Uint8Array>;
   exec(command: string, env: { [p: string]: string }, writable: Writable): Promise<number>;
   stop(): Promise<void>;
+  remove(): Promise<void>;
 }
