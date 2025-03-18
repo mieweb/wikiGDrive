@@ -421,6 +421,7 @@ export class ActionRunnerContainer extends Container {
         this.isErr = true;
       } finally {
         await container.stop();
+        await container.remove();
       }
     }
   }

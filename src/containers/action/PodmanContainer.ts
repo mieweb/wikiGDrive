@@ -52,6 +52,12 @@ export class PodmanContainer implements OciContainer {
     return this.container.stop();
   }
 
+  async remove() {
+    return this.container.remove({
+      force: true
+    });
+  }
+
   async copy(realPath: string, remotePath: string, ignoreGit = false) {
     this.logger.info('podman copy into ' + remotePath);
 
