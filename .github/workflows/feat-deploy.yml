@@ -27,7 +27,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - run: npm install -g deno
+
       - name: Test
+        run: npm run test --if-present
+
+      - name: Test apps
         run: npm run test --workspaces --if-present
 
   build:
