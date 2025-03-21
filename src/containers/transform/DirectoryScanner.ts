@@ -126,22 +126,25 @@ export class DirectoryScanner {
           continue;
         }
 
-        if (await existingDirectory.exists(`${realFileName}/.wgd-directory.yaml`)) {
-          const yamlContent = await existingDirectory.readFile(`${realFileName}/.wgd-directory.yaml`);
-          const props = yaml.load(yamlContent);
-          if (props.type === 'directory' && props.id) {
-            const directory: Directory = {
-              type: 'directory',
-              fileName: stripConflict(realFileName),
-              id: props.id,
-              mimeType: MimeTypes.FOLDER_MIME,
-              modifiedTime: props.date,
-              title: props.title,
-              version: props.version
-            };
-            const map: {[realFileName: string]: LocalFile} = props.fileMap || {};
-            this.files[realFileName] = directory;
+        const props = await (async () => {
+          if (await existingDirectory.exists(`${realFileName}/.wgd-directory.yaml`)) {
+            const yamlContent = await existingDirectory.readFile(`${realFileName}/.wgd-directory.yaml`);
+            return yaml.load(yamlContent);
           }
+          return undefined;
+        })();
+
+        if (props && props.type === 'directory' && props.id) {
+          const directory: Directory = {
+            type: 'directory',
+            fileName: stripConflict(realFileName),
+            id: props.id,
+            mimeType: MimeTypes.FOLDER_MIME,
+            modifiedTime: props.date,
+            title: props.title,
+            version: props.version
+          };
+          this.files[realFileName] = directory;
         } else {
           if (RESERVED_DIR_NAMES.indexOf(realFileName) > -1) {
             continue;
@@ -163,12 +166,15 @@ export class DirectoryScanner {
         continue;
       }
 
-      let yamlFile;
-      if (await existingDirectory.exists('.wgd-directory.yaml')) {
-        const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
-        const props = yaml.load(yamlContent);
-        yamlFile = props.fileMap && props.fileMap[realFileName] ? props.fileMap[realFileName] : null;
-      }
+      const props = await (async () => {
+        if (await existingDirectory.exists('.wgd-directory.yaml')) {
+          const yamlContent = await existingDirectory.readFile('.wgd-directory.yaml');
+          return yaml.load(yamlContent);
+        }
+        return undefined;
+      })();
+
+      const yamlFile = props?.fileMap && props.fileMap[realFileName] ? props.fileMap[realFileName] : null;
 
       if (realFileName.endsWith('.svg')) {
         const drawingFile: DrawingFile = {
