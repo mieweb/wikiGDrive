@@ -503,7 +503,7 @@ export class JobManagerContainer extends Container {
     downloadContainer.setForceDownloadFilters(filesIds.length === 1);
 
     await downloadContainer.mount(await this.filesService.getSubFileService(folderId, '/'));
-    downloadContainer.onProgressNotify(({ completed, total, warnings }) => {
+    downloadContainer.onProgressNotify(({ completed, total, warnings, failed }) => {
       if (!this.driveJobsMap[folderId]) {
         return;
       }
@@ -513,6 +513,7 @@ export class JobManagerContainer extends Container {
         job.progress = {
           completed: completed,
           total: total,
+          failed: failed,
           warnings
         };
         this.engine.emit(folderId, 'jobs:changed', this.driveJobsMap[folderId]);
@@ -525,15 +526,22 @@ export class JobManagerContainer extends Container {
       await this.engine.unregisterContainer(downloadContainer.params.name);
     }
 
-    await this.schedule(folderId, {
-      ...initJob(),
-      type: 'run_action',
-      title: 'Run action: on sync',
-      trigger: 'internal/sync',
-      payload: JSON.stringify({
-        selectedFileId: filesIds.length === 1 ? filesIds[0] : null
-      })
-    });
+    const jobs = this.driveJobsMap[folderId].jobs || [];
+    const job = jobs.find(j => j.state === 'running' && j.type === 'sync_all');
+
+    if (job?.progress?.failed) {
+      throw new Error('Sync failed');
+    } else {
+      await this.schedule(folderId, {
+        ...initJob(),
+        type: 'run_action',
+        title: 'Run action: on sync',
+        trigger: 'internal/sync',
+        payload: JSON.stringify({
+          selectedFileId: filesIds.length === 1 ? filesIds[0] : null
+        })
+      });
+    }
   }
 
   private async runAction(folderId: FileId, jobId: string, action_id: string, payload: string, user?: { name: string, email: string }) {

@@ -31,7 +31,7 @@ export class GoogleFolderContainer extends Container {
   private filterFilesIds: FileId[];
   private forceDownloadFilters: boolean;
 
-  private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number }) => void;
+  private progressNotifyCallback: ({total, completed}: { total?: number; completed?: number; failed?: number }) => void;
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     super(params, paramsArr);
@@ -64,9 +64,9 @@ export class GoogleFolderContainer extends Container {
       await this.buildFolderFilter(this.filterFilesIds, filterFoldersIds);
     }
 
-    downloader.onProgressNotify(({ total, completed }) => {
+    downloader.onProgressNotify(({ total, completed, failed }) => {
       if (this.progressNotifyCallback) {
-        this.progressNotifyCallback({ total, completed });
+        this.progressNotifyCallback({ total, completed, failed });
       }
     });
 
@@ -121,7 +121,7 @@ export class GoogleFolderContainer extends Container {
     }
   }
 
-  onProgressNotify(callback: ({total, completed, warnings}: { total?: number; completed?: number; warnings?: number }) => void) {
+  onProgressNotify(callback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void) {
     this.progressNotifyCallback = callback;
   }
 }

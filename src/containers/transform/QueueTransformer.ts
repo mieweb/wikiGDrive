@@ -32,8 +32,6 @@ export class QueueTransformer {
         this.q.push(queueTask);
       } else {
         this.progress.failed++;
-        // this.eventBus.emit('sync:progress', this.progress);
-        // this.progress.completed++;
         this.notify();
       }
     });
