@@ -5,10 +5,10 @@
     <div class="overflow-scroll d-flex flex-row mt-3">
 
       <div class="flex-column order-0 w-auto">
-        <div class="d-block" v-if="active_jobs.length === 0">
+        <div class="d-block">
           <div class="btn-group-vertical w-100">
-            <a class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL' && selectedFile.id !== 'UNKNOWN'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</a>
-            <a class="btn btn-outline-danger me-2" v-if="drive.name" @click.prevent="syncAll">Sync All</a>
+            <button :disabled="active_jobs.length > 0" class="btn btn-outline-primary me-2" v-if="selectedFile.id && selectedFile.id !== 'TO_FILL' && selectedFile.id !== 'UNKNOWN'" @click.prevent="$emit('sync', { $event, file: selectedFile })">Sync Single</button>
+            <button :disabled="active_jobs.length > 0" class="btn btn-outline-danger me-2" v-id="drive.name" @click.prevent="syncAll">Sync All</button>
           </div>
         </div>
         <div class="d-block mt-3" v-if="!isGDocsPreview && drive.name">
