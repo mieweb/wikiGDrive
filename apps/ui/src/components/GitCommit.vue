@@ -156,7 +156,9 @@ export default {
       const path = file.path.startsWith('/') ? file.path : '/' + file.path;
       this.selectedPath = path.substring(1);
 
-      this.$router.push('/drive/' + this.driveId + path + '#git_commit');
+      if (this.$route.hash === '#git_commit') {
+        this.$router.push('/drive/' + this.driveId + path + '#git_commit');
+      }
 
       if (file.children && file.children.length > 0) {
         return;
