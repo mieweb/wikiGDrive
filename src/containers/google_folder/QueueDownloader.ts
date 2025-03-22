@@ -9,12 +9,13 @@ const CONCURRENCY = 4;
 export class QueueDownloader {
   private q: QueueObject<QueueTask>;
   private logger: winston.Logger;
-  private progressCallback: ({total, completed}: { total: number; completed: number; warnings: number }) => void;
+  private progressCallback: ({total, completed}: { total: number; completed: number; warnings: number; failed: number }) => void;
 
   private progress = {
     completed: 0,
     total: 0,
-    warnings: 0
+    warnings: 0,
+    failed: 0
   };
 
   constructor(logger: winston.Logger) {
@@ -25,9 +26,8 @@ export class QueueDownloader {
       this.logger.error(err.stack ? err.stack : err.message);
 
       if (403 === err.code) {
-        // this.progress.failed++;
-        // this.eventBus.emit('sync:progress', this.progress);
-        this.progress.completed++;
+        this.progress.failed++;
+        this.logger.error(err.stack ? err.stack : err.message);
         this.notify();
         return;
       }
@@ -36,9 +36,8 @@ export class QueueDownloader {
         queueTask.retries--;
         this.q.push(queueTask);
       } else {
-        // this.progress.failed++;
-        // this.eventBus.emit('sync:progress', this.progress);
-        this.progress.completed++;
+        this.logger.error(err.stack ? err.stack : err.message);
+        this.progress.failed++;
         this.notify();
       }
     });
@@ -66,13 +65,13 @@ export class QueueDownloader {
     this.notify();
   }
 
-  onProgressNotify(progressCallback: ({total, completed, warnings}: { total: number; completed: number; warnings: number }) => void) {
+  onProgressNotify(progressCallback: ({total, completed, warnings, failed}: { total: number; completed: number; warnings: number; failed: number }) => void) {
     this.progressCallback = progressCallback;
   }
 
   notify() {
     if (this.progressCallback) {
-      this.progressCallback({ completed: this.progress.completed, total: this.progress.total, warnings: this.progress.warnings });
+      this.progressCallback({ completed: this.progress.completed, total: this.progress.total, warnings: this.progress.warnings, failed: this.progress.failed });
     }
   }
 }
