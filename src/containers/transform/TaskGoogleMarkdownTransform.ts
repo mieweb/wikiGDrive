@@ -142,7 +142,7 @@ export class TaskGoogleMarkdownTransform extends QueueTask {
     });
 
     const frontMatterOverload: Record<string, string> = {};
-    if (markdown.indexOf(' A.  ') > -1 || markdown.indexOf(' a.  ') > -1) {
+    if (markdown.match(/^ *A. {2}/igm)) {
       frontMatterOverload['markup'] = 'pandoc';
     }
 
