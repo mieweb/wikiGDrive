@@ -172,7 +172,7 @@ export class TaskLocalFileTransform extends QueueTask {
       markdown = await converter.convert();
       links = Array.from(converter.links);
       const frontMatterOverload: Record<string, string> = {};
-      if (markdown.indexOf(' A.  ') > -1 || markdown.indexOf(' a.  ') > -1) {
+      if (markdown.match(/^ *A. {2}/igm)) {
         frontMatterOverload['markup'] = 'pandoc';
       }
       frontMatter = generateDocumentFrontMatter(localFile, links, this.userConfig.fm_without_version, frontMatterOverload);
