@@ -247,7 +247,6 @@ export class ActionRunnerContainer extends Container {
 
       const env = Object.assign({
         CONFIG_TOML: '/site/tmp_dir/config.toml',
-        BASE_URL: `${process.env.DOMAIN}/preview/${driveId}/_manual/`,
         GIT_AUTHOR_NAME: committer.name,
         GIT_AUTHOR_EMAIL: committer.email,
         GIT_COMMITTER_NAME: committer.name,
@@ -377,10 +376,7 @@ export class ActionRunnerContainer extends Container {
               }
                 break;
               case 'internal/export_preview':
-              {
-                const previewOutput = `${process.env.VOLUME_PREVIEW}/${driveId}` + (this.userConfigService.config.hugo_theme?.id ? `/${this.userConfigService.config.hugo_theme?.id}` : '/_manual');
-                await container.export('/site/public', previewOutput);
-              }
+                await container.export('/site/public', `${process.env.VOLUME_PREVIEW}/${driveId}`);
                 break;
             }
           } else {

@@ -76,6 +76,7 @@ docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
         -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+        -e DOMAIN=http://localhost:3000 \
         -e VOLUME_DATA=$VOLUME_DATA \
         -e VOLUME_PREVIEW=$VOLUME_PREVIEW \
         --link zipkin:zipkin \

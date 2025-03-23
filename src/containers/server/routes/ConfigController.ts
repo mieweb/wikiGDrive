@@ -13,6 +13,7 @@ export interface ConfigBody {
     config_toml?: string;
     transform_subdir?: string;
     rewrite_rules_yaml?: string;
+    preview_rewrite_rule?: string;
     companion_files_rule?: string;
     hugo_theme: HugoTheme;
     auto_sync: boolean;
@@ -98,6 +99,9 @@ export class ConfigController extends Controller {
     }
     if (body.config?.rewrite_rules_yaml) {
       userConfigService.config.rewrite_rules = yaml.load(body.config?.rewrite_rules_yaml);
+    }
+    if (body.config?.preview_rewrite_rule) {
+      userConfigService.config.preview_rewrite_rule = body.config?.preview_rewrite_rule;
     }
     if (body.config?.companion_files_rule) {
       userConfigService.config.companion_files_rule = body.config?.companion_files_rule;
