@@ -84,6 +84,7 @@ jobs:
           -v "/var/www/dev.wikigdrive.com:/usr/src/app/dist/hugo" \
           -v "/var/www/preview-develop:/var/www/preview-develop" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+          -e "DOMAIN=https://dev.wikigdrive.com" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=wikigdrive-develop" \

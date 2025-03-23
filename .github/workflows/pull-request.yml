@@ -92,6 +92,7 @@ jobs:
           -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
           -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+          -e "DOMAIN=https://pr-${{ github.event.number }}.wikigdrive.com" \
           -e "GIT_SHA=${{ github.sha }}" \
           -e "ZIPKIN_URL=https://pr-${{ github.event.number }}.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=pr-${{ github.event.number }}" \

@@ -34,14 +34,12 @@ export const extToMime = {
   'svg': 'image/svg+xml'
 };
 
-export function addPreviewUrl(hugo_theme, driveId) {
-  return (file) => {
-    const previewMdUrl = '/' + driveId + (hugo_theme?.id ? `/${hugo_theme?.id}` : '/_manual') + file.path;
+export function convertToPreviewUrl(preview_rewrite_rule: string) {
+  return (file: { path: string }) => {
+    const preview_rewrite_rule_parts = preview_rewrite_rule.split('!').filter(str => !!str);
 
-    const previewUrl = '/preview' +
-      previewMdUrl
-        .replace(/.md$/, '')
-        .replace(/_index$/, '');
+    let previewUrl = file.path;
+    previewUrl = previewUrl.replace(new RegExp(preview_rewrite_rule_parts[0]), preview_rewrite_rule_parts[1]);
 
     return { ...file, previewUrl };
   };
@@ -68,14 +66,16 @@ export async function getCachedChanges(logger: Logger, transformedFileSystem: Fi
   try {
     const mtimeGit = await transformedFileSystem.getMtime('.git/refs/head/master');
     if (mtime < mtimeGit) mtime = mtimeGit;
-    // eslint-disable-next-line no-empty
-  } catch (ignore) {}
+    // deno-lint-ignore no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (ignore) { /* empty */}
 
   try {
     const mtimeContent = await contentFileService.getMtime('.tree.json');
     if (mtime < mtimeContent) mtime = mtimeContent;
-    // eslint-disable-next-line no-empty
-  } catch (ignore) {}
+    // deno-lint-ignore no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (ignore) { /* empty */}
 
   if (await googleFileSystem.exists(CACHE_PATH)) {
     const cached = await googleFileSystem.readJson(CACHE_PATH);
@@ -260,14 +260,7 @@ export default class FolderController extends Controller {
         : await markdownTreeProcessor.findByPath(contentFilePath);
 
       if (treeItem) {
-        const previewMdUrl = treeItem.path
-          ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + treeItem.path
-          : '';
-
-        const previewUrl = '/preview' +
-          previewMdUrl
-            .replace(/.md$/, '')
-            .replace(/_index$/, '');
+        const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)({ path: treeItem.path || '' });
 
         this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
         this.res.setHeader('wgd-google-id', treeItem.id || '');
@@ -287,7 +280,7 @@ export default class FolderController extends Controller {
               .map(element => [element.realFileName, element])
           );
           const map2: Map<string, TreeItem> = new Map(
-            treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId))
+            treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId))
               .map(element => [element.realFileName, element])
           );
           treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
@@ -326,7 +319,7 @@ export default class FolderController extends Controller {
 
       const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
       await addGitData(treeItem.children, changes, '');
-      treeItem.children = treeItem.children.map(addPreviewUrl(userConfigService.config.hugo_theme, driveId));
+      treeItem.children = treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId));
       await outputDirectory(this.res, treeItem);
       return;
     } else {
@@ -338,15 +331,7 @@ export default class FolderController extends Controller {
       }
 
       if ('md' === ext) {
-        const previewMdUrl = filePath
-          ? '/' + driveId + (userConfigService.config.hugo_theme?.id ? `/${userConfigService.config.hugo_theme?.id}` : '/_manual') + filePath
-          : '';
-
-        const previewUrl = '/preview' +
-          previewMdUrl
-            .replace(/.md$/, '')
-            .replace(/_index$/, '');
-
+        const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(filePath);
         this.res.setHeader('wgd-path', filePath || '');
         this.res.setHeader('wgd-mime-type', mimeType);
         this.res.setHeader('wgd-preview-url', previewUrl);

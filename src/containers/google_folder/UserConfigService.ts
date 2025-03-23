@@ -43,6 +43,7 @@ export class UserConfig {
   fm_without_version?: boolean;
   actions_yaml?: string;
   rewrite_rules?: RewriteRule[];
+  preview_rewrite_rule?: string;
   companion_files_rule?: string;
 }
 
@@ -75,7 +76,7 @@ export class UserConfigService {
 
   public config: UserConfig;
 
-  constructor(private fileService: FileContentService) {}
+  constructor(private fileService: FileContentService, private driveId?: string) {}
 
   async load(): Promise<UserConfig> {
     if (await this.fileService.exists('.user_config.json')) {
@@ -93,6 +94,14 @@ export class UserConfigService {
     }
     if (!this.config.companion_files_rule) {
       this.config.companion_files_rule = '(file.path == "content/navigation.md") || (file.path == "content/toc.md") || (commit.id && file.redirectTo == commit.id) || (commit.redirectTo == file.id && file.id)';
+    }
+    if (!this.config.preview_rewrite_rule) {
+      const driveId = this.driveId || this.fileService.getRealPath().split('/').pop();
+      console.log('vvvv', this.fileService.getRealPath().split('/').pop());
+
+      const match = '^(.*)(\\.md|\\/_index\\.md)$';
+      const replace = process.env.DOMAIN + '/preview/' + driveId + '$1';
+      this.config.preview_rewrite_rule = `!${match}!${replace}!`;
     }
     return this.config;
   }

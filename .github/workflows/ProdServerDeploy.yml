@@ -82,6 +82,7 @@ jobs:
           -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
           -v "/var/www/preview-prod:/var/www/preview-prod" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+          -e "DOMAIN=https://dev.wikigdrive.com" \
           -e "GIT_SHA=${GITHUB_SHA}" \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \

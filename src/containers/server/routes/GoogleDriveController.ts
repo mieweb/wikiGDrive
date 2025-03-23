@@ -9,7 +9,7 @@ import {
   RouteResponse
 } from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
-import {addPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController.ts';
+import {convertToPreviewUrl, getCachedChanges, outputDirectory, ShareErrorHandler} from './FolderController.ts';
 import {UserConfigService} from '../../google_folder/UserConfigService.ts';
 import {MarkdownTreeProcessor} from '../../transform/MarkdownTreeProcessor.ts';
 import {getContentFileService} from '../../transform/utils.ts';
@@ -120,7 +120,7 @@ export class GoogleDriveController extends Controller {
       return;
     }
 
-    const treeItem = addPreviewUrl(userConfigService.config.hugo_theme, driveId)(foundTreeItem);
+    const treeItem = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(foundTreeItem);
 
     this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
     this.res.setHeader('wgd-google-version', treeItem.version || '');

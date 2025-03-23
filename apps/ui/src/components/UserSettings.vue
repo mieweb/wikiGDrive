@@ -65,6 +65,10 @@
             </div>
 
             <div class="form-group">
+              <label>Preview Rewrite Rule</label>
+              <CodeEditor v-model="user_config.preview_rewrite_rule" lang="yaml" />
+            </div>
+            <div class="form-group">
               <label>Markdown Links Rewrite Rules</label>
               <CodeEditor v-model="user_config.rewrite_rules_yaml" lang="yaml" />
             </div>
