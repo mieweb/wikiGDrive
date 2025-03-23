@@ -230,7 +230,6 @@ export class ActionRunnerContainer extends Container {
       if (this.params['trigger'] === 'commit') {
          await gitScanner.pushToDir(this.tempFileService.getRealPath());
       }
-      const generatedFileService = this.params['trigger'] === 'commit' ? this.tempFileService : this.generatedFileService;
 
       const steps = workflowJob.steps;
       if (!Array.isArray(steps)) {
@@ -258,7 +257,7 @@ export class ActionRunnerContainer extends Container {
 
       const container = workflowJob['runs-on'] === 'podman' ?
         await PodmanContainer.create(this.logger, 'localhost/' + process.env.ACTION_IMAGE, env, `/${driveId}_transform`) :
-        await DockerContainer.create(this.logger, process.env.ACTION_IMAGE, env, generatedFileService.getRealPath());
+        await DockerContainer.create(this.logger, process.env.ACTION_IMAGE, env, `/${driveId}_transform`);
 
       let lastCode = 0;
       const iterateSteps = async (callback: (step: ActionStep) => Promise<void>) => {
@@ -294,9 +293,7 @@ export class ActionRunnerContainer extends Container {
       };
 
       try {
-        container.skipMount = (steps.length === 1 && steps[0].uses === 'internal/transform');
         await container.start();
-        // await container.mountOverlay(generatedFileService.getRealPath(), '/site');
 
         const ghActionObjs = new Map();
 

@@ -75,6 +75,7 @@ docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
         -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
+        -v "/srv/overlay_mounts:/srv/overlay_mounts" \
         -e VOLUME_DATA=$VOLUME_DATA \
         -e VOLUME_PREVIEW=$VOLUME_PREVIEW \
         --link zipkin:zipkin \
@@ -90,6 +91,8 @@ docker rm -f wikigdrive
 # 24678 - vite hot reload port
 ```
 
+If job is run with `ron-on=podman` workdir `/site` is mounted with `:O` option to isolate changes.
+Same function is simulated on docker using temporary directories created inside `/srv/overlay_mounts`
 
 ## Domain
 

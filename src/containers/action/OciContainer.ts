@@ -1,8 +1,6 @@
 import {Writable} from 'node:stream';
 
 export interface OciContainer {
-  skipMount: boolean;
-
   start(): Promise<void>;
   copy(localPath: string, remotePath: string): Promise<void>;
   putFile(uint8Array: Uint8Array, remotePath: string): Promise<void>;

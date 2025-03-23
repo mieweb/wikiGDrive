@@ -90,8 +90,9 @@ jobs:
           -v /home/wikigdrive/env.pr:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
-          -e "GIT_SHA=${{ github.sha }}" \
           -v "/var/www/pr-${{ github.event.number }}.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+          -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+          -e "GIT_SHA=${{ github.sha }}" \
           -e "ZIPKIN_URL=https://pr-${{ github.event.number }}.wikigdrive.com/zipkin" \
           -e "ZIPKIN_SERVICE=pr-${{ github.event.number }}" \
           -e "AUTH_DOMAIN=https://dev.wikigdrive.com" \

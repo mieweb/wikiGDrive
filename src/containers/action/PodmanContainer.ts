@@ -12,8 +12,6 @@ import {BufferWritable} from '../../utils/BufferWritable.ts';
 import process from 'node:process';
 
 export class PodmanContainer implements OciContainer {
-  public skipMount: false;
-
   private constructor(private logger: winston.Logger, public readonly id: string, public readonly image: string, private container: Docker.Container) {
   }
 

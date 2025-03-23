@@ -11,15 +11,15 @@ import winston from 'winston';
 import {OciContainer} from './OciContainer.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
 import process from 'node:process';
+import fs from 'node:fs';
 
 export class DockerContainer implements OciContainer {
-  public skipMount: false;
-
   private constructor(private logger: winston.Logger,
                       public readonly id: string,
                       public readonly image: string,
-                      private container: Docker.Container,
-                      private repoSubDir: string) {
+                      private container: typeof Docker.Container,
+                      private volume: typeof Docker.Volume,
+                      private dirs: string[]) {
   }
 
   static async create(logger: winston.Logger, image: string, env: { [p: string]: string }, repoSubDir: string): Promise<OciContainer> {
@@ -28,7 +28,45 @@ export class DockerContainer implements OciContainer {
 
     const dockerEngine = new Docker({ protocol: 'http', host: 'localhost', port: 5000 });
 
+    const upper = fs.mkdtempSync(path.join('/srv/overlay_mounts', `${env.DRIVE_ID}-upper`));
+    const workdir = fs.mkdtempSync(path.join('/srv/overlay_mounts', `${env.DRIVE_ID}-workdir`));
+
+    try {
+      const container = await dockerEngine.getContainer(`${env.DRIVE_ID}_job`);
+      if (container) {
+        await container.remove({
+          force: true
+        });
+      }
+      // deno-lint-ignore no-unused-vars
+      // deno-lint-ignore no-empty
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (ignoredError) { /* empty */ }
+
+    try {
+      const volume = await dockerEngine.getVolume(`${env.DRIVE_ID}_overlay_site`);
+      if (volume) {
+        await volume.remove({
+          force: true
+        });
+      }
+      // deno-lint-ignore no-unused-vars
+      // deno-lint-ignore no-empty
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (ignoredError) { /* empty */ }
+
+    const volume = await dockerEngine.createVolume({
+      'Name': `${env.DRIVE_ID}_overlay_site`,
+      'Driver': 'local',
+      'DriverOpts': {
+        'type': 'overlay',
+        'o': `lowerdir=${process.env.VOLUME_DATA}/${repoSubDir},upperdir=${upper},workdir=${workdir}`,
+        'device': 'overlay'
+      }
+    });
+
     const container = await dockerEngine.createContainer({
+      Name: `${env.DRIVE_ID}_job`,
       Image: image,
       AttachStdin: false,
       AttachStdout: true,
@@ -46,13 +84,16 @@ export class DockerContainer implements OciContainer {
         ],
         Mounts: [
           {
-            Source: '',
-            Target: '/site/resources',
-            Type: 'tmpfs',
-            ReadOnly: false,
-            TmpfsOptions: {
-              SizeBytes: undefined,
-              Mode: 0o777
+            'Type': 'volume',
+            'Source': `${env.DRIVE_ID}_overlay_site`,
+            'Target': '/site',
+            'VolumeOptions': {
+              'Driver': 'local',
+              'DriverOpts': {
+                'type': 'overlay',
+                'o': `lowerdir=${process.env.VOLUME_DATA}${repoSubDir},upperdir=${upper},workdir=${workdir}`,
+                'device': 'overlay'
+              }
             }
           }
         ]
@@ -71,16 +112,12 @@ export class DockerContainer implements OciContainer {
     //     ${process.env.ACTION_IMAGE}
     //   `);
 
-    return new DockerContainer(logger, container.id, image, container, repoSubDir);
+    return new DockerContainer(logger, container.id, image, container, volume, [ upper, workdir ]);
   }
 
   async start() {
     await this.container.start();
     this.logger.info('docker started: ' + this.id);
-
-    if (!this.skipMount) {
-      await this.copy(this.repoSubDir, '/site', true);
-    }
   }
 
   async stop() {
@@ -88,9 +125,15 @@ export class DockerContainer implements OciContainer {
   }
 
   async remove() {
-    return this.container.remove({
+    await this.container.remove({
       force: true
     });
+    await this.volume.remove({
+      force: true
+    });
+    for (const dir of this.dirs) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   }
 
   async copy(realPath: string, remotePath: string, ignoreGit = false) {
