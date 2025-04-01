@@ -97,7 +97,6 @@ export class UserConfigService {
     }
     if (!this.config.preview_rewrite_rule) {
       const driveId = this.driveId || this.fileService.getRealPath().split('/').pop();
-      console.log('vvvv', this.fileService.getRealPath().split('/').pop());
 
       const match = '^(.*)(\\.md|\\/_index\\.md)$';
       const replace = process.env.DOMAIN + '/preview/' + driveId + '$1';

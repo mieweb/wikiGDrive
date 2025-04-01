@@ -34,7 +34,9 @@ export const extToMime = {
   'svg': 'image/svg+xml'
 };
 
-export function convertToPreviewUrl(preview_rewrite_rule: string) {
+// deno-lint-ignore no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function convertToPreviewUrl(preview_rewrite_rule: string, driveId: string) {
   return (file: { path: string }) => {
     const preview_rewrite_rule_parts = preview_rewrite_rule.split('!').filter(str => !!str);
 
