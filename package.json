@@ -85,6 +85,7 @@
     "cli-progress": "3.10.0",
     "compression": "1.7.4",
     "cookie-parser": "1.4.7",
+    "d3": "7.9.0",
     "dayjs": "1.11.1",
     "dockerode": "4.0.2",
     "dom-serializer": "2.0.0",
