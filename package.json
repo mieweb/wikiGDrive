@@ -109,7 +109,7 @@
     "minimist": "1.2.6",
     "mitt": "^3.0.0",
     "open": "^7.4.2",
-    "prismjs": "1.29.0",
+    "prismjs": "1.30.0",
     "relateurl": "0.2.7",
     "slugify": "1.6.6",
     "stream": "^0.0.2",
