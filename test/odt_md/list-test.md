@@ -18,19 +18,19 @@ If the panel action is for a type of exposure, users will not want to set any Le
 
     e.  level2_5
     f.  level2_6
-        1. level3_1
+        i. level3_1
     g.  level2_7
     h.  level2_8
     i.  level2_9
-        1. llevel3_1
-        2. llevel3_2
-        3. llevel3_3
-        4. llevel3_4
+        i. llevel3_1
+        ii. llevel3_2
+        iii. llevel3_3
+        iv. llevel3_4
     j.  level2_10
-        1. lllevel3_1
+        i. lllevel3_1
     k.  level2_11
     l.  level2_12
-        1. llllevel3_1
+        i. llllevel3_1
     m.  level2_13
     n.  level2_14
 
