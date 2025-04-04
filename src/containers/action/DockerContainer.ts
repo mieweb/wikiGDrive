@@ -128,9 +128,13 @@ export class DockerContainer implements OciContainer {
     await this.container.remove({
       force: true
     });
-    await this.volume.remove({
-      force: true
-    });
+    try {
+      await this.volume.remove({
+        force: true
+      });
+    // deno-lint-ignore no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (ignoredError) { /* empty */ }
     for (const dir of this.dirs) {
       fs.rmSync(dir, { recursive: true, force: true });
     }

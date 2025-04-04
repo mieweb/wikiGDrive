@@ -438,7 +438,13 @@ export class JobManagerContainer extends Container {
               }
 
               const logger = this.engine.logger.child({ filename: __filename, driveId: driveId, jobId: currentJob.id });
-              logger.error(err.stack ? err.stack : err.message);
+              if (err instanceof AggregateError) {
+                for (const subErr of err.errors) {
+                  logger.error(subErr.stack ? subErr.stack : subErr.message);
+                }
+              } else {
+                logger.error(err.stack ? err.stack : err.message);
+              }
 
               currentJob.state = 'failed';
               currentJob.finished = +new Date();
