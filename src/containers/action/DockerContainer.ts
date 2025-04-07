@@ -75,6 +75,7 @@ export class DockerContainer implements OciContainer {
       OpenStdin: false,
       StdinOnce: false,
       HostConfig: {
+        AutoRemove: true,
         Binds: [ // Unlike Mounts those are created if not existing in the host
           `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
           `${process.env.VOLUME_PREVIEW}/${env.DRIVE_ID}:/output-preview:rw`
@@ -121,23 +122,19 @@ export class DockerContainer implements OciContainer {
   }
 
   async stop() {
-    return this.container.stop();
+    try {
+      return await this.container.stop({ t: 0 });
+    } catch (err) {
+      this.logger.error(err.stack ? err.stack : err.message);
+    }
   }
 
   async remove() {
-    await this.container.remove({
-      force: true
-    });
-    try {
-      await this.volume.remove({
-        force: true
-      });
-    // deno-lint-ignore no-unused-vars
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (ignoredError) { /* empty */ }
-    for (const dir of this.dirs) {
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
+    setTimeout(() => {
+      for (const dir of this.dirs) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    }, 30 * 1000);
   }
 
   async copy(realPath: string, remotePath: string, ignoreGit = false) {

@@ -18,6 +18,7 @@ import {FolderRegistryContainer} from '../folder_registry/FolderRegistryContaine
 import {ActionRunnerContainer, convertActionYaml} from '../action/ActionRunnerContainer.ts';
 import {getContentFileService} from '../transform/utils.ts';
 import {UploadContainer} from '../google_folder/UploadContainer.ts';
+import {startDockerProxy} from '../action/dockerProxy.ts';
 
 const __filename = import.meta.filename;
 
@@ -126,6 +127,8 @@ export class JobManagerContainer extends Container {
 
   async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
+    startDockerProxy(5000, '/var/run/docker.sock');
+    startDockerProxy(5001, '/var/run/podman/podman.sock');
     this.workerPool = new WorkerPool(os.cpus().length);
   }
 
