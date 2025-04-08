@@ -65,7 +65,6 @@ function styleToString(style: Style) {
   return styleTxt;
 }
 
-
 function buildSvgStart(payload: TagPayload) {
   const width = payload.width;
   const height = payload.height;
@@ -86,6 +85,33 @@ interface ToTextContext {
   addLiIndents?: boolean;
   isMacro?: boolean;
   parentLevel?: number;
+}
+
+function romanize(num: number): string {
+  const lookup: [string, number][] = [
+    ['M', 1000],
+    ['CM', 900],
+    ['D', 500],
+    ['CD', 400],
+    ['C', 100],
+    ['XC', 90],
+    ['L', 50],
+    ['XL', 40],
+    ['X', 10],
+    ['IX', 9],
+    ['V', 5],
+    ['IV', 4],
+    ['I', 1]
+  ];
+
+  let roman = '';
+  for (const [symbol, value] of lookup) {
+    while (num >= value) {
+      roman += symbol;
+      num -= value;
+    }
+  }
+  return roman;
 }
 
 function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, parentLevel?: number}, innerText: string) {
@@ -118,8 +144,14 @@ function addLiNumbers(chunk: MarkdownTagNode, ctx: {addLiIndents?: boolean, pare
       if (['A'].includes(payload.numFormat || '')) {
         return String.fromCharCode('A'.charCodeAt(0) + payload.number - 1) + '.  ';
       }
-      if (['1', 'i', 'I'].includes(payload.numFormat || '')) { // TODO roman
+      if (['1'].includes(payload.numFormat || '')) {
         return `${chunk.payload.number}. `;
+      }
+      if (['I'].includes(payload.numFormat || '')) {
+        return `${romanize(payload.number)}. `;
+      }
+      if (['i'].includes(payload.numFormat || '')) {
+        return `${romanize(payload.number).toLowerCase()}. `;
       }
     }
     return '';

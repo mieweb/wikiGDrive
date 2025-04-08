@@ -28,6 +28,7 @@ export class PodmanContainer implements OciContainer {
       StdinOnce: false,
 
       HostConfig: {
+        AutoRemove: true,
         Binds: [ // Unlike Mounts those are created if not existing in the host
           `${process.env.VOLUME_DATA}/${env.DRIVE_ID}/action-cache:/action-cache:rw`,
           `${process.env.VOLUME_PREVIEW}/${env.DRIVE_ID}:/output-preview:rw`,
@@ -51,9 +52,6 @@ export class PodmanContainer implements OciContainer {
   }
 
   async remove() {
-    return this.container.remove({
-      force: true
-    });
   }
 
   async copy(realPath: string, remotePath: string, ignoreGit = false) {
