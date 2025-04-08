@@ -26,7 +26,7 @@ export class DockerContainer implements OciContainer {
     // https://github.com/apocas/dockerode/issues/747
     // const dockerEngine = new Docker({socketPath: '/var/run/docker.sock'});
 
-    const dockerEngine = new Docker({ protocol: 'http', host: '127.0.0.1', port: 5000, timeout: 1000 });
+    const dockerEngine = new Docker({ protocol: 'http', host: '127.0.0.1', port: 5000, timeout: 30 * 1000 });
 
     const upper = fs.mkdtempSync(path.join('/srv/overlay_mounts', `${env.DRIVE_ID}-upper`));
     const workdir = fs.mkdtempSync(path.join('/srv/overlay_mounts', `${env.DRIVE_ID}-workdir`));
