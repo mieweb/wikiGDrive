@@ -2,6 +2,7 @@ import EventEmitter from 'node:events';
 import winston from 'winston';
 import {SpanKind, trace} from '@opentelemetry/api';
 import type {Context} from '@opentelemetry/api/build/src/context/types.d.ts';
+import process from "node:process";
 
 const CONCURRENCY = 16;
 const DELAY_AFTER_ERROR = 5;

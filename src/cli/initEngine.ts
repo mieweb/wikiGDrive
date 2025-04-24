@@ -4,6 +4,7 @@ import process from 'node:process';
 import {FileContentService} from '../utils/FileContentService.ts';
 import {createLogger} from '../utils/logger/logger.ts';
 import {ContainerEngine} from '../ContainerEngine.ts';
+import { type Logger } from 'winston';
 
 export async function initEngine(workdir: string) {
   const mainFileService = new FileContentService(workdir);
@@ -18,7 +19,7 @@ export async function initEngine(workdir: string) {
     throw error;
   });
 
-  const logger = createLogger(workdir, eventBus);
+  const logger: Logger = createLogger(workdir, eventBus);
   const containerEngine = new ContainerEngine(logger, mainFileService);
   return {mainFileService, containerEngine, logger};
 }

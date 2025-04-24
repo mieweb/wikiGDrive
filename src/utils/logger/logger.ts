@@ -1,9 +1,10 @@
-import winston from 'winston';
+import winston, { type Logger } from 'winston';
 import {EventEmitter} from 'node:events';
 import path from 'node:path';
 import {DailyRotateFile} from './DailyRotateFile.ts';
 import {ansi_colors} from './colors.ts';
 import {JobLogFile} from './JobLogFile.ts';
+import process from "node:process";
 
 const __dirname = import.meta.dirname;
 
@@ -110,7 +111,7 @@ export function instrumentLogger(logger, childOpts = {}) {
   };
 }
 
-export function createLogger(workdir: string, eventBus?: EventEmitter) {
+export function createLogger(workdir: string, eventBus?: EventEmitter): Logger {
   const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(

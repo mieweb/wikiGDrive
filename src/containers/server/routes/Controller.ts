@@ -173,7 +173,7 @@ export class Controller implements ControllerCallContext {
     return Controller.routes[key];
   }
 
-  async getRouter() {
+  async getRouter(): Promise<express.Router> {
     const controllerId = this.constructor.prototype.controllerId;
     const { Router} = await import('express');
     const router = Router();
