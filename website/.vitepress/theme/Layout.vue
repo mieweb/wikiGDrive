@@ -26,7 +26,7 @@
 import { useData } from 'vitepress'
 import DocsSideBar from './Components/DocsSideBar.vue';
 import DocsAside from './Components/DocsAside.vue';
-import BaseLayout from '@mieweb/wikigdrive-ui/src/layout/BaseLayout.vue';
+import BaseLayout from '../../../apps/ui/src/layout/BaseLayout.vue';
 
 // https://vitepress.dev/reference/runtime-api#usedata
 const { site, frontmatter, page, theme } = useData();

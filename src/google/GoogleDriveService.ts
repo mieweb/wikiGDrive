@@ -13,6 +13,7 @@ import {driveFetch, driveFetchMultipart, driveFetchStream} from './driveFetch.ts
 import {QuotaLimiter} from './QuotaLimiter.ts';
 import {HasAccessToken} from './AuthClient.ts';
 import {StopWatch} from '../utils/StopWatch.ts';
+import { Buffer } from "node:buffer";
 
 export interface Changes {
   token: string;

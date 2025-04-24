@@ -3,7 +3,7 @@ import {PassThrough, Readable} from 'node:stream';
 import zlib from 'node:zlib';
 import {FileId} from '../../model/model.ts';
 
-interface LogLine {
+export interface LogLine {
   level: 'error' | 'info' | 'debug';
   message: string;
   timestamp: number;
