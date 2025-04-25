@@ -202,13 +202,3 @@ a[disabled] {
   border-left: 3px solid var(--bs-gray-500);
   padding: 2em 0 2em 3em;
 }
-
-.prism-editor__editor, .prism-editor-wrapper {
-  font-size: 16px;
-  font-family: monospace;
-}
-pre.prism-editor__editor {
-  overflow-x: scroll; /* Adds a horizontal scrollbar when necessary */
-  white-space: pre !important; /* Ensures that text does not wrap */
-  word-wrap: normal !important; /* Ensures that long words don't break */
-}

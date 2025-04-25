@@ -46,6 +46,7 @@ import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
 import {WebHookController} from './routes/WebHookController.ts';
+import {setupWSConnection} from 'y-websocket-server/utils';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -134,14 +135,22 @@ export class ServerContainer extends Container {
 
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws, req) => {
-      if (!req.url || !req.url.startsWith('/api/')) {
+      if (!req.url) {
         return;
       }
-      const parts = req.url.split('/');
-      if (!parts[2]) {
-        return;
+
+      if (req.url.startsWith('/api/')) {
+        const parts = req.url.split('/');
+        if (!parts[2]) {
+          return;
+        }
+
+        this.socketManager.addSocketConnection(ws, parts[2]);
       }
-      this.socketManager.addSocketConnection(ws, parts[2]);
+
+      if (req.url.startsWith('/yjs')) {
+        setupWSConnection(ws, req);
+      }
     });
 
     server.listen(port, () => {

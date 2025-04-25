@@ -9,7 +9,6 @@
   },
   "imports": {
     "bootstrap": "npm:bootstrap@5.2.3",
-    "vue-prism-editor": "npm:vue-prism-editor@2.0.0-alpha.2",
     "vue-tsc": "npm:vue-tsc@2.1.10"
   },
   "exports": {},

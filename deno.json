@@ -116,7 +116,6 @@
     "minimist": "npm:minimist@1.2.6",
     "mitt": "npm:mitt@^3.0.0",
     "open": "npm:open@^7.4.2",
-    "prismjs": "npm:prismjs@1.30.0",
     "relateurl": "npm:relateurl@0.2.7",
     "slugify": "npm:slugify@1.6.6",
     "stream": "npm:stream@^0.0.2",
@@ -128,7 +127,16 @@
     "xml-js": "npm:xml-js@1.6.11",
     "xmldoc": "npm:xmldoc@1.3.0",
     "diff": "npm:diff@5.2.0",
-    "jshint": "npm:jshint@2.13.4"
+    "jshint": "npm:jshint@2.13.4",
+
+    "@kerebron/editor": "npm:@kerebron/editor@latest",
+    "@kerebron/extension-basic-editor": "npm:@kerebron/extension-basic-editor@latest",
+    "@kerebron/extension-markdown": "npm:@kerebron/extension-markdown@latest",
+    "@kerebron/extension-yjs": "npm:@kerebron/extension-yjs@latest",
+    "@kerebron/extension-codemirror": "npm:@kerebron/extension-codemirror@latest",
+    "yjs": "npm:yjs@13.6.24",
+    "y-websocket": "npm:y-websocket@2.1.0",
+    "y-websocket-server": "npm:@y/websocket-server@0.1.1"
   },
   "exports": {
     "./wikigdrive-server.ts": "./src/cli/wikigdrive-server.ts",

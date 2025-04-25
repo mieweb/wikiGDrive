@@ -7,7 +7,7 @@
         <form>
           <div class="form-group">
             <label>Workflows</label>
-            <CodeEditor v-model="user_config.actions_yaml" lang="yaml" />
+            <CodeEditor v-model="user_config.actions_yaml" lang="yaml" :room-id="'workflow_' + driveId" />
           </div>
         </form>
       </div>
