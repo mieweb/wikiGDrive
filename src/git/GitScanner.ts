@@ -437,7 +437,7 @@ export class GitScanner {
   async setRemoteUrl(url) {
     try {
       await this.exec('git remote rm origin', { skipLogger: !this.debug });
-      // eslint-disable-next-line no-empty
+      // deno-lint-ignore no-empty
     } catch (ignore) {}
     await this.exec(`git remote add origin "${sanitize(url)}"`, { skipLogger: !this.debug });
   }
@@ -884,7 +884,7 @@ export class GitScanner {
       return {
         ahead, behind
       };
-      // eslint-disable-next-line no-empty
+      // deno-lint-ignore no-empty
     } catch (ignore) {}
 
     return { ahead: 0, behind: 0 };

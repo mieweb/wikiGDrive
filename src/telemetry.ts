@@ -102,7 +102,7 @@ export class ClassInstrumentation extends InstrumentationBase {
 
   enable() {
     super.enable();
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    // deno-lint-ignore no-this-alias
     const instrumentation = this;
 
     for (const methodName of Object.getOwnPropertyNames(this.classPrototype)) {

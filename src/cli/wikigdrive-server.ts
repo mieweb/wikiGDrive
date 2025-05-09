@@ -2,7 +2,7 @@ import process from 'node:process';
 import {EventEmitter} from 'node:events';
 
 import minimist from 'minimist';
-import winston from 'winston';
+import type { Logger } from 'winston';
 import dotenv from 'dotenv';
 
 import {addTelemetry} from '../telemetry.ts';
@@ -28,7 +28,7 @@ process.env.GIT_SHA = process.env.GIT_SHA || 'dev';
 
 export class MainService {
   private readonly eventBus: EventEmitter;
-  private readonly logger: winston.Logger;
+  private readonly logger: Logger;
   private containerEngine: ContainerEngine;
   private mainFileService: FileContentService;
   private authConfig: AuthConfig;

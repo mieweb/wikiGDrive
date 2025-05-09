@@ -105,6 +105,9 @@ export class ServerContainer extends Container {
     }
 
     app.use(rateLimit({
+      validate: {
+        xForwardedForHeader: false
+      },
       windowMs: 60 * 1000,
       max: 3000
     }));

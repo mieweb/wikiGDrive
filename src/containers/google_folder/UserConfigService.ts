@@ -7,6 +7,7 @@ import {HugoTheme} from '../server/routes/ConfigController.ts';
 import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter.ts';
 import {convertActionYaml} from '../action/ActionRunnerContainer.ts';
 import {RewriteRule} from '../../odt/applyRewriteRule.ts';
+import process from "node:process";
 
 async function execAsync(command: string) {
   const err = new Error();

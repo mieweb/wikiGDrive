@@ -16,13 +16,13 @@ interface JobLogStreamOptions extends TransportStreamOptions {
   eol?: string;
 }
 
-function isValidFileName(filename) {
-  // eslint-disable-next-line no-control-regex
+function isValidFileName(filename: string) {
+  // deno-lint-ignore no-control-regex
   return !/["<>|:*?\\/\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f]/g.test(filename);
 }
 
-function isValidDirName(dirname) {
-  // eslint-disable-next-line no-control-regex
+function isValidDirName(dirname: string) {
+  // deno-lint-ignore no-control-regex
   return !/["<>|\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f]/g.test(dirname);
 }
 

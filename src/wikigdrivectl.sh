@@ -51,4 +51,4 @@ if [[ ! -f "$MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts" ]]; then
 fi
 
 #/usr/bin/env node $OPTS --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm/transpile-only $MAIN_DIR/src/cli/wikigdrivectl-$CMD.ts $ORIG_ARGS
-/usr/bin/env deno run --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+/usr/bin/env deno run --config $MAIN_DIR/deno.json --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
