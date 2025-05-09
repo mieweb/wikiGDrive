@@ -1,8 +1,9 @@
-name: Develop Server Deploy
+name: Deploy Prod Server
 
 on:
   push:
-    branches: [ develop ]
+    tags:
+      - '*'
 
 jobs:
   test:
@@ -29,17 +30,17 @@ jobs:
 
   build:
     needs: test
-    runs-on: wgd-dev
+    runs-on: wgd-prod
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Build action runner
-      run: docker build -t "wgd-action-runner:develop" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+      run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
     - uses: docker/build-push-action@v6
       with:
-        tags: "wikigdrive-develop:${{ github.sha }},wikigdrive-develop:latest"
+        tags: "wikigdrive-prod:${{ github.sha }},wikigdrive-prod:latest"
         push: false
         build-args: |
           GIT_SHA=${{ github.sha }}
@@ -48,35 +49,31 @@ jobs:
     - name: Build docs
       run: |
         docker run \
-        -v "/var/www/dev.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+        -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
         -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-develop:${{ github.sha }}" deno task -f wikigdrive-website build
+        "wikigdrive-prod:${{ github.sha }}" deno task -f wikigdrive-website build
 
     - name: Stop and remove
-      run: docker stop wikigdrive-develop ; docker rm wikigdrive-develop
+      run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
       continue-on-error: true
 
     - name: Start
       run: |
-        docker run -d --name wikigdrive-develop \
-          --cpu-period=100000 --cpu-quota=800000 --memory=8192m \
-          --restart unless-stopped \
-          --network nginx \
+        docker run -d --name wikigdrive-prod \
           --tmpfs /tmp \
-          -v wikiGDriveDevelop:/data \
+          -v wikiGDriveProd:/data \
           -v /home/wikigdrive/service_account.json:/service_account.json \
-          -v /home/wikigdrive/env.develop:/usr/src/app/.env \
+          -v /home/wikigdrive/env.prod:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
-          -v "/var/www/dev.wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
-          -v "/var/www/preview-develop:/var/www/preview-develop" \
+          -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+          -v "/var/www/preview-prod:/var/www/preview-prod" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
-          -e "DOMAIN=https://dev.wikigdrive.com" \
+          -e "DOMAIN=https://wikigdrive.com" \
           -e "GIT_SHA=${GITHUB_SHA}" \
-          -e "ZIPKIN_URL=https://dev.wikigdrive.com/zipkin" \
-          -e "ZIPKIN_SERVICE=wikigdrive-develop" \
-          --publish 127.0.0.1:4000:3000 \
-          "wikigdrive-develop:${GITHUB_SHA}" wikigdrive \
+          --publish 127.0.0.1:3000:3000 \
+          --restart unless-stopped \
+          "wikigdrive-prod:${GITHUB_SHA}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
