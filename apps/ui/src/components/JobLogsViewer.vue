@@ -22,8 +22,6 @@
 import {UtilsMixin} from './UtilsMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
 
-// import {Prism} from './prismFix';
-
 export default {
   mixins: [UtilsMixin],
   components: {StatusToolBar},

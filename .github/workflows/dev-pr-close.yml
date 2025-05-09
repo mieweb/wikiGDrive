@@ -26,16 +26,32 @@ jobs:
         run: |
           git config --global user.email "${GH_ORG_EMAIL}"
           git config --global user.name "${GH_ORG_NAME}"
-      - name: Apply version bump (major)
-        if: contains(github.event.pull_request.labels.*.name, 'major')
-        run: npm version major
-      - name: Apply version bump (minor)
-        if: contains(github.event.pull_request.labels.*.name, 'minor')
-        run: npm version minor
-      - name: Apply version bump (patch)
-        if: contains(github.event.pull_request.labels.*.name, 'patch')
-        run: npm version patch
-      - name: Git push version bump
-        run: git push origin master --follow-tags --force
+
+      - name: Get current version
+        id: get_version
+        run: echo ::set-output name=version::$(git describe --abbrev=0 --tags)
+
+      - name: Determine version type
+        id: bump_version
+        run: |
+          export major=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 1)
+          export minor=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 2)
+          export patch=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 3)
+
+          if [ -n "${{ github.event.pull_request.labels.find(x => x.name == 'major') }}" ]; then
+            echo "::set-output name=version::${major}.0.0"
+          elif [ -n "${{ github.event.pull_request.labels.find(x => x.name == 'minor') }}" ]; then
+            echo "::set-output name=version::${major}.${minor+1}.0"
+          else
+            echo "::set-output name=version::${major}.${minor}.${patch+1}"
+          fi
+
       - name: Output current version
-        run: npm pkg get version
+        run: echo "Current version is ${{ steps.bump_version.outputs.version }}"
+
+      - name: Create new tag
+        uses: anothrNick/github-tag-action@v1.71.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_TAG: ${{ steps.bump_version.outputs.version }}
+          WITH_V: true

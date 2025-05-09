@@ -1,4 +1,7 @@
 node_modules
+/npm
+.deno
+.vite
 .idea
 .wikigdrive
 .wgd

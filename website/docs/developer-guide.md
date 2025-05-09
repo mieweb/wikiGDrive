@@ -8,20 +8,10 @@ See [Node setup on the system](#node-setup-on-the-system) for prereq.
 
 [Example Google Drive Shared Folder](https://drive.google.com/open?id=0AIkOKXbzWCtSUk9PVA)
 
-# Node setup on the system
-
-## using OS
+# Deno setup on the system
 
 ```
-curl -sL https://deb.nodesource.com/setup_20.x | sudo bash -
-sudo apt install nodejs
-```
-
-## If you wish to support multiple versions, add n
-
-```
-sudo npm install -g n
-sudo n 22.10.0
+curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 ```
 
 ## Version Strategy
@@ -36,7 +26,7 @@ Copy and adjust .env.example .env
 ```
 sudo apt install libkrb5-dev libssh2-1-dev
 
-npm install
+deno install
 
 wikigdrive --workdir ~/wikigdrive --service_account ~/workspaces/mieweb/wikigdrive-with-service-account.json --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com server 3000
 ```
@@ -61,7 +51,7 @@ docker build -t wgd-action-runner apps/wgd-action-runner
 # Build docs
 docker run \
         -v "~/workspaces/mieweb/wikiGDrive/website:/usr/src/app/website/.vitepress/dist" \
-        "wikigdrive-develop" npm run build --workspace website
+        "wikigdrive-develop" deno task -f wikigdrive-website build
 
 # Build wikigdrive
 docker build -t wikigdrive .
@@ -70,7 +60,7 @@ docker build -t wikigdrive .
 docker run --rm --user=$(id -u):$(getent group docker | cut -d: -f3) -it \
         -v $VOLUME_DATA:/srv/wikigdrive \
         -v $VOLUME_PREVIEW:$VOLUME_PREVIEW \
-        -v $VOLUME_PREVIEW/docs:/usr/src/app/dist/hugo \
+        -v $VOLUME_PREVIEW/docs:/usr/src/app/website/.vitepress/dist \
         -v ~/workspaces/mieweb/wikigdrive-with-service-account.json:/service_account.json \
         -v ~/workspaces/mieweb/wikiGDrive:/usr/src/app \
         -v /var/run/docker.sock:/var/run/docker.sock \

@@ -1,14 +1,16 @@
 <template>
-  <pre><code class="language-markdown line-numbers" ref="code"><slot></slot></code></pre>
+  <CodeEditor :model-value="value" lang="markdown" readonly :room-id="'markdown_' + absPath" />
 </template>
 <script lang="ts">
-import {Prism} from './prismFix.ts';
+
+import CodeEditor from './CodeEditor.vue';
 
 export default {
-  props: ['absPath'],
+  components: {CodeEditor},
+  props: ['absPath', 'value'],
   mounted() {
     const absPath = this.absPath.endsWith('/') ? this.absPath.substring(0, this.absPath.length - 1) : this.absPath;
-    Prism.highlightElement(this.$refs.code);
+/*
     const links = this.$refs.code.querySelectorAll('a[data-to-rewrite]');
     for (const link of links) {
       const href = link.getAttribute('href');
@@ -31,6 +33,7 @@ export default {
       }
       link.removeAttribute('data-to-rewrite');
     }
+*/
   }
 };
 </script>

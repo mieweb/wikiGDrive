@@ -31,7 +31,7 @@
         <div v-else-if="diffs.length > 0" class="flex-grow-1 overflow-scroll">
           <h5>Git Diff</h5>
           <div v-for="(diff, idx) of diffs" :key="idx">
-            <pre><code ref="code" class="language-diff line-numbers">{{diff.txt}}</code></pre>
+            <CodeEditor v-model="diff.txt" lang="diff" readonly />
           </div>
         </div>
         <div v-else class="flex-grow-1 overflow-scroll">
@@ -64,12 +64,12 @@ import GitSideBar from './GitSideBar.vue';
 import GitToolBar from './GitToolBar.vue';
 import NavSearch from './NavSearch.vue';
 import GitFooter from './GitFooter.vue';
-const Prism = window['Prism'];
-Prism.manual = true;
+import CodeEditor from './CodeEditor.vue';
 
 export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
+    CodeEditor,
     GitFooter,
     GitToolBar,
     GitSideBar,
@@ -124,14 +124,6 @@ export default {
     }
   },
   watch: {
-    diffs() {
-      this.$nextTick(() => {
-        const codeElems = this.$el.querySelectorAll('code');
-        for (const elem of codeElems.values()) {
-          Prism.highlightElement(elem);
-        }
-      });
-    },
     checked: {
       deep: true,
       handler() {

@@ -4,7 +4,7 @@
     <div class="card flex-grow-1 flex-shrink-1 overflow-scroll">
       <div class="card-body">
         <form>
-          <CodeEditor v-model="fileContent" lang="text" />
+          <CodeEditor v-model="fileContent" lang="text" :room-id="'file_' + selectedFile.id" />
         </form>
       </div>
     </div>
