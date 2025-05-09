@@ -101,7 +101,7 @@
     "dotenv": "npm:dotenv@^8.6.0",
     "express": "npm:express@4.21.1",
     "express-jwt": "npm:express-jwt@8.2.1",
-    "express-rate-limit": "npm:express-rate-limit@^6.6.0",
+    "express-rate-limit": "npm:express-rate-limit@7.5.0",
     "htmlparser2": "npm:htmlparser2@9.0.0",
     "file-isignature": "npm:file-isignature@1.0.3",
     "js-yaml": "npm:js-yaml@4.1.0",
