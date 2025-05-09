@@ -1,4 +1,4 @@
-name: Feat Branch Deploy
+name: Create PR from feat/* Branch
 
 on:
   push:

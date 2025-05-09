@@ -1,14 +1,12 @@
-name: Pull request created
+name: Deploy Pull Request to test server
 
 on:
   pull_request:
     types: [edited, synchronize]
-    paths-ignore:
-      - 'develop/**'
 
 jobs:
   test:
-    if: github.event.pull_request.head.ref != 'develop' && contains( github.event.pull_request.labels.*.name, 'deploy-pr')
+    if: contains( github.event.pull_request.labels.*.name, 'deploy-pr')
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +29,7 @@ jobs:
         run: deno test --no-check --allow-read --allow-sys --allow-env --allow-write --allow-run
 
   build:
-    if: github.event.pull_request.head.ref != 'develop' && contains( github.event.pull_request.labels.*.name, 'deploy-pr')
+    if: contains( github.event.pull_request.labels.*.name, 'deploy-pr')
     needs: test
     runs-on: wgd-dev
 
