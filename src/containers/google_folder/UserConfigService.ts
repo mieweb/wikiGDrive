@@ -1,37 +1,48 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import {exec} from 'node:child_process';
+import process from "node:process";
+
 import yaml from 'js-yaml';
+
 import {FileContentService} from '../../utils/FileContentService.ts';
 import {HugoTheme} from '../server/routes/ConfigController.ts';
 import {FRONTMATTER_DUMP_OPTS} from '../transform/frontmatters/frontmatter.ts';
 import {convertActionYaml} from '../action/ActionRunnerContainer.ts';
 import {RewriteRule} from '../../odt/applyRewriteRule.ts';
-import process from "node:process";
 
-async function execAsync(command: string) {
-  const err = new Error();
-  const stackList = err.stack.split('\n');
-
-  await new Promise<{ stdout: string, stderr: string }>((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (stdout) {
-        console.log(stdout);
-      }
-      if (stderr) {
-        console.error(stderr);
-      }
-      if (error) {
-        const err = new Error(error.message);
-        err.stack = stackList.slice(0, 1).concat(stackList.slice(2)).join('\n');
-        return reject(err);
-      }
-
-      resolve({
-        stdout, stderr
-      });
-    });
+async function execAsync(cmd: string) {
+  const command = new Deno.Command('/bin/sh', {
+    args: [ '-c', cmd ],
+    stdout: 'piped',
+    stderr: 'piped',
   });
+
+  const child = command.spawn();
+
+  setTimeout(() => {
+    console.error('Process timeout');
+    child.kill();
+  }, 10000);
+
+  const decoder = new TextDecoder();
+  const [status] = await Promise.all([
+    child.status,
+    child.stdout.pipeTo(new WritableStream({
+      write(chunk, controller) {
+        console.log(decoder.decode(chunk));
+      }
+    })),
+    child.stderr.pipeTo(new WritableStream({
+      write(chunk, controller) {
+        console.error(decoder.decode(chunk));
+      }
+    }))
+  ]);
+
+  if (!status.success) {
+    console.error('Process exited with status: ' + status.code);
+    throw new Error('Process exited with status: ' + status.code);
+  }
 }
 
 export class UserConfig {

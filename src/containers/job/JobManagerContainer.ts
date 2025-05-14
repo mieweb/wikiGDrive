@@ -446,7 +446,9 @@ export class JobManagerContainer extends Container {
                   logger.error(subErr.stack ? subErr.stack : subErr.message);
                 }
               } else {
-                logger.error(err.stack ? err.stack : err.message);
+                if (err.message.indexOf('Process exited') === -1) { // Already in log
+                  logger.error(err.stack ? err.stack : err.message);
+                }
               }
 
               currentJob.state = 'failed';
@@ -606,7 +608,9 @@ export class JobManagerContainer extends Container {
 
       return {};
     } catch (err) {
-      logger.error(err.stack ? err.stack : err.message);
+      if (err.message.indexOf('Process exited') === -1) { // Already in log
+        logger.error(err.stack ? err.stack : err.message);
+      }
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
@@ -637,7 +641,9 @@ export class JobManagerContainer extends Container {
 
       return {};
     } catch (err) {
-      logger.error(err.stack ? err.stack : err.message);
+      if (err.message.indexOf('Process exited') === -1) { // Already in log
+        logger.error(err.stack ? err.stack : err.message);
+      }
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
@@ -663,7 +669,9 @@ export class JobManagerContainer extends Container {
 
       return {};
     } catch (err) {
-      logger.error(err.message);
+      if (err.message.indexOf('Process exited') === -1) { // Already in log
+        logger.error(err.stack ? err.stack : err.message);
+      }
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
@@ -795,7 +803,9 @@ export class JobManagerContainer extends Container {
         trigger: 'git_reset'
       });
     } catch (err) {
-      logger.error(err.message);
+      if (err.message.indexOf('Process exited') === -1) { // Already in log
+        logger.error(err.stack ? err.stack : err.message);
+      }
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
