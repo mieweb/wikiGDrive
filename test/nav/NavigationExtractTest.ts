@@ -13,7 +13,7 @@ import {DocumentContent, LIBREOFFICE_CLASSES} from '../../src/odt/LibreOffice.ts
 import {compareObjects} from '../utils.ts';
 
 
-const __dirname = import.meta.dirname;
+const __dirname = import.meta.dirname!;
 
 const NODES: NavigationHierarchyNode[] = [
   {

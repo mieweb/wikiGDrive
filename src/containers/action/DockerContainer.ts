@@ -39,8 +39,6 @@ export class DockerContainer implements OciContainer {
         });
       }
       // deno-lint-ignore no-unused-vars
-      // deno-lint-ignore no-empty
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (ignoredError) { /* empty */ }
 
     try {
@@ -51,7 +49,6 @@ export class DockerContainer implements OciContainer {
         });
       }
       // deno-lint-ignore no-unused-vars
-      // deno-lint-ignore no-empty
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (ignoredError) { /* empty */ }
 

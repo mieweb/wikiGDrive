@@ -55,4 +55,4 @@ fi
 #npx tsx $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
 #/usr/bin/env node $OPTS --import jiti/register $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
 #/usr/bin/env node $OPTS --experimental-strip-types --experimental-transform-types --no-warnings --enable-source-maps --experimental-specifier-resolution=node $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
-/usr/bin/env deno run --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $DENO_OPTS $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS
+/usr/bin/env deno run --config $MAIN_DIR/deno.json --allow-sys --allow-env --allow-read --allow-write --allow-ffi --allow-net --allow-run $DENO_OPTS $MAIN_DIR/src/cli/wikigdrive-$CMD.ts $ORIG_ARGS

@@ -37,8 +37,7 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
           variables[k] = nevValue;
           change = true;
         }
-        // eslint-disable-next-line no-empty, @typescript-eslint/no-unused-vars
-      } catch (ignore) {}
+      } catch (ignore) { /* empty */ }
     }
   }
 

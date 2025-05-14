@@ -40,7 +40,7 @@ export function fixCharacters(text) {
     .replace(/’/g, '\'')
     .replace(/“/g, '"')
     .replace(/”/g, '"')
-    // eslint-disable-next-line no-control-regex
+    // deno-lint-ignore no-control-regex
     .replace(/\x0b/g, ' ')
     .replace(/\u201d/g, '"')
     .replace(/\u201c/g, '"');

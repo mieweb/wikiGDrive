@@ -10,6 +10,9 @@ export async function loadRunningInstance() {
     const content = fs.readFileSync(fullPath).toString();
     try {
       const json = JSON.parse(content);
+      if (json.pid === process.pid) {
+        return null;
+      }
       if (json.pid > 0) {
         try {
           // kill -0 seems not to work on alpine for some reason

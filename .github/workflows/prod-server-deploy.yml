@@ -1,4 +1,4 @@
-name: Prod Server Deploy
+name: Deploy Prod Server
 
 on:
   push:
@@ -15,25 +15,18 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install -y libkrb5-dev
 
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v3
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
-          cache: npm
+          deno-version: v2.x
 
-      - name: Install node_modules
-        run: npm install
+      - name: Install modules
+        run: deno install
 
       - name: Lint
-        run: npm run lint
-
-      - run: npm install -g deno
+        run: deno lint
 
       - name: Test
-        run: npm run test --if-present
-
-      - name: Test apps
-        run: npm run test --workspaces --if-present
+        run: deno test --no-check --allow-read --allow-sys --allow-env --allow-write --allow-run
 
   build:
     needs: test
@@ -41,12 +34,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
-        cache: npm
 
     - name: Build action runner
       run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
@@ -64,7 +51,7 @@ jobs:
         docker run \
         -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
         -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-prod:${{ github.sha }}" npm run build --workspace website
+        "wikigdrive-prod:${{ github.sha }}" deno task -f wikigdrive-website build
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
@@ -79,7 +66,7 @@ jobs:
           -v /home/wikigdrive/env.prod:/usr/src/app/.env \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
-          -v "/var/www/wikigdrive.com:/usr/src/app/dist/hugo" \
+          -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
           -v "/var/www/preview-prod:/var/www/preview-prod" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
           -e "DOMAIN=https://wikigdrive.com" \

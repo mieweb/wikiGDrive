@@ -1,5 +1,6 @@
 import {marked} from 'marked';
 import {frontmatter} from '../containers/transform/frontmatters/frontmatter.ts';
+import { Buffer } from "node:buffer";
 
 export async function markdownToHtml(buffer: Buffer): Promise<string> {
   const renderer = {
