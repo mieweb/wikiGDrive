@@ -418,6 +418,46 @@ export class ServerContainer extends Container {
         next(err);
       }
     });
+
+    app.post('/api/ai', authenticate(this.logger, -1), async (req, res, next) => {
+      try {
+        const question = req.body.question;
+        const selection = req.body.selection || '';
+
+        if (!req.user?.google_access_token) {
+          throw redirError(req, 'Not authenticated');
+        }
+
+        const response = await fetch('https://ai.bluehive.com/api/v1/completion', {
+          method: 'POST',
+          headers: {
+            'User-Agent': 'wikigdrive',
+            Authorization: 'Bearer ' + process.env.BLUEHIVE_SECRET_KEY,
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            prompt: question + '\n\n' + selection,
+            systemMessage: 'You are a helpful chatbot named Will.'
+          })
+        });
+
+        const json = await response.json();
+
+        const choice = json.choices[0];
+        if (choice) {
+          res.json({
+            answer: choice.message.content
+          });
+
+        } else {
+          res.json({
+            answer: 'No answer'
+          });
+        }
+      } catch (err) {
+        next(err);
+      }
+    });
   }
 
   async run() {

@@ -134,6 +134,12 @@
     "@kerebron/extension-markdown": "npm:@kerebron/extension-markdown@latest",
     "@kerebron/extension-yjs": "npm:@kerebron/extension-yjs@latest",
     "@kerebron/extension-codemirror": "npm:@kerebron/extension-codemirror@latest",
+    "@kerebron/extension-menu": "npm:@kerebron/extension-menu@latest",
+    "@kerebron/extension-tables": "npm:@kerebron/extension-tables@latest",
+    "@kerebron/extension-odt": "npm:@kerebron/extension-odt@latest",
+    "@kerebron/odt-wasm": "npm:@kerebron/odt-wasm@latest",
+    "@codemirror/legacy-modes": "npm:@codemirror/legacy-modes@6.5.0",
+
     "yjs": "npm:yjs@13.6.24",
     "y-websocket": "npm:y-websocket@2.1.0",
     "y-websocket-server": "npm:@y/websocket-server@0.1.1"
