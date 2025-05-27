@@ -46,6 +46,7 @@ import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
 import {WebHookController} from './routes/WebHookController.ts';
+import {setupWSConnection} from 'y-websocket-server/utils';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -105,6 +106,9 @@ export class ServerContainer extends Container {
     }
 
     app.use(rateLimit({
+      validate: {
+        xForwardedForHeader: false
+      },
       windowMs: 60 * 1000,
       max: 3000
     }));
@@ -131,14 +135,22 @@ export class ServerContainer extends Container {
 
     const wss = new WebSocketServer({ server });
     wss.on('connection', (ws, req) => {
-      if (!req.url || !req.url.startsWith('/api/')) {
+      if (!req.url) {
         return;
       }
-      const parts = req.url.split('/');
-      if (!parts[2]) {
-        return;
+
+      if (req.url.startsWith('/api/')) {
+        const parts = req.url.split('/');
+        if (!parts[2]) {
+          return;
+        }
+
+        this.socketManager.addSocketConnection(ws, parts[2]);
       }
-      this.socketManager.addSocketConnection(ws, parts[2]);
+
+      if (req.url.startsWith('/yjs')) {
+        setupWSConnection(ws, req);
+      }
     });
 
     server.listen(port, () => {
@@ -402,6 +414,46 @@ export class ServerContainer extends Container {
         const folder = await folderRegistryContainer.registerFolder(drive.id);
 
         res.json(folder);
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.post('/api/ai', authenticate(this.logger, -1), async (req, res, next) => {
+      try {
+        const question = req.body.question;
+        const selection = req.body.selection || '';
+
+        if (!req.user?.google_access_token) {
+          throw redirError(req, 'Not authenticated');
+        }
+
+        const response = await fetch('https://ai.bluehive.com/api/v1/completion', {
+          method: 'POST',
+          headers: {
+            'User-Agent': 'wikigdrive',
+            Authorization: 'Bearer ' + process.env.BLUEHIVE_SECRET_KEY,
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            prompt: question + '\n\n' + selection,
+            systemMessage: 'You are a helpful chatbot named Will.'
+          })
+        });
+
+        const json = await response.json();
+
+        const choice = json.choices[0];
+        if (choice) {
+          res.json({
+            answer: choice.message.content
+          });
+
+        } else {
+          res.json({
+            answer: 'No answer'
+          });
+        }
       } catch (err) {
         next(err);
       }

@@ -40,6 +40,10 @@
         <i class="fa-solid fa-file-pen me-1"></i>
       </button>
 
+      <button v-if="isGoogleId(selectedFile.id)" @click.prevent.stop="setActiveTab('editor')" class="btn btn-white text-primary ml-1" type="button" aria-label="Edit" title="Edit">
+        <i class="fa-solid fa-pen me-1"></i>
+      </button>
+
       <button v-if="activeTab !== 'html'" @click.prevent.stop="setActiveTab('html')" class="btn btn-white text-primary ml-1" type="button" aria-label="Preview" title="Preview">
         <i class="fa-solid fa-eye me-1"></i>
       </button>

@@ -1,8 +1,3 @@
-export function strip_ansi(str = '') {
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/[\u001b][[\\]([^m]+)m/g, '$1');
-}
-
 const FG_DEFAULT = '\u001b[39m';
 const FG_RED = '\u001b[31m';
 const FG_GREEN = '\u001b[32m';

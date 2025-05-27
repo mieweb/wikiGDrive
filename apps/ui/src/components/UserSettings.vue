@@ -61,16 +61,16 @@
 
             <div class="form-group">
               <label>Config.toml for preview</label>
-              <CodeEditor v-model="user_config.config_toml" lang="toml" />
+              <CodeEditor v-model="user_config.config_toml" lang="toml" :room-id="'config_toml_' + driveId" />
             </div>
 
             <div class="form-group">
               <label>Preview Rewrite Rule</label>
-              <CodeEditor v-model="user_config.preview_rewrite_rule" lang="yaml" />
+              <CodeEditor v-model="user_config.preview_rewrite_rule" lang="yaml" :room-id="'config_rewrite_' + driveId" />
             </div>
             <div class="form-group">
               <label>Markdown Links Rewrite Rules</label>
-              <CodeEditor v-model="user_config.rewrite_rules_yaml" lang="yaml" />
+              <CodeEditor v-model="user_config.rewrite_rules_yaml" lang="yaml" :room-id="'config_markdown_' + driveId" />
             </div>
           </form>
           <br/>

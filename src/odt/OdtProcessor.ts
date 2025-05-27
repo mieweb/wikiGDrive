@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import JSZip from 'jszip';
 import crypto from 'node:crypto';
+import { Buffer } from "node:buffer";
 
 function getExt(fileName: string) {
   const idx = fileName.lastIndexOf('.');

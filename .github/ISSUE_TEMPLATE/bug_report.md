@@ -27,8 +27,7 @@ If applicable, add screenshots to help explain your problem.
  - OS [e.g. windows, osx]:
  - Browser [e.g. chrome, safari]:
  - Browser Version [e.g. 22]:
- - NodeJS Version:
- - NPM Version:
+ - Deno Version:
  - wikigdrive Version:
 
 **Additional context**

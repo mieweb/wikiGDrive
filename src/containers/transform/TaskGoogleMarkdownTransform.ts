@@ -13,6 +13,7 @@ import {generateDocumentFrontMatter} from './frontmatters/generateDocumentFrontM
 import {generateConflictMarkdown} from './frontmatters/generateConflictMarkdown.ts';
 import {googleMimeToExt} from './TaskLocalFileTransform.ts';
 import {getUrlHash, urlToFolderId} from '../../utils/idParsers.ts';
+import { Buffer } from "node:buffer";
 
 export class TaskGoogleMarkdownTransform extends QueueTask {
   constructor(protected logger: winston.Logger,

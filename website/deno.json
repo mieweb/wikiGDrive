@@ -1,0 +1,13 @@
+{
+  "name": "@mieweb/wikigdrive-website",
+  "tasks": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "imports": {
+    "vitepress": "npm:vitepress@1.6.3",
+    "vitepress-sidebar": "npm:vitepress-sidebar@1.29.0"
+  },
+  "exports": {}
+}

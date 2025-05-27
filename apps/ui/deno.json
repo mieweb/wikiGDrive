@@ -1,0 +1,24 @@
+{
+  "name": "@mieweb/wikigdrive-ui",
+  "tasks": {
+    "dev": "deno run -A --unstable --node-modules-dir npm:vite",
+    "build": "deno run -A --unstable --node-modules-dir npm:vite build",
+    "build-watch": "deno run -A --unstable --node-modules-dir npm:vite build --watch",
+    "preview": "deno run -A --unstable --node-modules-dir npm:vite preview",
+    "serve": "deno run --allow-net --allow-read main.ts"
+  },
+  "imports": {
+    "bootstrap": "npm:bootstrap@5.2.3",
+    "vue-tsc": "npm:vue-tsc@2.1.10"
+  },
+  "exports": {},
+  "author": {
+    "name": "Medical Informatics Engineering",
+    "url": "https://www.mieweb.com/"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mieweb/wikiGDrive/issues"
+  },
+  "homepage": "https://github.com/mieweb/wikiGDrive#readme"
+}

@@ -14,8 +14,7 @@
     ><div v-for="(item, idx) of logsFiltered" :key="idx" :class="{'text-danger': 'error' === item.level, 'text-warning': 'warn' === item.level}"
     ><span>[{{dateStr(item.timestamp)}}]</span
     > <span v-html="getLink(item.filename)"></span
-    > <span v-html="highLight(item.message)"></span
-    ></div>
+    > <CodeEditor v-model="item.message" lang="markdown" readonly /></div>
   </pre>
   </div>
 </template>
@@ -23,12 +22,11 @@
 <script>
 import {UtilsMixin} from './UtilsMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
-
-import {Prism} from './prismFix.ts';
+import CodeEditor from './CodeEditor.vue';
 
 export default {
   mixins: [UtilsMixin],
-  components: {StatusToolBar},
+  components: {CodeEditor, StatusToolBar},
   emits: ['update:modelValue'],
   props: {
     modelValue: {
@@ -175,7 +173,7 @@ export default {
       return new Date(v).toISOString();
     },
     highLight(str) {
-      return Prism.highlight(str, Prism.languages.markdown, 'markdown');
+      // return Prism.highlight(str, Prism.languages.markdown, 'markdown');
     },
     rewriteLinks() {
       const links = this.$el.querySelectorAll('a[data-to-rewrite]');
@@ -210,7 +208,6 @@ export default {
     }
 
     this.handleScroll();
-    // Prism.highlightElement(this.$refs.code);
   },
   beforeUnmount() {
     clearInterval(this.interval);
