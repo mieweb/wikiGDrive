@@ -8,7 +8,6 @@ import { execFile } from 'child_process';
 const themeId = process.env.THEME_ID;
 const themeUrl = process.env.THEME_URL;
 const themeSubpath = process.env.THEME_SUBPATH;
-const configToml = process.env.CONFIG_TOML;
 const baseUrl = process.env.BASE_URL;
 
 const siteDir = '/site';
@@ -19,6 +18,7 @@ const execPromise = (command, args) => {
   return new Promise((resolve, reject) => {
     execFile(command, args, (err, stdout, stderr) => {
       if (err) {
+        console.log(stdout);
         reject(`Error: ${stderr || err}`);
       } else {
         resolve(stdout);
@@ -73,9 +73,16 @@ try {
   }
 
   // Step 4: Print the contents of the config.toml file
-  const configTomlPath = path.join(siteDir, 'tmp_dir', 'config.toml');
-  if (fs.existsSync(configTomlPath)) {
-    const configContent = fs.readFileSync(configTomlPath, 'utf8');
+  let configToml = process.env.CONFIG_TOML;
+  if (!fs.existsSync(configToml)) {
+    configToml = path.join(siteDir, 'tmp_dir', 'config.toml');
+  }
+  if (!fs.existsSync(configToml)) {
+    configToml = path.join(siteDir, 'config.toml');
+  }
+
+  if (fs.existsSync(configToml)) {
+    const configContent = fs.readFileSync(configToml, 'utf8');
     console.log(configContent);
   }
 
