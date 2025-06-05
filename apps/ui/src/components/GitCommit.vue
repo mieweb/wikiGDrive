@@ -136,6 +136,7 @@ export default {
       deep: true,
       handler() {
         this.generateCommitMsg();
+        this.isSomethingChecked = Object.keys(this.checked).length > 0;
       }
     }
   },
