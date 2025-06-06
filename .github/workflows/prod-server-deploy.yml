@@ -1,9 +1,8 @@
 name: Deploy Prod Server
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
 
 jobs:
   test:
