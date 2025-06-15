@@ -1,6 +1,25 @@
 import {MarkdownNodes, TagPayload} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./issue-432
+// test ./issue-434-2
+// test ./issue-435-436
+// test ./issue-443
+// test ./our-docs
+// test ./nested-ordered-list.md
+// test ./bullets.md
+// test ./confluence.md
+// test ./project-overview.md
+// test ./intro-to-the-system.md
+// test ./list-test.md
+// test ./lettered-list.md
+// test ./list-indent.md
+// test ./strong-headers.md
+// test ./block-macro.md
+// test ./example-document.md
+// test ./line-breaks.md
+// test ./code-blocks.md
 export function processListsAndNumbering(markdownChunks: MarkdownNodes) {
   const body = markdownChunks.body;
 

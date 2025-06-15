@@ -1,6 +1,8 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./example-document.md
 export function removeInsideDoubleCodeBegin(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (preChunk) => {
     if (preChunk.isTag === true && preChunk.tag === 'PRE') {

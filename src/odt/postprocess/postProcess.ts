@@ -34,17 +34,17 @@ import {convertCodeBlockParagraphs} from './convertCodeBlockParagraphs.ts';
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
   processListsAndNumbering(chunks);
-  postProcessHeaders(chunks);
+  postProcessHeaders(chunks); // @TODO: no test
   fixSpacesInsideInlineFormatting(chunks);
   await fixBoldItalic(chunks);
   hideSuggestedChanges(chunks);
   convertCodeBlockParagraphs(chunks);
   convertMathMl(chunks);
 
-  trimParagraphs(chunks);
+  trimParagraphs(chunks); // @TODO: no test
   const { headersMap, invisibleBookmarks} = await rewriteHeaders(chunks);
-  trimParagraphs(chunks);
-  addEmptyLinesAfterParas(chunks);
+  trimParagraphs(chunks); // @TODO: no test
+  addEmptyLinesAfterParas(chunks); // @TODO: too many tests
   removeTdParas(chunks); // Requires: addEmptyLinesAfterParas
 
   mergeTexts(chunks);
@@ -56,11 +56,11 @@ export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRu
   postProcessPreMacros(chunks);
   removeInsideDoubleCodeBegin(chunks);
 
-  removeEmptyTags(chunks);
-  addEmptyLines(chunks);
+  removeEmptyTags(chunks); // @TODO: no test
+  addEmptyLines(chunks); // @TODO: too many tests
 
   fixIdLinks(chunks);
-  removeExcessiveLines(chunks);
+  removeExcessiveLines(chunks); // @TODO: too many tests
 
   convertGoogleUrls(chunks);
 

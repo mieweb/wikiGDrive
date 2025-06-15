@@ -2,6 +2,8 @@ import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.ts';
 import {chunksToText, walkRecursiveSync} from '../markdownNodesUtils.ts';
 import {applyRewriteRule, RewriteRule} from '../applyRewriteRule.ts';
 
+// Related tests:
+// test ./rewrite-rules.md.markdown
 export function applyRewriteRules(markdownChunks: MarkdownNodes, rewriteRule: RewriteRule[] = []) {
   let inHtml = 0;
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {

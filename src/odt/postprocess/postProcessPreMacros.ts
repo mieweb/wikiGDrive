@@ -59,6 +59,13 @@ function cleanupLines(chunk: MarkdownTagNode) {
   }
 }
 
+// Related tests:
+// test ./issue-431
+// test ./list-test.md
+// test ./list-indent.md
+// test ./raw-html.md
+// test ./pre-mie.md
+// test ./block-macro.md
 export function postProcessPreMacros(markdownChunks: MarkdownNodes) {
 
   let inHtml = false;

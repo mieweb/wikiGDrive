@@ -2,6 +2,8 @@ import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {isMarkdownBeginMacro, isMarkdownEndMacro} from '../macroUtils.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./example-document.md
 export function removePreWrappingAroundMacros(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (preChunk, ctx: { nodeIdx: number }) => {
     if (preChunk.isTag === true && preChunk.tag === 'PRE') {

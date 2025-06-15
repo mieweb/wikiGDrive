@@ -1,6 +1,11 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {extractText, walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./header-link
+// test ./project-overview.md
+// test ./list-indent.md
+// test ./strong-headers.md
 export function fixIdLinks(markdownChunks: MarkdownNodes) {
   let inHtml = false;
   walkRecursiveSync(markdownChunks.body, (chunk) => {

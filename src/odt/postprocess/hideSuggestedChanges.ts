@@ -1,5 +1,7 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 
+// Related tests:
+// test ./suggest.md
 export function hideSuggestedChanges(markdownChunks: MarkdownNodes) {
   const body = markdownChunks.body;
   for (let pos1 = 0; pos1 < body.children.length; pos1++) {
