@@ -2,6 +2,9 @@ import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.ts';
 import {isMarkdownMacro, stripMarkdownMacro} from '../macroUtils.ts';
 
+// Related tests:
+// test ./our-docs
+// test ./code-links.md
 export async function removeMarkdownMacro(markdownChunks: MarkdownNodes) {
   let inHtml = false;
   await walkRecursiveAsync(markdownChunks.body, async (chunk, ctx: { nodeIdx: number }) => {
@@ -20,7 +23,7 @@ export async function removeMarkdownMacro(markdownChunks: MarkdownNodes) {
         chunk.parent.children.splice(ctx.nodeIdx, 1, {
           isTag: false,
           text: stripMarkdownMacro(innerTxt),
-          comment: 'stripMarkdownMacro.ts: replace code part with stripped macro'
+          comment: 'removeMarkdownMacro.ts: replace code part with stripped macro'
         });
       }
     }

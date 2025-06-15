@@ -1,6 +1,7 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// @TODO: no test
 export function trimParagraphs(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk) => {
     if (chunk.isTag === true && ['P', 'H1', 'H2', 'H3', 'H4'].includes(chunk.tag)) {

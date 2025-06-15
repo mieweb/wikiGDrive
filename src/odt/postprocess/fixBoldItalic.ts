@@ -1,6 +1,13 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./issue-443
+// test ./intro-to-the-system.md
+// test ./list-test.md
+// test ./list-indent.md
+// test ./strong-headers.md
+// test ./example-document.md
 export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
   // Remove empty Bold and empty Italic
   await walkRecursiveAsync(markdownChunks.body, async (chunk, ctx: { nodeIdx: number }) => {

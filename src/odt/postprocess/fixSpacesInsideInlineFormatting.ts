@@ -1,6 +1,9 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./issue-434
+// test ./example-document.md
 export function fixSpacesInsideInlineFormatting(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (!chunk.parent) {

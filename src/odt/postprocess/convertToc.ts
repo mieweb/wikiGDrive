@@ -1,6 +1,9 @@
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 
+// Related tests:
+// test ./project-overview.md
+// test ./example-document.md
 export function convertToc(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, (chunk, ctx: { nodeIdx: number }) => {
     if (!(chunk.isTag && chunk.tag === 'TOC')) {

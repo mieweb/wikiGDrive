@@ -1,6 +1,9 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./our-docs
+// test ./suggest.md
 export function unwrapEmptyPre(markdownChunks: MarkdownNodes) {
 
   let inHtml = false;

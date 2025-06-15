@@ -1,6 +1,15 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {extractText, walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./issue-431
+// test ./list-test.md
+// test ./suggest.md
+// test ./raw-html.md
+// test ./pre-mie.md
+// test ./block-macro.md
+// test ./example-document.md
+// test ./code-blocks.md
 export function mergeParagraphs(markdownChunks: MarkdownNodes) {
 
   let inHtml = false;

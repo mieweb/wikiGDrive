@@ -1,6 +1,10 @@
 import {MarkdownNodes} from '../MarkdownNodes.ts';
 import {walkRecursiveSync} from '../markdownNodesUtils.ts';
 
+// Related tests:
+// test ./example-document.md
+// test ./td-bullets.md
+// test ./line-breaks.md
 export function removeTdParas(markdownChunks: MarkdownNodes) {
   // Run after addEmptyLinesAfterParas
   let inHtml = 0;

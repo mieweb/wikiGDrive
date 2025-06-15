@@ -21,6 +21,8 @@ function isCodeBlockPara(chunk: MarkdownNode, type: string) {
   return false;
 }
 
+// Related tests:
+// test ./code-blocks.md
 export function convertCodeBlockParagraphs(markdownChunks: MarkdownNodes) {
   walkRecursiveSync(markdownChunks.body, async (node, ctx: { nodeIdx: number }) => {
     if (isCodeBlockPara(node, CODEBLOCK_START)) {
