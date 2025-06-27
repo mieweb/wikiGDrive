@@ -20,7 +20,7 @@ async function execAsync(cmd: string) {
   const child = command.spawn();
 
   setTimeout(() => {
-    console.error('Process timeout');
+    console.error('Process timeout: ' + cmd);
     child.kill();
   }, 10000);
 

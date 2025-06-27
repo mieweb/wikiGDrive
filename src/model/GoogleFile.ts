@@ -20,6 +20,7 @@ export interface GoogleFile extends SimpleFile, DriveData {
   modifiedTime?: DateISO;
   lastAuthor?: string;
   md5Checksum?: string;
+  exportLinks?: Record<string, string>;
 }
 
 export const MimeTypes = {

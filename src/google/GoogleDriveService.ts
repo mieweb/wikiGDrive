@@ -211,17 +211,31 @@ export class GoogleDriveService {
     }
   }
 
-  async exportDocument(auth: HasAccessToken, file: SimpleFile, dest: Writable): Promise<void> {
+  async exportDocument(auth: HasAccessToken, file: GoogleFile, dest: Writable): Promise<void> {
     const ext = MimeToExt[file.mimeType] || '.bin';
 
     try {
+      const stopWatch = new StopWatch();
+
+      if (file.exportLinks && file.exportLinks['application/vnd.oasis.opendocument.text']) {
+        const fullUrl = new URL(file.exportLinks['application/vnd.oasis.opendocument.text']);
+        const urlWithoutQuery = `${fullUrl.origin}${fullUrl.pathname}`;
+        const paramsRecord: Record<string, string> = {};
+        fullUrl.searchParams.forEach((value, key) => {
+          paramsRecord[key] = value;
+        });
+        const res = await driveFetchStream(this.quotaLimiter, await auth.getAccessToken(), 'GET', urlWithoutQuery, paramsRecord);
+        await res.pipeTo(Writable.toWeb(dest));
+        this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + '] ' + stopWatch.toString());
+        return;
+      }
+
       const params = {
         fileId: file.id,
         mimeType: file.mimeType,
         // includeItemsFromAllDrives: true,
         // supportsAllDrives: true
       };
-      const stopWatch = new StopWatch();
       const res = await driveFetchStream(this.quotaLimiter, await auth.getAccessToken(), 'GET', `https://www.googleapis.com/drive/v3/files/${file.id}/export`, params);
       await res.pipeTo(Writable.toWeb(dest));
       this.logger.info('Exported document: ' + file.id + ext + ' [' + file.name + '] ' + stopWatch.toString());
