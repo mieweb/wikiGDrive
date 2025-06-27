@@ -3,7 +3,7 @@ import {QueueTask} from './QueueTask.ts';
 import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
 import {BufferWritable} from '../../utils/BufferWritable.ts';
-import {SimpleFile} from '../../model/GoogleFile.ts';
+import {GoogleFile} from '../../model/GoogleFile.ts';
 import {HasAccessToken} from '../../google/AuthClient.ts';
 
 export class TaskFetchDocument extends QueueTask {
@@ -11,7 +11,7 @@ export class TaskFetchDocument extends QueueTask {
               private googleDriveService: GoogleDriveService,
               private auth: HasAccessToken,
               private fileService: FileContentService,
-              private file: SimpleFile,
+              private file: GoogleFile,
               private forceDownload: boolean) {
     super(logger);
   }
@@ -27,7 +27,7 @@ export class TaskFetchDocument extends QueueTask {
 
     await this.googleDriveService.exportDocument(
       this.auth,
-      { id: this.file.id, mimeType: 'application/vnd.oasis.opendocument.text', name: this.file.name },
+      { ...this.file, mimeType: 'application/vnd.oasis.opendocument.text' },
       destOdt);
 
     await this.fileService.writeBuffer(odtPath, destOdt.getBuffer());

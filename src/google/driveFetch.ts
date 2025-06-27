@@ -91,7 +91,7 @@ export function filterParams(params: Record<string, string|number|boolean>): Rec
   return retVal;
 }
 
-export async function convertResponseToError(response) {
+export async function convertResponseToError(response: Response, requestInfo?: RequestInfo) {
   const body = await response.text();
   const message = jsonToErrorMessage(body) || response.statusText;
 
@@ -109,6 +109,9 @@ export async function convertResponseToError(response) {
 
   if (process.env.VERSION === 'dev' && !isUnautorized) {
     console.trace();
+    if (requestInfo) {
+      console.error('convertResponseToError requestInfo', requestInfo);
+    }
     console.error('convertResponseToError response', response.status, response.statusText, response.headers);
     console.error('convertResponseToError body', body);
   }
@@ -148,7 +151,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
     });
 
     if (response.status >= 400) {
-      throw await convertResponseToError(response);
+      throw await convertResponseToError(response, url);
     }
 
     return response;
@@ -169,7 +172,7 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
         });
 
         if (response.status >= 400) {
-          return reject(await convertResponseToError(response));
+          return reject(await convertResponseToError(response, url));
         }
 
         resolve(response);
