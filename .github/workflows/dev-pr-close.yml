@@ -34,28 +34,26 @@ jobs:
       - name: Determine version type
         id: bump_version
         run: |
-          export major=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 1)
-          export minor=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 2)
-          export patch=$(echo ${{ steps.get_version.outputs.version }} | sed s/^v\\.*// | cut -d '.' -f 3)
-
-          if [ -n "${{ github.event.pull_request.labels.find(x => x.name == 'major') }}" ]; then
-            echo "::set-output name=version::${major}.0.0"
-          elif [ -n "${{ github.event.pull_request.labels.find(x => x.name == 'minor') }}" ]; then
-            echo "::set-output name=version::${major}.${minor+1}.0"
+          version="${{ steps.get_version.outputs.version }}"
+          version="${version#v}"  # Strip leading 'v'
+          
+          major=$(echo "$version" | cut -d '.' -f 1)
+          minor=$(echo "$version" | cut -d '.' -f 2)
+          patch=$(echo "$version" | cut -d '.' -f 3)
+          
+          has_major_label="${{ contains(github.event.pull_request.labels.*.name, 'major') }}"
+          has_minor_label="${{ contains(github.event.pull_request.labels.*.name, 'minor') }}"
+          
+          if [ "$has_major_label" = "true" ]; then
+            echo "version=${major}.0.0" >> "$GITHUB_OUTPUT"
+          elif [ "$has_minor_label" = "true" ]; then
+            echo "version=${major}.$((minor + 1)).0" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=version::${major}.${minor}.${patch+1}"
+            echo "version=${major}.${minor}.$((patch + 1))" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Output current version
         run: echo "Current version is ${{ steps.bump_version.outputs.version }}"
-
-      - name: TODO create tag
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          draft: true
 
       - name: Create new tag
         uses: anothrNick/github-tag-action@v1.71.0
@@ -63,3 +61,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_TAG: ${{ steps.bump_version.outputs.version }}
           WITH_V: true
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          tag_name: ${{ steps.bump_version.outputs.version }}
+          draft: true
