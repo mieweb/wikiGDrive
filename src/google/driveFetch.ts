@@ -110,7 +110,8 @@ export async function convertResponseToError(response: Response, requestInfo?: R
   if (process.env.VERSION === 'dev' && !isUnautorized) {
     console.trace();
     if (requestInfo) {
-      console.error('convertResponseToError requestInfo', requestInfo);
+      const sanitizedRequestInfo = typeof requestInfo === 'string' ? requestInfo.replace(/\n|\r/g, '') : requestInfo;
+      console.error('convertResponseToError requestInfo', sanitizedRequestInfo);
     }
     console.error('convertResponseToError response', response.status, response.statusText, response.headers);
     console.error('convertResponseToError body', body);
