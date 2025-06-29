@@ -3,9 +3,8 @@ import {Logger} from 'winston';
 import {
   Controller, ErrorHandler,
   RouteErrorHandler,
-  RouteParamPath, RouteParamMethod,
   RouteResponse,
-  RouteUse, RouteParamBody
+  RouteUse, type ControllerCallContext
 } from './Controller.ts';
 import {MimeTypes} from '../../../model/GoogleFile.ts';
 import {AuthConfig} from '../../../model/AccountJson.ts';
@@ -49,6 +48,7 @@ export function convertToPreviewUrl(preview_rewrite_rule: string, driveId: strin
 
 export class ShareErrorHandler extends ErrorHandler {
   private authContainer;
+
   async catch(err) {
     if (err.message === 'Drive not shared with wikigdrive') {
       const authConfig: AuthConfig = this.authContainer['authConfig'];
@@ -195,13 +195,16 @@ export default class FolderController extends Controller {
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder(@RouteParamMethod() method: string, @RouteParamPath('driveId') driveId: string,
-                  @RouteParamBody() body: string) {
-    const filePath = this.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
+  async getFolder(ctx: ControllerCallContext) {
+    const method: string = await ctx.routeParamMethod();
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const body: string = await ctx.routeParamBody();
+
+    const filePath = ctx.req.originalUrl.replace('/api/file/' + driveId, '') || '/';
 
     const folderRegistryContainer = <FolderRegistryContainer>this.engine.getContainer('folder_registry');
     if (!folderRegistryContainer.hasFolder(driveId)) {
-      this.res.status(404).send(JSON.stringify({ message: 'Folder not registered' }));
+      ctx.res.status(404).send(JSON.stringify({ message: 'Folder not registered' }));
       return;
     }
 
@@ -213,7 +216,7 @@ export default class FolderController extends Controller {
 
     if (method === 'delete') {
       const result = await this.removeFolder(driveId, contentFileService, filePath);
-      this.res.status(200).send(JSON.stringify(result));
+      ctx.res.status(200).send(JSON.stringify(result));
 
       this.engine.emit(driveId, 'toasts:added', {
         title: 'File deleted: ' + filePath,
@@ -224,7 +227,7 @@ export default class FolderController extends Controller {
 
     if (method === 'put') {
       if (!await transformedFileSystem.exists(filePath)) {
-        this.res.status(404).send('Not exist in transformedFileSystem');
+        ctx.res.status(404).send('Not exist in transformedFileSystem');
         return;
       }
       await transformedFileSystem.writeFile(filePath, body);
@@ -243,13 +246,13 @@ export default class FolderController extends Controller {
 
     const treeVersion = markdownTreeProcessor.getTreeVersion();
 
-    this.res.setHeader('wgd-drive-empty', googleTreeProcessor.getTree().length === 0 ? 'true' : 'false');
-    this.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
-    this.res.setHeader('wgd-tree-version', treeVersion);
-    this.res.setHeader('wgd-content-dir', userConfigService.config.transform_subdir || '');
+    ctx.res.setHeader('wgd-drive-empty', googleTreeProcessor.getTree().length === 0 ? 'true' : 'false');
+    ctx.res.setHeader('wgd-tree-empty', markdownTreeProcessor.getTree().length === 0 ? 'true' : 'false');
+    ctx.res.setHeader('wgd-tree-version', treeVersion);
+    ctx.res.setHeader('wgd-content-dir', userConfigService.config.transform_subdir || '');
 
     if (!await transformedFileSystem.exists(filePath)) {
-      this.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
+      ctx.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
       return;
     }
 
@@ -264,18 +267,18 @@ export default class FolderController extends Controller {
       if (treeItem) {
         const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)({ path: treeItem.path || '' });
 
-        this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
-        this.res.setHeader('wgd-google-id', treeItem.id || '');
-        this.res.setHeader('wgd-google-version', treeItem.version || '');
-        this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
-        this.res.setHeader('wgd-path', treeItem.path || '');
-        this.res.setHeader('wgd-file-name', treeItem.fileName || '');
-        this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
-        this.res.setHeader('wgd-preview-url', previewUrl);
-        this.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
+        ctx.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
+        ctx.res.setHeader('wgd-google-id', treeItem.id || '');
+        ctx.res.setHeader('wgd-google-version', treeItem.version || '');
+        ctx.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
+        ctx.res.setHeader('wgd-path', treeItem.path || '');
+        ctx.res.setHeader('wgd-file-name', treeItem.fileName || '');
+        ctx.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+        ctx.res.setHeader('wgd-preview-url', previewUrl);
+        ctx.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
 
         if (await transformedFileSystem.isDirectory(filePath)) {
-          const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+          const changes = await getCachedChanges(ctx.logger, transformedFileSystem, contentFileService, googleFileSystem);
           const subDir = await transformedFileSystem.getSubFileService(filePath);
           const map1: Map<string, TreeItem> = new Map(
             (await this.generateChildren(subDir, driveId, prefixed_subdir, filePath))
@@ -287,22 +290,22 @@ export default class FolderController extends Controller {
           );
           treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
           await addGitData(treeItem.children, changes, prefixed_subdir);
-          await outputDirectory(this.res, treeItem);
+          await outputDirectory(ctx.res, treeItem);
           return;
         } else {
           if (treeItem.mimeType) {
-            this.res.setHeader('Content-type', treeItem.mimeType);
+            ctx.res.setHeader('Content-type', treeItem.mimeType);
           }
 
           const buffer = await transformedFileSystem.readBuffer(filePath);
-          this.res.send(buffer);
+          ctx.res.send(buffer);
           return;
         }
       }
     }
 
     if (!await transformedFileSystem.exists(filePath)) {
-      this.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
+      ctx.res.status(404).send({ message: 'Not exist in transformedFileSystem' });
       return;
     }
 
@@ -319,28 +322,28 @@ export default class FolderController extends Controller {
         children: await this.generateChildren(subDir, driveId, userConfigService.config.transform_subdir || '/', filePath)
       };
 
-      const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+      const changes = await getCachedChanges(ctx.logger, transformedFileSystem, contentFileService, googleFileSystem);
       await addGitData(treeItem.children, changes, '');
       treeItem.children = treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId));
-      await outputDirectory(this.res, treeItem);
+      await outputDirectory(ctx.res, treeItem);
       return;
     } else {
       const ext = await transformedFileSystem.guessExtension(filePath);
 
       const mimeType = extToMime[ext] || (isTextFileName(filePath) ? 'text/plain' : undefined);
       if (mimeType) {
-        this.res.setHeader('Content-type', mimeType);
+        ctx.res.setHeader('Content-type', mimeType);
       }
 
       if ('md' === ext) {
         const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(filePath);
-        this.res.setHeader('wgd-path', filePath || '');
-        this.res.setHeader('wgd-mime-type', mimeType);
-        this.res.setHeader('wgd-preview-url', previewUrl);
+        ctx.res.setHeader('wgd-path', filePath || '');
+        ctx.res.setHeader('wgd-mime-type', mimeType);
+        ctx.res.setHeader('wgd-preview-url', previewUrl);
       }
 
       const buffer = await transformedFileSystem.readBuffer(filePath);
-      this.res.send(buffer);
+      ctx.res.send(buffer);
       return;
     }
   }

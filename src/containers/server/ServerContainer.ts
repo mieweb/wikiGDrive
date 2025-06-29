@@ -45,7 +45,6 @@ import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
 import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
-import {WebHookController} from './routes/WebHookController.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -263,9 +262,6 @@ export class ServerContainer extends Container {
 
     const driveUiController = new DriveUiController('/driveui', this.logger, this.filesService, <GoogleApiContainer>this.authContainer);
     app.use('/driveui', await driveUiController.getRouter());
-
-    const webHookController = new WebHookController('/webhook', this.logger);
-    app.use('/webhook', await webHookController.getRouter());
 
     app.use('/api/share-token', authenticate(this.logger), (req, res) => {
       if ('POST' !== req.method) {

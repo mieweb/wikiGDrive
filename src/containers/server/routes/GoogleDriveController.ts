@@ -1,7 +1,7 @@
 import process from 'node:process';
 
 import {
-  Controller,
+  Controller, type ControllerCallContext,
   RouteErrorHandler,
   RouteGet,
   RouteParamPath,
@@ -27,7 +27,8 @@ export class GoogleDriveController extends Controller {
   }
 
   @RouteGet('/:driveId/share')
-  async getShare(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
+  async getShare(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
@@ -46,7 +47,8 @@ export class GoogleDriveController extends Controller {
   }
 
   @RouteGet('/:driveId/upload')
-  async getUpload(@RouteParamUser() user, @RouteParamPath('driveId') driveId: string) {
+  async getUpload(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
@@ -67,9 +69,13 @@ export class GoogleDriveController extends Controller {
   @RouteGet('/:driveId/:fileId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getDocs(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string, @RouteParamUser() user) {
+  async getDocs(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const fileId: string = await ctx.routeParamPath('fileId');
+    const user = await ctx.routeParamUser();
+
     if (!user?.google_access_token) {
-      throw redirError(this.req, 'Not authenticated');
+      throw redirError(ctx.req, 'Not authenticated');
     }
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
@@ -87,11 +93,11 @@ export class GoogleDriveController extends Controller {
     const [foundTreeItem] = await markdownTreeProcessor.findByPath(logRow?.filePath);
 
     const contentDir = (userConfigService.config.transform_subdir || '').startsWith('/') ? userConfigService.config.transform_subdir : undefined;
-    this.res.setHeader('wgd-content-dir', contentDir || '');
-    this.res.setHeader('wgd-google-id', fileId);
+    ctx.res.setHeader('wgd-content-dir', contentDir || '');
+    ctx.res.setHeader('wgd-google-id', fileId);
 
     if (!foundTreeItem) {
-      const googleDriveService = new GoogleDriveService(this.logger, null);
+      const googleDriveService = new GoogleDriveService(ctx.logger, null);
       const auth = {
         async getAccessToken(): Promise<string> {
           return user.google_access_token;
@@ -100,39 +106,39 @@ export class GoogleDriveController extends Controller {
       try {
         const file = await googleDriveService.getFile(auth, fileId);
         if (file) {
-          this.res.setHeader('wgd-google-parent-id', file.parentId || '');
-          this.res.setHeader('wgd-google-version', file.version || '');
-          this.res.setHeader('wgd-google-modified-time', file.modifiedTime || '');
-          this.res.setHeader('wgd-mime-type', file.mimeType || '');
-          this.res.setHeader('wgd-last-author', file.lastAuthor || '');
-          this.res.setHeader('Content-type', file.mimeType);
+          ctx.res.setHeader('wgd-google-parent-id', file.parentId || '');
+          ctx.res.setHeader('wgd-google-version', file.version || '');
+          ctx.res.setHeader('wgd-google-modified-time', file.modifiedTime || '');
+          ctx.res.setHeader('wgd-mime-type', file.mimeType || '');
+          ctx.res.setHeader('wgd-last-author', file.lastAuthor || '');
+          ctx.res.setHeader('Content-type', file.mimeType);
 
-          this.res.send('Not synced');
+          ctx.res.send('Not synced');
           return;
         }
       } catch (err) {
         if (err.status === 401) {
-          throw redirError(this.req, err.message);
+          throw redirError(ctx.req, err.message);
         }
       }
 
-      this.res.status(404).send({ message: 'No local' });
+      ctx.res.status(404).send({ message: 'No local' });
       return;
     }
 
     const treeItem = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(foundTreeItem);
 
-    this.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
-    this.res.setHeader('wgd-google-version', treeItem.version || '');
-    this.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
-    this.res.setHeader('wgd-path', treeItem.path || '');
-    this.res.setHeader('wgd-file-name', treeItem.fileName || '');
-    this.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
-    this.res.setHeader('wgd-preview-url', treeItem.previewUrl || '');
-    this.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
+    ctx.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
+    ctx.res.setHeader('wgd-google-version', treeItem.version || '');
+    ctx.res.setHeader('wgd-google-modified-time', treeItem.modifiedTime || '');
+    ctx.res.setHeader('wgd-path', treeItem.path || '');
+    ctx.res.setHeader('wgd-file-name', treeItem.fileName || '');
+    ctx.res.setHeader('wgd-mime-type', treeItem.mimeType || '');
+    ctx.res.setHeader('wgd-preview-url', treeItem.previewUrl || '');
+    ctx.res.setHeader('wgd-last-author', treeItem.lastAuthor || '');
 
     if (!contentDir) {
-      this.res.status(404).send('Content subdirectory must be set and start with /');
+      ctx.res.status(404).send('Content subdirectory must be set and start with /');
       return;
     }
 
@@ -141,11 +147,11 @@ export class GoogleDriveController extends Controller {
     const [leaf] = await treeProcessor.findById(foundTreeItem.id);
 
     if (leaf) {
-      this.res.setHeader('wgd-synced-version', leaf.version || '');
-      this.res.setHeader('wgd-synced-modified-time', leaf.modifiedTime || '');
+      ctx.res.setHeader('wgd-synced-version', leaf.version || '');
+      ctx.res.setHeader('wgd-synced-modified-time', leaf.modifiedTime || '');
     }
 
-    const changes = await getCachedChanges(this.logger, transformedFileSystem, contentFileService, googleFileSystem);
+    const changes = await getCachedChanges(ctx.logger, transformedFileSystem, contentFileService, googleFileSystem);
     const change = changes.find(change => change.path === (contentDir.substring(1) + treeItem.path).replace(/^\//, ''));
     if (change) {
       if (change.state.isNew) {
@@ -157,25 +163,25 @@ export class GoogleDriveController extends Controller {
       if (change.state.isDeleted) {
         treeItem['status'] = 'D';
       }
-      this.res.setHeader('wgd-git-attachments', String(change.attachments) || '0');
+      ctx.res.setHeader('wgd-git-attachments', String(change.attachments) || '0');
     }
-    this.res.setHeader('wgd-git-status', treeItem['status'] || '');
+    ctx.res.setHeader('wgd-git-status', treeItem['status'] || '');
 
     const filePath = contentDir + treeItem.path;
     if (!await transformedFileSystem.exists(filePath)) {
-      this.res.status(404).send('Not exist in transformedFileSystem');
+      ctx.res.status(404).send('Not exist in transformedFileSystem');
       return;
     }
     if (await transformedFileSystem.isDirectory(filePath)) {
-      await outputDirectory(this.res, treeItem);
+      await outputDirectory(ctx.res, treeItem);
       return;
     } else {
       if (treeItem.mimeType) {
-        this.res.setHeader('Content-type', treeItem.mimeType);
+        ctx.res.setHeader('Content-type', treeItem.mimeType);
       }
 
       const buffer = await transformedFileSystem.readBuffer(filePath);
-      this.res.send(buffer);
+      ctx.res.send(buffer);
       return;
     }
   }

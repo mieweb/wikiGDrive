@@ -48,7 +48,6 @@
   ],
   "nodeModulesDir": "auto",
   "compilerOptions": {
-    "experimentalDecorators": true,
     "types": [
       "npm:@types/async@3.2.12",
       "npm:@types/compression@1.7.3",

@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamPath, RouteParamQuery} from './Controller.ts';
+import {Controller, type ControllerCallContext, RouteGet, RouteParamPath, RouteParamQuery} from './Controller.ts';
 import {Logger} from 'winston';
 
 export class LogsController extends Controller {
@@ -8,13 +8,13 @@ export class LogsController extends Controller {
   }
 
   @RouteGet('/:driveId')
-  async getConfig(@RouteParamPath('driveId') driveId: string,
-                  @RouteParamQuery('from') from?: number,
-                  @RouteParamQuery('until') until?: number,
-                  @RouteParamQuery('jobId') jobId?: string,
-                  @RouteParamQuery('order') order?: 'desc' | 'asc',
-                  @RouteParamQuery('offset') offset?: number
-                  ) {
+  async getConfig(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    let from: number = await ctx.routeParamQuery('from');
+    let until: number = await ctx.routeParamQuery('until');
+    const jobId: string = await ctx.routeParamQuery('jobId');
+    const order: 'desc' | 'asc' = await ctx.routeParamQuery('order');
+    const offset: number = await ctx.routeParamQuery('offset');
 
     if (!until && !from) {
       if (order === 'desc') {

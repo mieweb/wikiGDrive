@@ -1,11 +1,9 @@
 import lunr from 'lunr';
 
 import {
-  Controller,
+  Controller, type ControllerCallContext,
   RouteErrorHandler,
   RouteGet,
-  RouteParamPath,
-  RouteParamQuery
 } from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
 import {ShareErrorHandler} from './FolderController.ts';
@@ -18,7 +16,10 @@ export class SearchController extends Controller {
 
   @RouteGet('/:driveId')
   @RouteErrorHandler(new ShareErrorHandler())
-  async search(@RouteParamPath('driveId') driveId: string, @RouteParamQuery('q') queryParam: string) {
+  async search(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    let queryParam: string = await ctx.routeParamQuery('q');
+
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();
