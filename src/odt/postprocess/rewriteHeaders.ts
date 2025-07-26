@@ -1,4 +1,4 @@
-import slugify from 'slugify';
+import {slugify} from '../../utils/slugify.ts';
 import {extractText, walkRecursiveAsync, walkRecursiveSync} from '../markdownNodesUtils.ts';
 import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.ts';
 

@@ -86,7 +86,6 @@
     "npm:open@^7.4.2": "7.4.2",
     "npm:prismjs@1.30.0": "1.30.0",
     "npm:relateurl@0.2.7": "0.2.7",
-    "npm:slugify@1.6.6": "1.6.6",
     "npm:stream@^0.0.2": "0.0.2",
     "npm:tar-fs@3.0.8": "3.0.8",
     "npm:tar-stream@3.1.7": "3.1.7",
@@ -3325,9 +3324,6 @@
         "is-fullwidth-code-point"
       ]
     },
-    "slugify@1.6.6": {
-      "integrity": "sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw=="
-    },
     "source-map-js@1.2.1": {
       "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="
     },
@@ -3946,7 +3942,6 @@
       "npm:open@^7.4.2",
       "npm:prismjs@1.30.0",
       "npm:relateurl@0.2.7",
-      "npm:slugify@1.6.6",
       "npm:stream@^0.0.2",
       "npm:tar-fs@3.0.8",
       "npm:tar-stream@3.1.7",
