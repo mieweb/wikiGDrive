@@ -112,7 +112,6 @@
     "mathjs": "npm:mathjs@14.6.0",
     "mathml-to-latex": "npm:mathml-to-latex@1.5.0",
     "minimist": "npm:minimist@1.2.6",
-    "mitt": "npm:mitt@^3.0.0",
     "open": "npm:open@^7.4.2",
     "prismjs": "npm:prismjs@1.30.0",
     "relateurl": "npm:relateurl@0.2.7",

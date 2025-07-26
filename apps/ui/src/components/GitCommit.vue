@@ -141,7 +141,7 @@ export default {
     }
   },
   async created() {
-    this.emitter.on('tree:changed', () => {
+    this.emitter.addEventListener('tree:changed', () => {
       this.fetch();
     });
     await this.fetch();

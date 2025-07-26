@@ -3943,7 +3943,6 @@
       "npm:mathjs@14.6.0",
       "npm:mathml-to-latex@1.5.0",
       "npm:minimist@1.2.6",
-      "npm:mitt@3",
       "npm:open@^7.4.2",
       "npm:prismjs@1.30.0",
       "npm:relateurl@0.2.7",
