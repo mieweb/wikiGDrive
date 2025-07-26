@@ -1,4 +1,3 @@
-import type * as express from 'express';
 import {Logger} from 'winston';
 import {
   Controller, ErrorHandler,
@@ -134,8 +133,8 @@ async function addGitData(treeItems: TreeItem[], changes: GitChange[], contentFi
   }
 }
 
-export async function outputDirectory(res: express.Response, treeItem: TreeItem) {
-  const treeItems = [].concat(treeItem.children || []);
+export function outputDirectory(treeItem: TreeItem): TreeItem[] {
+  const treeItems: TreeItem[] = [].concat(treeItem.children || []);
 
   treeItems.sort((file1: TreeItem, file2: TreeItem) => {
     if ((MimeTypes.FOLDER_MIME === file1.mimeType) && !(MimeTypes.FOLDER_MIME === file2.mimeType)) {
@@ -150,8 +149,7 @@ export async function outputDirectory(res: express.Response, treeItem: TreeItem)
     return file1.fileName.toLocaleLowerCase().localeCompare(file2.fileName.toLocaleLowerCase());
   });
 
-  res.setHeader('content-type', MimeTypes.FOLDER_MIME);
-  res.send(JSON.stringify(treeItems));
+  return treeItems;
 }
 
 function inDir(dirPath: string, filePath: string) {
@@ -290,7 +288,10 @@ export default class FolderController extends Controller {
           );
           treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
           await addGitData(treeItem.children, changes, prefixed_subdir);
-          await outputDirectory(ctx.res, treeItem);
+
+          const treeItems = outputDirectory(treeItem);
+          ctx.res.setHeader('content-type', MimeTypes.FOLDER_MIME);
+          ctx.res.send(JSON.stringify(treeItems));
           return;
         } else {
           if (treeItem.mimeType) {
@@ -325,7 +326,10 @@ export default class FolderController extends Controller {
       const changes = await getCachedChanges(ctx.logger, transformedFileSystem, contentFileService, googleFileSystem);
       await addGitData(treeItem.children, changes, '');
       treeItem.children = treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId));
-      await outputDirectory(ctx.res, treeItem);
+
+      const treeItems = outputDirectory(treeItem);
+      ctx.res.setHeader('content-type', MimeTypes.FOLDER_MIME);
+      ctx.res.send(JSON.stringify(treeItems));
       return;
     } else {
       const ext = await transformedFileSystem.guessExtension(filePath);

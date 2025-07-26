@@ -40,7 +40,6 @@ export default {
     async login() {
       const driveId = this.driveId ? this.driveId : 'none';
       const urlSearchParams = new URLSearchParams();
-      // urlSearchParams.set('redirectTo', '/drive/' + (req['driveId'] || ''));
       urlSearchParams.set('redirectTo', window.location.pathname);
       const authPath = '/auth/' + driveId + '?' + urlSearchParams.toString();
       this.openAuthRedirWindow(authPath);

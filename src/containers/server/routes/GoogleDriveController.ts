@@ -4,8 +4,6 @@ import {
   Controller, type ControllerCallContext,
   RouteErrorHandler,
   RouteGet,
-  RouteParamPath,
-  RouteParamUser,
   RouteResponse
 } from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
@@ -19,6 +17,7 @@ import {filterParams} from '../../../google/driveFetch.ts';
 import {GoogleDriveService} from '../../../google/GoogleDriveService.ts';
 import {redirError} from '../auth.ts';
 import {LocalLog} from '../../transform/LocalLog.ts';
+import {MimeTypes} from '../../../model/GoogleFile.ts';
 
 export class GoogleDriveController extends Controller {
 
@@ -173,7 +172,9 @@ export class GoogleDriveController extends Controller {
       return;
     }
     if (await transformedFileSystem.isDirectory(filePath)) {
-      await outputDirectory(ctx.res, treeItem);
+      const treeItems = outputDirectory(treeItem);
+      ctx.res.setHeader('content-type', MimeTypes.FOLDER_MIME);
+      ctx.res.send(JSON.stringify(treeItems));
       return;
     } else {
       if (treeItem.mimeType) {

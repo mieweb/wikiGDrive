@@ -1,7 +1,7 @@
 import process from 'node:process';
 
 import jsonwebtoken from 'jsonwebtoken';
-import type {Request, Response} from 'express';
+import type {NextFunction, Request, Response} from 'express';
 import {Logger} from 'winston';
 import {decrypt, encrypt} from '../../google/GoogleAuthService.ts';
 import {GoogleDriveService} from '../../google/GoogleDriveService.ts';
@@ -127,7 +127,7 @@ export async function handleDriveUiInstall(req: Request, res: Response, next) {
   }
 }
 
-export async function handleShare(req: Request, res: Response, next) {
+export async function handleShare(req: Request, res: Response, next: NextFunction) {
   try {
     const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
@@ -145,7 +145,7 @@ export async function handleShare(req: Request, res: Response, next) {
   }
 }
 
-export async function handlePopupClose(req: Request, res: Response, next) {
+export async function handlePopupClose(req: Request, res: Response, next: NextFunction) {
   try {
     const state = new URLSearchParams(req.query.state.toString());
     if (!process.env.AUTH_INSTANCE) { // main auth host
@@ -183,7 +183,7 @@ function sanitizeRedirect(redirectTo: string) {
   return `/drive/${folderId}`;
 }
 
-export async function getAuth(req: Request, res: Response, next) {
+export async function getAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
@@ -242,7 +242,7 @@ export async function getAuth(req: Request, res: Response, next) {
     const googleDriveService = new GoogleDriveService(this.logger, null);
     const googleUser: GoogleUser = await authClient.getUser(await authClient.getAccessToken());
 
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret: string = process.env.JWT_SECRET;
 
     if (driveId) {
       const drive = await googleDriveService.getDrive(await authClient.getAccessToken(), driveId);
@@ -283,9 +283,8 @@ export async function getAuth(req: Request, res: Response, next) {
   }
 }
 
-async function decodeAuthenticateInfo(req, res, next) {
+async function decodeAuthenticateInfo(req: Request, res: Response, next: NextFunction, logger: Logger) {
   const driveId = req['driveId'];
-  const logger = req['logger'];
 
   if (!req.cookies.accessToken) {
     req.user = null;
@@ -351,20 +350,16 @@ async function decodeAuthenticateInfo(req, res, next) {
   }
 }
 
-export function authenticateOptionally(logger: Logger, idx = 0) {
+export function authenticateOptionally(logger: Logger) {
   return async (req, res, next) => {
-    req['driveId'] = '';
     req['logger'] = logger;
     const parts = req.path.split('/');
 
     if (parts[0].length === 0) {
       parts.shift();
     }
-    const driveId = (parts[idx] || '').replace('undefined', '');
-    req['driveId'] = driveId || '';
-    req['logger'] = req['driveId'] ? logger.child({driveId: req['driveId']}) : logger;
 
-    await decodeAuthenticateInfo(req, res, next);
+    await decodeAuthenticateInfo(req, res, next, logger);
   };
 }
 
@@ -375,7 +370,7 @@ function isLocal(req: Request) {
 }
 
 export function authenticate(logger: Logger, idx = 0) {
-  return async (req: Request, res, next) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
 
     req['driveId'] = '';
     req['logger'] = logger;
@@ -396,11 +391,11 @@ export function authenticate(logger: Logger, idx = 0) {
       return next(redirError(req, 'No accessToken cookie'));
     }
 
-    await decodeAuthenticateInfo(req, res, next);
+    await decodeAuthenticateInfo(req, res, next, logger);
   };
 }
 
-export function setAccessCookie(res, accessToken) {
+export function setAccessCookie(res: Response, accessToken: string) {
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: true,

@@ -51,14 +51,10 @@ export class Container {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async flushData() {
   }
-
-  getQueue(): QueueObject<QueueTask> {
-    return null;
-  }
 }
 
 export class ContainerError extends Error {
-  constructor(msg) {
+  constructor(msg: string) {
     super(msg);
   }
 }

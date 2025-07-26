@@ -46,7 +46,6 @@ export async function initStaticDistPages(app: Application) {
     if (indexHtml) {
       res.status(200).header('Content-type', 'text/html').end(indexHtml);
     } else {
-      // res.status(404).json({});
       next();
     }
   });

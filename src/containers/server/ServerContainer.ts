@@ -59,10 +59,9 @@ function getDurationInMilliseconds(start) {
 }
 
 export class ServerContainer extends Container {
-  private logger: winston.Logger;
-  private app: Express;
-  private authContainer: Container;
-  private socketManager: SocketManager;
+  private logger!: winston.Logger;
+  private authContainer!: Container;
+  private socketManager!: SocketManager;
 
   constructor(params: ContainerConfig, private port: number) {
     super(params);
@@ -77,12 +76,8 @@ export class ServerContainer extends Container {
     await saveRunningInstance(this.port);
   }
 
-  async destroy(): Promise<void> {
-    // TODO
-  }
-
-  private async startServer(port) {
-    const app = this.app = express();
+  private async startServer(port: number) {
+    const app = express();
 
     app.use(express.json({
       limit: '50mb'
@@ -247,6 +242,9 @@ export class ServerContainer extends Container {
 
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
+    // app.get('/api/backlinks/:driveId/:fileId', async (req: Request, res: Response) => { TODO
+    //   const { backlinks, links } = backlinksController.getBackLinks();
+    // });
 
     const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.engine);
     app.use('/api/config', authenticate(this.logger), await configController.getRouter());
