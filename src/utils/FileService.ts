@@ -93,6 +93,7 @@ export class FileService {
   }
 
   md5File(filePath: string): Promise<string> {
+    // TODO migrate to WebAPI when https://github.com/w3c/webcrypto/issues/73 is done
     return new Promise((resolve, reject) => {
       const hash = crypto.createHash('md5');
       hash.setEncoding('hex');

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import JSZip from 'jszip';
-import crypto from 'node:crypto';
-import { Buffer } from "node:buffer";
+import { Buffer } from 'node:buffer';
+import { generateMD5Hash } from '../utils/generateMD5Hash.ts';
 
 function getExt(fileName: string) {
   const idx = fileName.lastIndexOf('.');
@@ -96,11 +96,7 @@ export class OdtProcessor {
 
       const ext = getExt(fileName);
       if (this.contentAddressable && ext) {
-        const hash = crypto.createHash('md5');
-        hash.setEncoding('hex');
-        hash.write(buffer);
-        hash.end();
-        this.fileNameMap[fileName] = hash.read() + ext;
+        this.fileNameMap[fileName] = await generateMD5Hash(buffer) + ext;
       } else {
         this.fileNameMap[fileName] = fileName;
       }

@@ -1,7 +1,6 @@
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 
 import Sandbox from '@nyariv/sandboxjs';
 
@@ -27,7 +26,7 @@ export type JobState = 'waiting' | 'running' | 'failed' | 'done';
 
 export function initJob(): { id: string, state: JobState } {
   return {
-    id: randomUUID(),
+    id: crypto.randomUUID(),
     state: 'waiting'
   };
 }

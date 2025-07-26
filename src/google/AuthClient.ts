@@ -2,7 +2,6 @@ import process from 'node:process';
 import readline from 'node:readline';
 import {promisify} from 'node:util';
 
-import open from 'open';
 import jsonwebtoken from 'jsonwebtoken';
 
 import {convertResponseToError} from './driveFetch.ts';
@@ -63,20 +62,6 @@ export async function getCliCode(client_id: string): Promise<string> {
     include_granted_scopes: 'true',
     scope: SCOPES.join(' '),
   }).toString();
-
-  const child = await open(authUrl, { wait: true });
-  child.stdout.on('data', (data) => {
-    console.log(`Received chunk ${data}`);
-  });
-  child.stderr.on('data', (data) => {
-    console.log(`Received err ${data}`);
-  });
-  child.on('close', (code) => {
-    console.log(`child process exited with code ${code}`);
-  });
-  child.on('message', (m) => {
-    console.log('PARENT got message:', m);
-  });
 
   console.log('Authorize this app by visiting this url:', authUrl);
 
