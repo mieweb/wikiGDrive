@@ -87,7 +87,6 @@
     "@opentelemetry/semantic-conventions": "npm:@opentelemetry/semantic-conventions@1.8.0",
     "async": "npm:async@3.2.3",
     "buffer": "npm:buffer@^5.7.1",
-    "casual": "npm:casual@1.6.2",
     "cli-progress": "npm:cli-progress@3.10.0",
     "compression": "npm:compression@1.7.4",
     "cookie-parser": "npm:cookie-parser@1.4.7",
