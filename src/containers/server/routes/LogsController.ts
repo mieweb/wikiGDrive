@@ -1,4 +1,4 @@
-import {Controller, type ControllerCallContext, RouteGet, RouteParamPath, RouteParamQuery} from './Controller.ts';
+import {Controller, type ControllerCallContext, RouteGet} from './Controller.ts';
 import {Logger} from 'winston';
 
 export class LogsController extends Controller {
