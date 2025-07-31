@@ -233,7 +233,7 @@ export class Controller {
 }
 
 export function RouteUse(routePath: string, docs: RouteDoc = {}) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.routePath = routePath;
@@ -244,7 +244,7 @@ export function RouteUse(routePath: string, docs: RouteDoc = {}) {
 }
 
 export function RouteGet(routePath: string, docs: RouteDoc = {}) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.routePath = routePath;
@@ -255,7 +255,7 @@ export function RouteGet(routePath: string, docs: RouteDoc = {}) {
 }
 
 export function RoutePut(routePath: string, docs: RouteDoc = {}) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.routePath = routePath;
@@ -266,7 +266,7 @@ export function RoutePut(routePath: string, docs: RouteDoc = {}) {
 }
 
 export function RoutePost(routePath: string, docs: RouteDoc = {}) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.routePath = routePath;
@@ -277,7 +277,7 @@ export function RoutePost(routePath: string, docs: RouteDoc = {}) {
 }
 
 export function RouteDelete(routePath: string, docs: RouteDoc = {}) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.routePath = routePath;
@@ -302,7 +302,7 @@ export function RouteHasRole(roles: string[]) {
 }
 
 export function RouteResponse(objType = 'object', docs: RouteDoc = {}, contentType = 'application/json; charset=utf-8') {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.responseObjectType = objType;
@@ -314,7 +314,7 @@ export function RouteResponse(objType = 'object', docs: RouteDoc = {}, contentTy
 
 // TODO: remove
 export function RouteErrorHandler(errorHandler: ErrorHandler) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.errorHandlers.push(errorHandler);
@@ -323,7 +323,7 @@ export function RouteErrorHandler(errorHandler: ErrorHandler) {
 }
 
 export function RouteResponseStatus(status: number = HttpStatus.OK) {
-  return function (func: Function, ctx: DecoratorContext) {
+  return function (_func: undefined, ctx: DecoratorContext) {
     ctx.addInitializer(function () {
       const route = this.getRoute(this, ctx.name);
       route.responseStatus = status;
