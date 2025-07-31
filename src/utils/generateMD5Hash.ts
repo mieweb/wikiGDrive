@@ -1,5 +1,4 @@
 import crypto from 'node:crypto';
-import { Buffer } from 'node:buffer';
 
 export async function generateMD5Hash(data: BufferSource) {
   // TODO: migrate to sha256
