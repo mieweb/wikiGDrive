@@ -1,3 +1,5 @@
+// TODO: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toBase64#browser_compatibility
+
 function getLengths(b64: string): [number, number] {
   const len: number = b64.length;
 

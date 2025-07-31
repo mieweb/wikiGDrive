@@ -8,7 +8,7 @@ import Transport, {TransportStreamOptions} from 'winston-transport';
 
 import {FileStreamRotator} from './FileStreamRotator.ts';
 import {DailyRotateFileProcessor} from './DailyRotateFileProcessor.ts';
-import {generateMD5Hash} from '../generateMD5Hash';
+import {generateMD5Hash} from '../generateMD5Hash.ts';
 
 const loggerDefaults = {
   json: false,

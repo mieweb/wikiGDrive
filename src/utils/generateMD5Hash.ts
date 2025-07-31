@@ -1,8 +1,13 @@
-export async function generateMD5Hash(data: BufferSource) {
-  // Generate MD5 hash using Web Crypto API
-  const hashBuffer = await crypto.subtle.digest('MD5', data);
+import crypto from 'node:crypto';
+import { Buffer } from 'node:buffer';
 
-  // Convert the hash to hexadecimal format
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+export async function generateMD5Hash(data: BufferSource) {
+  // TODO: migrate to sha256
+  // const buffer = Buffer.from(data);
+
+  const hash = crypto.createHash('md5')
+                      .update(data)
+                      .digest('hex');
+
+  return hash;
 }
