@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+function sanitizeLogInput(input: string): string {
+  // Remove newline characters and escape quotes/backslashes
+  return input.replace(/[\n\r]/g, '').replace(/["'\\]/g, '\\$&');
+}
+
 import process from 'node:process';
 
 import {trace, context} from '@opentelemetry/api';
@@ -110,7 +115,7 @@ export async function convertResponseToError(response: Response, requestInfo?: R
   if (process.env.VERSION === 'dev' && !isUnautorized) {
     console.trace();
     if (requestInfo) {
-      const sanitizedRequestInfo = typeof requestInfo === 'string' ? requestInfo.replace(/\n|\r/g, '') : requestInfo;
+      const sanitizedRequestInfo = typeof requestInfo === 'string' ? sanitizeLogInput(requestInfo) : requestInfo;
       console.error('convertResponseToError requestInfo', sanitizedRequestInfo);
     }
     console.error('convertResponseToError response', response.status, response.statusText, response.headers);
