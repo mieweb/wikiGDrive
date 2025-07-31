@@ -176,11 +176,23 @@ export default class FolderController extends Controller {
     // Remove redirs
     const localLog = new LocalLog(contentFileService);
     await localLog.load();
-    if (await localLog.remove(filePath)) {
+
+    const googleFileSystem = await this.filesService.getSubFileService(
+      driveId,
+      '',
+    );
+
+    const userConfigService = new UserConfigService(googleFileSystem);
+    await userConfigService.load();
+    const contentDir =
+      (userConfigService.config.transform_subdir || '').startsWith('/')
+        ? (userConfigService.config.transform_subdir || '')
+        : '';
+
+    if (await localLog.remove(filePath.substring(contentDir.length))) {
       await localLog.save();
     }
 
-    const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
     await clearCachedChanges(googleFileSystem);
 
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
