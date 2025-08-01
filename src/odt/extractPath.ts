@@ -42,12 +42,12 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
   }
 
   const evaluateVariable = (name) => {
-    const scope = Object.assign({}, variables, {});
+    const scope: Record<string, any> = Object.assign({}, variables, {});
 
     let value = name;
     let retry = 1;
     while (retry > 0) {
-      if (typeof value === 'string') {
+      if (typeof value === 'string' && value in scope) {
         value = scope[value];
       }
       if (typeof value === 'number') {
