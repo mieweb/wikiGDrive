@@ -3,7 +3,7 @@ import {create, all} from 'mathjs';
 
 const math = create(all);
 math.import({
-  if: (a,b,c) => a ? b : c
+  if: (a: boolean, b: number, c: number) => a ? b : c
 }, {});
 
 function cleanUpFormula(formula: string) {
@@ -42,18 +42,21 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
   }
 
   const evaluateVariable = (name) => {
-    const scope = Object.assign({}, variables, {});
+    const scope: Record<string, any> = Object.assign({}, variables, {});
 
     let value = name;
     let retry = 1;
     while (retry > 0) {
+      if (typeof value === 'string' && value in scope) {
+        value = scope[value];
+      }
       if (typeof value === 'number') {
         break;
       }
       retry--;
       value = value.replace(/\?f/g, 'f');
 
-      const newValue = math.evaluate(scope[value] ? scope[value] : value, scope);
+      const newValue = math.evaluate(value, scope);
       if (newValue !== value) {
         retry++;
       }

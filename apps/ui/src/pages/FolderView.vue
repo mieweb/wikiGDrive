@@ -201,7 +201,7 @@ export default {
   created() {
     this.fetch();
     this.rootFolder = this.$root.drive;
-    this.emitter.on('tree:changed', () => {
+    this.emitter.addEventListener('tree:changed', () => {
       this.$nextTick(() => {
         this.fetch();
       });

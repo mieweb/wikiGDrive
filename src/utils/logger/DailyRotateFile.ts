@@ -1,7 +1,6 @@
 import fs, {ReadStream} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import {StreamOptions} from 'node:stream';
 import zlib from 'node:zlib';
 
@@ -9,6 +8,7 @@ import Transport, {TransportStreamOptions} from 'winston-transport';
 
 import {FileStreamRotator} from './FileStreamRotator.ts';
 import {DailyRotateFileProcessor} from './DailyRotateFileProcessor.ts';
+import {generateMD5Hash} from '../generateMD5Hash.ts';
 
 const loggerDefaults = {
   json: false,
@@ -25,12 +25,8 @@ const loggerDefaults = {
   }
 };
 
-function hash(obj) {
-  const hash = crypto.createHash('md5');
-  hash.setEncoding('hex');
-  hash.write(JSON.stringify(obj));
-  hash.end();
-  return hash.read();
+async function hash(obj) {
+  return await generateMD5Hash(new TextEncoder().encode(JSON.stringify(obj)));
 }
 
 function getMaxSize(size: string | number) {
@@ -100,7 +96,7 @@ export class DailyRotateFile extends Transport {
     this.logStreamMap = {};
   }
 
-  getLogStream(driveId: string) {
+  async getLogStream(driveId: string) {
     driveId = driveId || '';
 
     if (this.logStreamMap[driveId]) {
@@ -118,7 +114,7 @@ export class DailyRotateFile extends Transport {
       size: getMaxSize(options.maxSize),
       max_logs: options.maxFiles,
       end_stream: true,
-      audit_file: options.auditFile ? options.auditFile : path.join(dirname, '.' + hash(options) + '-audit.json'),
+      audit_file: options.auditFile ? options.auditFile : path.join(dirname, '.' + await hash(options) + '-audit.json'),
       file_options: options.file_options ? options.file_options : {flags: 'a'},
       utc: options.utc ? options.utc : false,
       extension: options.extension ? options.extension : '',
@@ -180,9 +176,9 @@ export class DailyRotateFile extends Transport {
     return logStream;
   }
 
-  log(info, callback) {
+  async log(info, callback) {
     if (!info?.jobId) {
-      const logStream = this.getLogStream(info.driveId);
+      const logStream = await this.getLogStream(info.driveId);
       logStream.write(JSON.stringify(info) + this.options.eol);
       this.emit('logged', info);
     }

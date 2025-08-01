@@ -12,7 +12,7 @@ import {getContentFileService} from '../transform/utils.ts';
 export class SocketManager {
 
   socketsMap: {[driveId: string]: Set<WebSocket.WebSocket>} = {};
-  private fileService: FileContentService;
+  private fileService!: FileContentService;
 
   constructor(private engine: ContainerEngine) {
     this.engine.subscribe('jobs:changed', (driveId, driveJobs: DriveJobs) => {

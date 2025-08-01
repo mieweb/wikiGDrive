@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamBody, RouteParamPath, RouteParamUser, RoutePost, RouteUse} from './Controller.ts';
+import {Controller, type ControllerCallContext, RouteGet, RoutePost, RouteUse} from './Controller.ts';
 import {GitScanner} from '../../../git/GitScanner.ts';
 import {UserConfigService} from '../../google_folder/UserConfigService.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
@@ -27,11 +27,13 @@ export default class GitController extends Controller {
   }
 
   @RouteUse('/:driveId/history')
-  async getHistory(@RouteParamPath('driveId') driveId: string) {
-    const filePath = this.req.originalUrl.replace('/api/git/' + driveId + '/history', '') || '/';
+  async getHistory(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
+    const filePath = ctx.req.originalUrl.replace('/api/git/' + driveId + '/history', '') || '/';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -44,11 +46,13 @@ export default class GitController extends Controller {
   }
 
   @RouteUse('/:driveId/diff')
-  async getDiff(@RouteParamPath('driveId') driveId: string) {
-    const filePath = this.req.originalUrl.replace('/api/git/' + driveId + '/diff', '') || '/';
+  async getDiff(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
+    const filePath = ctx.req.originalUrl.replace('/api/git/' + driveId + '/diff', '') || '/';
 
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const history = await gitScanner.diff(filePath);
@@ -57,9 +61,11 @@ export default class GitController extends Controller {
   }
 
   @RouteGet('/:driveId/commit')
-  async getCommit(@RouteParamPath('driveId') driveId: string) {
+  async getCommit(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const changes = await gitScanner.changes();
@@ -67,7 +73,11 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/commit')
-  async postCommit(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CommitPost, @RouteParamUser() user) {
+  async postCommit(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const body: CommitPost = await ctx.routeParamBody();
+    const user = await ctx.routeParamUser();
+
     const message = body.message;
     const filePaths: string[] = Array.isArray(body.filePaths)
       ? body.filePaths
@@ -85,9 +95,12 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/cmd')
-  async postCmd(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: CmdPost) {
+  async postCmd(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const body: CmdPost = await ctx.routeParamBody();
+
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const output = await gitScanner.cmd(body.cmd, body.arg || '');
@@ -95,7 +108,9 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/fetch')
-  async fetch(@RouteParamPath('driveId') driveId: string) {
+  async fetch(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_fetch',
@@ -105,7 +120,9 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/pull')
-  async pull(@RouteParamPath('driveId') driveId: string) {
+  async pull(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_pull',
@@ -115,7 +132,9 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/push')
-  async push(@RouteParamPath('driveId') driveId: string) {
+  async push(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_push',
@@ -126,7 +145,9 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/reset_remote')
-  async resetRemote(@RouteParamPath('driveId') driveId: string) {
+  async resetRemote(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_reset',
@@ -138,7 +159,9 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/reset_local')
-  async resetLocal(@RouteParamPath('driveId') driveId: string) {
+  async resetLocal(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     await this.jobManagerContainer.schedule(driveId, {
       ...initJob(),
       type: 'git_reset',
@@ -150,16 +173,18 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/remove_untracked')
-  async removeUntracked(@RouteParamPath('driveId') driveId: string) {
+  async removeUntracked(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
       await gitScanner.removeUntracked();
 
       return {};
     } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
+      ctx.logger.error(err.stack ? err.stack : err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }
@@ -168,16 +193,19 @@ export default class GitController extends Controller {
   }
 
   @RoutePost('/:driveId/remove_cached')
-  async removeCached(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: RemovePath) {
+  async removeCached(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const body: RemovePath = await ctx.routeParamBody();
+
     try {
       const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
-      const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+      const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
       await gitScanner.initialize();
       await gitScanner.removeCached(body.filePath);
 
       return {};
     } catch (err) {
-      this.logger.error(err.stack ? err.stack : err.message);
+      ctx.logger.error(err.stack ? err.stack : err.message);
       if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
         return { error: 'Failed to authenticate' };
       }

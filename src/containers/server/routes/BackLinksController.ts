@@ -1,4 +1,4 @@
-import {Controller, RouteGet, RouteParamPath} from './Controller.ts';
+import {Controller, type ControllerCallContext, RouteGet} from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
 import {LocalLinks} from '../../transform/LocalLinks.ts';
 import {UserConfigService} from '../../google_folder/UserConfigService.ts';
@@ -12,7 +12,10 @@ export class BackLinksController extends Controller {
   }
 
   @RouteGet('/:driveId/:fileId')
-  async getBackLinks(@RouteParamPath('driveId') driveId: string, @RouteParamPath('fileId') fileId: string) {
+  async getBackLinks(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const fileId: string = await ctx.routeParamPath('fileId');
+
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '/');
     const userConfigService = new UserConfigService(googleFileSystem);
     await userConfigService.load();

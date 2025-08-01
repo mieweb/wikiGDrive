@@ -3,7 +3,7 @@ import process from 'node:process';
 import {Logger} from 'winston';
 
 import {
-  Controller,
+  Controller, type ControllerCallContext,
   RouteErrorHandler,
   RouteResponse,
   RouteUse
@@ -23,20 +23,20 @@ export class PreviewController extends Controller {
   @RouteUse('/:driveId')
   @RouteResponse('stream')
   @RouteErrorHandler(new ShareErrorHandler())
-  async getFolder() {
-    const relativeUrl = this.req.originalUrl || '/';
+  async getFolder(ctx: ControllerCallContext) {
+    const relativeUrl = ctx.req.originalUrl || '/';
 
     let filePath = relativeUrl.replace('/preview', '').replace(/\?.*$/, '');
 
     if (!await this.fileSystem.exists(filePath)) {
       this.queryLogger.warn(`Not found: ${filePath}`);
-      this.res.status(404).send('Not found');
+      ctx.res.status(404).send('Not found');
       return;
     }
 
     if (await this.fileSystem.isDirectory(filePath)) {
       if (!relativeUrl.endsWith('/')) {
-        this.res
+        ctx.res
           .status(301)
           .setHeader('location', relativeUrl + '/')
           .send();
@@ -48,7 +48,7 @@ export class PreviewController extends Controller {
 
     if (!await this.fileSystem.exists(filePath)) {
       this.queryLogger.warn(`Not found: ${filePath}`);
-      this.res.status(404).send('Not found');
+      ctx.res.status(404).send('Not found');
       return;
     }
 
@@ -57,10 +57,10 @@ export class PreviewController extends Controller {
     const mimeType = extToMime[ext] || extToMime[guessedExt];
 
     if (mimeType) {
-      this.res.setHeader('Content-type', mimeType);
+      ctx.res.setHeader('Content-type', mimeType);
     }
 
     const buffer = await this.fileSystem.readBuffer(filePath);
-    this.res.send(buffer);
+    ctx.res.send(buffer);
   }
 }

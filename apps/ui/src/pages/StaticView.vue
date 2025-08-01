@@ -25,7 +25,7 @@
     </template>
   </BaseLayout>
 </template>
-<script>
+<script lang="ts">
 import {markRaw} from 'vue';
 import {UtilsMixin} from '../components/UtilsMixin.ts';
 import BaseLayout from '../layout/BaseLayout.vue';
@@ -50,8 +50,8 @@ export default {
   },
   async created() {
     if (this.emitter) {
-      this.emitter.on('html_lazy_content', (html) => {
-        this.content = html;
+      this.emitter.addEventListener('html_lazy_content', (event: CustomEvent) => {
+        this.content = event.detail;
       });
     }
     await this.fetch();

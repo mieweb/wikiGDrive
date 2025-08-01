@@ -132,28 +132,35 @@ export async function convertResponseToError(response: Response, requestInfo?: R
 
 async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, method: string, requestUrl: string, params: Record<string, string|number|boolean>, body?: unknown): Promise<Response> {
   const filteredParams = filterParams(params);
-  const url = requestUrl + '?' + new URLSearchParams(filteredParams).toString();
 
-  let traceparent;
+  const headers: Record<string, string> = {
+    "User-Agent": "wikigdrive (gzip)",
+    Authorization: "Bearer " + accessToken,
+    "Accept-Encoding": "gzip",
+  };
+  if (body) {
+    headers["Content-type"] = "application/json";
+  }
+
+  let traceparent = "";
   if (process.env.ZIPKIN_URL) {
     const span = trace.getActiveSpan();
     if (span) {
       traceparent = span.spanContext().traceId;
     }
   }
+  if (traceparent) {
+    headers["traceparent"] = traceparent;
+  }
+
+  const url = requestUrl + "?" + new URLSearchParams(filteredParams).toString();
 
   if (!quotaLimiter) {
     const fetchInstrumented = instrumentFunction(fetch, 1);
     const response = await fetchInstrumented(url, {
       method,
-      headers: {
-        'User-Agent': 'wikigdrive (gzip)',
-        Authorization: 'Bearer ' + accessToken,
-        'Accept-Encoding': 'gzip',
-        'Content-type': body ? 'application/json' : undefined,
-        traceparent
-      },
-      body: body ? JSON.stringify(body): undefined
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (response.status >= 400) {
@@ -169,12 +176,8 @@ async function driveRequest(quotaLimiter: QuotaLimiter, accessToken: string, met
         const fetchInstrumented = instrumentFunction(fetch, 1);
         const response = await fetchInstrumented(url, {
           method,
-          headers: {
-            Authorization: 'Bearer ' + accessToken,
-            'Content-type': body ? 'application/json' : undefined,
-            traceparent
-          },
-          body: body ? JSON.stringify(body): undefined
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
         });
 
         if (response.status >= 400) {

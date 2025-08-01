@@ -1,12 +1,10 @@
 import process from 'node:process';
 
-import type {QueueObject} from 'async';
-import casual from 'casual';
 import winston from 'winston';
 
 import {FileContentService} from './utils/FileContentService.ts';
-import {QueueTask} from './containers/google_folder/QueueTask.ts';
 import {FileId} from './model/model.ts';
+import {randomWord} from './utils/randomWord.ts';
 
 export interface ContainerConfig {
   name?: string;
@@ -25,7 +23,7 @@ export class Container {
 
   constructor(public readonly params: ContainerConfig, public readonly paramsArr: ContainerConfigArr = {}) {
     if (!this.params.name) {
-      this.params.name = casual.array_of_words(2).join('_');
+      this.params.name = randomWord() + '_' + randomWord();
     }
   }
 
@@ -51,14 +49,10 @@ export class Container {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   async flushData() {
   }
-
-  getQueue(): QueueObject<QueueTask> {
-    return null;
-  }
 }
 
 export class ContainerError extends Error {
-  constructor(msg) {
+  constructor(msg: string) {
     super(msg);
   }
 }

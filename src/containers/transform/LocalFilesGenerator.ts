@@ -1,7 +1,7 @@
-import slugify from 'slugify';
 import {BinaryFile, DrawingFile, Directory, LocalFile, MdFile, ShortcutFile} from '../../model/LocalFile.ts';
 import { GoogleFile, MimeTypes } from '../../model/GoogleFile.ts';
 import {googleMimeToExt} from './TaskLocalFileTransform.ts';
+import {slugify} from '../../utils/slugify.ts';
 
 const MAX_PATH_LENGTH = 2000;
 const MAX_FILENAME_LENGTH = 200;

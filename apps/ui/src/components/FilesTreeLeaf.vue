@@ -77,7 +77,7 @@ export default {
     }
   },
   created() {
-    this.emitter.on('tree:changed', () => {
+    this.emitter.addEventListener('tree:changed', () => {
       setTimeout(() => {
         this.fetchFolder();
       }, 100);

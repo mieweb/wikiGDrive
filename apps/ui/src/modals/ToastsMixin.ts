@@ -56,7 +56,19 @@ export const ToastsMixin = {
         }, 5000);
       }
 
-      this.emitter.emit(toast.type, toast);
+      switch (toast.type) {
+        case 'run_action:done':
+        case 'git_fetch:done':
+        case 'git_pull:done':
+        case 'git_push:done':
+        case 'git_reset:done':
+        case 'git_commit:done':
+          if (this.drive?.id) {
+            await this.$root.changeDrive(this.drive.id);
+          }
+          this.emitter.dispatchEvent(new Event('tree:changed'));
+          break;
+      }
     },
     $removeToast() {
       if (this.toasts.length === 0) return;

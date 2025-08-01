@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 
-import {Controller, RouteGet, RouteParamBody, RouteParamPath, RoutePost, RoutePut} from './Controller.ts';
+import {Controller, type ControllerCallContext, RouteGet, RoutePost, RoutePut} from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
 import {GitScanner} from '../../../git/GitScanner.ts';
 import {UserConfigService} from '../../google_folder/UserConfigService.ts';
@@ -60,10 +60,11 @@ export class ConfigController extends Controller {
   }
 
   @RouteGet('/:driveId')
-  async getConfig(@RouteParamPath('driveId') driveId: string) {
+  async getConfig(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -77,10 +78,13 @@ export class ConfigController extends Controller {
   }
 
   @RoutePut('/:driveId')
-  async putConfig(@RouteParamPath('driveId') driveId: string, @RouteParamBody() body: ConfigBody) {
+  async putConfig(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
+    const body: ConfigBody = await ctx.routeParamBody();
+
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
     await gitScanner.setSafeDirectory();
 
@@ -147,10 +151,11 @@ export class ConfigController extends Controller {
   }
 
   @RoutePost('/:driveId/regenerate_key')
-  async regenerateKey(@RouteParamPath('driveId') driveId: string) {
+  async regenerateKey(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     const transformedFileSystem = await this.filesService.getSubFileService(driveId + '_transform', '');
 
-    const gitScanner = new GitScanner(this.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
+    const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
     const googleFileSystem = await this.filesService.getSubFileService(driveId, '');
@@ -166,19 +171,21 @@ export class ConfigController extends Controller {
   }
 
   @RoutePost('/:driveId/prune_transform')
-  async pruneTransform(@RouteParamPath('driveId') driveId: string) {
+  async pruneTransform(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     await this.folderRegistryContainer.pruneTransformFolder(driveId);
   }
 
   @RoutePost('/:driveId/prune_all')
-  async pruneAll(@RouteParamPath('driveId') driveId: string) {
+  async pruneAll(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     await this.folderRegistryContainer.pruneFolder(driveId);
   }
 
   @RoutePost('/:driveId/prune_git')
-  async pruneGit(@RouteParamPath('driveId') driveId: string) {
+  async pruneGit(ctx: ControllerCallContext) {
+    const driveId: string = await ctx.routeParamPath('driveId');
     await this.folderRegistryContainer.pruneGitFolder(driveId);
   }
-
 
 }

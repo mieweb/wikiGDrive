@@ -52,7 +52,9 @@ router.isReady().then(async () => {
         if (mainContent && elemContent) {
           setTimeout(() => {
             const emitter = (vm as any).emitter;
-            emitter.emit('html_lazy_content', mainContent.innerHTML);
+            emitter.dispatchEvent(new CustomEvent('html_lazy_content', {
+              detail: mainContent.innerHTML
+            }));
           }, 100);
         }
         next(true);

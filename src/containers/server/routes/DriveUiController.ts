@@ -2,10 +2,9 @@ import process from 'node:process';
 
 import {Logger} from 'winston';
 import {
-  Controller,
+  Controller, type ControllerCallContext,
   RouteErrorHandler,
   RouteGet,
-  RouteParamQuery,
   RouteResponse
 } from './Controller.ts';
 import {FileContentService} from '../../../utils/FileContentService.ts';
@@ -28,7 +27,9 @@ export class DriveUiController extends Controller {
   @RouteGet('/')
   @RouteErrorHandler(new ShareErrorHandler())
   @RouteResponse('stream')
-  async getFolder(@RouteParamQuery('state') state: string) {
+  async getFolder(ctx: ControllerCallContext) {
+    const state: string = ctx.routeParamQuery('state');
+
     if (!state) {
       throw new Error('No state query parameter');
     }
@@ -39,7 +40,7 @@ export class DriveUiController extends Controller {
     if (action === 'open' && ids.length > 0) {
       const fileId = ids[0];
 
-      const googleDriveService = new GoogleDriveService(this.logger, this.googleApiContainer.getQuotaLimiter());
+      const googleDriveService = new GoogleDriveService(ctx.logger, this.googleApiContainer.getQuotaLimiter());
       const auth = this.googleApiContainer.getAuth();
 
       const drives = await this.googleApiContainer.listDrives();
@@ -51,7 +52,7 @@ export class DriveUiController extends Controller {
       }
 
       if (!dir.id || !driveIds.includes(dir.id)) {
-        this.res.send({ not_shared: 1 });
+        ctx.res.send({ not_shared: 1 });
         return;
       }
 
@@ -69,17 +70,17 @@ export class DriveUiController extends Controller {
         if (userConfigService.config.transform_subdir.length > 0) {
           const transformSubDir = (!userConfigService.config.transform_subdir.startsWith('/') ? '/' : '')
             + userConfigService.config.transform_subdir;
-          this.res.redirect(`/drive/${driveId}${transformSubDir}/${drivePath}`);
+          ctx.res.redirect(`/drive/${driveId}${transformSubDir}/${drivePath}`);
         } else {
-          this.res.redirect(`/drive/${driveId}`);
+          ctx.res.redirect(`/drive/${driveId}`);
         }
         return;
       } else {
-        this.res.redirect(`/drive/${driveId}`);
+        ctx.res.redirect(`/drive/${driveId}`);
       }
 
     } else {
-      this.res.send({ invalid_action: 1 });
+      ctx.res.send({ invalid_action: 1 });
       return;
     }
   }
@@ -93,7 +94,7 @@ export class DriveUiController extends Controller {
   @RouteGet('/install')
   @RouteErrorHandler(new ShareErrorHandler())
   @RouteResponse('stream')
-  async getInstall() {
+  async getInstall(ctx: ControllerCallContext) {
     const serverUrl = process.env.AUTH_DOMAIN || process.env.DOMAIN;
 
     const state = new URLSearchParams(filterParams({
@@ -109,7 +110,7 @@ export class DriveUiController extends Controller {
       console.debug(authUrl);
     }
 
-    this.res.redirect(authUrl);
+    ctx.res.redirect(authUrl);
   }
 
 }

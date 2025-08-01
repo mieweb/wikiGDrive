@@ -45,7 +45,6 @@ import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
 import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
-import {WebHookController} from './routes/WebHookController.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -60,10 +59,9 @@ function getDurationInMilliseconds(start) {
 }
 
 export class ServerContainer extends Container {
-  private logger: winston.Logger;
-  private app: Express;
-  private authContainer: Container;
-  private socketManager: SocketManager;
+  private logger!: winston.Logger;
+  private authContainer!: Container;
+  private socketManager!: SocketManager;
 
   constructor(params: ContainerConfig, private port: number) {
     super(params);
@@ -78,12 +76,8 @@ export class ServerContainer extends Container {
     await saveRunningInstance(this.port);
   }
 
-  async destroy(): Promise<void> {
-    // TODO
-  }
-
-  private async startServer(port) {
-    const app = this.app = express();
+  private async startServer(port: number) {
+    const app = express();
 
     app.use(express.json({
       limit: '50mb'
@@ -248,6 +242,9 @@ export class ServerContainer extends Container {
 
     const backlinksController = new BackLinksController('/api/backlinks', this.filesService);
     app.use('/api/backlinks', authenticate(this.logger), await backlinksController.getRouter());
+    // app.get('/api/backlinks/:driveId/:fileId', async (req: Request, res: Response) => { TODO
+    //   const { backlinks, links } = backlinksController.getBackLinks();
+    // });
 
     const configController = new ConfigController('/api/config', this.filesService, <FolderRegistryContainer>this.engine.getContainer('folder_registry'), this.engine);
     app.use('/api/config', authenticate(this.logger), await configController.getRouter());
@@ -263,9 +260,6 @@ export class ServerContainer extends Container {
 
     const driveUiController = new DriveUiController('/driveui', this.logger, this.filesService, <GoogleApiContainer>this.authContainer);
     app.use('/driveui', await driveUiController.getRouter());
-
-    const webHookController = new WebHookController('/webhook', this.logger);
-    app.use('/webhook', await webHookController.getRouter());
 
     app.use('/api/share-token', authenticate(this.logger), (req, res) => {
       if ('POST' !== req.method) {

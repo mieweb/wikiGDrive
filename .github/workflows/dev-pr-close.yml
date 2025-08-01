@@ -56,7 +56,7 @@ jobs:
         run: echo "Current version is ${{ steps.bump_version.outputs.version }}"
 
       - name: Create new tag
-        uses: anothrNick/github-tag-action@v1.71.0
+        uses: anothrNick/github-tag-action@v1.73.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_TAG: ${{ steps.bump_version.outputs.version }}
