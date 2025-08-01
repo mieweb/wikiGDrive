@@ -13,6 +13,7 @@ export function slugify(string: string, options?: {
     throw new Error('slugify: string argument expected')
   }
 
+  options = options || {};
   const locale = locales[options.locale] || {}
 
   const replacement = options.replacement === undefined ? '-' : options.replacement
