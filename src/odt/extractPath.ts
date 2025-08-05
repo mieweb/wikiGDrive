@@ -15,17 +15,17 @@ function cleanUpFormula(formula: string) {
 export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth: number, logheight: number): string {
   // const pathSource: string = drawEnhancedGeometry.path2 || drawEnhancedGeometry.path;
   const pathSource: string = drawEnhancedGeometry.path;
-  const equations: DrawEquation[] = drawEnhancedGeometry.equations;
+  const equations: DrawEquation[] = drawEnhancedGeometry.equations || [];
 
-  const variables = {};
+  const variables: Record<string, string> = {};
   if (Array.isArray(equations)) {
     for (const equation of equations) {
       variables[equation.name] = cleanUpFormula(equation.formula);
     }
   }
 
-  variables['logwidth'] = logwidth;
-  variables['logheight'] = logheight;
+  variables['logwidth'] = String(logwidth);
+  variables['logheight'] = String(logheight);
 
   let change = true;
   while (change) {
@@ -41,7 +41,7 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
     }
   }
 
-  const evaluateVariable = (name) => {
+  const evaluateVariable = (name: string) => {
     const scope: Record<string, any> = Object.assign({}, variables, {});
 
     let value = name;
@@ -67,8 +67,12 @@ export function extractPath(drawEnhancedGeometry: DrawEnhancedGeometry, logwidth
 
   let loopLimit = 1000; // to avoid infinite loop
   let path = pathSource;
-  while (path.match('\\?f[\\d]+')) {
-    const variable = path.match('\\?f[\\d]+')[0].slice(1);
+  while (true) {
+    const matches = path.match('\\?f[\\d]+');
+    if (!matches) {
+      break;
+    }
+    const variable = matches[0].slice(1);
     const calculatedValue = evaluateVariable(variable);
     path = path.replace('?' + variable, calculatedValue);
     if (loopLimit-- < 0) {
