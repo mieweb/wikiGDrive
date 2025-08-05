@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import {ContainerEngine} from '../../ContainerEngine.ts';
 import {DriveJobs, JobManagerContainer, Toast} from '../job/JobManagerContainer.ts';
 import {FileId} from '../../model/model.ts';
@@ -9,9 +8,17 @@ import {MarkdownTreeProcessor} from '../transform/MarkdownTreeProcessor.ts';
 import {UserConfigService} from '../google_folder/UserConfigService.ts';
 import {getContentFileService} from '../transform/utils.ts';
 
-export class SocketManager {
+export interface Socket {
+  send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void;
+  addEventListener<K extends keyof WebSocketEventMap>(
+    type: K,
+    listener: (this: Socket, ev: WebSocketEventMap[K]) => any
+  ): void;
+}
 
-  socketsMap: {[driveId: string]: Set<WebSocket.WebSocket>} = {};
+export class SocketManager<SK extends Socket> {
+
+  socketsMap: {[driveId: string]: Set<SK>} = {};
   private fileService!: FileContentService;
 
   constructor(private engine: ContainerEngine) {
@@ -30,9 +37,9 @@ export class SocketManager {
     this.fileService = fileService;
   }
 
-  async addSocketConnection(ws: WebSocket.WebSocket, driveId: string) {
+  async addSocketConnection(ws: SK, driveId: string) {
     if (!this.socketsMap[driveId]) {
-      this.socketsMap[driveId] = new Set<WebSocket.WebSocket>();
+      this.socketsMap[driveId] = new Set<SK>();
     }
 
     this.socketsMap[driveId].add(ws);
@@ -57,7 +64,7 @@ export class SocketManager {
       }));
     }
 
-    ws.on('close', () => {
+    ws.addEventListener('close', () => {
       this.socketsMap[driveId].delete(ws);
     });
   }
