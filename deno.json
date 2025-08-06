@@ -54,7 +54,7 @@
     ]
   },
   "imports": {
-    "@deno/dnt": "jsr:@deno/dnt@^0.41.3",
+    "@deno/dnt": "jsr:@deno/dnt@^0.42.3",
     "@std/fs": "jsr:@std/fs@^1.0.16",
     "asserts": "https://deno.land/std@0.178.0/testing/asserts.ts",
 
