@@ -47,7 +47,6 @@
       "npm:@types/lunr@2.3.4",
       "npm:@types/node@22.10.1",
       "npm:@types/passport@1.0.9",
-      "npm:@types/relateurl@0.2.29",
       "npm:@types/ws@8.5.3",
       "npm:@types/xmldoc@1.1.9",
       "npm:@types/js-yaml@4.0.9"
@@ -102,7 +101,6 @@
     "minimist": "npm:minimist@1.2.6",
     "open": "npm:open@^7.4.2",
     "prismjs": "npm:prismjs@1.30.0",
-    "relateurl": "npm:relateurl@0.2.7",
     "tar-fs": "npm:tar-fs@3.0.8",
     "tar-stream": "npm:tar-stream@3.1.7",
     "winston": "npm:winston@3.8.2",
