@@ -2,8 +2,7 @@ import process from 'node:process';
 import http from 'node:http';
 import path from 'node:path';
 
-import {WebSocketServer} from 'ws';
-import type {Express, NextFunction, Request, Response} from 'express';
+import type {NextFunction, Request, Response} from 'express';
 import express from 'express';
 import winston from 'winston';
 import cookieParser from 'cookie-parser';
@@ -25,7 +24,7 @@ import {GoogleDriveController} from './routes/GoogleDriveController.ts';
 import {LogsController} from './routes/LogsController.ts';
 import {PreviewController} from './routes/PreviewController.ts';
 
-import {SocketManager} from './SocketManager.ts';
+import {Socket, SocketManager} from './SocketManager.ts';
 
 import {
   authenticate,
@@ -45,12 +44,14 @@ import {GoogleTreeProcessor} from '../google_folder/GoogleTreeProcessor.ts';
 import {initStaticDistPages} from './static.ts';
 import {initUiServer} from './vuejs.ts';
 import {initErrorHandler} from './error.ts';
+import { Buffer } from 'node:buffer';
+import { Duplex } from 'node:stream';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 const MAIN_DIR = __dirname + '/../../..';
 
-function getDurationInMilliseconds(start) {
+function getDurationInMilliseconds(start: [number, number]) {
   const NS_PER_SEC = 1e9;
   const NS_TO_MS = 1e6;
   const diff = process.hrtime(start);
@@ -58,16 +59,162 @@ function getDurationInMilliseconds(start) {
   return Math.round((diff[0] * NS_PER_SEC + diff[1]) / NS_TO_MS);
 }
 
+async function encodeWebSocketFrame(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+  let payload;
+  let opcode;
+
+  // Convert data to Buffer based on type
+  if (typeof data === 'string') {
+    payload = Buffer.from(data, 'utf8');
+    opcode = 0x01; // Text frame
+  } else if (data instanceof Blob) {
+    const arrayBuffer = await data.arrayBuffer();
+    payload = Buffer.from(arrayBuffer);
+    opcode = 0x02; // Binary frame
+  } else if (ArrayBuffer.isView(data) || data instanceof ArrayBuffer) {
+    payload = Buffer.from(data);
+    opcode = 0x02; // Binary frame
+  } else {
+    throw new Error('Unsupported data type');
+  }
+
+  const payloadLength = payload.length;
+  let headerLength = 2; // Minimum header (FIN+opcode, payload length)
+  let extendedLength = 0;
+
+  // Determine header size based on payload length
+  if (payloadLength >= 126 && payloadLength <= 65535) {
+    headerLength += 2; // 16-bit length
+    extendedLength = 126;
+  } else if (payloadLength > 65535) {
+    headerLength += 8; // 64-bit length
+    extendedLength = 127;
+  }
+
+  // Create frame buffer
+  const frame = Buffer.alloc(headerLength + payloadLength);
+
+  // Set FIN bit (1) and opcode
+  frame[0] = 0x80 | opcode; // FIN=1, opcode=0x01 or 0x02
+  frame[1] = extendedLength || payloadLength; // Payload length or extended length flag
+
+  // Write extended length if needed
+  if (extendedLength === 126) {
+    frame.writeUInt16BE(payloadLength, 2);
+  } else if (extendedLength === 127) {
+    frame.writeBigUInt64BE(BigInt(payloadLength), 2);
+  }
+
+  // Append payload
+  payload.copy(frame, headerLength);
+
+  return frame;
+}
+
+class DuplexToSocket implements Socket {
+  private emitter = new EventTarget();
+  private _closed: boolean = false;
+
+  constructor(private duplex: Duplex) {
+    this.duplex.addListener('end', () => {
+      this._closed = true;
+    });
+    this.duplex.addListener('close', () => {
+      this.emitter.dispatchEvent(new CloseEvent('close'));
+      this._closed = true;
+    });
+    this.duplex.addListener('error', (err) => {
+      this._closed = true;
+    });
+
+    this.duplex.addListener('data', (buffer: any) => {
+      try {
+        // Basic WebSocket frame parsing
+        // const fin = (buffer[0] & 0x80) === 0x80;
+        const opcode = buffer[0] & 0x0F;
+        const hasMask = (buffer[1] & 0x80) === 0x80;
+        let payloadLen = buffer[1] & 0x7F;
+        let offset = 2;
+
+        if (payloadLen === 126) {
+          payloadLen = buffer.readUInt16BE(2);
+          offset += 2;
+        } else if (payloadLen === 127) {
+          payloadLen = Number(buffer.readBigUInt64BE(2));
+          offset += 8;
+        }
+
+        const maskingKey = hasMask ? buffer.slice(offset, offset + 4) : null;
+        offset += hasMask ? 4 : 0;
+
+        const payload = buffer.slice(offset, offset + payloadLen);
+        let data = payload;
+
+        // Unmask data if necessary
+        if (hasMask) {
+          data = Buffer.alloc(payloadLen);
+          for (let i = 0; i < payloadLen; i++) {
+            data[i] = payload[i] ^ maskingKey[i % 4];
+          }
+        }
+
+        // https://datatracker.ietf.org/doc/html/rfc6455#section-11.8
+        switch (opcode) {
+          case 0x01: // Text Frame
+          {
+            // TODO
+            const message = data.toString('utf8');
+            console.warn(`Received: ${message}`);
+          }
+            break;
+
+          case 0x08: // Connection Close Frame
+            break;
+
+          case 0x09: // Ping Frame
+            // TODO
+            console.warn('ping', data);
+            break;
+
+          default:
+            console.warn('Unknown OPCODE', opcode, data);
+        }
+
+      } catch (error) {
+        console.error('Error processing message:', error);
+      }
+      this.emitter.dispatchEvent(new MessageEvent('message')); // TODO
+    });
+  }
+
+  addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: (this: Socket, ev: WebSocketEventMap[K]) => any): void {
+    switch (type) {
+      case 'close':
+        this.emitter.addEventListener(type, () => {
+          listener.call(this, new CloseEvent('close'));
+        });
+        break;
+    }
+  }
+
+  async send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+    if (this._closed) {
+      return;
+    }
+    this.duplex.write(await encodeWebSocketFrame(data));
+  }
+}
+
 export class ServerContainer extends Container {
   private logger!: winston.Logger;
   private authContainer!: Container;
-  private socketManager!: SocketManager;
+  private socketManager!: SocketManager<DuplexToSocket>;
 
   constructor(params: ContainerConfig, private port: number) {
     super(params);
   }
 
-  async init(engine: ContainerEngine): Promise<void> {
+  override async init(engine: ContainerEngine): Promise<void> {
     await super.init(engine);
     this.logger = engine.logger.child({ filename: __filename });
     this.authContainer = engine.getContainer('google_api');
@@ -126,16 +273,52 @@ export class ServerContainer extends Container {
 
     const server = http.createServer(app);
 
-    const wss = new WebSocketServer({ server });
-    wss.on('connection', (ws, req) => {
-      if (!req.url || !req.url.startsWith('/api/')) {
+    server.on('upgrade', async (request: express.Request, socket: Duplex, head: Buffer) => {
+      // Check for WebSocket upgrade request
+      if (request.headers['upgrade'] !== 'websocket') {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
         return;
       }
-      const parts = req.url.split('/');
+
+      // Validate WebSocket key
+      const key = request.headers['sec-websocket-key'];
+      if (!key) {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+        return;
+      }
+
+      const version = +(request.headers['sec-websocket-version'] || 0);
+      if (version !== 13 && version !== 8) {
+        const message = 'Missing or invalid Sec-WebSocket-Version header';
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n' + message);
+        return;
+      }
+
+      if (!request.url || !request.url.startsWith('/api/')) {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+        return;
+      }
+
+      const parts = request.url.split('/');
       if (!parts[2]) {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
         return;
       }
-      this.socketManager.addSocketConnection(ws, parts[2]);
+
+      // Generate accept key per WebSocket protocol
+      const arrayBuffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'));
+      const acceptKey = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      // Send WebSocket handshake response
+      socket.write(
+        'HTTP/1.1 101 Switching Protocols\r\n' +
+        'Upgrade: websocket\r\n' +
+        'Connection: Upgrade\r\n' +
+        `Sec-WebSocket-Accept: ${acceptKey}\r\n` +
+        '\r\n'
+      );
+
+      await this.socketManager.addSocketConnection(new DuplexToSocket(socket), parts[2]);
     });
 
     server.listen(port, () => {

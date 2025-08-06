@@ -1,4 +1,4 @@
-import RelateUrl from 'relateurl';
+import { absolutizeUrl, relateUrl } from './utils/RelateUrl.ts';
 
 import {LinkMode} from './model/model.ts';
 
@@ -44,9 +44,7 @@ export function convertToRelativeMarkDownPath(localPath: string, basePath: strin
   if (basePath === localPath) return '.';
 
   const host = '//example.com/';
-  return convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
-    output: RelateUrl.PATH_RELATIVE
-  })));
+  return convertExtension(decodeURIComponent(relateUrl(host + basePath, host + localPath)));
 }
 
 export function convertToRelativeSvgPath(localPath: string, basePath: string) {
@@ -55,19 +53,17 @@ export function convertToRelativeSvgPath(localPath: string, basePath: string) {
   if (basePath === localPath) return '.';
 
   const host = '//example.com/';
-  return convertExtension(decodeURIComponent(RelateUrl.relate(host + basePath, host + localPath, {
-    output: RelateUrl.PATH_RELATIVE
-  })), 'dirURLs');
+  convertExtension(decodeURIComponent(relateUrl(host + basePath, host + localPath)), 'dirURLs');
 }
 
 export function convertToAbsolutePath(fullPath: string, relativePath: string) {
   if (relativePath.indexOf('://') > -1) {
     return '';
   }
-  if (fullPath.startsWith('/')) {
+  if (!fullPath.startsWith('/')) {
     fullPath = '/' + fullPath;
   }
   const fakeServer = 'https://example.com';
-  const abs = RelateUrl.relate(fakeServer + fullPath, relativePath, { output: RelateUrl.ABSOLUTE });
+  const abs = absolutizeUrl(fakeServer + fullPath, relativePath);
   return abs.substring(fakeServer.length);
 }
