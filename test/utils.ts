@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {createPatch} from 'diff';
+import {createPatch} from 'npm:diff@5.2.0';
 import {ansi_colors} from '../src/utils/logger/colors.ts';
 
 export function createTmpDir(prefix = 'wg-') {
@@ -9,7 +9,7 @@ export function createTmpDir(prefix = 'wg-') {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function trailSpacesReplacer(x) {
+function trailSpacesReplacer(x: string) {
   x = x.replace(/\n/g, '');
   return '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'.substring(0, x.length);
 }
@@ -28,7 +28,7 @@ function consoleColorPatch(patch: string) {
   }
 }
 
-export function compareTexts(input, output, ignoreWhitespace = true, fileName = 'file.txt') {
+export function compareTexts(input: string, output: string, ignoreWhitespace = true, fileName = 'file.txt') {
   if (!ignoreWhitespace) {
     const patch = createPatch(fileName, input, output, 'oldHeader', 'newHeader', { ignoreWhitespace: false, newlineIsToken: true });
     if (patch.indexOf('@@') > -1) {
@@ -49,7 +49,7 @@ export function compareTexts(input, output, ignoreWhitespace = true, fileName = 
   return true;
 }
 
-export function compareObjects(obj1, obj2, prefix = '') {
+export function compareObjects(obj1: Record<string, any>, obj2: Record<string, any>, prefix = '') {
   const set = new Set<string>();
   Object.keys(obj1).forEach(k => set.add(k));
   Object.keys(obj2).forEach(k => set.add(k));
