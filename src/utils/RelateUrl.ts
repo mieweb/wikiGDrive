@@ -72,39 +72,43 @@ export function absolutizeUrl(fullPath: string, relativePath: string): string {
   if (!match) {
     throw new Error('Invalid fullPath URL');
   }
-  const baseUrl = match[1]; // e.g., https://example.com
-  let basePath = match[2] || '/'; // e.g., /path
+  const baseUrl = match[1];
+  let basePath = match[2] || '/';
 
   // Handle absolute URLs or root paths
   if (relativePath.match(/^[a-zA-Z]+:\/\//)) {
     return relativePath; // Return as-is if it's a full URL
   }
+
+  // If relativePath starts with '/', treat it as an absolute path from the base URL
   if (relativePath.startsWith('/')) {
     return baseUrl + normalizePath(relativePath);
   }
 
-  // Split paths into segments
+  // Split basePath into segments and remove the file name if it's a path to a file
   const baseSegments: string[] = normalizePath(basePath).split('/');
   baseSegments.shift(); // Remove empty segment from leading /
 
-  // Do not remove last segment unless explicitly a file (e.g., ends with .ext)
-  // This assumes fullPath is a directory for relative paths like 'path2'
+  // If basePath is a file, remove the file name to treat it as a directory
+  if (basePath.match(/\.[a-zA-Z0-9]+$/)) {
+    baseSegments.pop();  // Remove the last segment if basePath points to a file
+  }
 
   // Process relative path segments
-  const toSegments: string[] = relativePath.split('/');
+  const relativeSegments: string[] = relativePath.split('/');
   const resultSegments: string[] = [...baseSegments];
 
-  for (const segment of toSegments) {
-    if (segment === '.' || segment === '') {
-      continue;
+  for (const segment of relativeSegments) {
+    if (segment === '' || segment === '.') {
+      continue; // Skip empty segments or '.' (current directory)
     } else if (segment === '..') {
-      resultSegments.pop();
+      resultSegments.pop(); // Move up one directory for '..'
     } else {
-      resultSegments.push(segment);
+      resultSegments.push(segment); // Add the segment to the result path
     }
   }
 
   // Construct absolute path
-  let absolutePath: string = '/' + resultSegments.join('/');
-  return baseUrl + normalizePath(absolutePath);
+  const absolutePath: string = normalizePath('/' + resultSegments.join('/'));
+  return baseUrl + absolutePath;
 }
