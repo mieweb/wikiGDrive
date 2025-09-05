@@ -27,44 +27,31 @@ jobs:
           git config --global user.email "${GH_ORG_EMAIL}"
           git config --global user.name "${GH_ORG_NAME}"
 
-      - name: Get current version
-        id: get_version
-        run: echo ::set-output name=version::$(git describe --abbrev=0 --tags)
-
       - name: Determine version type
         id: bump_version
         run: |
-          version="${{ steps.get_version.outputs.version }}"
-          version="${version#v}"  # Strip leading 'v'
-          
-          major=$(echo "$version" | cut -d '.' -f 1)
-          minor=$(echo "$version" | cut -d '.' -f 2)
-          patch=$(echo "$version" | cut -d '.' -f 3)
-          
           has_major_label="${{ contains(github.event.pull_request.labels.*.name, 'major') }}"
           has_minor_label="${{ contains(github.event.pull_request.labels.*.name, 'minor') }}"
           
           if [ "$has_major_label" = "true" ]; then
-            echo "version=${major}.0.0" >> "$GITHUB_OUTPUT"
+            echo "bump_type=major" >> "$GITHUB_OUTPUT"
           elif [ "$has_minor_label" = "true" ]; then
-            echo "version=${major}.$((minor + 1)).0" >> "$GITHUB_OUTPUT"
+            echo "bump_type=minor" >> "$GITHUB_OUTPUT"
           else
-            echo "version=${major}.${minor}.$((patch + 1))" >> "$GITHUB_OUTPUT"
+            echo "bump_type=patch" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Output current version
-        run: echo "Current version is ${{ steps.bump_version.outputs.version }}"
-
       - name: Create new tag
+        id: tag_create
         uses: anothrNick/github-tag-action@1.73.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CUSTOM_TAG: ${{ steps.bump_version.outputs.version }}
+          DEFAULT_BUMP: ${{ steps.bump_version.outputs.bump_type }}
           WITH_V: true
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          tag_name: ${{ steps.bump_version.outputs.version }}
+          tag_name: ${{ steps.tag_create.outputs.new_tag }}
           draft: true
