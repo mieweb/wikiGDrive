@@ -1,4 +1,5 @@
 import winston from 'winston';
+import process from 'node:process';
 
 import {QueueTask} from '../google_folder/QueueTask.ts';
 import {FileContentService} from '../../utils/FileContentService.ts';
@@ -272,6 +273,12 @@ export class TaskLocalFileTransform extends QueueTask {
   }
 
   private addBadgesToMarkdown(content: string, localFile: MdFile, links: string[]): string {
+    // Check if badges are enabled
+    const badgeConfig = this.userConfig.badge_config;
+    if (badgeConfig?.enabled === false) {
+      return content;
+    }
+
     const badgeSystem = new BadgeSystem();
     
     // Create badge context from available data
@@ -286,9 +293,9 @@ export class TaskLocalFileTransform extends QueueTask {
         fileName: localFile.fileName
       },
       config: {
-        baseUrl: process.env.WIKIGDRIVE_BASE_URL,
-        wikiUrl: process.env.WIKIGDRIVE_WIKI_URL,
-        tocUrl: process.env.WIKIGDRIVE_TOC_URL
+        baseUrl: badgeConfig?.base_url || badgeConfig?.wiki_url || process.env.WIKIGDRIVE_BASE_URL,
+        wikiUrl: badgeConfig?.wiki_url || badgeConfig?.base_url || process.env.WIKIGDRIVE_WIKI_URL,
+        tocUrl: badgeConfig?.toc_url || process.env.WIKIGDRIVE_TOC_URL
       },
       links,
       duplicates: [] // TODO: Add duplicate detection logic if needed
