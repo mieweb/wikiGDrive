@@ -15,6 +15,8 @@ import {LocalLinks} from './LocalLinks.ts';
 import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfig} from '../google_folder/UserConfigService.ts';
+import {BadgeSystem} from '../../odt/postprocess/badges/BadgeSystem.ts';
+import {BadgeContext} from '../../odt/postprocess/badges/BadgeTypes.ts';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -214,7 +216,10 @@ export class TaskLocalFileTransform extends QueueTask {
       });
     }
 
-    await this.destinationDirectory.writeFile(this.realFileName, frontMatter + markdown);
+    // Add badges to the markdown content
+    const markdownWithBadges = this.addBadgesToMarkdown(frontMatter + markdown, localFile, links);
+    
+    await this.destinationDirectory.writeFile(this.realFileName, markdownWithBadges);
     this.localLinks.append(localFile.id, localFile.fileName, links);
     for (const k in headersMap) {
       this.globalHeadersMap['gdoc:' + localFile.id + k] = 'gdoc:' + localFile.id + headersMap[k];
@@ -264,6 +269,33 @@ export class TaskLocalFileTransform extends QueueTask {
       this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.stack ? err.stack : err.message);
       throw err;
     }
+  }
+
+  private addBadgesToMarkdown(content: string, localFile: MdFile, links: string[]): string {
+    const badgeSystem = new BadgeSystem();
+    
+    // Create badge context from available data
+    const badgeContext: BadgeContext = {
+      localFile: {
+        id: localFile.id,
+        title: localFile.title,
+        modifiedTime: localFile.modifiedTime,
+        version: localFile.version || '',
+        lastAuthor: localFile.lastAuthor || '',
+        mimeType: localFile.mimeType,
+        fileName: localFile.fileName
+      },
+      config: {
+        baseUrl: process.env.WIKIGDRIVE_BASE_URL,
+        wikiUrl: process.env.WIKIGDRIVE_WIKI_URL,
+        tocUrl: process.env.WIKIGDRIVE_TOC_URL
+      },
+      links,
+      duplicates: [] // TODO: Add duplicate detection logic if needed
+    };
+
+    // Update badges in content
+    return badgeSystem.updateBadgesInContent(content, badgeContext);
   }
 
 }
