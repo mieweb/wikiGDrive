@@ -30,7 +30,6 @@ import {unwrapEmptyPre} from './unwrapEmptyPre.ts';
 import {convertGoogleUrls} from './convertGoogleUrls.ts';
 import {fixIdLinks} from './fixIdLinks.ts';
 import {convertCodeBlockParagraphs} from './convertCodeBlockParagraphs.ts';
-import {processBadges} from './processBadges.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
   convertToc(chunks);
