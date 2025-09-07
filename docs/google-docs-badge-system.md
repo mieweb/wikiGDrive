@@ -1,6 +1,6 @@
 # Google Docs Badge System
 
-This system inserts badges directly into Google Documents, allowing editors to see and reposition wikiGDrive indicators while working in Google Docs.
+This system inserts badges directly into Google Documents, allowing editors to see and reposition wikiGDrive indicators while working in Google Docs. Badges are automatically filtered out during markdown conversion to keep the final output clean.
 
 ## How It Works
 
@@ -9,6 +9,8 @@ This system inserts badges directly into Google Documents, allowing editors to s
 2. **User Repositioning**: Authors can cut and paste the badge section to any location within their Google Document without breaking functionality.
 
 3. **Badge Updates**: On subsequent processing, the system finds existing badges and updates them in place, preserving their position.
+
+4. **Markdown Filtering**: During ODT to markdown conversion, badge markers are automatically removed to ensure badges don't appear in the final wiki output.
 
 ## Badge Types
 
@@ -55,8 +57,8 @@ The markers (`📍 WikiGDrive Badges:` and `📍 End Badges`) help the system id
 
 1. Author works in Google Docs as normal
 2. wikiGDrive processes the document and inserts/updates badges
-3. Author can cut/paste the badge block to reposition it
+3. Author can cut/paste the badge block to reposition it within Google Docs
 4. Future processing updates badges in their repositioned location
-5. Document is converted to markdown with badges naturally included
+5. Document is converted to markdown with badges filtered out (badges remain only in Google Docs)
 
-This approach ensures badges are visible and manageable within the Google Docs editing environment while maintaining the automated nature of wikiGDrive processing.
+This approach ensures badges are visible and manageable within the Google Docs editing environment while keeping the final markdown output clean and focused on content.
