@@ -88,6 +88,12 @@ export class GoogleFolderContainer extends Container {
         await userConfigService.load();
 
         taskFetchFolder.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
+        taskFetchFolder.setUserConfig(userConfigService.config);
+        
+        // Get quota limiter from GoogleApiContainer
+        const googleApiContainer: GoogleApiContainer = <GoogleApiContainer>this.engine.getContainer('google_api');
+        taskFetchFolder.setQuotaLimiter(googleApiContainer.getQuotaLimiter());
+        
         downloader.addTask(taskFetchFolder);
       }
     }
