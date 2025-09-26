@@ -7,10 +7,6 @@ body,
   height: 100vh;
 }
 
-body {
-  min-width: 300px !important;
-}
-
 #main {
   display: flex;
   flex-direction: column;
