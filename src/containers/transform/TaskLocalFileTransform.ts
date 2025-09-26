@@ -162,7 +162,11 @@ export class TaskLocalFileTransform extends QueueTask {
 
       const converter = new OdtToMarkdown(document, styles, fileNameMap, xmlMap);
       converter.setRewriteRules(rewriteRules);
-      converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
+      if (this.realFileName === '_index.md') {
+        converter.setPicturesDir('./' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
+      } else {
+        converter.setPicturesDir('../' + this.realFileName.replace(/.md$/, '.assets/'), picturesDirAbsolute);
+      }
       headersMap = converter.getHeadersMap();
       invisibleBookmarks = converter.getInvisibleBookmarks();
       markdown = await converter.convert();
