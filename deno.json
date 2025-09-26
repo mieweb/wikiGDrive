@@ -56,6 +56,7 @@
     "@deno/dnt": "jsr:@deno/dnt@^0.42.3",
     "@std/fs": "jsr:@std/fs@1.0.19",
     "@std/path": "jsr:@std/path@1.1.2",
+    "@std/io": "jsr:@std/io@0.225.2",
     "asserts": "https://deno.land/std@0.178.0/testing/asserts.ts",
 
     "vite": "npm:vite@6.3.3",
