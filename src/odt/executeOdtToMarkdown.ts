@@ -28,7 +28,11 @@ export async function executeOdtToMarkdown(workerData) {
 
   const converter = new OdtToMarkdown(document, styles, fileNameMap, xmlMap);
   converter.setRewriteRules(workerData.rewriteRules);
-  converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);
+  if (workerData.realFileName === '_index.md') {
+    converter.setPicturesDir('./' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);
+  } else {
+    converter.setPicturesDir('../' + workerData.realFileName.replace(/.md$/, '.assets/'), workerData.picturesDirAbsolute);
+  }
   const markdown = await converter.convert();
   const links = Array.from(converter.links);
 
