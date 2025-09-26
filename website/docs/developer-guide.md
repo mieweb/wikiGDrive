@@ -17,6 +17,12 @@ curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 ## Version Strategy
 * We use labels to set the version number based on https://github.com/marketplace/actions/create-tag-release
 * See background info: https://github.com/mieweb/wikiGDrive/issues/297
+
+## Deployment Control
+* Production deployments support release-based version control
+* You can deploy specific commits, tags, or branches without resetting master
+* See [deployment-control.md](../../docs/deployment-control.md) for detailed instructions
+* Specify deployment targets in release descriptions using: `deploy-target: <commit-hash|tag|branch>`
   
 
 ## Install locally
