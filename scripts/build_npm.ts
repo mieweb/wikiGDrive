@@ -1,4 +1,4 @@
-import path from 'npm:path';
+import path from '@std/path';
 import { copy, exists } from '@std/fs';
 import { build, emptyDir } from '@deno/dnt';
 
