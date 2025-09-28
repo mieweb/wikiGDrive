@@ -1,0 +1,42 @@
+name: Build and Publish Docker Image
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  test-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libkrb5-dev
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Install modules
+        run: deno install
+      - name: Lint
+        run: deno lint
+      - name: Test
+        run: deno test --no-check --allow-read --allow-sys --allow-env --allow-write --allow-run
+
+  build-push-docker:
+    needs: test-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: get_tag_version
+        run: echo TAG_VERSION=${GITHUB_REF/refs\/tags\//} >> $GITHUB_OUTPUT
+      - name: Build Docker image
+        run: docker build -t "ghcr.io/${{ github.repository }}:${{ steps.get_tag_version.outputs.TAG_VERSION }}" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}:${{ steps.get_tag_version.outputs.TAG_VERSION }}
