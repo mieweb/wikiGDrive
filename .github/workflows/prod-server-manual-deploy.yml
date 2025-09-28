@@ -1,0 +1,57 @@
+name: Manual Prod Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version to deploy'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: wgd-prod
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull Docker image
+        run: docker pull ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_version }}
+
+    - name: Build docs
+      run: |
+        docker run \
+        -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+        -e "GIT_SHA=${{ github.event.inputs.release_version }}" \
+        "wikigdrive-prod:${{ github.event.inputs.release_version }}" deno task -f wikigdrive-website build
+
+    - name: Stop and remove old container
+      run: |
+        docker stop wikigdrive-prod || true
+        docker rm wikigdrive-prod || true
+
+    - name: Start
+      run: |
+        docker run -d --name wikigdrive-prod \
+          --tmpfs /tmp \
+          -v wikiGDriveProd:/data \
+          -v /home/wikigdrive/service_account.json:/service_account.json \
+          -v /home/wikigdrive/env.prod:/usr/src/app/.env \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v /var/run/podman/podman.sock:/var/run/podman/podman.sock \
+          -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
+          -v "/var/www/preview-prod:/var/www/preview-prod" \
+          -v "/srv/overlay_mounts:/srv/overlay_mounts" \
+          -e "DOMAIN=https://wikigdrive.com" \
+          -e "GIT_SHA=${{ github.event.inputs.release_version }}" \
+          --publish 127.0.0.1:3000:3000 \
+          --restart unless-stopped \
+          ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_version }} \
+          wikigdrive \
+          --service_account /service_account.json \
+          --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
+          --workdir /data \
+          server 3000
