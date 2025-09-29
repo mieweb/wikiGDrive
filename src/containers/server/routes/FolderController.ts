@@ -275,7 +275,7 @@ export default class FolderController extends Controller {
         : await markdownTreeProcessor.findByPath(contentFilePath);
 
       if (treeItem) {
-        const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)({ path: treeItem.path || '' });
+        const { previewUrl } = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)({ path: treeItem.path || '' });
 
         ctx.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
         ctx.res.setHeader('wgd-google-id', treeItem.id || '');
