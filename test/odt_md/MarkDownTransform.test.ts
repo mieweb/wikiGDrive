@@ -11,6 +11,12 @@ import {FileContentService} from '../../src/utils/FileContentService.ts';
 
 const __dirname = import.meta.dirname;
 
+Deno.test('test ./fix-bold.md', async () => {
+  const markdown = await transformOdt('fix-bold');
+  const testMarkdown = fs.readFileSync(__dirname + '/fix-bold.md').toString();
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
+});
+
 Deno.test('test ./nested-ordered-list.md', async () => {
   const testMarkdown = fs.readFileSync(__dirname + '/nested-ordered-list.md').toString();
   const markdown = await transformOdt('nested-ordered-list');
