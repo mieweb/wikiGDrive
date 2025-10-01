@@ -8,6 +8,7 @@ import {extractText, walkRecursiveAsync} from '../markdownNodesUtils.ts';
 // test ./list-indent.md
 // test ./strong-headers.md
 // test ./example-document.md
+// test ./fix-bold.md
 export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
   // Remove empty Bold and empty Italic
   await walkRecursiveAsync(markdownChunks.body, async (chunk, ctx: { nodeIdx: number }) => {
@@ -27,8 +28,9 @@ export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
     }
 
     if (chunk.isTag === true && ['B'].includes(chunk.tag)) {
-      if (chunk.parent.isTag && ['H1', 'H2', 'H3', 'H4', 'BI'].includes(chunk.parent.tag)) {
-        chunk.parent.children.splice(ctx.nodeIdx, 1, ...chunk.children);
+      if (chunk.parent?.isTag && ['H1', 'H2', 'H3', 'H4', 'BI'].includes(chunk.parent.tag)) {
+        const chunkChildren = chunk.children.splice(0, chunk.children.length);
+        chunk.parent.children.splice(ctx.nodeIdx, 1, ...chunkChildren);
         return { nodeIdx: ctx.nodeIdx - 1 };
       }
     }
@@ -36,7 +38,7 @@ export async function fixBoldItalic(markdownChunks: MarkdownNodes) {
     if (chunk.isTag === true && ['I'].includes(chunk.tag)) {
       const innerTxt = extractText(chunk);
       if (innerTxt.startsWith('{{%') && innerTxt.endsWith('%}}')) {
-        chunk.parent.children.splice(ctx.nodeIdx, 1, ...chunk.children);
+        chunk.parent?.children.splice(ctx.nodeIdx, 1, ...chunk.children);
         return { nodeIdx: ctx.nodeIdx - 1 };
       }
     }
