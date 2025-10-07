@@ -10,6 +10,8 @@ import {MimeTypes, SimpleFile} from '../../model/GoogleFile.ts';
 import {FileId} from '../../model/model.ts';
 import {HasAccessToken} from '../../google/AuthClient.ts';
 import {StopWatch} from '../../utils/StopWatch.ts';
+import {UserConfig} from './UserConfigService.ts';
+import {QuotaLimiter} from '../../google/QuotaLimiter.ts';
 
 interface Filters {
   filterFoldersIds: FileId[];
@@ -19,6 +21,8 @@ interface Filters {
 export class TaskFetchFolder extends QueueTask {
 
   private useGoogleMarkdowns = false;
+  private userConfig?: UserConfig;
+  private quotaLimiter?: QuotaLimiter;
 
   constructor(protected logger: winston.Logger,
               private googleDriveService: GoogleDriveService,
@@ -32,6 +36,14 @@ export class TaskFetchFolder extends QueueTask {
 
   setUseGoogleMarkdowns(value: boolean) {
     this.useGoogleMarkdowns = value;
+  }
+
+  setUserConfig(userConfig: UserConfig) {
+    this.userConfig = userConfig;
+  }
+
+  setQuotaLimiter(quotaLimiter: QuotaLimiter) {
+    this.quotaLimiter = quotaLimiter;
   }
 
   async run(): Promise<QueueTask[]> {
@@ -128,7 +140,9 @@ export class TaskFetchFolder extends QueueTask {
                 this.auth,
                 await this.fileService,
                 file,
-                forceDownload
+                forceDownload,
+                this.userConfig,
+                this.quotaLimiter
               ));
             } else {
               tasks.push(new TaskFetchBinary(
