@@ -33,24 +33,62 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Parse deployment target from release
+      id: deployment_target
+      run: |
+        # Extract deployment target from release body or use current commit
+        RELEASE_BODY="${{ github.event.release.body }}"
+        TARGET_COMMIT="${{ github.sha }}"
+        TARGET_TAG=""
+        
+        # Look for deployment target in release body
+        # Format: deploy-target: <commit-hash|tag|branch>
+        if echo "$RELEASE_BODY" | grep -i "deploy-target:"; then
+          TARGET_REF=$(echo "$RELEASE_BODY" | grep -i "deploy-target:" | head -1 | sed -E 's/.*[Dd][Ee][Pp][Ll][Oo][Yy]-[Tt][Aa][Rr][Gg][Ee][Tt]:[[:space:]]*//' | awk '{print $1}')
+          echo "Found deployment target: $TARGET_REF"
+          
+          # Check if it's a valid commit/tag/branch
+          if git cat-file -e "$TARGET_REF" 2>/dev/null; then
+            TARGET_COMMIT=$(git rev-parse "$TARGET_REF")
+            if git tag --list | grep -q "^${TARGET_REF}$"; then
+              TARGET_TAG="$TARGET_REF"
+            fi
+            echo "Resolved target to commit: $TARGET_COMMIT"
+          else
+            echo "Invalid deployment target '$TARGET_REF', using current commit"
+          fi
+        else
+          echo "No deployment target specified, using current commit"
+        fi
+        
+        echo "deploy_commit=$TARGET_COMMIT" >> $GITHUB_OUTPUT
+        echo "deploy_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
+        echo "Using deployment commit: $TARGET_COMMIT"
+    
+    - name: Checkout deployment target
+      if: steps.deployment_target.outputs.deploy_commit != github.sha
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.deployment_target.outputs.deploy_commit }}
 
     - name: Build action runner
-      run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
+      run: docker build -t "wgd-action-runner:prod" --build-arg "GIT_SHA=${{ steps.deployment_target.outputs.deploy_commit }}" apps/wgd-action-runner
 
     - uses: docker/build-push-action@v6
       with:
-        tags: "wikigdrive-prod:${{ github.sha }},wikigdrive-prod:latest"
+        tags: "wikigdrive-prod:${{ steps.deployment_target.outputs.deploy_commit }},wikigdrive-prod:latest"
         push: false
         build-args: |
-          GIT_SHA=${{ github.sha }}
+          GIT_SHA=${{ steps.deployment_target.outputs.deploy_commit }}
           BUILD_UI=yes
 
     - name: Build docs
       run: |
         docker run \
         -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
-        -e "GIT_SHA=${{ github.sha }}" \
-        "wikigdrive-prod:${{ github.sha }}" deno task -f wikigdrive-website build
+        -e "GIT_SHA=${{ steps.deployment_target.outputs.deploy_commit }}" \
+        "wikigdrive-prod:${{ steps.deployment_target.outputs.deploy_commit }}" deno task -f wikigdrive-website build
 
     - name: Stop and remove
       run: docker stop wikigdrive-prod ; docker rm wikigdrive-prod
@@ -69,10 +107,10 @@ jobs:
           -v "/var/www/preview-prod:/var/www/preview-prod" \
           -v "/srv/overlay_mounts:/srv/overlay_mounts" \
           -e "DOMAIN=https://wikigdrive.com" \
-          -e "GIT_SHA=${GITHUB_SHA}" \
+          -e "GIT_SHA=${{ steps.deployment_target.outputs.deploy_commit }}" \
           --publish 127.0.0.1:3000:3000 \
           --restart unless-stopped \
-          "wikigdrive-prod:${GITHUB_SHA}" wikigdrive \
+          "wikigdrive-prod:${{ steps.deployment_target.outputs.deploy_commit }}" wikigdrive \
           --service_account /service_account.json \
           --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
           --workdir /data \
