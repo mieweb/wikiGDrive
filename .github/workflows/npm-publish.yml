@@ -1,4 +1,4 @@
-name: Build anb publish NPM packages
+name: Build and publish NPM packages
 
 on:
   release:
