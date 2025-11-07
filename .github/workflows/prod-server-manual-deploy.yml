@@ -19,7 +19,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Pull Docker image
-        run: docker pull ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_version }}
+        run: |
+          TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/$REPO:$TAG"
+          
+          docker pull "$IMAGE"
 
       - name: Build docs
         run: |
@@ -35,6 +40,10 @@ jobs:
 
       - name: Start
         run: |
+          TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/$REPO:$TAG"
+
           docker run -d --name wikigdrive-prod \
             --tmpfs /tmp \
             -v wikiGDriveProd:/data \
@@ -49,7 +58,7 @@ jobs:
             -e "GIT_SHA=${{ github.event.inputs.release_version }}" \
             --publish 127.0.0.1:3000:3000 \
             --restart unless-stopped \
-            ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_version }} \
+            "$IMAGE" \
             wikigdrive \
             --service_account /service_account.json \
             --share_email mie-docs-wikigdrive@wikigdrive.iam.gserviceaccount.com \
