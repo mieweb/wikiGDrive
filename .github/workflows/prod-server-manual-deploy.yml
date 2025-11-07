@@ -28,10 +28,14 @@ jobs:
 
       - name: Build docs
         run: |
+          TAG="${{ github.event.inputs.release_version }}"
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/$REPO:$TAG"
+          
           docker run \
           -v "/var/www/wikigdrive.com:/usr/src/app/website/.vitepress/dist" \
           -e "GIT_SHA=${{ github.event.inputs.release_version }}" \
-          "wikigdrive-prod:${{ github.event.inputs.release_version }}" deno task -f wikigdrive-website build
+          "$IMAGE" deno task -f wikigdrive-website build
 
       - name: Stop and remove old container
         run: |
