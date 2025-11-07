@@ -38,21 +38,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         run: |
           TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           IMAGE="ghcr.io/$REPO:$TAG"
           docker build -t "$IMAGE" --build-arg "GIT_SHA=${GITHUB_SHA}" .
-      - name: Build runner image
+          docker push "$IMAGE"
+
+      - name: Build and push runner image
         run: |
           TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
           IMAGE="ghcr.io/mieweb/wgd-action-runner:$TAG"
           docker build -t "$IMAGE" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
-
-      - name: Push Docker image
-        run: |
-          TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
-          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE="ghcr.io/$REPO:$TAG"
           docker push "$IMAGE"
