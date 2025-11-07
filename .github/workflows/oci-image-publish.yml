@@ -47,7 +47,7 @@ jobs:
       - name: Build runner image
         run: |
           TAG="${{ steps.get_tag_version.outputs.TAG_VERSION }}"
-          IMAGE="ghcr.io/miewieb/wgd-action-runner:$TAG"
+          IMAGE="ghcr.io/mieweb/wgd-action-runner:$TAG"
           docker build -t "$IMAGE" --build-arg "GIT_SHA=${GITHUB_SHA}" apps/wgd-action-runner
 
       - name: Push Docker image
