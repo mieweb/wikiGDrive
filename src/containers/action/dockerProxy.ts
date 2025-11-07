@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/extensions,import/no-unresolved
-import { copy } from 'jsr:@std/io';
+import { copy } from '@std/io';
 import { ClientRequest } from 'node:http';
 
 export function startDockerProxy(proxyPort = 2375, socketPath= '/var/run/docker.sock'): () => Promise<void> {
