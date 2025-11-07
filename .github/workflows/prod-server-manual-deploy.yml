@@ -26,6 +26,13 @@ jobs:
           
           docker pull "$IMAGE"
 
+      - name: Pull runner image
+        run: |
+          TAG="${{ github.event.inputs.release_version }}"
+          IMAGE="ghcr.io/miewieb/wgd-action-runner:$TAG"
+          
+          docker pull "$IMAGE"
+
       - name: Build docs
         run: |
           TAG="${{ github.event.inputs.release_version }}"
