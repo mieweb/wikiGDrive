@@ -26,4 +26,6 @@ RUN echo 'export GIT_SSH_COMMAND="ssh -i \$(pwd | sed s/_transform.*//)/.private
 #RUN apt upgrade git --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN git config --global --add safe.directory /srv/wikigdrive/*
 
+HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost:3000 || exit 1
+
 CMD [ "sh", "-c", "wikigdrive --workdir /data server 3000" ]
