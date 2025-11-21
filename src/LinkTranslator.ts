@@ -53,7 +53,7 @@ export function convertToRelativeSvgPath(localPath: string, basePath: string) {
   if (basePath === localPath) return '.';
 
   const host = '//example.com/';
-  convertExtension(decodeURIComponent(relateUrl(host + basePath, host + localPath)), 'dirURLs');
+  return convertExtension(decodeURIComponent(relateUrl(host + basePath, host + localPath)), 'dirURLs');
 }
 
 export function convertToAbsolutePath(fullPath: string, relativePath: string) {
