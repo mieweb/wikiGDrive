@@ -22,8 +22,6 @@
 import {UtilsMixin} from './UtilsMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
 
-// import {Prism} from './prismFix';
-
 export default {
   mixins: [UtilsMixin],
   components: {StatusToolBar},
@@ -123,7 +121,6 @@ export default {
     },
     highLight(str) {
       return str;
-      // FIXME: return Prism.highlight(str, Prism.languages.markdown, 'markdown');
     },
     rewriteLinks() {
       const links = this.$el.querySelectorAll('a[data-to-rewrite]');
@@ -151,7 +148,6 @@ export default {
     await this.fetch();
 
     this.handleScroll();
-    // Prism.highlightElement(this.$refs.code);
     if (!this.intervalHandle && this.currentJob && !this.currentJob.finished) {
       this.intervalHandle = setInterval(() => {
         this.fetch();

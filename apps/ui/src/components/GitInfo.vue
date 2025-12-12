@@ -26,7 +26,7 @@
     <form>
       <div class="container d-flex flex-column order-0 w-vh-toolbar w-100">
         <GitToolBar :active-tab="activeTab" :selected-file="selectedFile" />
-        <pre><code ref="code" class="language-diff line-numbers">{{ stderr }}{{ stdout }}</code></pre>
+        <CodeEditor :modelValue="stderr + stdout" lang="diff" readOnly />
       </div>
     </form>
   </BaseLayout>
@@ -39,12 +39,12 @@ import NavBar from './NavBar.vue';
 import NavSearch from './NavSearch.vue';
 import NavTabs from './NavTabs.vue';
 import GitToolBar from './GitToolBar.vue';
-const Prism = window['Prism'];
-Prism.manual = true;
+import CodeEditor from './CodeEditor.vue';
 
 export default {
   mixins: [UtilsMixin, GitMixin],
   components: {
+    CodeEditor,
     BaseLayout,
     GitToolBar,
     NavBar,
@@ -83,7 +83,7 @@ export default {
       this.$nextTick(() => {
         const codeElems = this.$el.querySelectorAll('code');
         for (const elem of codeElems.values()) {
-          Prism.highlightElement(elem);
+          // Prism.highlightElement(elem);
         }
       });
     },
@@ -91,7 +91,7 @@ export default {
       this.$nextTick(() => {
         const codeElems = this.$el.querySelectorAll('code');
         for (const elem of codeElems.values()) {
-          Prism.highlightElement(elem);
+          // Prism.highlightElement(elem);
         }
       });
     }
