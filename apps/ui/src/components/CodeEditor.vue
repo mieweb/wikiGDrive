@@ -1,24 +1,21 @@
 <template>
-  <PrismEditor
-      class="form-control"
-      :language="lang"
-      :model-value="innerValue"
-      @update:modelValue="$emit('update:modelValue', $event)"
-      :highlight="highlight"
-      :line-numbers="true"
-  ></PrismEditor>
+  <div ref="editor" class="form-control"></div>
 </template>
-<script>
-import { PrismEditor } from 'vue-prism-editor';
-import 'vue-prism-editor/dist/prismeditor.min.css';
+<script lang="ts">
+import { CoreEditor } from '@kerebron/editor';
+import { CodeEditorKit } from '@kerebron/editor-kits/CodeEditorKit';
 
-const Prism = window['Prism'];
+import "@kerebron/editor/assets/index.css";
+import '@kerebron/editor-kits/assets/CodeEditorKit.css';
 
 export default {
   name: 'CodeEditor',
-  components: { PrismEditor },
   emits: ['update:modelValue'],
   props: {
+    readOnly: {
+      type: Boolean,
+      default: false
+    },
     lang: {
       type: String,
       default: 'toml'
@@ -29,14 +26,35 @@ export default {
   },
   data() {
     return {
-      innerValue: ''
+      innerValue: '',
+      editor: null
     };
+  },
+  async mounted() {
+    this.editor = new CoreEditor({
+      cdnUrl: '/wasm/',
+      uri: 'file:///test.md',
+      topNode: 'doc_code',
+      readOnly: this.readOnly,
+      element: this.$refs.editor,
+      extensions: [
+        new CodeEditorKit(this.lang),
+      ]
+    });
+
+    await this.editor.loadDocument('text/code-only', new TextEncoder().encode(this.innerValue));
+
+    this.editor.addEventListener('changed', async (ev) => { // TODO debounce?
+      const buffer = await this.editor.saveDocument('text/code-only');
+      this.$emit('update:modelValue', new TextDecoder().decode(buffer));
+    });
   },
   watch: {
     modelValue: {
       deep: true,
-      handler() {
+      async handler() {
         this.innerValue = this.modelValue;
+        await this.editor.loadDocument('text/code-only', new TextEncoder().encode(this.innerValue));
       }
     }
   },
@@ -44,8 +62,7 @@ export default {
     this.innerValue = this.modelValue;
   },
   methods: {
-    highlight(code) {
-      return Prism.highlight(code, Prism.languages[this.lang], this.lang);
+    async init() {
     }
   }
 };

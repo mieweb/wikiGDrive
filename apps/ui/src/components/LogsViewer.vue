@@ -24,8 +24,6 @@
 import {UtilsMixin} from './UtilsMixin.ts';
 import StatusToolBar from './StatusToolBar.vue';
 
-import {Prism} from './prismFix.ts';
-
 export default {
   mixins: [UtilsMixin],
   components: {StatusToolBar},
@@ -175,7 +173,7 @@ export default {
       return new Date(v).toISOString();
     },
     highLight(str) {
-      return Prism.highlight(str, Prism.languages.markdown, 'markdown');
+      return str;
     },
     rewriteLinks() {
       const links = this.$el.querySelectorAll('a[data-to-rewrite]');
@@ -210,7 +208,6 @@ export default {
     }
 
     this.handleScroll();
-    // Prism.highlightElement(this.$refs.code);
   },
   beforeUnmount() {
     clearInterval(this.interval);

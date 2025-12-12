@@ -268,6 +268,7 @@ export class ServerContainer extends Container {
 
     app.use(express.static(path.resolve(MAIN_DIR, 'website', '.vitepress', 'dist'), { extensions: ['html'] }));
     app.use(express.static(path.resolve(MAIN_DIR, 'apps', 'ui', 'dist')));
+    app.use('/wasm', express.static(path.resolve(MAIN_DIR, 'node_modules', '@kerebron', 'wasm', 'assets')));
 
     await initErrorHandler(app, this.logger);
 
