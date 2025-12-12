@@ -78,6 +78,27 @@ function buildSvgStart(payload: TagPayload) {
   return retVal;
 }
 
+function buildImageTag(payload: TagPayload) {
+  const src = payload.href || '';
+  const alt = payload.alt || '';
+  const width = payload.width;
+  const height = payload.height;
+  
+  let style = '';
+  if (width && typeof width === 'string') {
+    style += `width:${width};`;
+  }
+  if (height && typeof height === 'string') {
+    style += ` height:${height};`;
+  }
+  
+  if (style) {
+    return `<img src="${src}" alt="${alt}" style="${style.trim()}" />`;
+  }
+  
+  return `<img src="${src}" alt="${alt}" />`;
+}
+
 interface ToTextContext {
   mode: OutputMode;
   onlyNotTag?: boolean;
@@ -255,8 +276,14 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'A':
           return '[' + chunksToText(chunk.children, ctx) + `](${chunk.payload.href})`;
         case 'SVG/':
+          if (chunk.payload.width || chunk.payload.height) {
+            return buildImageTag(chunk.payload);
+          }
           return `![](${chunk.payload.href})`;
         case 'IMG/':
+          if (chunk.payload.width || chunk.payload.height) {
+            return buildImageTag(chunk.payload);
+          }
           return `![](${chunk.payload.href})`;
         case 'EMB_SVG':
           return buildSvgStart(chunk.payload);
@@ -325,8 +352,14 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'TOC':
           return chunksToText(chunk.children, ctx);
         case 'SVG/':
+          if (chunk.payload.width || chunk.payload.height) {
+            return buildImageTag(chunk.payload);
+          }
           return `<object type="image/svg+xml" data="${chunk.payload.href}" ></object>`;
         case 'IMG/':
+          if (chunk.payload.width || chunk.payload.height) {
+            return buildImageTag(chunk.payload);
+          }
           return `<img src="${chunk.payload.href}" />`;
         case 'EMB_SVG':
           return buildSvgStart(chunk.payload) + chunksToText(chunk.children, ctx) + '</svg>\n';
