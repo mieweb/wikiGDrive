@@ -84,6 +84,8 @@ function buildImageTag(payload: TagPayload) {
   const width = payload.width;
   const height = payload.height;
   
+  // Build inline styles for images with physical dimensions (from ODT)
+  // Only handle string dimensions with physical units (in, cm, mm)
   const styles = [];
   if (width && typeof width === 'string') {
     styles.push(`width:${width}`);
