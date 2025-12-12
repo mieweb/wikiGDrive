@@ -84,16 +84,16 @@ function buildImageTag(payload: TagPayload) {
   const width = payload.width;
   const height = payload.height;
   
-  let style = '';
+  const styles = [];
   if (width && typeof width === 'string') {
-    style += `width:${width};`;
+    styles.push(`width:${width}`);
   }
   if (height && typeof height === 'string') {
-    style += ` height:${height};`;
+    styles.push(`height:${height}`);
   }
   
-  if (style) {
-    return `<img src="${src}" alt="${alt}" style="${style.trim()}" />`;
+  if (styles.length > 0) {
+    return `<img src="${src}" alt="${alt}" style="${styles.join('; ')};" />`;
   }
   
   return `<img src="${src}" alt="${alt}" />`;
