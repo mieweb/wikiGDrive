@@ -4,7 +4,7 @@
 
 How to show a player:
 
-<img src="10000001000005700000040E226C4E068C6BB2BE.png" />
+<img src="10000001000005700000040E226C4E068C6BB2BE.png" alt="" style="width:2.7681in; height:2.0634in;" />
 
 You
 

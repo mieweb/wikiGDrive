@@ -52,6 +52,6 @@ done
 
 Inserted as unlinked:
 
-![](100002010000025C000001488DD4BFD479C0CF61.png)
+<img src="100002010000025C000001488DD4BFD479C0CF61.png" alt="" style="width:6.2917in; height:3.4165in;" />
 
 done
