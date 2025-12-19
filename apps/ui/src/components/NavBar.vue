@@ -9,6 +9,7 @@
       </span>
       <span v-if="!isGDocsPreview" class="drive-link">
         <router-link activeClass="active" :to="{ name: 'home' }">WikiGDrive</router-link>
+        <span v-if="rootFolder && rootFolder.name" class="drive-name"> - {{ rootFolder.name }}</span>
       </span>
     </span>
     <slot>
