@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown">
+  <div class="dropdown d-none d-md-inline">
     <div class="input-group">
       <input ref="searchInput" class="form-control" @focus="onFocued" @blur="onBlurred" @keydown="onKeyDown" placeholder="Search [/]" v-model="query" />
     </div>
