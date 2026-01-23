@@ -34,14 +34,17 @@ export const extToMime = {
 
 // deno-lint-ignore no-unused-vars
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function convertToPreviewUrl(preview_rewrite_rule: string, driveId: string) {
+export function convertToPreviewUrl(preview_rewrite_rules: string, driveId: string) {
   return (file: { path: string }) => {
-    const preview_rewrite_rule_parts = preview_rewrite_rule.split('!').filter(str => !!str);
+    for (const preview_rewrite_rule of preview_rewrite_rules.split('\n')) {
+      const preview_rewrite_rule_parts = preview_rewrite_rule.split('!').filter(str => !!str);
 
-    let previewUrl = file.path;
-    previewUrl = previewUrl.replace(new RegExp(preview_rewrite_rule_parts[0]), preview_rewrite_rule_parts[1]);
-
-    return { ...file, previewUrl };
+      if (file.path.match(new RegExp(preview_rewrite_rule_parts[0]))) {
+        const previewUrl = file.path.replace(new RegExp(preview_rewrite_rule_parts[0]), preview_rewrite_rule_parts[1]);
+        return { ...file, previewUrl };
+      }
+    }
+    return { ...file, previewUrl: file.path };
   };
 }
 
@@ -275,7 +278,7 @@ export default class FolderController extends Controller {
         : await markdownTreeProcessor.findByPath(contentFilePath);
 
       if (treeItem) {
-        const { previewUrl } = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)({ path: treeItem.path || '' });
+        const { previewUrl } = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule || '', driveId)({ path: treeItem.path || '' });
 
         ctx.res.setHeader('wgd-google-parent-id', treeItem.parentId || '');
         ctx.res.setHeader('wgd-google-id', treeItem.id || '');
@@ -295,7 +298,7 @@ export default class FolderController extends Controller {
               .map(element => [element.realFileName, element])
           );
           const map2: Map<string, TreeItem> = new Map(
-            treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId))
+            treeItem.children.map(convertToPreviewUrl(userConfigService.config.preview_rewrite_rule || '', driveId))
               .map(element => [element.realFileName, element])
           );
           treeItem.children = Object.values({ ...Object.fromEntries(map1), ...Object.fromEntries(map2) });
@@ -352,7 +355,7 @@ export default class FolderController extends Controller {
       }
 
       if ('md' === ext) {
-        const previewUrl = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(filePath);
+        const { previewUrl } = convertToPreviewUrl(userConfigService.config.preview_rewrite_rule, driveId)(filePath);
         ctx.res.setHeader('wgd-path', filePath || '');
         ctx.res.setHeader('wgd-mime-type', mimeType);
         ctx.res.setHeader('wgd-preview-url', previewUrl);
