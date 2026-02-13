@@ -828,7 +828,8 @@ Deno.test('test stash and pop', async () => {
     }
 
     // Stash changes
-    await scannerLocal.stashChanges();
+    const stashed = await scannerLocal.stashChanges();
+    assertStrictEquals(stashed, true);
 
     {
       const changes = await scannerLocal.changes();
@@ -889,7 +890,8 @@ Deno.test('test commit with local behind remote', async () => {
     assertStrictEquals(behind, 1);
 
     // Test stash, pull, and pop workflow
-    await scannerLocal.stashChanges();
+    const stashed = await scannerLocal.stashChanges();
+    assertStrictEquals(stashed, true);
     await scannerLocal.pullBranch('main');
     await scannerLocal.stashPop();
 

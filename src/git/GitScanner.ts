@@ -1031,9 +1031,10 @@ export class GitScanner {
       await this.exec('git stash pop', { skipLogger: !this.debug });
     } catch (err) {
       // If there's no stash to pop, handle gracefully
-      if (err?.message && err.message.indexOf('No stash entries found') === -1) {
-        throw err;
+      if (err?.message && err.message.indexOf('No stash entries found') > -1) {
+        return;
       }
+      throw err;
     }
   }
 
