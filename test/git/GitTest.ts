@@ -936,13 +936,13 @@ Deno.test('test hasConflicts detection', async () => {
     await scannerLocal.commit('Second commit', ['file1.md'], COMMITER1);
 
     // Reset to previous commit and make conflicting change
-    await scannerLocal.exec('git reset --hard HEAD~1', {});
+    execSync('git reset --hard HEAD~1', { cwd: localRepoDir });
     fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\ndifferent line\n');
     await scannerLocal.commit('Conflicting commit', ['file1.md'], COMMITER1);
 
     // Try to merge - this will create a conflict
     try {
-      await scannerLocal.exec('git merge HEAD@{1}', {});
+      execSync('git merge HEAD@{1}', { cwd: localRepoDir });
     } catch (err) {
       // Expected to fail with conflict
     }

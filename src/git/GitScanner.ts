@@ -1048,7 +1048,7 @@ export class GitScanner {
   async hasConflicts(): Promise<boolean> {
     try {
       const result = await this.exec('git status --porcelain', { skipLogger: !this.debug });
-      // Check for unmerged files (status codes starting with U)
+      // Check for unmerged files (any merge-conflict porcelain status codes)
       const lines = result.stdout.split('\n');
       return lines.some(line => line.startsWith('UU ') || line.startsWith('AA ') || 
                                  line.startsWith('DD ') || line.startsWith('AU ') || 
