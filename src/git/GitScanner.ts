@@ -346,41 +346,65 @@ export class GitScanner {
           GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
         }
       });
-    } catch (err) {
+     catch (err) {
       if (err.message.indexOf('Updates were rejected because the remote contains work') > -1 ||
         err.message.indexOf('Updates were rejected because a pushed branch tip is behind its remote') > -1) {
-        await this.exec(`git fetch origin ${remoteBranch}`, {
-          env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-          }
-        });
-
+        // Stash any local changes before fetching and rebasing
+        const stashed = await this.stashChanges();
+        
         try {
-          await this.exec(`git rebase origin/${remoteBranch}`, {
+          await this.exec(`git fetch origin ${remoteBranch}`, {
             env: {
-              GIT_AUTHOR_NAME: committer.name,
-              GIT_AUTHOR_EMAIL: committer.email,
-              GIT_COMMITTER_NAME: committer.name,
-              GIT_COMMITTER_EMAIL: committer.email
+              GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
             }
           });
+
+          try {
+            await this.exec(`git rebase origin/${remoteBranch}`, {
+              env: {
+                GIT_AUTHOR_NAME: committer.name,
+                GIT_AUTHOR_EMAIL: committer.email,
+                GIT_COMMITTER_NAME: committer.name,
+                GIT_COMMITTER_EMAIL: committer.email
+              }
+            });
+            
+            // Restore stashed changes if any
+            if (stashed) {
+              await this.stashPop();
+              
+              // Check for conflicts after restoring stash
+              if (await this.hasConflicts()) {
+                await this.exec('git rebase --abort', { ignoreError: true });
+                throw new Error('Stash pop resulted in merge conflicts after rebase. Cannot proceed with push. ' +
+                  'Please resolve conflicts manually.');
+              }
+            }
+          } catch (err) {
+            await this.exec('git rebase --abort', { ignoreError: true });
+            if (err.message.indexOf('Resolve all conflicts manually') > -1 || err.message.indexOf('merge conflicts') > -1) {
+              this.logger.error('Conflict detected during rebase', { filename: __filename });
+              throw new Error('Rebase conflicts detected. Please resolve conflicts manually and retry.');
+            }
+            throw err;
+          }
+
+          await this.exec(`git push origin main:${remoteBranch}`, {
+            env: {
+              GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+            }
+          });
+          return;
         } catch (err) {
-          await this.exec('git rebase --abort', { ignoreError: true });
-          if (err.message.indexOf('Resolve all conflicts manually') > -1) {
-            this.logger.error('Conflict', { filename: __filename });
+          // If we stashed something and the operation failed, warn about it
+          if (stashed) {
+            this.logger.warn('Push/rebase failed. Stashed changes remain saved. Use `git stash list` to view.', { filename: __filename });
           }
           throw err;
         }
-
-        await this.exec(`git push origin main:${remoteBranch}`, {
-          env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-          }
-        });
-        return;
       }
 
-      return;
+      throw err;
     }
   }
 
