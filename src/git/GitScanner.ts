@@ -1014,12 +1014,15 @@ export class GitScanner {
     this.companionFileResolver = resolver;
   }
 
+  private async getStashCount(): Promise<number> {
+    const result = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
+    const lines = result.stdout.trim().split('\n').filter(line => line.length > 0);
+    return lines.length;
+  }
+
   async stashChanges(): Promise<boolean> {
     // Capture the number of existing stash entries before attempting to stash
-    const beforeResult = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
-    const beforeCount = beforeResult.stdout.trim().length === 0
-      ? 0
-      : beforeResult.stdout.trim().split('\n').length;
+    const beforeCount = await this.getStashCount();
 
     try {
       await this.exec('git stash push -u -m "WikiGDrive auto-stash before sync"', { skipLogger: !this.debug });
@@ -1033,10 +1036,7 @@ export class GitScanner {
     }
 
     // Re-count stash entries after the push to determine if a new stash was created
-    const afterResult = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
-    const afterCount = afterResult.stdout.trim().length === 0
-      ? 0
-      : afterResult.stdout.trim().split('\n').length;
+    const afterCount = await this.getStashCount();
 
     return afterCount > beforeCount;
   }
