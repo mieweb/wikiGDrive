@@ -716,16 +716,17 @@ export class JobManagerContainer extends Container {
             }
           } catch (err) {
             // If pull fails, leave stash intact for manual recovery
-            // The user can use "Reset and Pull" to clean up
+            // The user can use "Reset and Pull" to clean up or `git stash list` to view saved changes
             if (stashed) {
-              logger.warn('Pull failed. Stashed changes remain saved for manual recovery. Use "Reset and Pull" to clean up.');
+              logger.warn('Pull failed. Stashed changes remain saved for manual recovery. ' +
+                'Use `git stash list` to view stashed changes or "Reset and Pull" to clean up.');
             }
             throw err;
           }
         }
       } catch (err) {
         if (err?.message?.includes('Failed to retrieve list of SSH authentication methods')) {
-          throw new Error('Failed to authenticate with remote repository');
+          throw new Error('Failed to authenticate with remote repository: ' + err.message);
         }
         throw err;
       }
