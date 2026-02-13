@@ -715,19 +715,16 @@ export class JobManagerContainer extends Container {
               await gitScanner.stashPop();
             }
           } catch (err) {
-            // If pull or stash pop fails, try to restore stash if we created one
+            // If pull fails, leave stash intact for manual recovery
+            // The user can use "Reset and Pull" to clean up
             if (stashed) {
-              try {
-                await gitScanner.stashPop();
-              } catch (stashErr) {
-                logger.error('Failed to restore stashed changes after sync error: ' + (stashErr?.message || stashErr));
-              }
+              logger.warn('Pull failed. Stashed changes remain saved for manual recovery. Use "Reset and Pull" to clean up.');
             }
             throw err;
           }
         }
       } catch (err) {
-        if (err?.message && err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        if (err?.message && err.message.includes('Failed to retrieve list of SSH authentication methods')) {
           throw new Error('Failed to authenticate with remote repository');
         }
         throw err;
