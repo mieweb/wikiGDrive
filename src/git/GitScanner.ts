@@ -1020,7 +1020,8 @@ export class GitScanner {
       return true;
     } catch (err) {
       // If there's nothing to stash, git stash will return "No local changes to save"
-      if (err?.message?.includes('No local changes to save')) {
+      // Error message format: "Process exited with status: X\n" + stderr
+      if (err.message && err.message.includes('No local changes to save')) {
         return false;
       }
       throw err;
@@ -1032,10 +1033,30 @@ export class GitScanner {
       await this.exec('git stash pop', { skipLogger: !this.debug });
     } catch (err) {
       // If there's no stash to pop, handle gracefully
-      if (err?.message?.includes('No stash entries found')) {
+      // Error message format: "Process exited with status: X\n" + stderr
+      if (err.message && err.message.includes('No stash entries found')) {
         return;
       }
+      // Check if the error is due to merge conflicts
+      if (err.message && err.message.includes('CONFLICT')) {
+        throw new Error('Stash pop encountered merge conflicts. Please resolve conflicts manually.');
+      }
       throw err;
+    }
+  }
+
+  async hasConflicts(): Promise<boolean> {
+    try {
+      const result = await this.exec('git status --porcelain', { skipLogger: !this.debug });
+      // Check for unmerged files (status codes starting with U)
+      const lines = result.stdout.split('\n');
+      return lines.some(line => line.startsWith('UU ') || line.startsWith('AA ') || 
+                                 line.startsWith('DD ') || line.startsWith('AU ') || 
+                                 line.startsWith('UA ') || line.startsWith('DU ') || 
+                                 line.startsWith('UD '));
+    } catch (err) {
+      this.logger.warn('Failed to check for conflicts: ' + err.message, { filename: __filename });
+      return false;
     }
   }
 

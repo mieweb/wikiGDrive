@@ -717,6 +717,12 @@ export class JobManagerContainer extends Container {
             // Apply stashed changes if we stashed something
             if (stashed) {
               await gitScanner.stashPop();
+              
+              // Check for conflicts after stash pop
+              if (await gitScanner.hasConflicts()) {
+                throw new Error('Stash pop resulted in merge conflicts. Cannot proceed with commit. ' +
+                  'Please resolve conflicts manually using "Reset and Pull" or by running git commands directly.');
+              }
             }
           } catch (err) {
             // If pull fails, leave stash intact for manual recovery

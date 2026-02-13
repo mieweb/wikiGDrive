@@ -920,3 +920,38 @@ Deno.test('test commit with local behind remote', async () => {
     fs.rmSync(secondRepoDir, { recursive: true, force: true });
   }
 });
+
+Deno.test('test hasConflicts detection', async () => {
+  const localRepoDir: string = createTmpDir();
+
+  try {
+    const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+    await scannerLocal.initialize();
+
+    fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\n');
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
+
+    // Create a conflict situation
+    fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\nline2\n');
+    await scannerLocal.commit('Second commit', ['file1.md'], COMMITER1);
+
+    // Reset to previous commit and make conflicting change
+    await scannerLocal.exec('git reset --hard HEAD~1', {});
+    fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\ndifferent line\n');
+    await scannerLocal.commit('Conflicting commit', ['file1.md'], COMMITER1);
+
+    // Try to merge - this will create a conflict
+    try {
+      await scannerLocal.exec('git merge HEAD@{1}', {});
+    } catch (err) {
+      // Expected to fail with conflict
+    }
+
+    // Should detect conflicts
+    const hasConflicts = await scannerLocal.hasConflicts();
+    assertStrictEquals(hasConflicts, true);
+
+  } finally {
+    fs.rmSync(localRepoDir, { recursive: true, force: true });
+  }
+});
