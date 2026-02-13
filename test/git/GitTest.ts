@@ -28,30 +28,6 @@ const logger = winston.createLogger({
 });
 instrumentLogger(logger);
 
-// Helper function to run git commands using spawn
-function runGitCommand(command: string, args: string[], cwd: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(command, args, { cwd });
-    let stderr = '';
-    
-    proc.stderr?.on('data', (data) => {
-      stderr += data.toString();
-    });
-    
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Command failed with code ${code}: ${stderr}`));
-      } else {
-        resolve();
-      }
-    });
-    
-    proc.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
-
 Deno.test('test initialize', async () => {
   // t.timeout(5000);
   const localRepoDir: string = createTmpDir();
