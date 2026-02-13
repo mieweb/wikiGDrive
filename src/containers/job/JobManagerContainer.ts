@@ -724,7 +724,7 @@ export class JobManagerContainer extends Container {
           }
         }
       } catch (err) {
-        if (err?.message && err.message.includes('Failed to retrieve list of SSH authentication methods')) {
+        if (err?.message?.includes('Failed to retrieve list of SSH authentication methods')) {
           throw new Error('Failed to authenticate with remote repository');
         }
         throw err;

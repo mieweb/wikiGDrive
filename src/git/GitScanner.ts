@@ -1019,7 +1019,7 @@ export class GitScanner {
       return true;
     } catch (err) {
       // If there's nothing to stash, git stash will return "No local changes to save"
-      if (err?.message && err.message.includes('No local changes to save')) {
+      if (err?.message?.includes('No local changes to save')) {
         return false;
       }
       throw err;
@@ -1031,7 +1031,7 @@ export class GitScanner {
       await this.exec('git stash pop', { skipLogger: !this.debug });
     } catch (err) {
       // If there's no stash to pop, handle gracefully
-      if (err?.message && err.message.includes('No stash entries found')) {
+      if (err?.message?.includes('No stash entries found')) {
         return;
       }
       throw err;
