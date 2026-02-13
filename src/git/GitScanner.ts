@@ -902,8 +902,9 @@ export class GitScanner {
       return {
         ahead, behind
       };
-      // deno-lint-ignore no-empty
-    } catch (ignore) {}
+    } catch (err) {
+      this.logger.warn(`Failed to count ahead/behind commits for branch ${remoteBranch}: ${err.message}`, { filename: __filename });
+    }
 
     return { ahead: 0, behind: 0 };
   }

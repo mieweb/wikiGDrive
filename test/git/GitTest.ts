@@ -851,6 +851,13 @@ Deno.test('test stash and pop', async () => {
 });
 
 Deno.test('test commit with local behind remote', async () => {
+  // This test simulates a scenario where WikiGDrive is out of sync with the remote repository:
+  // - localRepoDir: Represents the WikiGDrive local repository
+  // - githubRepoDir: Represents the remote GitHub repository (bare repo)
+  // - secondRepoDir: Represents another contributor who commits directly to GitHub
+  // The test verifies that the stash/pull/pop workflow correctly syncs local changes
+  // when the local repository is behind the remote.
+  
   const localRepoDir: string = createTmpDir();
   const githubRepoDir: string = createTmpDir();
   const secondRepoDir: string = createTmpDir();
@@ -858,7 +865,7 @@ Deno.test('test commit with local behind remote', async () => {
   try {
     execSync(`git init -b main --bare ${githubRepoDir}`);
 
-    // Setup first repo
+    // Setup first repo (WikiGDrive local repository)
     const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
     await scannerLocal.initialize();
 
@@ -868,7 +875,7 @@ Deno.test('test commit with local behind remote', async () => {
     await scannerLocal.setRemoteUrl(githubRepoDir);
     await scannerLocal.pushBranch('main');
 
-    // Setup second repo and make a commit
+    // Setup second repo (simulates another contributor pushing to GitHub)
     const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
     await scannerSecond.initialize();
     fs.unlinkSync(secondRepoDir + '/.gitignore');
@@ -879,7 +886,7 @@ Deno.test('test commit with local behind remote', async () => {
     await scannerSecond.commit('Second commit', ['file2.md'], COMMITER2);
     await scannerSecond.pushBranch('main');
 
-    // First repo now has local changes but is behind remote
+    // WikiGDrive repository now has local changes but is behind remote
     fs.writeFileSync(path.join(localRepoDir, 'file3.md'), 'Local change');
 
     // Fetch to make remote refs available

@@ -698,6 +698,10 @@ export class JobManagerContainer extends Container {
 
         const { ahead, behind } = await gitScanner.countAheadBehind(userConfig.remote_branch);
         
+        if (ahead > 0 && behind > 0) {
+          throw new Error('Local and remote branches have diverged. Please manually sync your repository before committing.');
+        }
+        
         if (behind > 0) {
           logger.info(`Local branch is ${behind} commit(s) behind remote. Syncing before commit...`);
           
@@ -705,7 +709,7 @@ export class JobManagerContainer extends Container {
           const stashed = await gitScanner.stashChanges();
           
           try {
-            // Pull with rebase
+            // Pull with rebase to integrate remote changes (uses git pull --rebase internally)
             await gitScanner.pullBranch(userConfig.remote_branch, {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
@@ -725,7 +729,7 @@ export class JobManagerContainer extends Container {
           }
         }
       } catch (err) {
-        if (err?.message?.includes('Failed to retrieve list of SSH authentication methods')) {
+        if (err.message && err.message.includes('Failed to retrieve list of SSH authentication methods')) {
           throw new Error('Failed to authenticate with remote repository: ' + err.message);
         }
         throw err;
