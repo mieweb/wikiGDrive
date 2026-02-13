@@ -965,15 +965,27 @@ Deno.test('test hasConflicts detection', async () => {
     await scannerLocal.commit('Conflicting commit', ['file1.md'], COMMITER1);
 
     // Try to merge the second commit - this will create a conflict
+    let mergeSucceeded = false;
     try {
       await runGitCommand('git', ['merge', secondCommitSha], localRepoDir);
+      mergeSucceeded = true;
     } catch (err) {
-      // Expected to fail with conflict
+      // Expected to fail with conflict - verify it's a merge conflict
+      const message = err instanceof Error ? err.message : String(err);
+      if (!message.includes('CONFLICT') && !message.includes('Merge conflict')) {
+        // If merge failed for a different reason, we need to know
+        console.error('Merge failed but not due to conflict:', message);
+      }
+    }
+
+    // If merge succeeded without conflict, the test setup is wrong
+    if (mergeSucceeded) {
+      throw new Error('Merge should have created a conflict but succeeded');
     }
 
     // Should detect conflicts
     const hasConflicts = await scannerLocal.hasConflicts();
-    assertStrictEquals(hasConflicts, true);
+    assertStrictEquals(hasConflicts, true, 'hasConflicts() should return true after merge conflict');
 
   } finally {
     fs.rmSync(localRepoDir, { recursive: true, force: true });
