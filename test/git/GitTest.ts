@@ -1,6 +1,6 @@
 import fs, {rmSync, unlinkSync} from 'node:fs';
 import path from 'node:path';
-import {execSync} from 'node:child_process';
+import {execSync, spawn} from 'node:child_process';
 
 import winston from 'winston';
 // eslint-disable-next-line import/no-unresolved
@@ -27,6 +27,30 @@ const logger = winston.createLogger({
   ]
 });
 instrumentLogger(logger);
+
+// Helper function to run git commands using spawn
+function runGitCommand(command: string, args: string[], cwd: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args, { cwd });
+    let stderr = '';
+    
+    proc.stderr?.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Command failed with code ${code}: ${stderr}`));
+      } else {
+        resolve();
+      }
+    });
+    
+    proc.on('error', (err) => {
+      reject(err);
+    });
+  });
+}
 
 Deno.test('test initialize', async () => {
   // t.timeout(5000);
@@ -936,13 +960,13 @@ Deno.test('test hasConflicts detection', async () => {
     await scannerLocal.commit('Second commit', ['file1.md'], COMMITER1);
 
     // Reset to previous commit and make conflicting change
-    execSync('git reset --hard HEAD~1', { cwd: localRepoDir });
+    await runGitCommand('git', ['reset', '--hard', 'HEAD~1'], localRepoDir);
     fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\ndifferent line\n');
     await scannerLocal.commit('Conflicting commit', ['file1.md'], COMMITER1);
 
     // Try to merge - this will create a conflict
     try {
-      execSync('git merge HEAD@{1}', { cwd: localRepoDir });
+      await runGitCommand('git', ['merge', 'HEAD@{1}'], localRepoDir);
     } catch (err) {
       // Expected to fail with conflict
     }
