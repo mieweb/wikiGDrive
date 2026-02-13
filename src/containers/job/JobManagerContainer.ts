@@ -701,9 +701,8 @@ export class JobManagerContainer extends Container {
         if (behind > 0) {
           logger.info(`Local branch is ${behind} commit(s) behind remote. Syncing before commit...`);
           
-          // Stash local changes
-          await gitScanner.stashChanges();
-          let stashed = true;
+          // Stash local changes - returns true if something was stashed
+          const stashed = await gitScanner.stashChanges();
           
           try {
             // Pull with rebase
@@ -711,16 +710,17 @@ export class JobManagerContainer extends Container {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
             
-            // Apply stashed changes
-            await gitScanner.stashPop();
-            stashed = false;
+            // Apply stashed changes if we stashed something
+            if (stashed) {
+              await gitScanner.stashPop();
+            }
           } catch (err) {
-            // If pull or stash pop fails, try to restore stash if it's still there
+            // If pull or stash pop fails, try to restore stash if we created one
             if (stashed) {
               try {
                 await gitScanner.stashPop();
               } catch (stashErr) {
-                logger.error('Failed to restore stashed changes: ' + (stashErr?.message || stashErr));
+                logger.error('Failed to restore stashed changes after sync error: ' + (stashErr?.message || stashErr));
               }
             }
             throw err;
