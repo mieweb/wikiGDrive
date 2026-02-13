@@ -703,6 +703,7 @@ export class JobManagerContainer extends Container {
           
           // Stash local changes
           await gitScanner.stashChanges();
+          let stashed = true;
           
           try {
             // Pull with rebase
@@ -712,18 +713,21 @@ export class JobManagerContainer extends Container {
             
             // Apply stashed changes
             await gitScanner.stashPop();
+            stashed = false;
           } catch (err) {
-            // If pull or stash pop fails, try to restore stash
-            try {
-              await gitScanner.stashPop();
-            } catch (stashErr) {
-              logger.error('Failed to restore stashed changes: ' + stashErr.message);
+            // If pull or stash pop fails, try to restore stash if it's still there
+            if (stashed) {
+              try {
+                await gitScanner.stashPop();
+              } catch (stashErr) {
+                logger.error('Failed to restore stashed changes: ' + (stashErr?.message || stashErr));
+              }
             }
             throw err;
           }
         }
       } catch (err) {
-        if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+        if (err?.message && err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
           throw new Error('Failed to authenticate with remote repository');
         }
         throw err;
