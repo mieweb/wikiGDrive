@@ -346,7 +346,7 @@ export class GitScanner {
           GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
         }
       });
-     catch (err) {
+    } catch (err) {
       if (err.message.indexOf('Updates were rejected because the remote contains work') > -1 ||
         err.message.indexOf('Updates were rejected because a pushed branch tip is behind its remote') > -1) {
         // Stash any local changes before fetching and rebasing
@@ -404,6 +404,7 @@ export class GitScanner {
         }
       }
 
+      // For other errors, just throw them
       throw err;
     }
   }
