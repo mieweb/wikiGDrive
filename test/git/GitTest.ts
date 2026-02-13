@@ -807,3 +807,107 @@ Deno.test('test remove assets not file', async () => {
     fs.rmSync(localRepoDir, { recursive: true, force: true });
   }
 });
+
+Deno.test('test stash and pop', async () => {
+  const localRepoDir: string = createTmpDir();
+
+  try {
+    const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+    await scannerLocal.initialize();
+
+    fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
+
+    // Create a local change
+    fs.writeFileSync(path.join(localRepoDir, 'file2.md'), 'New file');
+
+    {
+      const changes = await scannerLocal.changes();
+      assertStrictEquals(changes.length, 1);
+      assertStrictEquals(changes[0].path, 'file2.md');
+    }
+
+    // Stash changes
+    await scannerLocal.stashChanges();
+
+    {
+      const changes = await scannerLocal.changes();
+      assertStrictEquals(changes.length, 0);
+    }
+
+    // Pop stashed changes
+    await scannerLocal.stashPop();
+
+    {
+      const changes = await scannerLocal.changes();
+      assertStrictEquals(changes.length, 1);
+      assertStrictEquals(changes[0].path, 'file2.md');
+    }
+
+  } finally {
+    fs.rmSync(localRepoDir, { recursive: true, force: true });
+  }
+});
+
+Deno.test('test commit with local behind remote', async () => {
+  const localRepoDir: string = createTmpDir();
+  const githubRepoDir: string = createTmpDir();
+  const secondRepoDir: string = createTmpDir();
+
+  try {
+    execSync(`git init -b main --bare ${githubRepoDir}`);
+
+    // Setup first repo
+    const scannerLocal = new GitScanner(logger, localRepoDir, COMMITER1.email);
+    await scannerLocal.initialize();
+
+    fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'Initial content');
+    await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
+
+    await scannerLocal.setRemoteUrl(githubRepoDir);
+    await scannerLocal.pushBranch('main');
+
+    // Setup second repo and make a commit
+    const scannerSecond = new GitScanner(logger, secondRepoDir, COMMITER2.email);
+    await scannerSecond.initialize();
+    fs.unlinkSync(secondRepoDir + '/.gitignore');
+    await scannerSecond.setRemoteUrl(githubRepoDir);
+    await scannerSecond.pullBranch('main');
+
+    fs.writeFileSync(path.join(secondRepoDir, 'file2.md'), 'Second repo change');
+    await scannerSecond.commit('Second commit', ['file2.md'], COMMITER2);
+    await scannerSecond.pushBranch('main');
+
+    // First repo now has local changes but is behind remote
+    fs.writeFileSync(path.join(localRepoDir, 'file3.md'), 'Local change');
+
+    // Fetch to make remote refs available
+    await scannerLocal.fetch();
+
+    const { ahead, behind } = await scannerLocal.countAheadBehind('main');
+    assertStrictEquals(ahead, 0);
+    assertStrictEquals(behind, 1);
+
+    // Test stash, pull, and pop workflow
+    await scannerLocal.stashChanges();
+    await scannerLocal.pullBranch('main');
+    await scannerLocal.stashPop();
+
+    // Verify we now have both files
+    assertStrictEquals(fs.existsSync(path.join(localRepoDir, 'file2.md')), true);
+    assertStrictEquals(fs.existsSync(path.join(localRepoDir, 'file3.md')), true);
+
+    // Verify we're now up to date
+    const { ahead: newAhead, behind: newBehind } = await scannerLocal.countAheadBehind('main');
+    assertStrictEquals(newAhead, 0);
+    assertStrictEquals(newBehind, 0);
+
+    // Now we can commit successfully
+    await scannerLocal.commit('Third commit', ['file3.md'], COMMITER1);
+
+  } finally {
+    fs.rmSync(localRepoDir, { recursive: true, force: true });
+    fs.rmSync(githubRepoDir, { recursive: true, force: true });
+    fs.rmSync(secondRepoDir, { recursive: true, force: true });
+  }
+});
