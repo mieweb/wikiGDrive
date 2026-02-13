@@ -955,18 +955,18 @@ Deno.test('test hasConflicts detection', async () => {
     fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\n');
     await scannerLocal.commit('First commit', ['.gitignore', 'file1.md'], COMMITER1);
 
-    // Create a conflict situation
+    // Create a conflict situation - capture the SHA before resetting
     fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\nline2\n');
-    await scannerLocal.commit('Second commit', ['file1.md'], COMMITER1);
+    const secondCommitSha = await scannerLocal.commit('Second commit', ['file1.md'], COMMITER1);
 
     // Reset to previous commit and make conflicting change
     await runGitCommand('git', ['reset', '--hard', 'HEAD~1'], localRepoDir);
     fs.writeFileSync(path.join(localRepoDir, 'file1.md'), 'line1\ndifferent line\n');
     await scannerLocal.commit('Conflicting commit', ['file1.md'], COMMITER1);
 
-    // Try to merge - this will create a conflict
+    // Try to merge the second commit - this will create a conflict
     try {
-      await runGitCommand('git', ['merge', 'HEAD@{1}'], localRepoDir);
+      await runGitCommand('git', ['merge', secondCommitSha], localRepoDir);
     } catch (err) {
       // Expected to fail with conflict
     }

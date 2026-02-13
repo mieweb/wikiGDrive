@@ -1015,30 +1015,48 @@ export class GitScanner {
   }
 
   async stashChanges(): Promise<boolean> {
+    // Capture the number of existing stash entries before attempting to stash
+    const beforeResult = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
+    const beforeCount = beforeResult.stdout.trim().length === 0
+      ? 0
+      : beforeResult.stdout.trim().split('\n').length;
+
     try {
       await this.exec('git stash push -u -m "WikiGDrive auto-stash before sync"', { skipLogger: !this.debug });
-      return true;
     } catch (err) {
-      // If there's nothing to stash, git stash will return "No local changes to save"
-      // Error message format: "Process exited with status: X\n" + stderr
+      // If there's nothing to stash, git stash may report "No local changes to save"
+      // in the error output. In that case, report that no stash was created.
       if (err.message && err.message.includes('No local changes to save')) {
         return false;
       }
       throw err;
     }
+
+    // Re-count stash entries after the push to determine if a new stash was created
+    const afterResult = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
+    const afterCount = afterResult.stdout.trim().length === 0
+      ? 0
+      : afterResult.stdout.trim().split('\n').length;
+
+    return afterCount > beforeCount;
   }
 
   async stashPop(): Promise<void> {
     try {
       await this.exec('git stash pop', { skipLogger: !this.debug });
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       // If there's no stash to pop, handle gracefully
       // Error message format: "Process exited with status: X\n" + stderr
-      if (err.message && err.message.includes('No stash entries found')) {
+      if (message.includes('No stash entries found')) {
         return;
       }
-      // Check if the error is due to merge conflicts
-      if (err.message && err.message.includes('CONFLICT')) {
+      // Check if the error is due to merge conflicts based on the error message
+      if (message.includes('CONFLICT')) {
+        throw new Error('Stash pop encountered merge conflicts. Please resolve conflicts manually.');
+      }
+      // If the message did not explicitly mention conflicts, fall back to checking for unmerged files
+      if (await this.hasConflicts()) {
         throw new Error('Stash pop encountered merge conflicts. Please resolve conflicts manually.');
       }
       throw err;
