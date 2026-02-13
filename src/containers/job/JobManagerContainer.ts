@@ -689,6 +689,59 @@ export class JobManagerContainer extends Container {
     const userConfigService = new UserConfigService(googleFileSystem);
     const userConfig = await userConfigService.load();
 
+    // Check if local branch is behind remote and sync if needed
+    if (userConfig.remote_branch) {
+      try {
+        await gitScanner.fetch({
+          privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+        });
+
+        const { ahead, behind } = await gitScanner.countAheadBehind(userConfig.remote_branch);
+        
+        if (ahead > 0 && behind > 0) {
+          throw new Error('Local and remote branches have diverged. Please manually sync your repository before committing.');
+        }
+        
+        if (behind > 0) {
+          logger.info(`Local branch is ${behind} commit(s) behind remote. Syncing before commit...`);
+          
+          // Stash local changes - returns true if something was stashed
+          const stashed = await gitScanner.stashChanges();
+          
+          try {
+            // Pull with rebase to integrate remote changes (uses git pull --rebase internally)
+            await gitScanner.pullBranch(userConfig.remote_branch, {
+              privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+            });
+            
+            // Apply stashed changes if we stashed something
+            if (stashed) {
+              await gitScanner.stashPop();
+              
+              // Check for conflicts after stash pop
+              if (await gitScanner.hasConflicts()) {
+                throw new Error('Stash pop resulted in merge conflicts. Cannot proceed with commit. ' +
+                  'Please resolve conflicts manually using "Reset and Pull" or by running git commands directly.');
+              }
+            }
+          } catch (err) {
+            // If pull fails, leave stash intact for manual recovery
+            // The user can use "Reset and Pull" to clean up or `git stash list` to view saved changes
+            if (stashed) {
+              logger.warn('Pull failed. Stashed changes remain saved for manual recovery. ' +
+                'Use `git stash list` to view stashed changes or "Reset and Pull" to clean up.');
+            }
+            throw err;
+          }
+        }
+      } catch (err) {
+        if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+          throw new Error('Failed to authenticate with remote repository: ' + err.message);
+        }
+        throw err;
+      }
+    }
+
     const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();

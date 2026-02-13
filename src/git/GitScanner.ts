@@ -349,38 +349,63 @@ export class GitScanner {
     } catch (err) {
       if (err.message.indexOf('Updates were rejected because the remote contains work') > -1 ||
         err.message.indexOf('Updates were rejected because a pushed branch tip is behind its remote') > -1) {
-        await this.exec(`git fetch origin ${remoteBranch}`, {
-          env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-          }
-        });
-
+        // Stash any local changes before fetching and rebasing
+        const stashed = await this.stashChanges();
+        
         try {
-          await this.exec(`git rebase origin/${remoteBranch}`, {
+          await this.exec(`git fetch origin ${remoteBranch}`, {
             env: {
-              GIT_AUTHOR_NAME: committer.name,
-              GIT_AUTHOR_EMAIL: committer.email,
-              GIT_COMMITTER_NAME: committer.name,
-              GIT_COMMITTER_EMAIL: committer.email
+              GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
             }
           });
+
+          try {
+            await this.exec(`git rebase origin/${remoteBranch}`, {
+              env: {
+                GIT_AUTHOR_NAME: committer.name,
+                GIT_AUTHOR_EMAIL: committer.email,
+                GIT_COMMITTER_NAME: committer.name,
+                GIT_COMMITTER_EMAIL: committer.email
+              }
+            });
+            
+            // Restore stashed changes if any
+            if (stashed) {
+              await this.stashPop();
+              
+              // Check for conflicts after restoring stash
+              if (await this.hasConflicts()) {
+                await this.exec('git rebase --abort', { ignoreError: true });
+                throw new Error('Stash pop resulted in merge conflicts after rebase. Cannot proceed with push. ' +
+                  'Please resolve conflicts manually.');
+              }
+            }
+          } catch (err) {
+            await this.exec('git rebase --abort', { ignoreError: true });
+            if (err.message.indexOf('Resolve all conflicts manually') > -1 || err.message.indexOf('merge conflicts') > -1) {
+              this.logger.error('Conflict detected during rebase', { filename: __filename });
+              throw new Error('Rebase conflicts detected. Please resolve conflicts manually and retry.');
+            }
+            throw err;
+          }
+
+          await this.exec(`git push origin main:${remoteBranch}`, {
+            env: {
+              GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+            }
+          });
+          return;
         } catch (err) {
-          await this.exec('git rebase --abort', { ignoreError: true });
-          if (err.message.indexOf('Resolve all conflicts manually') > -1) {
-            this.logger.error('Conflict', { filename: __filename });
+          // If we stashed something and the operation failed, warn about it
+          if (stashed) {
+            this.logger.warn('Push/rebase failed. Stashed changes remain saved. Use `git stash list` to view.', { filename: __filename });
           }
           throw err;
         }
-
-        await this.exec(`git push origin main:${remoteBranch}`, {
-          env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-          }
-        });
-        return;
       }
 
-      return;
+      // For other errors, just throw them
+      throw err;
     }
   }
 
@@ -902,8 +927,9 @@ export class GitScanner {
       return {
         ahead, behind
       };
-      // deno-lint-ignore no-empty
-    } catch (ignore) {}
+    } catch (err) {
+      this.logger.warn(`Failed to count ahead/behind commits for branch ${remoteBranch}: ${err.message}`, { filename: __filename });
+    }
 
     return { ahead: 0, behind: 0 };
   }
@@ -1011,6 +1037,66 @@ export class GitScanner {
 
   setCompanionFileResolver(resolver: (filePath: string) => Promise<string[]>) {
     this.companionFileResolver = resolver;
+  }
+
+  private async getStashCount(): Promise<number> {
+    const result = await this.exec('git stash list --format=%gd', { skipLogger: !this.debug });
+    const lines = result.stdout.trim().split('\n').filter(line => line.length > 0);
+    return lines.length;
+  }
+
+  async stashChanges(): Promise<boolean> {
+    // Capture the number of existing stash entries before attempting to stash
+    const beforeCount = await this.getStashCount();
+
+    try {
+      await this.exec('git stash push -u -m "WikiGDrive auto-stash before sync"', { skipLogger: !this.debug });
+    } catch (err) {
+      // If there's nothing to stash, git stash may report "No local changes to save"
+      // in the error output. In that case, report that no stash was created.
+      if (err.message && err.message.includes('No local changes to save')) {
+        return false;
+      }
+      throw err;
+    }
+
+    // Re-count stash entries after the push to determine if a new stash was created
+    const afterCount = await this.getStashCount();
+
+    return afterCount > beforeCount;
+  }
+
+  async stashPop(): Promise<void> {
+    try {
+      await this.exec('git stash pop', { skipLogger: !this.debug });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // If there's no stash to pop, handle gracefully
+      // Error message format: "Process exited with status: X\n" + stderr
+      if (message.includes('No stash entries found')) {
+        return;
+      }
+      // Check if the error is due to merge conflicts based on the error message
+      if (message.includes('CONFLICT')) {
+        throw new Error('Stash pop encountered merge conflicts. Please resolve conflicts manually.');
+      }
+      // If the message did not explicitly mention conflicts, fall back to checking for unmerged files
+      if (await this.hasConflicts()) {
+        throw new Error('Stash pop encountered merge conflicts. Please resolve conflicts manually.');
+      }
+      throw err;
+    }
+  }
+
+  async hasConflicts(): Promise<boolean> {
+    try {
+      const result = await this.exec('git diff --name-only --diff-filter=U', { skipLogger: !this.debug });
+      // If any file names are returned, there are unmerged files (conflicts)
+      return result.stdout.trim().length > 0;
+    } catch (err) {
+      this.logger.warn('Failed to check for conflicts: ' + err.message, { filename: __filename });
+      return false;
+    }
   }
 
 }
