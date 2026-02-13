@@ -689,6 +689,47 @@ export class JobManagerContainer extends Container {
     const userConfigService = new UserConfigService(googleFileSystem);
     const userConfig = await userConfigService.load();
 
+    // Check if local branch is behind remote and sync if needed
+    if (userConfig.remote_branch) {
+      try {
+        await gitScanner.fetch({
+          privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+        });
+
+        const { ahead, behind } = await gitScanner.countAheadBehind(userConfig.remote_branch);
+        
+        if (behind > 0) {
+          logger.info(`Local branch is ${behind} commit(s) behind remote. Syncing before commit...`);
+          
+          // Stash local changes
+          await gitScanner.stashChanges();
+          
+          try {
+            // Pull with rebase
+            await gitScanner.pullBranch(userConfig.remote_branch, {
+              privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
+            });
+            
+            // Apply stashed changes
+            await gitScanner.stashPop();
+          } catch (err) {
+            // If pull or stash pop fails, try to restore stash
+            try {
+              await gitScanner.stashPop();
+            } catch (stashErr) {
+              logger.error('Failed to restore stashed changes: ' + stashErr.message);
+            }
+            throw err;
+          }
+        }
+      } catch (err) {
+        if (err.message.indexOf('Failed to retrieve list of SSH authentication methods') > -1) {
+          throw new Error('Failed to authenticate with remote repository');
+        }
+        throw err;
+      }
+    }
+
     const contentFileService = await getContentFileService(transformedFileSystem, userConfigService);
     const markdownTreeProcessor = new MarkdownTreeProcessor(contentFileService);
     await markdownTreeProcessor.load();

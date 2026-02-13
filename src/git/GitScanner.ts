@@ -1013,4 +1013,26 @@ export class GitScanner {
     this.companionFileResolver = resolver;
   }
 
+  async stashChanges(): Promise<void> {
+    try {
+      await this.exec('git stash push -u -m "WikiGDrive auto-stash before sync"', { skipLogger: !this.debug });
+    } catch (err) {
+      // If there's nothing to stash, git stash will return "No local changes to save"
+      if (err.message.indexOf('No local changes to save') === -1) {
+        throw err;
+      }
+    }
+  }
+
+  async stashPop(): Promise<void> {
+    try {
+      await this.exec('git stash pop', { skipLogger: !this.debug });
+    } catch (err) {
+      // If there's no stash to pop, handle gracefully
+      if (err.message.indexOf('No stash entries found') === -1) {
+        throw err;
+      }
+    }
+  }
+
 }
