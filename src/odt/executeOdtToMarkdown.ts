@@ -7,8 +7,29 @@ import {UnMarshaller} from './UnMarshaller.ts';
 import {DocumentStyles, LIBREOFFICE_CLASSES} from './LibreOffice.ts';
 import {generateDocumentFrontMatter} from '../containers/transform/frontmatters/generateDocumentFrontMatter.ts';
 import {OdtProcessor} from './OdtProcessor.ts';
+import type {RewriteRule} from './applyRewriteRule.ts';
+import type {MdFile} from '../model/LocalFile.ts';
 
-export async function executeOdtToMarkdown(workerData) {
+export interface WorkerPayload {
+  odtPath: string;
+  realFileName: string;
+  destinationPath: string;
+  picturesDirAbsolute: string;
+  rewriteRules: RewriteRule[];
+  fm_without_version?: boolean;
+  localFile: MdFile;
+}
+
+export interface WorkerResult {
+  links: Array<string>;
+  frontMatter: string;
+  markdown: string;
+  errors: Array<string>;
+  headersMap: {[key: string]: string};
+  invisibleBookmarks: {[key: string]: number};
+}
+
+export async function executeOdtToMarkdown(workerData: WorkerPayload): Promise<WorkerResult> {
   const processor = new OdtProcessor(true);
   await processor.load(workerData.odtPath);
   await processor.unzipAssets(workerData.destinationPath, workerData.realFileName);

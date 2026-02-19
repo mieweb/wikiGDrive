@@ -25,7 +25,7 @@ export class TaskFetchBinary extends QueueTask {
       return [];
     }
 
-    await this.googleDriveService.exportDocument(
+    await this.googleDriveService.download(
       this.auth,
       { id: this.file.id, mimeType: this.mimeType, name: this.file.name },
       this.fileService.createWriteStream(assetPath)

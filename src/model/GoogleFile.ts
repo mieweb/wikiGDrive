@@ -38,5 +38,7 @@ export const MimeTypes = {
 };
 export const MimeToExt = {
   'image/svg+xml': '.svg',
-  'application/vnd.oasis.opendocument.text': '.odt'
+  'application/vnd.oasis.opendocument.text': '.odt',
+  'application/vnd.oasis.opendocument.spreadsheet': '.ods',
+  'application/vnd.oasis.opendocument.presentation': '.odp',
 };
