@@ -172,8 +172,6 @@ class DuplexToSocket implements Socket {
             break;
 
           case 0x09: // Ping Frame
-            // TODO
-            console.warn('ping', data);
             break;
 
           default:
