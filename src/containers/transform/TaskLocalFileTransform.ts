@@ -15,6 +15,7 @@ import {LocalLinks} from './LocalLinks.ts';
 import {SINGLE_THREADED_TRANSFORM} from './QueueTransformer.ts';
 import {JobManagerContainer} from '../job/JobManagerContainer.ts';
 import {UserConfig} from '../google_folder/UserConfigService.ts';
+import type {WorkerResult} from '../../odt/executeOdtToMarkdown.ts';
 
 export function googleMimeToExt(mimeType: string, fileName: string) {
   switch (mimeType) {
@@ -26,12 +27,15 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
       return 'png';
     case 'image/svg+xml':
       return 'svg';
+    case 'text/csv':
+      return 'csv';
     case 'application/vnd.google-apps.drawing':
       return 'svg';
     case 'application/vnd.google-apps.document':
       return 'odt';
-    case 'text/csv':
-      return 'csv';
+    case 'application/vnd.google-apps.presentation':
+      return 'pdf';
+    // case 'application/vnd.google-apps.shortcut':
   }
 
   if (fileName.indexOf('.') > -1) {
@@ -41,7 +45,7 @@ export function googleMimeToExt(mimeType: string, fileName: string) {
 }
 
 export class TaskLocalFileTransform extends QueueTask {
-  constructor(protected logger: winston.Logger,
+  constructor(protected override logger: winston.Logger,
               private jobManagerContainer: JobManagerContainer,
               private realFileName: string,
               private googleFolder: FileContentService,
@@ -51,7 +55,7 @@ export class TaskLocalFileTransform extends QueueTask {
               private localLinks: LocalLinks,
               private userConfig: UserConfig,
               private globalHeadersMap: {[key: string]: string},
-              private globalInvisibleBookmarks: {[key: number]: number},
+              private globalInvisibleBookmarks: {[key: string]: number},
               ) {
     super(logger);
     this.retries = 0;
@@ -61,7 +65,7 @@ export class TaskLocalFileTransform extends QueueTask {
     }
   }
 
-  async run(): Promise<QueueTask[]> {
+  override async run(): Promise<QueueTask[]> {
     await this.generate(this.localFile);
 
     return [];
@@ -130,8 +134,8 @@ export class TaskLocalFileTransform extends QueueTask {
   async generateDocument(localFile: MdFile) {
     let frontMatter;
     let markdown;
-    let headersMap = {};
-    let invisibleBookmarks = {};
+    let headersMap: Record<string, string> = {};
+    let invisibleBookmarks: Record<string, number> = {};
     let links = [];
     let errors = [];
 
@@ -175,14 +179,7 @@ export class TaskLocalFileTransform extends QueueTask {
       errors = converter.getErrors();
       this.warnings = errors.length;
     } else {
-      interface WorkerResult {
-        links: Array<string>;
-        frontMatter: string;
-        markdown: string;
-        errors: Array<string>;
-        headersMap: {[key: string]: string};
-        invisibleBookmarks: {[key: string]: string};
-      }
+
 
       const workerResult: WorkerResult = <WorkerResult>await this.jobManagerContainer.scheduleWorker('OdtToMarkdown', {
         localFile,
@@ -256,7 +253,7 @@ export class TaskLocalFileTransform extends QueueTask {
         }
       }
       this.logger.info('Transformed: ' + this.localFile.fileName + verStr);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error('Error transforming ' + localFile.fileName + ' ' + err.stack ? err.stack : err.message);
       throw err;
     }

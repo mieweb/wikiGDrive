@@ -151,6 +151,15 @@ export class TaskFetchFolder extends QueueTask {
               await this.fileService,
               file,
               forceDownload,
+              'application/vnd.oasis.opendocument.spreadsheet', 'ods'
+            ));
+            tasks.push(new TaskFetchBinary(
+              this.logger,
+              this.googleDriveService,
+              this.auth,
+              await this.fileService,
+              file,
+              forceDownload,
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx'
             ));
             tasks.push(new TaskFetchBinary(
@@ -165,6 +174,15 @@ export class TaskFetchFolder extends QueueTask {
             break;
 
           case MimeTypes.PRESENTATION_MIME:
+            tasks.push(new TaskFetchBinary(
+              this.logger,
+              this.googleDriveService,
+              this.auth,
+              await this.fileService,
+              file,
+              forceDownload,
+              'application/vnd.oasis.opendocument.presentation', 'odp'
+            ));
             tasks.push(new TaskFetchBinary(
               this.logger,
               this.googleDriveService,

@@ -1,4 +1,4 @@
-function stripUrlSuffix(id) {
+function stripUrlSuffix(id: string) {
   if (id.indexOf('/') > 0) {
     id = id.substring(0, id.indexOf('/'));
   }
