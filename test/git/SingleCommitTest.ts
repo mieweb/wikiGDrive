@@ -45,8 +45,8 @@ Deno.test('test single commit', async () => {
     const sandbox = new Sandbox.default();
     const exec = sandbox.compileExpression('return (filePath.endsWith(".md") && filePath == "test1.md" && ["navigation.md", "toc.md"]) || []');
 
-    scannerLocal.setCompanionFileResolver((filePath: string) => {
-      return exec({ filePath }).run();
+    scannerLocal.setCompanionFileResolver(async (filePath: string) => {
+      return exec({ filePath }).run() as string[];
     });
 
     await scannerLocal.commit('initial commit', ['.gitignore', 'test1.md'], COMMITER1);
