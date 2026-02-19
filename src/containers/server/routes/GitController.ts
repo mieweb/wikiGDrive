@@ -103,7 +103,7 @@ export default class GitController extends Controller {
     const gitScanner = new GitScanner(ctx.logger, transformedFileSystem.getRealPath(), 'wikigdrive@wikigdrive.com');
     await gitScanner.initialize();
 
-    const output = await gitScanner.cmd(body.cmd, body.arg || '');
+    const output = await gitScanner.executer.cmd(body.cmd, body.arg || '');
     return output;
   }
 

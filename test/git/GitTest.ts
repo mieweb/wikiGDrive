@@ -328,7 +328,7 @@ Deno.test('pullBranch', async () => {
     // fs.mkdirSync(path.join(secondRepoDir, 'content'));
     // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '---\ntype: \'page\'\n---\nChange local');
 
-    await scannerSecond.resetToRemote('main');
+    await scannerSecond.reset.resetToRemote('main');
     // await scannerSecond.pullBranch('main');
 
     const history = await scannerSecond.history('/');
@@ -355,18 +355,18 @@ Deno.test('pullBranch', async () => {
     // fs.writeSync(fd, '');
 
     // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '');
-    // await scannerSecond.cmd('add -N _errors.md');
+    // await scannerSecond.executer.cmd('add -N _errors.md');
     // fs.chmodSync(path.join(secondRepoDir, '_errors.md'), 0o771);
 
 
     await scannerSecond.autoCommit();
 
-    console.info(await scannerSecond.cmd('ls-files --stage'));
+    console.info(await scannerSecond.executer.cmd('ls-files --stage'));
 
     fs.writeSync(fd, 'test');
     // fs.closeSync(fd);
 
-    console.info(await scannerSecond.cmd('ls-files --stage'));
+    console.info(await scannerSecond.executer.cmd('ls-files --stage'));
 
     // fs.unlinkSync(path.join(secondRepoDir, '_errors.md'));
     // fs.writeFileSync(path.join(secondRepoDir, '_errors.md'), '---\ntype: \'page\'\n---\nChange local');
@@ -375,12 +375,12 @@ Deno.test('pullBranch', async () => {
 
     // fs.writeFileSync(path.join(secondRepoDir, 'untracked.md'), 'untracked');
 
-    console.info(await scannerSecond.cmd('ls-files --stage'));
+    console.info(await scannerSecond.executer.cmd('ls-files --stage'));
 
-    await scannerSecond.resetToLocal();
+    await scannerSecond.reset.resetToLocal();
     await scannerSecond.pullBranch('main');
 
-    console.info(await scannerSecond.cmd('status'));
+    console.info(await scannerSecond.executer.cmd('status'));
 
     {
       const history = await scannerSecond.history('/');
@@ -611,13 +611,13 @@ Deno.test('test reset', async () => {
       assertStrictEquals(history.length, 3);
     }
 
-    await scannerLocal.resetToLocal();
+    await scannerLocal.reset.resetToLocal();
     {
       const history = await scannerLocal.history('');
       assertStrictEquals(history.length, 3);
     }
 
-    await scannerLocal.resetToRemote('main');
+    await scannerLocal.reset.resetToRemote('main');
     {
       const history = await scannerLocal.history('');
       assertStrictEquals(history.length, 2);

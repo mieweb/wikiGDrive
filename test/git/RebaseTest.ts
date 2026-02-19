@@ -376,7 +376,7 @@ Deno.test('test conflict', async () => {
       }
     }
 
-    await scannerLocal.resetToRemote('main');
+    await scannerLocal.reset.resetToRemote('main');
 
     await scannerLocal.pushBranch('main');
 

@@ -368,6 +368,17 @@ export class ActionRunnerContainer extends Container {
                 }, `wgd/${additionalEnv['BRANCH']}`);
               }
                 break;
+
+              case 'internal/git_reset_remote':
+              {
+                gitScanner.debug = true;
+                await gitScanner.setSafeDirectory();
+                const userConfig = await this.userConfigService.load();
+                await gitScanner.reset.resetToRemote(userConfig.remote_branch, {
+                  privateKeyFile: await this.userConfigService.getDeployPrivateKeyPath()
+                });
+              }
+                break;
               case 'internal/auto_commit':
               {
                 gitScanner.debug = true;

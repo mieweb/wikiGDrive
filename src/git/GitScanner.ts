@@ -7,32 +7,28 @@ import process from 'node:process';
 import type {Logger} from 'winston';
 
 import {UserConfig} from '../containers/google_folder/UserConfigService.ts';
-import {TelemetryMethod} from '../telemetry.ts';
+import {GitExecuter, sanitize, SshParams} from './GitExecuter.ts';
+import {GitStash} from './GitStash.ts';
+import { GitReset } from './GitReset.ts';
 
 const __filename = import.meta.filename;
 
+interface GitFileState {
+  isNew?: boolean;
+  isModified?: boolean;
+  isDeleted?: boolean;
+}
+
 export interface GitChange {
   path: string;
-  state: {
-    isNew: boolean;
-    isModified: boolean;
-    isDeleted: boolean;
-  };
+  state: GitFileState;
   attachments?: number;
 }
 
-interface SshParams {
-  privateKeyFile: string;
-}
 
-interface Commiter {
+export interface Commiter {
   name: string;
   email: string;
-}
-
-function sanitize(txt) {
-  txt = txt.replace(/[;"|]/g, '');
-  return txt;
 }
 
 interface ExecOpts {
@@ -48,74 +44,18 @@ export class GitScanner {
 
   private companionFileResolver: (filePath: string) => Promise<string[]> = async () => ([]);
 
-  constructor(private logger: Logger, public readonly rootPath: string, private email: string) {
+  public readonly executer: GitExecuter;
+  public readonly stash: GitStash;
+  public readonly reset: GitReset;
+
+  constructor(public readonly logger: Logger, public readonly rootPath: string, private email: string) {
+    this.executer = new GitExecuter(this);
+    this.stash = new GitStash(this);
+    this.reset = new GitReset(this);
   }
 
-  @TelemetryMethod({ paramsCount: 1 })
   private async exec(cmd: string, opts: ExecOpts = { env: {}, skipLogger: false, ignoreError: false }): Promise<{ stdout: string, stderr: string }> {
-    if (!opts.skipLogger) {
-      this.logger.info(cmd, { stackOffset: 1, filename: __filename });
-    }
-
-    let [ stdout, stderr ] = [ '', '' ];
-
-    if (!opts.env) {
-      opts.env = {};
-    }
-    if (!opts.env['HOME']) {
-      opts.env['HOME'] = process.env.HOME;
-    }
-    if (!opts.env['PATH']) {
-      opts.env['PATH'] = process.env.PATH;
-    }
-
-    const command = new Deno.Command('/bin/sh', {
-      args: [ '-c', cmd ],
-      cwd: this.rootPath,
-      env: opts.env,
-      stdout: 'piped',
-      stderr: 'piped',
-    });
-
-    const child = command.spawn();
-
-    const timer = setTimeout(() => {
-      this.logger.error('Process timeout', { filename: __filename });
-      child.kill();
-    }, 300_000);
-
-    const decoder = new TextDecoder();
-
-    const [status] = await Promise.all([
-      child.status,
-      child.stdout.pipeTo(new WritableStream({
-        write: (chunk, controller) => {
-          const text = decoder.decode(chunk);
-          stdout += text;
-          if (!opts.skipLogger) {
-            this.logger.info(text, { filename: __filename });
-          }
-        }
-      })),
-      child.stderr.pipeTo(new WritableStream({
-        write: (chunk, controller) => {
-          const text = decoder.decode(chunk);
-          stderr += text;
-          if (!opts.skipLogger) {
-            this.logger.error(text, { filename: __filename });
-          }
-        }
-      }))
-    ]);
-
-    clearTimeout(timer);
-
-    if (!status.success && !opts.ignoreError) {
-      this.logger.error('Process exited with status: ' + status.code, { filename: __filename });
-      throw new Error('Process exited with status: ' + status.code + '\n' + stderr);
-    }
-
-    return { stdout, stderr };
+    return this.executer.exec(cmd, opts);
   }
 
   async isRepo() {
@@ -125,7 +65,7 @@ export class GitScanner {
   async changes(opts: { includeAssets: boolean } = { includeAssets: false }): Promise<GitChange[]> {
     const retVal: { [path: string]: GitChange & { cnt: number } } = {};
 
-    function addEntry(path, state, attachments = 0) {
+    function addEntry(path: string, state: GitFileState, attachments = 0) {
       if (!retVal[path]) {
         retVal[path] = {
           cnt: 0,
@@ -138,7 +78,7 @@ export class GitScanner {
         };
       }
       retVal[path].cnt++;
-      for (const k in state) {
+      for (const k of Object.keys(state) as Array<keyof GitFileState>) {
         retVal[path].state[k] = state[k];
       }
       if (attachments > 0) {
@@ -166,7 +106,7 @@ export class GitScanner {
           addEntry(path, { isDeleted: true });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err.message.indexOf('fatal: bad revision') === -1) {
         throw err;
       }
@@ -219,7 +159,7 @@ export class GitScanner {
       retVal.push(filePath);
       try {
         retVal.push(...(await this.companionFileResolver(filePath) || []));
-      } catch (err) {
+      } catch (err: any) {
         this.logger.warn('Error evaluating companion files: ' + err.message, { filename: __filename });
         break;
       }
@@ -266,7 +206,7 @@ export class GitScanner {
       if (rmParam) {
         try {
           await this.exec(`git rm -r --ignore-unmatch ${rmParam}`);
-        } catch (err) {
+        } catch (err: any) {
           if (err.message.indexOf('did not match any files') === -1) {
             throw err;
           }
@@ -276,11 +216,7 @@ export class GitScanner {
 
     await this.exec(`git commit -m "${sanitize(message)}"`, {
       env: {
-        GIT_AUTHOR_NAME: committer.name,
-        GIT_AUTHOR_EMAIL: committer.email,
-        GIT_COMMITTER_NAME: committer.name,
-        GIT_COMMITTER_EMAIL: committer.email
-      }
+        ...this.executer.committerEnv(committer),      }
     });
 
     const res = await this.exec('git rev-parse HEAD', { skipLogger: !this.debug });
@@ -300,11 +236,8 @@ export class GitScanner {
 
     await this.exec(`git pull --rebase origin ${remoteBranch}`, {
       env: {
-        GIT_AUTHOR_NAME: committer.name,
-        GIT_AUTHOR_EMAIL: committer.email,
-        GIT_COMMITTER_NAME: committer.name,
-        GIT_COMMITTER_EMAIL: committer.email,
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+        ...this.executer.committerEnv(committer),
+        ...this.executer.sshOptsEnv(sshParams)
       }
     });
   }
@@ -312,7 +245,7 @@ export class GitScanner {
   async fetch(sshParams?: SshParams) {
     await this.exec('git fetch', {
       env: {
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+        ...this.executer.sshOptsEnv(sshParams)
       }
     });
   }
@@ -329,95 +262,91 @@ export class GitScanner {
     if (localBranch !== 'main') {
       await this.exec(`git push --force origin ${localBranch}:${remoteBranch}`, {
         env: {
-          GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+          ...this.executer.sshOptsEnv(sshParams)
         }
       });
       return;
     }
 
-    const committer = {
+    const committer: Commiter = {
       name: 'WikiGDrive',
       email: this.email
     };
 
+    let stashed = false;
     try {
-      await this.exec(`git push origin main:${remoteBranch}`, {
+      const { behind } = await this.countAheadBehind(remoteBranch);
+
+      if (behind > 0) {
+        await this.exec(`git reset --mixed`, {
+          env: {
+            ...this.executer.committerEnv(committer),
+          }
+        });
+
+        await this.stash.stash('Before push');
+        stashed = true;
+
+        await this.executer.exec(`git pull --rebase origin ${remoteBranch}`, {
+          env: {
+            ...this.executer.committerEnv(committer),
+            ...this.executer.sshOptsEnv(sshParams)
+          }
+        });
+      }
+
+      await this.exec(`git push origin ${localBranch}:${remoteBranch}`, {
         env: {
-          GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+          ...this.executer.sshOptsEnv(sshParams)
         }
       });
-    } catch (err) {
+    } catch (err: any) {
       if (err.message.indexOf('Updates were rejected because the remote contains work') > -1 ||
         err.message.indexOf('Updates were rejected because a pushed branch tip is behind its remote') > -1) {
         await this.exec(`git fetch origin ${remoteBranch}`, {
           env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+            ...this.executer.sshOptsEnv(sshParams)
           }
         });
 
         try {
           await this.exec(`git rebase origin/${remoteBranch}`, {
             env: {
-              GIT_AUTHOR_NAME: committer.name,
-              GIT_AUTHOR_EMAIL: committer.email,
-              GIT_COMMITTER_NAME: committer.name,
-              GIT_COMMITTER_EMAIL: committer.email
+              ...this.executer.committerEnv(committer),
             }
           });
         } catch (err) {
-          await this.exec('git rebase --abort', { ignoreError: true });
-          if (err.message.indexOf('Resolve all conflicts manually') > -1) {
-            this.logger.error('Conflict', { filename: __filename });
-          }
           throw err;
         }
 
-        await this.exec(`git push origin main:${remoteBranch}`, {
+        await this.exec(`git push origin ${localBranch}:${remoteBranch}`, {
           env: {
-            GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
+            ...this.executer.sshOptsEnv(sshParams)
           }
         });
         return;
       }
-
       return;
+    } finally {
+      await this.exec('git rebase --abort', { ignoreError: true });
+      // if (err.message.indexOf('Resolve all conflicts manually') > -1) {
+      //   this.logger.error('Conflict', { filename: __filename });
+      // }
+
+      if (stashed) {
+        await this.stash.apply(0);
+        await this.stash.drop(0);
+      }
     }
   }
 
-  async resetToLocal(sshParams?: SshParams) {
-    await this.exec('git checkout main --force', {});
+  async getRemoteUrl(): Promise<string | null> {
     try {
-      await this.exec('git rebase --abort', { ignoreError: true });
-    } catch (ignoredError) { /* empty */ }
-    await this.exec('git reset --hard HEAD', {
-      env: {
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-      }
-    });
-    await this.removeUntracked();
-  }
-
-  async resetToRemote(remoteBranch: string, sshParams?: SshParams) {
-    if (!remoteBranch) {
-      remoteBranch = 'main';
+      const result = await this.exec('git remote get-url origin', { skipLogger: !this.debug });
+      return result.stdout.trim();
+    } catch (e) {
+      return null;
     }
-
-    await this.exec(`git fetch origin ${remoteBranch}`, {
-      env: {
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-      }
-    });
-
-    try {
-      await this.exec('git rebase --abort', { ignoreError: true });
-    } catch (ignoredError) { /* empty */ }
-
-    await this.exec(`git reset --hard origin/${remoteBranch}`, {
-      env: {
-        GIT_SSH_COMMAND: sshParams?.privateKeyFile ? `ssh -i ${sanitize(sshParams.privateKeyFile)} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes` : ''
-      }
-    });
-    await this.removeUntracked();
   }
 
   async getOwnerRepo(): Promise<string> {
@@ -432,15 +361,6 @@ export class GitScanner {
     }
 
     return '';
-  }
-
-  async getRemoteUrl(): Promise<string> {
-    try {
-      const result = await this.exec('git remote get-url origin', { skipLogger: !this.debug });
-      return result.stdout.trim();
-    } catch (e) {
-      return null;
-    }
   }
 
   async setRemoteUrl(url: string) {
@@ -487,22 +407,29 @@ export class GitScanner {
       const retVal = [];
 
       let mode = 0;
-      let current = null;
+      let current: null | {
+        oldFile: string;
+        newFile: string;
+        txt: string;
+        patches: string[];
+      } = null;
+
       let currentPatch = '';
       for (const line of result.stdout.split('\n')) {
-        switch (mode) {
-          case 0:
-            if (line.startsWith('diff --git ')) {
-              mode = 1;
-              current = {
-                oldFile: '',
-                newFile: '',
-                txt: '',
-                patches: []
-              };
-            }
-            break;
+        if (current === null) { // mode === 0
+          if (line.startsWith('diff --git ')) {
+            mode = 1;
+            current = {
+              oldFile: '',
+              newFile: '',
+              txt: '',
+              patches: []
+            };
+          }
+          continue;
+        }
 
+        switch (mode) {
           case 1:
             if (line.startsWith('--- a/')) {
               current.oldFile = line.substring('--- a/'.length);
@@ -542,8 +469,8 @@ export class GitScanner {
                 break;
               }
 
-              mode = 0;
               retVal.push(current);
+              mode = 0;
               current = null;
 
               if (line.startsWith('diff --git ')) {
@@ -551,7 +478,8 @@ export class GitScanner {
                 current = {
                   oldFile: '',
                   newFile: '',
-                  txt: ''
+                  txt: '',
+                  patches: []
                 };
               }
             }
@@ -577,7 +505,7 @@ export class GitScanner {
       });
 
       return retVal;
-    } catch (err) {
+    } catch (err: any) {
       if (err.message.indexOf('fatal: bad revision') > -1) {
         return [];
       }
@@ -707,7 +635,7 @@ export class GitScanner {
     await this.exec('git config --global --add safe.directory ' + this.rootPath, { skipLogger: false });
   }
 
-  async getBranchCommit(branch: string): Promise<string> {
+  async getBranchCommit(branch: string): Promise<string | null> {
     try {
       const res = await this.exec(`git rev-parse ${branch}`, { skipLogger: !this.debug });
       return res.stdout.trim();
@@ -756,7 +684,11 @@ export class GitScanner {
       let idx;
       let buff = '';
       let mode = 0;
-      let current = null;
+      let current: null | {
+        doAutoCommit: boolean;
+        oldFile: string;
+        newFile: string;
+      } = null;
 
       const flushCurrent = (current) => {
         if (current) {
@@ -852,7 +784,6 @@ export class GitScanner {
         error += chunk;
       }
 
-
       const status = await childProcess.status;
 
       if (!status.success) {
@@ -861,7 +792,7 @@ export class GitScanner {
       }
 
       current = flushCurrent(current);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.warn(err.message, { filename: __filename });
     }
 
@@ -921,7 +852,7 @@ export class GitScanner {
         }
         unstaged++;
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err.message.indexOf('fatal: not a git repository')) {
         initialized = false;
       } else {
@@ -940,7 +871,7 @@ export class GitScanner {
           unstaged++;
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       if (!err.message.indexOf('fatal: bad revision')) {
         throw err;
       }
@@ -993,16 +924,6 @@ export class GitScanner {
       const filePath = path.join(this.rootPath, fileName);
       fs.rmSync(filePath, { recursive: true });
     }
-  }
-
-  async cmd(cmd: string, arg: string = '') {
-    if (!['status', 'remote -v', 'ls-files --stage', 'branch -m'].includes(cmd)) {
-      throw new Error('Forbidden command');
-    }
-
-    const result = await this.exec('git ' + cmd + ' ' + (arg || ''), { skipLogger: !this.debug });
-
-    return { stdout: result.stdout, stderr: result.stderr };
   }
 
   async removeCached(filePath: string) {

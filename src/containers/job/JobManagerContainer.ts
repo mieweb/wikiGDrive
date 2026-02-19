@@ -776,7 +776,7 @@ export class JobManagerContainer extends Container {
 
       switch (type) {
         case 'local':
-          await gitScanner.resetToLocal({
+          await gitScanner.reset.resetToLocal({
             privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
           });
 
@@ -785,7 +785,7 @@ export class JobManagerContainer extends Container {
           break;
         case 'remote':
           {
-            await gitScanner.resetToRemote(userConfig.remote_branch, {
+            await gitScanner.reset.resetToRemote(userConfig.remote_branch, {
               privateKeyFile: await userConfigService.getDeployPrivateKeyPath()
             });
 
