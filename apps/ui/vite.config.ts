@@ -1,6 +1,7 @@
 import { env } from 'node:process';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import wasm from 'vite-plugin-wasm';
 
 import {generateHead} from '../../website/generateHead.ts';
 import type {DenoResolveResult} from './vite-plugins/resolver.ts';
@@ -92,6 +93,7 @@ const cache = new Map<string, DenoResolveResult>();
 export default defineConfig({
   plugins: [
     vue(),
+    wasm(),
     denoPrefixPlugin(cache),
     denoPlugin(cache, __dirname + '/../../'),
     denoCssPlugin(__dirname + '/../../'),

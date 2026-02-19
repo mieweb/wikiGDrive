@@ -61,12 +61,15 @@
 
     "vite": "npm:vite@6.3.3",
     "@vitejs/plugin-vue": "npm:@vitejs/plugin-vue@5.2.3",
+    "vite-plugin-wasm": "npm:vite-plugin-wasm@3.5.0",
     "vue-router": "npm:vue-router@4.5.0",
     "vue": "npm:vue@3.5.13",
 
-    "@kerebron/editor": "npm:@kerebron/editor@0.4.17",
-    "@kerebron/editor-kits": "npm:@kerebron/editor-kits@0.4.17",
-    "@kerebron/wasm": "npm:@kerebron/wasm@0.4.17",
+    "@kerebron/editor": "npm:@kerebron/editor@0.5.3",
+    "@kerebron/editor-kits": "npm:@kerebron/editor-kits@0.5.3",
+    "@kerebron/editor-browserless": "npm:@kerebron/editor-browserless@0.5.3",
+    "@kerebron/extension-odt": "npm:@kerebron/extension-odt@0.5.3",
+    "@kerebron/wasm": "npm:@kerebron/wasm@0.5.3",
 
     "@nyariv/sandboxjs": "npm:@nyariv/sandboxjs@0.8.23",
     "@opentelemetry/core": "npm:@opentelemetry/core@1.28.0",

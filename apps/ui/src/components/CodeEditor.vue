@@ -31,13 +31,13 @@ export default {
     };
   },
   async mounted() {
-    this.editor = new CoreEditor({
+    this.editor = CoreEditor.create({
       cdnUrl: '/wasm/',
       uri: 'file:///test.md',
       topNode: 'doc_code',
       readOnly: this.readOnly,
       element: this.$refs.editor,
-      extensions: [
+      editorKits: [
         new CodeEditorKit(this.lang),
       ]
     });
