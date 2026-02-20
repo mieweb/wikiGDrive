@@ -43,7 +43,7 @@ With a "Shared Drive" as the key, WikiGDrive:
 
 WikiGDrive scans for changes in the drive and then refresh the local converted files.
 
-![](10000201000002BA000001464F317568B8F12696.png)
+<img src="10000201000002BA000001464F317568B8F12696.png" alt="" style="width:5.272in; height:2.4583in;" />
 
 The WikiGDrive refreshes the "Local Filesystem" with changes from the Google Shared Drive overwriting or deleting any content to bring it into sync.  The Local Filesystem is not preserved (since we will be committing the markdown in github anyway).
 
@@ -178,11 +178,11 @@ The index is a listing of all of the defined terms and their references in the d
 ## Markdown Cleanup
 
 * Bold headings: ([issue](https://github.com/mieweb/wikiGDrive/issues/17)) Remove the ** bold markdown from all headings.
-    ![](10000201000001A5000000492C856905A808045C.png)
+    <img src="10000201000001A5000000492C856905A808045C.png" alt="" style="width:2.161in; height:0.3756in;" />
 * End of line bold text: ([issue](https://github.com/mieweb/wikiGDrive/issues/15)) The closing ** for bold text at the end of a line is being placed on a newline and not being parsed.
-    ![](10000201000005480000004BB83F3F8B5F0C77BD.png)
+    <img src="10000201000005480000004BB83F3F8B5F0C77BD.png" alt="" style="width:6.5in; height:0.361in;" />
 * Italics/bold in an unordered list: ([issue](https://github.com/mieweb/wikiGDrive/issues/16)) Italics are not being rendered if in a list item.  We may need to find these and replace the */** with em/strong tags. Example is rendered in browser next to [Google Doc](gdoc:108WScoxxGKKKOsGWF7UNZ4rLRanGXu6BPdJ-axjVn5s).
-    ![](1000020100000243000000F28AB7617254FDBB3A.png)
+    <img src="1000020100000243000000F28AB7617254FDBB3A.png" alt="" style="width:3.2134in; height:1.3374in;" />
 <a id="c00wob6zjk55"></a>
 <a id="_dqy5042w3u8q"></a>
 ## Images

@@ -411,14 +411,14 @@ export class OdtToMarkdown {
       const svgId = urlToFolderId(altText);
 
       if (svgId) {
-        const node = this.chunks.createNode('SVG/', { href: 'gdoc:' + svgId });
+        const node = this.chunks.createNode('SVG/', { href: 'gdoc:' + svgId, width: drawFrame.width, height: drawFrame.height });
         this.chunks.append(currentTagNode, node);
       } else
       if (imageLink.endsWith('.svg')) {
-        const node = this.chunks.createNode('SVG/', { href: imageLink, alt: altText });
+        const node = this.chunks.createNode('SVG/', { href: imageLink, alt: altText, width: drawFrame.width, height: drawFrame.height });
         this.chunks.append(currentTagNode, node);
       } else {
-        const node = this.chunks.createNode('IMG/', { href: imageLink, alt: altText });
+        const node = this.chunks.createNode('IMG/', { href: imageLink, alt: altText, width: drawFrame.width, height: drawFrame.height });
         this.chunks.append(currentTagNode, node);
       }
     }

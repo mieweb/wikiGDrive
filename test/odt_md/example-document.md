@@ -64,9 +64,9 @@ After subtable</td>
 
 ## Image
 
-![](1000000000000640000001CF60FB0243CA95EC14.jpg)
+<img src="1000000000000640000001CF60FB0243CA95EC14.jpg" alt="" style="width:4.5256in; height:1.3055in;" />
 
-![](10000000000003F0000003F092F85671239C65F9.jpg)
+<img src="10000000000003F0000003F092F85671239C65F9.jpg" alt="" style="width:6.1839in; height:6.1839in;" />
 
 ## Preformatted Text
 
