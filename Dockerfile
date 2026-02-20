@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 RUN apt-get update
 RUN apt-get install -yq bash git-lfs openssh-client curl unzip podman
-RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s v2.6.1 -y
 
 COPY . ./
 
