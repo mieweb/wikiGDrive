@@ -57,6 +57,14 @@ export class UserConfig {
   rewrite_rules?: RewriteRule[];
   preview_rewrite_rule?: string;
   companion_files_rule?: string;
+  // Badge system configuration
+  badge_config?: {
+    enabled?: boolean;
+    base_url?: string;
+    wiki_url?: string;
+    toc_url?: string;
+    badges?: string[]; // List of enabled badge types
+  };
 }
 
 const DEFAULT_CONFIG: UserConfig = {
