@@ -2,7 +2,7 @@ name: Deploy Pull Request to test server
 
 on:
   pull_request:
-    types: [edited, synchronize]
+    types: [edited, synchronize, labeled]
 
 jobs:
   test:
