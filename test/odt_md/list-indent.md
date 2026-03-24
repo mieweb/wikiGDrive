@@ -1,7 +1,7 @@
 1. If not already there, navigate to the <strong>Health Surveillance</strong> menu of the Control Panel.
 2. Using the information acquired in the Health Surveillance Matrix, begin entering the appropriate actions to each of the respective panels, as needed, clicking <strong>Add Panel</strong>. Otherwise, click <strong>Edit</strong> on an existing panel action to make any necessary changes.
 
-![](10000201000004BE0000011D30E30AE192655040.png)
+<img src="10000201000004BE0000011D30E30AE192655040.png" alt="" style="width:6.5in; height:1.528in;" />
 
 3. When adding action items to panels, the [Representative Event panel action](#representative-event-panel-action) is usually added to the panel first. Fill out all of the necessary fields according to the information acquired in the Health Surveillance matrix, and click <strong>Submit</strong> to save the panel action to the panel.
     a.  <strong>Action Name</strong>: Required field. The Action Name is usually the name of a test/procedure that is the component/action of the panel. The name will be displayed listings and dialogues throughout the system.
@@ -9,7 +9,7 @@
 
 {{% tip %}}
 If the panel action is for a type of exposure, users will not want to set any Lead Time days. Lead Time is not needed for an exposure type panel action.
-![](1000020100000311000001824A182983854F26CB.png)
+<img src="1000020100000311000001824A182983854F26CB.png" alt="" style="width:6.5in; height:3.1945in;" />
 {{% /tip %}}
 
     c.  <strong>Required for Certification</strong>: Select this to indicate the panel action is required for members of the panel. Leave unchecked if the panel action is voluntary. If checked, a panel member failing or becoming overdue for the action will become de-certified from the panel.
@@ -21,7 +21,7 @@ If the panel action is for a type of exposure, users will not want to set any Le
         i. <strong>Date of Birth</strong>: Triggers the panel action on the panel member's date of birth, on a schedule determined by the starting age and frequency. Assumes the panel member's DOB has been captured in the chart demographics.
         ii. <strong>Other Action (Triggered)</strong>: The Other Action (Triggered) trigger date allows users to trigger a panel action at the same time as another action item, indicated in this panel action. For example, an action to trigger an Audiogram may be for Entry, Routine, or Exit actions; if checked, other actions may use this panel action as a trigger. This option must be selected for the action to display in the Related Action list. The Related Action list displays when then Trigger Date is set to Other Action (Triggered) or Prior Action (Completed). Additionally, action items can be configured to trigger with the Representative Events, as needed, if that programming is utilized. This allows all action items to trigger together for a panel. Triggers with all the same date are usually tied to representative event.
 
-![](100002010000033B00000036339CF669B6C2B512.png)
+<img src="100002010000033B00000036339CF669B6C2B512.png" alt="" style="width:6.5in; height:0.4307in;" />
 
         iii. <strong>Point in Time</strong>: The Point in Time trigger date allows users to trigger an action item on the same day and month, each year (must be MM/DD format).
         iv. <strong>Panel Expiration</strong>: Triggers on the expiration date specified in the panel status. Most panels will be configured with a representative event as the

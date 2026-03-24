@@ -123,11 +123,15 @@ export class SvgDesc {
 @XmlElementChild('draw:object', 'object', 'DrawObject')
 @XmlElementChild('draw:image', 'image', 'DrawImage')
 @XmlElementChild('svg:desc', 'description', 'SvgDesc')
+@XmlAttribute('svg:width', 'width')
+@XmlAttribute('svg:height', 'height')
 export class DrawFrame implements ParagraphSection {
   type = 'draw_frame';
   object?: DrawObject;
   image?: DrawImage;
   description?: SvgDesc;
+  width?: string;
+  height?: string;
 }
 
 @XmlElement()

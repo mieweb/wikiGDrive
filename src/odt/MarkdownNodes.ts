@@ -39,8 +39,8 @@ export interface TagPayload {
 
   x?: number;
   y?: number;
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   transform?: string;
 }
 
