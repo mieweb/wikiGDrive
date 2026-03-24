@@ -23,7 +23,7 @@ jobs:
           deno-version: v2.x
       - uses: actions/setup-node@v6
         with:
-          node-version: 22.14.0
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - name: npm build
         run: deno run -A ./scripts/build_npm.ts ${{steps.get_tag_version.outputs.TAG_VERSION}}
