@@ -30,8 +30,12 @@ import {unwrapEmptyPre} from './unwrapEmptyPre.ts';
 import {convertGoogleUrls} from './convertGoogleUrls.ts';
 import {fixIdLinks} from './fixIdLinks.ts';
 import {convertCodeBlockParagraphs} from './convertCodeBlockParagraphs.ts';
+import {removeBadgeMarkers} from './removeBadgeMarkers.ts';
 
 export async function postProcess(chunks: MarkdownNodes, rewriteRules: RewriteRule[]) {
+  // Remove badge markers early in the process to ensure they don't interfere with other processing
+  removeBadgeMarkers(chunks);
+  
   convertToc(chunks);
   processListsAndNumbering(chunks);
   postProcessHeaders(chunks); // @TODO: no test
