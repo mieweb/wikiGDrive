@@ -87,7 +87,7 @@ export class GoogleFolderContainer extends Container {
         const userConfigService = new UserConfigService(googleFileSystem);
         await userConfigService.load();
 
-        taskFetchFolder.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
+        taskFetchFolder.setMarkdownTransform(userConfigService.config.md_transform);
         downloader.addTask(taskFetchFolder);
       }
     }

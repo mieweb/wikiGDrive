@@ -36,10 +36,11 @@
             </div>
 
             <div class="form-group">
-              <label>Use Google Markdowns</label>
-              <select class="form-control" @change="user_config.use_google_markdowns = !user_config.use_google_markdowns">
-                <option :selected="!user_config.use_google_markdowns" value="">Disabled</option>
-                <option :selected="user_config.use_google_markdowns" value="enabled">Enabled</option>
+              <label>Markdown generation</label>
+              <select class="form-control" @change="user_config.md_transform = $event.target.value">
+                <option :selected="!user_config.md_transform" value="">Classic</option>
+                <option :selected="user_config.md_transform === 'google'" value="enabled">Google</option>
+                <option :selected="user_config.md_transform === 'kerebron'" value="enabled">Kerebron</option>
               </select>
             </div>
 

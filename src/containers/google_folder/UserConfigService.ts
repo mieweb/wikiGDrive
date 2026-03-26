@@ -50,7 +50,7 @@ export class UserConfig {
   hugo_theme?: HugoTheme;
   config_toml?: string;
   transform_subdir?: string;
-  use_google_markdowns?: boolean;
+  md_transform?: string;
   auto_sync?: boolean;
   fm_without_version?: boolean;
   actions_yaml?: string;

@@ -17,7 +17,7 @@ export interface ConfigBody {
     companion_files_rule?: string;
     hugo_theme: HugoTheme;
     auto_sync: boolean;
-    use_google_markdowns: boolean;
+    md_transform: string;
     fm_without_version: boolean;
     actions_yaml?: string;
   };
@@ -125,7 +125,7 @@ export class ConfigController extends Controller {
       userConfigService.config.actions_yaml = body.config?.actions_yaml;
     }
     userConfigService.config.auto_sync = !!body.config?.auto_sync;
-    userConfigService.config.use_google_markdowns = !!body.config?.use_google_markdowns;
+    userConfigService.config.md_transform = body.config?.md_transform || '';
     userConfigService.config.fm_without_version = !!body.config?.fm_without_version;
 
     await userConfigService.save();

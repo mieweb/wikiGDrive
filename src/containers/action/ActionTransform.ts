@@ -26,7 +26,7 @@ export class ActionTransform {
     const userConfigService = new UserConfigService(this.googleFileSystem);
     await userConfigService.load();
 
-    transformContainer.setUseGoogleMarkdowns(userConfigService.config.use_google_markdowns);
+    transformContainer.setMarkdownTransform(userConfigService.config.md_transform);
 
     const jobManager = <JobManagerContainer>this.engine.getContainer('job_manager');
     transformContainer.onProgressNotify(({ completed, total, warnings, failed }) => {

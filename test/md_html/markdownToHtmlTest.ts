@@ -13,7 +13,7 @@ import {markdownToHtml} from '../../src/google/markdownToHtml.ts';
 import {convertToAbsolutePath} from '../../src/LinkTranslator.ts';
 import {compareTexts} from '../utils.ts';
 
-const __dirname = import.meta.dirname;
+const __dirname = import.meta.dirname!;
 
 async function transformMd(id: string) {
   const markdownBuffer = fs.readFileSync(path.join(__dirname, id + '.md'));
@@ -26,7 +26,7 @@ Deno.test('test markdownToHtml links', async () => {
 
   const dom = htmlparser2.parseDocument(html);
 
-  const map = {};
+  const map: Record<string, string> = {};
 
   const links = domutils.findAll((elem: Element) => {
     return ['a'].includes(elem.tagName) && !!elem.attribs?.href;

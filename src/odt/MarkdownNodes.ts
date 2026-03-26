@@ -104,7 +104,7 @@ export class MarkdownNodes {
     this.body.children.splice(start, deleteCount, chunk);
     for (let i = start; i < this.body.children.length; i++) {
       const chunk = this.body.children[i];
-      if (chunk.isTag) {
+      if (chunk.isTag && 'number' === typeof chunk.payload.position) {
         chunk.payload.position -= deleteCount;
       }
     }

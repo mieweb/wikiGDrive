@@ -5,8 +5,9 @@
 import { CoreEditor } from '@kerebron/editor';
 import { CodeEditorKit } from '@kerebron/editor-kits/CodeEditorKit';
 
-import "@kerebron/editor/assets/index.css";
+import '@kerebron/editor/assets/index.css';
 import '@kerebron/editor-kits/assets/CodeEditorKit.css';
+import { createAssetLoad } from '@kerebron/wasm/web';
 
 export default {
   name: 'CodeEditor',
@@ -32,9 +33,8 @@ export default {
   },
   async mounted() {
     this.editor = CoreEditor.create({
-      cdnUrl: '/wasm/',
+      assetLoad: createAssetLoad(),
       uri: 'file:///test.md',
-      topNode: 'doc_code',
       readOnly: this.readOnly,
       element: this.$refs.editor,
       editorKits: [
