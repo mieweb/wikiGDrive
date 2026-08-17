@@ -11,6 +11,18 @@ import {FileContentService} from '../../src/utils/FileContentService.ts';
 
 const __dirname = import.meta.dirname;
 
+Deno.test('test ./pre-macro', async () => {
+  const markdown = await transformOdt('pre-macro');
+  const testMarkdown = fs.readFileSync(__dirname + '/pre-macro.md').toString();
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
+});
+
+Deno.test('test ./resource-spec', async () => {
+  const markdown = await transformOdt('resource-spec');
+  const testMarkdown = fs.readFileSync(__dirname + '/resource-spec.md').toString();
+  assertStrictEquals(true, compareTexts(testMarkdown, markdown));
+});
+
 Deno.test('test ./fix-bold.md', async () => {
   const markdown = await transformOdt('fix-bold');
   const testMarkdown = fs.readFileSync(__dirname + '/fix-bold.md').toString();

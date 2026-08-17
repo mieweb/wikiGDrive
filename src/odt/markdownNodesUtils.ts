@@ -230,9 +230,17 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'EMPTY_LINE/':
           return '\n';
         case 'PRE':
-          return '```'+ (chunk.payload?.lang || '') +'\n' + chunksToText(chunk.children, ctx) + '```\n';
+          {
+            let codeText = chunksToText(chunk.children, ctx);
+            codeText = codeText.replaceAll('\\$', '$'); // LatexMath unfix
+            return '```'+ (chunk.payload?.lang || '') +'\n' + codeText + '```\n';
+          }
         case 'CODE':
-          return '`' + chunksToText(chunk.children, ctx) + '`';
+          {
+            let codeText = chunksToText(chunk.children, ctx);
+            codeText = codeText.replaceAll('\\$', '$'); // LatexMath unfix
+            return '`' + codeText + '`';
+          }
         case 'I':
           return '*' + chunksToText(chunk.children, ctx) + '*';
         case 'BI':
@@ -253,7 +261,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'HR/':
           return '___';
         case 'A':
-          return '[' + chunksToText(chunk.children, ctx) + `](${chunk.payload.href})`;
+          return '[' + chunksToText(chunk.children, ctx).trim() + `](${chunk.payload.href})`;
         case 'SVG/':
           return `![](${chunk.payload.href})`;
         case 'IMG/':
@@ -287,9 +295,21 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'HR/':
           return '<hr />';
         case 'B':
-          return '<strong>' + chunksToText(chunk.children, ctx) + '</strong>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return '<strong>' + innerHTML + '</strong>';
+          }
         case 'I':
-          return '<em>' + chunksToText(chunk.children, ctx) + '</em>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return '<em>' + innerHTML + '</em>';
+          }
         case 'BI':
           return '<strong><em>' + chunksToText(chunk.children, ctx) + '</em></strong>\'';
         case 'H1':
