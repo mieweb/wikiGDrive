@@ -242,11 +242,29 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
             return '`' + codeText + '`';
           }
         case 'I':
-          return '*' + chunksToText(chunk.children, ctx) + '*';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '*' + innerText + '*';
+          }
         case 'BI':
-          return '**_' + chunksToText(chunk.children, ctx) + '_**';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '**_' + innerText + '_**';
+          }
         case 'B':
-          return '**' + chunksToText(chunk.children, ctx) + '**';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '**' + innerText + '**';
+          }
         case 'H1':
           return '# ' + chunksToText(chunk.children, ctx) + '\n';
         case 'H2':
@@ -335,7 +353,13 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'LI':
           return '<li>' + chunksToText(chunk.children, ctx) + '</li>';
         case 'A':
-          return `<a href="${chunk.payload.href}">` + chunksToText(chunk.children, ctx) + '</a>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return `<a href="${chunk.payload.href}">` + chunksToText(chunk.children, ctx) + '</a>';
+          }
         case 'TABLE':
           return '<table>\n' + chunksToText(chunk.children, ctx) + '</table>\n';
         case 'TR':

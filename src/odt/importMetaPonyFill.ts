@@ -13,6 +13,7 @@ interface AnyImportMeta {
 }
 
 declare global {
+  // deno-lint-ignore no-empty-interface
   interface ImportMeta {}
 }
 export interface PonyfillImportMeta extends ImportMeta {

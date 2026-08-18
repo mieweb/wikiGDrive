@@ -12,6 +12,7 @@ interface AnyImportMeta {
 }
 
 declare global {
+  // deno-lint-ignore no-empty-interface
   interface ImportMeta {}
 }
 export interface PonyfillImportMeta extends ImportMeta {
@@ -217,7 +218,7 @@ export const import_meta_ponyfill_esmodule = /*@__PURE__*/ ((globalThis as any)[
         try {
           im.resolve(`./${Date.now()}${Math.random()}`);
           isSupportPathResolve = true;
-        } catch {}
+        } catch { /* ignore */ }
       }
 
       let nodeResolve: PonyfillImportMeta['nodeResolve'] = isSupportResolve
