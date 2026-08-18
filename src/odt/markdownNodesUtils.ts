@@ -230,15 +230,41 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'EMPTY_LINE/':
           return '\n';
         case 'PRE':
-          return '```'+ (chunk.payload?.lang || '') +'\n' + chunksToText(chunk.children, ctx) + '```\n';
+          {
+            let codeText = chunksToText(chunk.children, ctx);
+            codeText = codeText.replaceAll('\\$', '$'); // LatexMath unfix
+            return '```'+ (chunk.payload?.lang || '') +'\n' + codeText + '```\n';
+          }
         case 'CODE':
-          return '`' + chunksToText(chunk.children, ctx) + '`';
+          {
+            let codeText = chunksToText(chunk.children, ctx);
+            codeText = codeText.replaceAll('\\$', '$'); // LatexMath unfix
+            return '`' + codeText + '`';
+          }
         case 'I':
-          return '*' + chunksToText(chunk.children, ctx) + '*';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '*' + innerText + '*';
+          }
         case 'BI':
-          return '**_' + chunksToText(chunk.children, ctx) + '_**';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '**_' + innerText + '_**';
+          }
         case 'B':
-          return '**' + chunksToText(chunk.children, ctx) + '**';
+          {
+            const innerText = chunksToText(chunk.children, ctx);
+            if (!innerText) {
+              return '';
+            }
+            return '**' + innerText + '**';
+          }
         case 'H1':
           return '# ' + chunksToText(chunk.children, ctx) + '\n';
         case 'H2':
@@ -253,7 +279,7 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'HR/':
           return '___';
         case 'A':
-          return '[' + chunksToText(chunk.children, ctx) + `](${chunk.payload.href})`;
+          return '[' + chunksToText(chunk.children, ctx).trim() + `](${chunk.payload.href})`;
         case 'SVG/':
           return `![](${chunk.payload.href})`;
         case 'IMG/':
@@ -287,9 +313,21 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'HR/':
           return '<hr />';
         case 'B':
-          return '<strong>' + chunksToText(chunk.children, ctx) + '</strong>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return '<strong>' + innerHTML + '</strong>';
+          }
         case 'I':
-          return '<em>' + chunksToText(chunk.children, ctx) + '</em>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return '<em>' + innerHTML + '</em>';
+          }
         case 'BI':
           return '<strong><em>' + chunksToText(chunk.children, ctx) + '</em></strong>\'';
         case 'H1':
@@ -315,7 +353,13 @@ function chunkToText(chunk: MarkdownNode, ctx: ToTextContext) {
         case 'LI':
           return '<li>' + chunksToText(chunk.children, ctx) + '</li>';
         case 'A':
-          return `<a href="${chunk.payload.href}">` + chunksToText(chunk.children, ctx) + '</a>';
+          {
+            const innerHTML = chunksToText(chunk.children, ctx);
+            if (!innerHTML) {
+              return '';
+            }
+            return `<a href="${chunk.payload.href}">` + chunksToText(chunk.children, ctx) + '</a>';
+          }
         case 'TABLE':
           return '<table>\n' + chunksToText(chunk.children, ctx) + '</table>\n';
         case 'TR':

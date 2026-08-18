@@ -69,7 +69,7 @@ export class OdtProcessor {
       const fileName = relativePath.replace('/content.xml', '.xml').replace(/\s/g, '_');
       if (fileName.indexOf('/') === -1) {
         const entry = this.files[relativePath];
-        const buffer = await entry.async('nodebuffer');
+        const buffer = await entry.async('uint8array');
 
         const mathMl = new TextDecoder().decode(buffer);
         if (mathMl.indexOf('<math ') > -1) {
@@ -91,7 +91,7 @@ export class OdtProcessor {
         continue;
       }
       const entry = this.files[relativePath];
-      const buffer = await entry.async('nodebuffer');
+      const buffer = await entry.async('uint8array');
       const fileName = relativePath.split('/').pop();
 
       const ext = getExt(fileName);

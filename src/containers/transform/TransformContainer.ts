@@ -207,7 +207,7 @@ export class TransformContainer extends Container {
   private progressNotifyCallback: ({total, completed, warnings, failed}: { total?: number; completed?: number; warnings?: number; failed?: number }) => void;
   private transformLog: TransformLog;
   private isFailed = false;
-  private useGoogleMarkdowns = false;
+  private markdownTransformMode = '';
   private globalHeadersMap: {[key: string]: string} = {};
   private globalInvisibleBookmarks: {[key: string]: number} = {};
 
@@ -282,6 +282,9 @@ export class TransformContainer extends Container {
       }
 
       const googleFile = googleFolderFiles.find(f => f.id === localFile.id);
+      if (!googleFile) {
+        continue;
+      }
 
       if (this.filterFilesIds.length > 0 && -1 === this.filterFilesIds.indexOf(localFile.id)) {
         continue;
@@ -289,34 +292,60 @@ export class TransformContainer extends Container {
 
       const jobManagerContainer = <JobManagerContainer>this.engine.getContainer('job_manager');
 
-      if (!this.useGoogleMarkdowns) {
-        const task = new TaskLocalFileTransform(
-          this.logger,
-          jobManagerContainer,
-          realFileName,
-          googleFolder,
-          googleFile,
-          destinationDirectory,
-          localFile,
-          this.localLinks,
-          this.userConfigService.config,
-          this.globalHeadersMap,
-          this.globalInvisibleBookmarks
-        );
-        queueTransformer.addTask(task);
-      } else {
-        const task = new TaskGoogleMarkdownTransform(
-          this.logger,
-          jobManagerContainer,
-          realFileName,
-          googleFolder,
-          googleFile,
-          destinationDirectory,
-          localFile,
-          this.localLinks,
-          this.userConfigService.config
-        );
-        queueTransformer.addTask(task);
+      switch (this.markdownTransformMode) {
+        case 'google':
+          {
+            const task = new TaskGoogleMarkdownTransform(
+              this.logger,
+              jobManagerContainer,
+              realFileName,
+              googleFolder,
+              googleFile,
+              destinationDirectory,
+              localFile,
+              this.localLinks,
+              this.userConfigService.config
+            );
+            queueTransformer.addTask(task);
+          }
+          break;
+        case 'kerebron':
+          {
+            const task = new TaskLocalFileTransform(
+              this.logger,
+              jobManagerContainer,
+              realFileName,
+              googleFolder,
+              googleFile,
+              destinationDirectory,
+              localFile,
+              this.localLinks,
+              this.userConfigService.config,
+              this.globalHeadersMap,
+              this.globalInvisibleBookmarks
+            );
+            task.setMarkdownMode('kerebron');
+            queueTransformer.addTask(task);
+          }
+          break;
+        default:
+          {
+            const task = new TaskLocalFileTransform(
+              this.logger,
+              jobManagerContainer,
+              realFileName,
+              googleFolder,
+              googleFile,
+              destinationDirectory,
+              localFile,
+              this.localLinks,
+              this.userConfigService.config,
+              this.globalHeadersMap,
+              this.globalInvisibleBookmarks
+            );
+            queueTransformer.addTask(task);
+          }
+          break;
       }
     }
 
@@ -584,7 +613,7 @@ export class TransformContainer extends Container {
     this.progressNotifyCallback = callback;
   }
 
-  setUseGoogleMarkdowns(value: boolean) {
-    this.useGoogleMarkdowns = value;
+  setMarkdownTransform(value: string) {
+    this.markdownTransformMode = value;
   }
 }

@@ -35,8 +35,9 @@ export function inchesToPixels(value): number {
   return Math.floor(100 * inchesToMm(value));
 }
 
-export function fixCharacters(text) {
+export function fixCharacters(text: string) {
   return text
+    .replace(/\$/g, '\\$') // LatexMath fix
     .replace(/’/g, '\'')
     .replace(/“/g, '"')
     .replace(/”/g, '"')

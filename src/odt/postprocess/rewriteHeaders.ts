@@ -1,6 +1,6 @@
 import {slugify} from '../../utils/slugify.ts';
 import {extractText, walkRecursiveAsync, walkRecursiveSync} from '../markdownNodesUtils.ts';
-import {MarkdownNodes, MarkdownTextNode} from '../MarkdownNodes.ts';
+import {MarkdownNodes, MarkdownTagNode, MarkdownTextNode} from '../MarkdownNodes.ts';
 
 export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ headersMap: {[key: string]: string}, invisibleBookmarks: {[key: string]: number} }> {
   const headersMap = {};
@@ -63,6 +63,20 @@ export async function rewriteHeaders(markdownChunks: MarkdownNodes): Promise<{ h
       if (chunk.parent.children.length < 2) {
         return;
       }
+
+      const prevChunk = chunk.parent?.children[ctx.nodeIdx - 1];
+      if (prevChunk?.isTag && 'HTML_MODE/' === prevChunk.tag) {
+        const space: MarkdownTagNode = {
+          isTag: true,
+          tag: 'EMPTY_LINE/',
+          payload: {},
+          children: [],
+          comment: 'rewriteHeaders.ts: line before anchor'
+        };
+        chunk.parent.children.splice(ctx.nodeIdx, 0, space);
+        return { nodeIdx: ctx.nodeIdx + 1 };
+      }
+
       const space: MarkdownTextNode = {
         isTag: false,
         text: ' ',

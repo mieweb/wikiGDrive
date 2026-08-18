@@ -27,7 +27,7 @@ import {RewriteRule} from './applyRewriteRule.ts';
 import {isMarkdownMacro} from './macroUtils.ts';
 import {postProcess} from './postprocess/postProcess.ts';
 
-function getBaseFileName(fileName) {
+function getBaseFileName(fileName: string) {
   return fileName.replace(/.*\//, '');
 }
 
@@ -95,17 +95,17 @@ export class OdtToMarkdown {
     return structuredClone(mergeDeep(parentStyle, this.styles[styleName]));
   }
 
-  getListStyle(listStyleName: string): ListStyle | null {
+  getListStyle(listStyleName: string): ListStyle | undefined {
     if (!this.documentStyles?.styles?.listStyles) {
-      return null;
+      return undefined;
     }
 
     return this.documentStyles.styles.listStyles.find(ls => ls.name === listStyleName) || null;
   }
 
   async convert(): Promise<string> {
-    const listLevelsObj = {};
-    const listMargins = {};
+    const listLevelsObj: Record<string, boolean> = {};
+    const listMargins: Record<string, string> = {};
 
     if (this.document.automaticStyles) {
       for (const namedStyle of this.document.automaticStyles.styles) {
